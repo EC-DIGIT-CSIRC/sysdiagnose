@@ -14,7 +14,7 @@ import sys
 import json
 from optparse import OptionParser
 
-version_string = "sysdiagnose-ps.py v2019-10-14 Version 1.0"
+version_string = "sysdiagnose-ps.py v2023-03-10 Version 1.1"
 
 #----- definition for parsing.py script -----#
 #-----         DO NET DELETE             ----#
@@ -26,7 +26,7 @@ parser_call = "parse_ps"
 #--------------------------------------------#
 
 # --------------------------------------------------------------------------- #
-def parse_ps(filename, ios_version=13):
+def parse_ps(filename, ios_version=16):
   processes = {}
   try:
 
@@ -35,28 +35,55 @@ def parse_ps(filename, ios_version=13):
 
         for line in fd:
             """
+            iOS < 16
             USER             UID   PID  PPID  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
             root               0     1     0   0.0  0.4  37  0  4226848   8912 -        ??  Ss   14Jan19   7:27.40 /sbin/launchd
+
+            iOS > 16
+            USER  UID PRSNA   PID  PPID        F  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
+            root  0     -     1     0     4004   0.0  0.0   0  0        0      0 -        ??  ?s   Tue09PM   0:00.00 /sbin/launchd
             """
             patterns = re.split("\s+", line)
             # key of hash table is PID
-            processes[int(patterns[2])] = { "USER"    :  patterns[0],
-                                       "UID"     :  patterns[1],
-                                       "PID"     :  int(patterns[2]),
-                                       "PPID"    :  int(patterns[3]),
-                                       "CPU"     :  patterns[4],
-                                       "MEM"     :  patterns[5],
-                                       "PRI"     :  patterns[6],
-                                       "NI"      :  patterns[7],
-                                       "VSZ"     :  patterns[8],
-                                       "RSS"     :  patterns[9],
-                                       "WCHAN"   :  patterns[10],
-                                       "TT"      :  patterns[11],
-                                       "STAT"    :  patterns[12],
-                                       "STARTED" :  patterns[13],
-                                       "TIME"    :  patterns[14],
-                                       "COMMAND" :  patterns[15] }
+            if(ios_version < 16):
+              processes[int(patterns[2])] = { "USER"    :  patterns[0],
+                                        "UID"     :  patterns[1],
+                                        "PID"     :  int(patterns[2]),
+                                        "PPID"    :  int(patterns[3]),
+                                        "CPU"     :  patterns[4],
+                                        "MEM"     :  patterns[5],
+                                        "PRI"     :  patterns[6],
+                                        "NI"      :  patterns[7],
+                                        "VSZ"     :  patterns[8],
+                                        "RSS"     :  patterns[9],
+                                        "WCHAN"   :  patterns[10],
+                                        "TT"      :  patterns[11],
+                                        "STAT"    :  patterns[12],
+                                        "STARTED" :  patterns[13],
+                                        "TIME"    :  patterns[14],
+                                        "COMMAND" :  patterns[15] }
+            else:
+              processes[int(patterns[3])] = { "USER"    :  patterns[0],
+                                        "UID"     :  patterns[1],
+                                        "PRSNA"   :  patterns[2],
+                                        "PID"     :  int(patterns[3]),
+                                        "PPID"    :  int(patterns[4]),
+                                        "F"       :  patterns[5],
+                                        "CPU"     :  patterns[6],
+                                        "MEM"     :  patterns[7],
+                                        "PRI"     :  patterns[8],
+                                        "NI"      :  patterns[9],
+                                        "VSZ"     :  patterns[10],
+                                        "RSS"     :  patterns[11],
+                                        "WCHAN"   :  patterns[12],
+                                        "TT"      :  patterns[13],
+                                        "STAT"    :  patterns[14],
+                                        "STARTED" :  patterns[15],
+                                        "TIME"    :  patterns[16],
+                                        "COMMAND" :  patterns[17] }        
+               
         fd.close()
+
   except Exception as e:
     print("Impossible to parse ps.txt: %s" % str(e))
   return processes
