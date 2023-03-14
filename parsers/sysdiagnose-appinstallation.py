@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 
 # For Python3
-# Script to print connection info from logs/appinstallation/AppUpdates.sqlite.db
+# Script to print connection info from logs/appinstallation/AppUpdates.sqlite.db (iOS12)
+# New version of iOS store data into logs/appinstallation/appstored.sqlitedb
 # Author: david@autopsit.org
 
 # PID: encoded in Litlle Endian??
@@ -21,11 +22,16 @@ version_string = "sysdiagnose-appinstallation.py v2019-11-22 Version 2.0"
 
 parser_description = "Parsing app installation logs"
 parser_input = "appinstallation"
-parser_call = "get_appinstallation_ios13"
+parser_call = "get_appinstallation"
 
 #--------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+def get_appinstallation(dbpath, ios_version=13):
+    if ios_version < 13:
+        return print_appinstall_ios12(dbpath)
+    else:
+        return get_appinstallation_ios13(dbpath)
 
 def print_appinstall_ios12(dbpath):
     try:
@@ -80,7 +86,7 @@ def main():
         parser.print_help()
         exit(-1)    
 
-    print_appinstall_ios12(options.inputfile)
+    get_appinstallation(options.inputfile)
     
 # --------------------------------------------------------------------------- #
 
