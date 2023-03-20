@@ -23,6 +23,7 @@ import json
 from docopt import docopt
 from tabulate import tabulate
 import re
+import pprint
 
 #----- definition for parsing.py script -----#
 #-----         DO NET DELETE             ----#
@@ -163,9 +164,9 @@ def parse_thread(data):
         loaded={}
         if "+" in line:
             loaded["library"] = line.split("(",1)[1].split("+",1)[0].strip()
-            loaded["int"] = line.split("(",1)[1].split("+",1)[1].strip()
+            loaded["int"] = line.split("(",1)[1].split("+",1)[1].split(")",1)[0].strip()
             loaded["hex"] = line.split("[",1)[1][:-1].strip()
-        elif "<truncated backtrace>" not in line:
+        elif "truncated backtrace>" not in line:
             loaded["hex"] = line.split("[",1)[1][:-1].strip()
         output["loaded"].append(loaded)
     return output

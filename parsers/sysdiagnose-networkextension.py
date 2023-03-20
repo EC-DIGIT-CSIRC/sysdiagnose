@@ -19,6 +19,7 @@ Options:
 import sys
 from optparse import OptionParser
 import plistlib
+import biplist
 import json
 from docopt import docopt
 from tabulate import tabulate
@@ -34,7 +35,8 @@ parser_call = "parseplist"
 #--------------------------------------------#
 def parseplist(file):
     with open(file, 'rb') as fp:
-        pl = plistlib.load(fp)
+        pl = biplist.readPlist(fp)
+        #pl = plistlib.load(fp)
 
     objects = pl['$objects']
 

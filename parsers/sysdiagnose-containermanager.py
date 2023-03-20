@@ -73,33 +73,34 @@ def parsecontainermanager(loglist):
 def buildlogentry(line):
     entry = {}
     # timestamp
-    timeregex = re.search(r"(?<=^)(.*)(?= \[)", line) #Regex for timestamp
-    timestamp = timeregex.group(1)
-    weekday, month, day, time, year = (str.split(timestamp[:24]))
-    day = day_converter(day)
-    month = month_converter(month)
-    entry['timestamp'] = str(year)+ '-'+ str(month) + '-' + str(day) + ' ' + str(time)
+    timeregex = re.search(r"(?<=^)(.*)(?= \[[0-9]+)", line) #Regex for timestamp
+    if timeregex:
+        timestamp = timeregex.group(1)
+        weekday, month, day, time, year = (str.split(timestamp[:24]))
+        day = day_converter(day)
+        month = month_converter(month)
+        entry['timestamp'] = str(year)+ '-'+ str(month) + '-' + str(day) + ' ' + str(time)
 
-    #log level
-    loglevelregex = re.search(r"\<(.*?)\>", line)
-    entry['loglevel'] = loglevelregex.group(1)
+        #log level
+        loglevelregex = re.search(r"\<(.*?)\>", line)
+        entry['loglevel'] = loglevelregex.group(1)
 
-    # hex_ID
-    hexIDregex = re.search(r"\(0x(.*?)\)", line)
-    entry['hexID'] = '0x' + hexIDregex.group(1)
+        # hex_ID
+        hexIDregex = re.search(r"\(0x(.*?)\)", line)
+        entry['hexID'] = '0x' + hexIDregex.group(1)
 
-    # event_type
-    eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)
-    if eventyperegex:
-        entry['event_type'] = eventyperegex.group(1)
+        # event_type
+        eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)
+        if eventyperegex:
+            entry['event_type'] = eventyperegex.group(1)
 
-    #msg
-    if 'event_type' in entry:
-        msgregex = re.search(r"\]\:(.*)", line)
-        entry['msg'] = msgregex.group(1)
-    else:
-        msgregex = re.search(r"\)\ (.*)", line)
-        entry['msg'] = msgregex.group(1)
+        #msg
+        if 'event_type' in entry:
+            msgregex = re.search(r"\]\:(.*)", line)
+            entry['msg'] = msgregex.group(1)
+        else:
+            msgregex = re.search(r"\)\ (.*)", line)
+            entry['msg'] = msgregex.group(1)
 
     return entry
 

@@ -74,8 +74,10 @@ def parsemobinstall(loglist):
 def buildlogentry(line):
     entry = {}
     # timestamp
-    timeregex = re.search(r"(?<=^)(.*)(?= \[)", line) #Regex for timestamp
+    print(line)
+    timeregex = re.search(r"(?<=^)(.*)(?= \[[0-9]+)", line) #Regex for timestamp
     timestamp = timeregex.group(1)
+    print(timestamp)
     weekday, month, day, time, year = (str.split(timestamp))
     day = day_converter(day)
     month = month_converter(month)
@@ -123,6 +125,8 @@ def main():
 
     if arguments['-i'] == True:
     #list files in folder and build list object
+        #loglist = glob.glob(arguments['<logfolder>'] + '/mobile_installation.log*')
+        #events = parsemobinstall(loglist)
         try:
             loglist = glob.glob(arguments['<logfolder>'] + '/mobile_installation.log*')
             events = parsemobinstall(loglist)
