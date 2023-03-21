@@ -98,7 +98,7 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
         line = line.strip()
     
         # break if end of task block
-        if line.startswith("\n"):
+        if len(line) == 0: 
             return result
         
         # global info on task
