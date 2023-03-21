@@ -109,16 +109,30 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             result["CPU usage"] = line.split()[5][:-1]
         elif line.startswith('sched mode:'):
             result["sched mode"] = line.split()[2]
+        elif line.startswith('run state:'):
+            result["run state"] = line.split()[2]
+        elif line.startswith('flags:'):
+            result["flags"] = line.split()[1:]
+        elif line.startswith('suspend count:'):
+            result["suspend count"] = line.split()[2][:-1]       
+        elif line.startswith('sleep time:'):
+            result["sleep time"] = line.split()[2][:-1] 
+        elif line.startswith('importance in task:'):
+            result["importance in task"] = line.split()[3][:-1]    
         
         # Policy
         elif line.startswith('policy:'):
             continue
-        #                 timeshare max  priority: 63
-        #       timeshare base priority: 20
-        #        timeshare cur  priority: 20
-        #        timeshare depressed: NO, prio -1
-        #elif line.startswith(''):
-        #    continue
+        elif line.startswith("timeshare max  priority"):
+            result["policy"]["timeshare max priority"] = line.split()[3][:-1]
+        elif line.startswith("timeshare base priority"):
+            result["policy"]["timeshare base priority"] = line.split()[3][:-1]
+        elif line.startswith("timeshare cur  priority"):
+            result["policy"]["timeshare cur priority"] = line.split()[3][:-1]
+        elif line.startswith("timeshare depressed"):
+            result["policy"]["timeshare depressed"] = {}
+            result["policy"]["timeshare depressed"]["status"] = line.split()[2]
+            result["policy"]["timeshare depressed"]["prio"] = line.split()[4]
 
         # Requested Policy
         elif line.startswith("requested policy:"):
@@ -163,14 +177,9 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
 
         # Handline unknown
         else:
+            print("WARNING: Unexpected line detected for tasks: %s (%s)" % (current_threat_id, line))
             continue # unknown line
-            print("WARNING: Unexpected line detected: %s " % line)
-        #Missing 
-        #run state: TH_STATE_WAITING
-        #flags: TH_FLAGS_SWAPPED |  |
-        #suspend count: 0
-        #sleep time: 0 s
-        #importance in task: 0
+
     return result
 
 
@@ -181,7 +190,6 @@ def search_task_block(fd, ios_version):
             line = line.strip()
             if line.startswith('thread ID:'):
                 current_threatID = line.split()[2]
-                print("Parsing ThreatId: %s" % current_threatID)
                 result[current_threatID] = parse_task_block(fd, current_threatID, ios_version)
             else:
                 continue
@@ -198,6 +206,8 @@ def search_task_block(fd, ios_version):
 def get_tasks(filename, ios_version=13):
     numb_tasks = get_num_tasks(filename, ios_version)
     tasks = {}
+
+    # TODO parses elements before / after tasks
 
     try:
         fd = open(filename, "r")
