@@ -93,7 +93,9 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
     result["policy"] = {}
     result["requested policy"] = {}
     result["effective policy"] = {}
-    
+    result["req kernel overrides"] = {}
+    result["requested policy"]["req workqueue/pthread overrides"] = {}
+
     for line in fd:
         line = line.strip()
     
@@ -102,13 +104,26 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             return result
         
         # global info on task
+        elif line.startswith('thread name:'):
+            result["thread name"] = line.split()[2]
         elif line.startswith('user/system time:'):
             result["user time"] = line.split()[3]
             result["system time"] = line.split()[5]
         elif line.startswith('CPU usage (over last tick):'):
             result["CPU usage"] = line.split()[5][:-1]
         elif line.startswith('sched mode:'):
-            result["sched mode"] = line.split()[2]
+            result["sched mode"] = {}
+            result["sched mode"]["mode"] = line.split()[2]
+        elif line.startswith('real-time priority:'):
+            result["sched mode"]["real-time priority"] = line.split()[2]
+        elif line.startswith('real-time period:'):
+            result["sched mode"]["real-time period"] = line.split()[2]
+        elif line.startswith('real-time computation:'):
+            result["sched mode"]["real-time computation"] = line.split()[2]
+        elif line.startswith('real-time constraint:'): 
+            result["sched mode"]["real-time constraint"] = line.split()[2]
+        elif line.startswith('real-time preemptible:'):
+            result["sched mode"]["real-time preemptible"] = line.split()[2]
         elif line.startswith('run state:'):
             result["run state"] = line.split()[2]
         elif line.startswith('flags:'):
@@ -122,7 +137,15 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
         
         # Policy
         elif line.startswith('policy:'):
-            continue
+            result["policy"]["policy"] = line.split()[1:]
+        elif line.startswith("round-robin max  priority:"):
+            result["policy"]["round-robin max priority"] = line.split()[3]
+        elif line.startswith("round-robin base priority:"):
+            result["policy"]["round-robin base priority"] = line.split()[3]
+        elif line.startswith("round-robin quantum:"):
+            result["policy"]["round-robin quantum"] = line.split()[2]
+        elif line.startswith("round-robin depressed:"): 
+            result["policy"]["round-robin depressed"] = line.split()[2:]
         elif line.startswith("timeshare max  priority"):
             result["policy"]["timeshare max priority"] = line.split()[3][:-1]
         elif line.startswith("timeshare base priority"):
@@ -139,10 +162,12 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             continue
         elif line.startswith('req thread qos:'):
             result["requested policy"]["req thread qos"] = line.split()[3][:-1]
+        elif line.startswith("req workqueue/pthread overrides:"):
+            continue
         elif line.startswith('req legacy qos override:'):
-            result["requested policy"]["req legacy qos override"] = line.split()[4][:-1]
+            result["requested policy"]["req workqueue/pthread overrides"]["req legacy qos override"] = line.split()[4][:-1]
         elif line.startswith('req workqueue qos override:'):
-            result["requested policy"]["req workqueue qos override"] = line.split()[4][:-1]
+            result["requested policy"]["req workqueue/pthread overrides"]["req workqueue qos override"] = line.split()[4][:-1]
         elif line.startswith('req kevent overrides:'):
             result["requested policy"]["req kevent overrides"] = line.split()[3][:-1]
         elif line.startswith('req workloop servicer override:'):
@@ -174,6 +199,22 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             result["effective policy"]["eff thruput qos"] = line.split()[3]
         elif line.startswith('eff darwin BG:'):
             result["effective policy"]["eff darwin bg"] = line.split()[3]
+        elif line.startswith('eff other:'):
+            result["effective policy"]["eff other"] = line.split()[2:]
+        elif line.startswith('eff iotier:'):
+            result["effective policy"]["eff iotier"] = line.split()[2:]
+
+        # Kernel override
+        elif line.startswith("req kernel overrides"):
+            continue
+        elif line.startswith("req kevent overrides:"):
+            result["req kernel overrides"]["eq kevent overrides"] = line.split()[3:]
+        elif line.startswith("req workloop servicer override:"):
+            result["req kernel overrides"]["req workloop servicer override"] = line.split()[4:]
+
+        # Other
+        elif line.startswith("req other:"):
+            result["flags"] = line.split()[2:]
 
         # Handline unknown
         else:
