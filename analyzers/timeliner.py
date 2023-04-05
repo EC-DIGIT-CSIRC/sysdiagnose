@@ -7,14 +7,16 @@
 import os
 import sys
 import json
-import datetime
+from datetime import datetime
 from optparse import OptionParser
+
+version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 
 # Structure:
 # filename : parsing_function
 timestamps_files = {
     "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
-    "sysdiagnose-powerlogs.json" : {},
+    #"sysdiagnose-powerlogs.json" : {},
 }
 
 
@@ -22,7 +24,7 @@ timestamps_files = {
 # {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 timeline = []
 
-def __extract_ts_mobileaction(filename):
+def __extract_ts_mobileactivation(filename):
     try:
         with open(filename, 'r') as fd:
             data = json.load(fd)
@@ -54,12 +56,22 @@ def parse_json(jsondir):
 
     # Loop through all the files to check
     for parser in timestamps_files.keys():
-        if os.path.exists(parser):
-            parser_function = globals()[timestamps_files[parser]]
-            parser_function(parser)
+        path = "%s/%s" % (jsondir, parser)
+
+        if os.path.exists(path):
+            function_name = timestamps_files[parser]
+            parser_function = globals()[function_name]
+            parser_function(path)
 
     # return the timeline as JSON
-    return json.dump(timeline)
+    return timeline
+
+def save_timeline(timeline, ts_file):
+    try:
+        with open(ts_file, 'w') as f:
+            json.dump(timeline, f)
+    except Exception as e:
+        print("ERROR: impossible to save timeline to %s" % timeline)
 
 # --------------------------------------------------------------------------- #
 """
@@ -79,6 +91,9 @@ def main():
     parser.add_option("-d", dest="inputdir",
                       action="store", type="string",
                       help="Directory containing JSON from parsers")
+    parser.add_option("-o", dest="outputfile",
+                      action="store", type="string",
+                      help="JSON tile to save the timeline")
     (options, args) = parser.parse_args()
 
     #no arguments given by user, print help and exit
@@ -89,7 +104,10 @@ def main():
     # parse PS file :)
     if options.inputdir:
         timeline = parse_json(options.inputdir)
-        print(timeline)
+        if options.outputfile:
+            save_timeline(timeline, options.outputfile)
+        else:
+            print(timeline)
     else:
         print("WARNING -i option is mandatory!")
 
