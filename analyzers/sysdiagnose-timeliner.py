@@ -15,10 +15,13 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # Structure:
 # filename : parsing_function
 timestamps_files = {
+    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
+    #   appinstallation: TODO
+    #   itunesstore: TODO
     "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
 #    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs",
+    # psthread: TODO
     "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
-    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
 }
 
 
