@@ -16,7 +16,8 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # filename : parsing_function
 timestamps_files = {
     "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
-    #"sysdiagnose-powerlogs.json" : {},
+#    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs",
+    "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
 }
 
 
@@ -41,6 +42,54 @@ def __extract_ts_mobileactivation(filename):
                     timeline.append(ts_event)
             else:
                 return False
+        return True
+    except Exception as e:
+        print("ERROR while extracting timestamp from %s" %  filename)
+        print(e)
+        return False
+    return False
+
+def __extract_ts_powerlogs(filename):
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            # -- IMPLEMENT HERE --
+        return True
+    except Exception as e:
+        print("ERROR while extracting timestamp from %s" %  filename)
+        print(e)
+        return False
+    return False
+
+def __extract_ts_swcutil(filename):
+    """
+        FORMAT:
+            "Service": "applinks",
+            "App ID": "CYSVS85Q6G.be.fgov.ehealth.DGC",
+            "App Version": "193.0",
+            "App PI": "<LSPersistentIdentifier 0xdac8132d0> { v = 0, t = 0x8, u = 0x3ec, db = 2135AC5C-110D-4E2E-A350-90494244DBB4, {length = 8, bytes = 0xec03000000000000} }",
+            "Domain": "int.cert-app.be",
+            "User Approval": "unspecified",
+            "Site/Fmwk Approval": "denied",
+            "Flags": "",
+            "Last Checked": "2023-02-23 23:00:15 +0000",
+            "Next Check": "2023-02-28 22:06:35 +0000"
+        },
+    """
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            if "db" in data.keys():
+                for service in data["db"]:
+                    timestamp = datetime.strptime(service["Last Checked"], "%Y-%m-%d %H:%M:%S %z")
+                    ts_event = {
+                        "message": service["Service"],
+                        "timestamp" : timestamp.timestamp(),
+                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc" : "swcutil last checkeed",
+                        "extra_field_1" : "application: %s" % service["App ID"]
+                    }
+                    timeline.append(ts_event) 
         return True
     except Exception as e:
         print("ERROR while extracting timestamp from %s" %  filename)
