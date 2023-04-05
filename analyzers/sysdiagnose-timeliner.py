@@ -18,6 +18,7 @@ timestamps_files = {
     "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
 #    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs",
     "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
+    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
 }
 
 
@@ -53,6 +54,7 @@ def __extract_ts_powerlogs(filename):
     try:
         with open(filename, 'r') as fd:
             data = json.load(fd)
+            print("ERROR: not implemented!!")
             # -- IMPLEMENT HERE --
         return True
     except Exception as e:
@@ -96,6 +98,80 @@ def __extract_ts_swcutil(filename):
         print(e)
         return False
     return False
+
+
+def __extract_ts_accessibility_tcc(filename):
+    """
+        Service format
+            {
+                "service": "kTCCServiceCamera"
+            },
+            {
+                "client": "eu.europa.publications.ECASMobile"
+            },
+            {
+                "client_type": "0"
+            },
+            {
+                "auth_value": "2"
+            },
+            {
+                "auth_reason": "0"
+            },
+            {
+                "auth_version": "1"
+            },
+            {
+                "csreq": "None"
+            },
+            {
+                "policy_id": "None"
+            },
+            {
+                "indirect_object_identifier_type": "None"
+            },
+            {
+                "indirect_object_identifier": "UNUSED"
+            },
+            {
+                "indirect_object_code_identity": "None"
+            },
+            {
+                "flags": "None"
+            },
+            {
+                "last_modified": "1537694318"
+            }
+    """
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            if "access" in data.keys():
+                for access in data["access"]:
+                     # convert to hashtable
+                    service = {}
+                    for line in access:
+                        keys = line.keys()
+                        for key in keys:
+                            service[key] = line[key]
+
+                    # create timeline entry
+                    timestamp = datetime.fromtimestamp(int(service["last_modified"]))
+                    ts_event = {
+                        "message": service["service"],
+                        "timestamp" : timestamp.timestamp(),
+                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc" : "Accessibility TC Last Modified",
+                        "extra_field_1" : "client: %s" % service["client"]
+                    }
+                    timeline.append(ts_event) 
+        return True
+    except Exception as e:
+        print("ERROR while extracting timestamp from %s" %  filename)
+        print(e)
+        return False
+    return False
+
 
 def parse_json(jsondir):
     """
