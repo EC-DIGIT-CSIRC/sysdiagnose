@@ -290,9 +290,5 @@ if __name__ == "__main__":
     # Create an instance of the Analysis class (called "base") and run main
     main()
 
-
-<<<<<<< HEAD
-# That's all folk ;)
-=======
 # That's all folks ;)
->>>>>>> refs/remotes/origin/main
+
