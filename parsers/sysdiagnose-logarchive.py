@@ -135,7 +135,7 @@ def main():
     parser = OptionParser(usage=usage)
     parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
-                      help="PRovide path to ystem_logs.logarchive folder")
+                      help="Provide path to system_logs.logarchive folder")
     parser.add_option("-j", dest="unifiedlog",
                       action="store", type="string",
                       help="Proceed with a second pass on the result of UnifiedLogs to produce a JSON file (path to logs.txt file)")
