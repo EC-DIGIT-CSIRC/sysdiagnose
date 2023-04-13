@@ -291,4 +291,8 @@ if __name__ == "__main__":
     main()
 
 
+<<<<<<< HEAD
 # That's all folk ;)
+=======
+# That's all folks ;)
+>>>>>>> refs/remotes/origin/main
