@@ -55,7 +55,7 @@ pip3 install graphviz
 
 Binaries
 ```
-graphiz (dot)
+graphviz (dot)
 
 ```
 
