@@ -190,8 +190,10 @@ def __extract_ts_logarchive(filename):
         with open(filename, 'r') as fd:
             data = json.load(fd)
 
+            print("DEBUG: JSON loaded")
             try:
                 for trace in data:
+                    print("DEBUG: parsing trace")
                     # create timeline entry
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
                     ts_event = {
@@ -201,6 +203,7 @@ def __extract_ts_logarchive(filename):
                         "timestamp_desc" : "Entry in logarchive: %s" % trace["eventType"],
                         "extra_field_1" : "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
                     }
+                    print("DEBUG: %s" % ts_event)
                     timeline.append(ts_event)
             except Exception as e:
                 print("WARNING: trace not parsed: %s" %  trace) 
