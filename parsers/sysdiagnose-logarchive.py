@@ -24,7 +24,15 @@ parser_call = "get_logs"
 
 #--------------------------------------------#
 
-cmd_parsing_osx = "/usr/bin/log show %s --style json" # fastest and short version
+# On 2023-04-13: using ndjson instead of json to avoid parsing issues.
+# Based on manpage: 
+#       json      JSON output.  Event data is synthesized as an array of JSON dictionaries.
+#
+#       ndjson    Line-delimited JSON output.  Event data is synthesized as JSON dictionaries, each emitted on a single line.
+#                 A trailing record, identified by the inclusion of a "finished" field, is emitted to indicate the end of events.
+#
+cmd_parsing_osx = "/usr/bin/log show %s --style ndjson" # fastest and short version
+#cmd_parsing_osx = "/usr/bin/log show %s --style json" # fastest and short version
 #cmd_parsing_osx = "/usr/bin/log show %s --info --style json" # to enable debug, add --debug
 #cmd_parsing_osx = "/usr/bin/log show %s --info --debug --style json"
 

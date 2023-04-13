@@ -15,13 +15,13 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # Structure:
 # filename : parsing_function
 timestamps_files = {
-#    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
+    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
     #   appinstallation: TODO
     #   itunesstore: TODO
-#    "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
+    "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation", # TODO
 #    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
     # psthread: TODO
-#    "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
+    "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json" : "__extract_ts_logarchive",
 }
 
@@ -188,12 +188,9 @@ def __extract_ts_logarchive(filename):
     """
     try:
         with open(filename, 'r') as fd:
-            data = json.load(fd)
-
-            print("DEBUG: JSON loaded")
-            try:
-                for trace in data:
-                    print("DEBUG: parsing trace")
+            for line in fd:
+                trace = json.loads(line)
+                try:
                     # create timeline entry
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
                     ts_event = {
@@ -203,10 +200,9 @@ def __extract_ts_logarchive(filename):
                         "timestamp_desc" : "Entry in logarchive: %s" % trace["eventType"],
                         "extra_field_1" : "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
                     }
-                    print("DEBUG: %s" % ts_event)
                     timeline.append(ts_event)
-            except Exception as e:
-                print("WARNING: trace not parsed: %s" %  trace) 
+                except Exception as e:
+                   print("WARNING: trace not parsed: %s" %  trace) 
         return True
     except Exception as e:
         print("ERROR while extracting timestamp from %s" %  filename)
