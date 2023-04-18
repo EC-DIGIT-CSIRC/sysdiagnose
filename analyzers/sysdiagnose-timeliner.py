@@ -16,11 +16,11 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # filename : parsing_function
 timestamps_files = {
     "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
-    #   appinstallation: TODO
-    #   itunesstore: TODO
-    "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation", # TODO
-#    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
-    # psthread: TODO
+    ##   appinstallation: TODO
+    ##   itunesstore: TODO
+    "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
+    ##    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
+    ## psthread: TODO
     "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json" : "__extract_ts_logarchive",
 }
@@ -231,9 +231,14 @@ def parse_json(jsondir):
     return timeline
 
 def save_timeline(timeline, ts_file):
+    """
+        Save timeline as JSONL (not JSON!!)
+    """
     try:
         with open(ts_file, 'w') as f:
-            json.dump(timeline, f)
+            for event in timeline:
+                line = json.dumps(event)
+                f.write("%s\n" % line)
     except Exception as e:
         print("ERROR: impossible to save timeline to %s" % timeline)
 
