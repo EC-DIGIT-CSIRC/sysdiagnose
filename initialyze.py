@@ -114,7 +114,7 @@ def init(sysdiagnose_file):
         pass
 
     try:
-        new_case_json["brctl-dump"] = new_folder+glob.glob('./*/brctl/brctl-dump.txt')[0][1:]
+        new_case_json["brctl"] = new_folder+glob.glob('./*/brctl/')[0][1:]
     except:
         pass
 

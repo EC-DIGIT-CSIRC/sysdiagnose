@@ -118,6 +118,7 @@ def parse(parser,case_id):
 
     # Load parser module
     spec = importlib.util.spec_from_file_location(parser[:-3], config.parsers_folder + parser + '.py')
+    print(spec)
     #print(spec) #debug
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -130,10 +131,12 @@ def parse(parser,case_id):
 
     #print(command)
     #running the command, expecting JSON output
-    try:
-        result = eval(command)
-    except Exception as e:
-        print('Error trying to parse ' + case[module.parser_input] + ': ' + str(e))
+    #try:
+    #    result = eval(command)
+    #except Exception as e:
+    #    print('Error trying to parse ' + case[module.parser_input] + ': ' + str(e))
+
+    result = eval(command)
 
     #saving the parser output
     output_file = config.parsed_data_folder + case_id + '/' + parser + '.json'
