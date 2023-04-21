@@ -27,6 +27,11 @@ import hashlib
 import glob
 from docopt import docopt
 
+from misc import get_version
+
+version = get_version()
+
+
 """
     Init function
 """
@@ -35,8 +40,8 @@ def init(sysdiagnose_file):
     try:
         with open(config.cases_file, 'r') as f:
             cases = json.load(f)
-    except:
-        print('error opening cases json file - check config.py')
+    except Exception as e:
+        print(f'error opening cases json file - check config.py. Failure reason: f{str(e)}')
         exit()
 
     # calculate sha256 of sysdiagnose file and compare with past cases
@@ -45,8 +50,8 @@ def init(sysdiagnose_file):
             bytes = f.read() # read entire file as bytes
             readable_hash = hashlib.sha256(bytes).hexdigest();
             print(readable_hash)
-    except:
-        print('error calculating sha256')
+    except Exception as e:
+        print(f'error calculating sha256. Reason: {str(e)}')
     case_id = 0
     for case in cases['cases']:
         # Take the opportunity to find the highest case_id
@@ -59,17 +64,17 @@ def init(sysdiagnose_file):
     # test sysdiagnose file
     try:
         tf = tarfile.open(sysdiagnose_file)
-    except:
-        print('error opening sysdiagnose file')
+    except Exception as e:
+        print(f'error opening sysdiagnose file. Reason: {str(e)}')
         exit()
 
     # if sysdiagnose file is new and legit, create new case and extract files
     # create case dictionnary
     new_case = {
-        "case_id":case_id +1,
-        "source_file":sysdiagnose_file,
-        "source_sha256":readable_hash,
-        "case_file":config.data_folder+str(case_id +1)+".json"
+        "case_id": case_id +1,
+        "source_file": sysdiagnose_file,
+        "source_sha256": readable_hash,
+        "case_file": config.data_folder+str(case_id +1)+".json"
     }
     # create case folder
     new_folder = config.data_folder+str(new_case['case_id'])
@@ -82,11 +87,13 @@ def init(sysdiagnose_file):
         os.makedirs(new_parsed_folder)
 
     # extract sysdiagnose files
+    if config.debug:
+        print(f"cd'ing to {new_folder}")
     os.chdir(new_folder)
     try:
         tf.extractall()
-    except:
-        print('Error while decompressing sysdiagnose file')
+    except Exception as e:
+        print(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
     # create case json file
     new_case_json = {
@@ -218,15 +225,20 @@ def init(sysdiagnose_file):
     except:
         pass
 
-    #print(json.dumps(new_case_json, indent=4))
+    print(json.dumps(new_case_json, indent=4))
 
     # Get iOS version
+    if config.debug:
+        print(f"cd'ing to ../..")
     os.chdir('../..')
-    with open(new_case_json['sysdiagnose.log'], 'r') as f:
-        line_version=[line for line in f if 'iPhone OS' in line][0]
-        version=line_version.split()[4]
-    new_case_json['ios_version']=version
-
+    try:
+        with open(new_case_json['sysdiagnose.log'], 'r') as f:
+            line_version=[line for line in f if 'iPhone OS' in line][0]
+            version=line_version.split()[4]
+        new_case_json['ios_version']=version
+    except Exception as e:
+        print(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
+        exit()
 
 
     # Save JSON file
@@ -269,12 +281,12 @@ def main():
         print("Still using Python 2 ?!?")
         exit(-1)
 
-    arguments = docopt(__doc__, version='Sysdiagnose initialize script v0.1')
+    arguments = docopt(__doc__, version=f'Sysdiagnose initialize script {version}')
 
     integrity_check()
 
     if arguments['file'] == True:
-        if os.path.isfile(arguments['<sysdiagnose_file>']):
+        if os.path.realpath(arguments['<sysdiagnose_file>']):
             init(arguments['<sysdiagnose_file>'])
         else:
             print('file not found')
