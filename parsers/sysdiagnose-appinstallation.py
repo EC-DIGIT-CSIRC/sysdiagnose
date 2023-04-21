@@ -10,6 +10,7 @@
 
 import os
 import sys
+import json
 from optparse import OptionParser
 import time
 import struct
@@ -58,7 +59,7 @@ def get_appinstallation_ios13(dbpath):
     from utils import sqlite2json
 
     appinstallation = sqlite2json.sqlite2struct(dbpath)
-    return sqlite2json.dump2json(appinstallation)
+    return json.loads(sqlite2json.dump2json(appinstallation))
 
 
 # --------------------------------------------------------------------------- #
