@@ -1,7 +1,22 @@
 # sysdiagnose-timeline
 Sysdiagnose timeliner
 
-# Quick and ugly howto
+# Installation
+
+Create a virtual environment:
+
+```bash
+ virtualenv --python python3.10 venv
+ source venv/bin/activate
+ ```
+
+ Install dependencies:
+ ```bash
+ pip install -r requirements.txt
+ sudo apt install graphviz
+ ```
+
+# Quickstart
 
 Add new sysdiagnose case
 
@@ -44,20 +59,4 @@ Tested On:
 - iOS13
 - iOS14
 - iOS16 (ongoing)
-
-
-# Requirements
-
-Python package:
-```
-pip3 install graphviz
-```
-
-Binaries
-```
-graphviz (dot)
-
-```
-
-
 
