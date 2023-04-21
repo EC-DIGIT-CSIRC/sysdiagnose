@@ -1,5 +1,14 @@
+# virtual envs
+.venv/*
+venv/*
+.env/*
+
+# generated data
 data/*
-__pycache__/*
 cases.json
 parsed_data/*
-parsers/__pycache__/sysdiagnose-accessibility-tcc.cpython-310.pyc
+
+# pycache
+__pycache__/*
+parsers/__pycache__/*
+utils/__pycache__/*
