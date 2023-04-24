@@ -33,7 +33,7 @@ import io
 #-----         DO NOT DELETE             ----#
 
 parser_description = "Parsing brctl files"
-parser_input = "brctl" #folder containing brctl files
+parser_input = "brctl"      # folder containing brctl files
 parser_call = "parsebrctl"
 
 
