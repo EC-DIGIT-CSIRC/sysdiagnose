@@ -28,21 +28,18 @@ import csv
 import io
 
 
-
-#----- definition for parsing.py script -----#
-#-----         DO NOT DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing brctl files"
 parser_input = "brctl"      # folder containing brctl files
 parser_call = "parsebrctl"
 
 
-
-
 def parselistfile(container_list_file):
-    containers = {"containers" : []}
+    containers = {"containers": []}
     result = []
-    #print(container_list_file)
+    # print(container_list_file)
     with open(container_list_file[0], 'r') as f:
         keys = ['id', 'localizedName', 'documents', 'Public', 'clients']
         for line in f:
@@ -50,7 +47,7 @@ def parselistfile(container_list_file):
             line = line.replace('Mobile Documents', 'Mobile_Documents')
             keys = ['id', 'localizedName', 'documents', 'Public', 'Private', 'clients']
             values = re.findall(rf"({'|'.join(keys)}):\s*([^ \[]+|\[[^\]]*\])", line)
-            result = {k:v.strip('[]') for k,v in values}
+            result = {k: v.strip('[]') for k, v in values}
             if result != {}:
                 result['documents'] = result['documents'].replace('Mobile_Documents', 'Mobile Documents')
                 containers['containers'].append(result)
@@ -58,21 +55,21 @@ def parselistfile(container_list_file):
 
 def parsedumpfile(container_dump_file):
     with open(container_dump_file[0], 'r') as f:
-        dump={}
-        section="header"
-        previous_line=""
+        dump = {}
+        section = "header"
+        previous_line = ""
         current_section = ""
         for line in f:
             if line.strip() == "-----------------------------------------------------":
-                dump[section]=current_section
-                section=previous_line.strip()
+                dump[section] = current_section
+                section = previous_line.strip()
                 current_section = ""
             else:
-                previous_line=line
+                previous_line = line
                 current_section += line
         if current_section != "":
-            dump[section]=current_section
-    #print(dump.keys())
+            dump[section] = current_section
+    # print(dump.keys())
 
     ## parsing different sections
     ### header
@@ -125,18 +122,19 @@ def parsedumpfile(container_dump_file):
     #### putting together all the parsed data
 
     result = {
-        "header":header,
-        "boot_history":boot_history,
-        "server_state":server_state,
-        "client_state":client_state,
-        "system":system,
-        "applibrary":applibrary,
-        "server_items":server_items,
-        "app_library_id":app_library_id,
-        "app_ids":app_ids
+        "header": header,
+        "boot_history": boot_history,
+        "server_state": server_state,
+        "client_state": client_state,
+        "system": system,
+        "applibrary": applibrary,
+        "server_items": server_items,
+        "app_library_id": app_library_id,
+        "app_ids": app_ids
         }
 
     return result
+
 
 def parse_header(header):
     # Define a regular expression to match the key-value pairs
@@ -178,6 +176,7 @@ def parse_header(header):
     # Print the output JSON string
     return output_json
 
+
 def parse_boot_history(boot_history):
     # split the section by newline characters
     lines = boot_history.split("\n")
@@ -192,21 +191,23 @@ def parse_boot_history(boot_history):
     # return the result list
     return result
 
+
 def parse_line_boot_history(line):
-  # use regular expressions to extract the fields
-  match = re.search(r"\[(.+?)\] OS:(.+?) CloudDocs:(.+?) BirdSchema:(.+?) DBSchema:(.+)", line)
-  if match:
-    # return a dictionary with the field names and values
-    return {
-      "date": match.group(1),
-      "OS": match.group(2),
-      "CloudDocs": match.group(3),
-      "BirdSchema": match.group(4),
-      "DBSchema": match.group(5)
-    }
-  else:
-    # return None if the line does not match the pattern
-    return None
+    # use regular expressions to extract the fields
+    match = re.search(r"\[(.+?)\] OS:(.+?) CloudDocs:(.+?) BirdSchema:(.+?) DBSchema:(.+)", line)
+    if match:
+        # return a dictionary with the field names and values
+        return {
+            "date": match.group(1),
+            "OS": match.group(2),
+            "CloudDocs": match.group(3),
+            "BirdSchema": match.group(4),
+            "DBSchema": match.group(5)
+        }
+    else:
+        # return None if the line does not match the pattern
+        return None
+
 
 def parse_server_state(server_state):
     # Define the regex pattern to match the fields and their values
@@ -232,14 +233,15 @@ def parse_server_state(server_state):
 
     # Print the output dictionary
     return output_dict
-    
+
+
 def parse_client_state(data: str) -> dict:
     # Split the data into lines
     lines = data.split('\n')
-    
+
     # Initialize an empty dictionary to store the parsed data
     parsed_data = {}
-    
+
     # Iterate over each line in the data
     for line in lines:
         # Use regular expressions to match key-value pairs
@@ -258,7 +260,7 @@ def parse_client_state(data: str) -> dict:
                     pass
             # Add the key-value pair to the dictionary
             parsed_data[key] = value
-    
+
     return parsed_data
 
 
@@ -280,7 +282,7 @@ def parse_system_scheduler(input):
 def parse_app_library(data):
     lines = data.splitlines()
     matching_lines = [line for line in lines if "+ app library" in line]
-    
+
     pattern = r'<(.*?)\[(\d+)\].*?ino:(\d+).*?apps:\{(.*?)\}.*?bundles:\{(.*?)\}'
     matches = re.findall(pattern, '\n'.join(matching_lines))
 
@@ -294,7 +296,6 @@ def parse_app_library(data):
         result.append({'library': library, 'ino': ino, 'apps': apps, 'bundles': bundles})
 
     return result
-
 
 
 def parse_server_items(data):
@@ -314,24 +315,25 @@ def parse_server_items(data):
 
     return app_list
 
+
 def parse_apps_monitor(data):
     # Split the text into two parts
     parts = data.split("=======================")
 
     # Extract the JSON strings from each part
-    json_str1 = parts[1].strip().replace("=", ":").replace("\\","").replace("\"{(n    \"","[\"").replace("\"n)}\"","\"]").replace(",n    ",",").replace(";",",")
-    json_str2 = parts[2].strip().replace("=", ":").replace("\\","").replace("\"{(n    \"","[\"").replace("\"n)}\"","\"]").replace(",n    ",",").replace(";",",")
+    json_str1 = parts[1].strip().replace("=", ":").replace("\\", "").replace("\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
+    json_str2 = parts[2].strip().replace("=", ":").replace("\\", "").replace("\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
 
     ### ugly fixes
     last_comma_index = json_str1.rfind(",")
-    json_str1_new = json_str1[:last_comma_index] + json_str1[last_comma_index+1:]
+    json_str1_new = json_str1[:last_comma_index] + json_str1[last_comma_index + 1:]
 
     first_brace_index = json_str1_new.find("}")
     json_str1 = json_str1_new[:first_brace_index+1]
 
     ### ugly fixes
     last_comma_index = json_str2.rfind(",")
-    json_str2_new = json_str2[:last_comma_index] + json_str2[last_comma_index+1:]
+    json_str2_new = json_str2[:last_comma_index] + json_str2[last_comma_index + 1:]
 
     first_brace_index = json_str2_new.find("}")
     json_str2 = json_str2_new[:first_brace_index+1]
@@ -341,17 +343,17 @@ def parse_apps_monitor(data):
     json1 = json.loads(json_str1)
     json2 = json.loads(json_str2)
 
-    return json1,json2
+    return json1, json2
 
 
 def parsebrctl(brctl_folder):
     container_list_file = [brctl_folder + '/brctl-container-list.txt']
     container_dump_file = [brctl_folder + '/brctl-dump.txt']
 
-
     brctl_parsing = {**parselistfile(container_list_file),**parsedumpfile(container_dump_file)}
 
     return brctl_parsing
+
 
 def main():
     """
@@ -364,18 +366,19 @@ def main():
 
     arguments = docopt(__doc__, version='parser for brctl files v0.1')
 
-    if arguments['-i'] == True:
+    if arguments['-i']:
         try:
             container_list_file = glob.glob(arguments['<logfolder>'] + 'brctl-container-list.txt')
             container_dump_file = glob.glob(arguments['<logfolder>'] + 'brctl-dump.txt')
 
-            brctl_parsing = {**parselistfile(container_list_file),**parsedumpfile(container_dump_file)}
+            brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
 
             print(json.dumps(brctl_parsing, indent=4))
-        except:
-            print('error retrieving log files')
+        except Exception as e:
+            print(f'error retrieving log files. Reason: {str(e)}')
 
-    return 0
+    return 
+
 
 """
    Call main function
