@@ -44,7 +44,7 @@ def parse_ps(filename, ios_version=16):
             USER  UID PRSNA   PID  PPID        F  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
             root  0     -     1     0     4004   0.0  0.0   0  0        0      0 -        ??  ?s   Tue09PM   0:00.00 /sbin/launchd
             """
-            patterns = re.split("\s+", line)
+            patterns = re.split("\s+", line)    # XXX FIXME? don't we need a \r" string here for the regexp?
             # key of hash table is PID
             if (ios_version < 16):
                 processes[int(patterns[2])] = {"USER": patterns[0],
@@ -100,8 +100,8 @@ def export_to_json(processes, filename="./ps.json"):
         fd = open(filename, "w")
         fd.write(json_ps)
         fd.close()
-    except:
-        print("Impossible to dump the processes to %s\n" % filename)
+    except Exception as e:
+        print(f"Impossible to dump the processes to {filename}. Reason: {str(e)}\n")
 
 
 """

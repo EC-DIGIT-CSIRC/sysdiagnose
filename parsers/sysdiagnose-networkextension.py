@@ -25,22 +25,24 @@ from docopt import docopt
 from tabulate import tabulate
 
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing networkextension plist file"
 parser_input = "networkextension"
 parser_call = "parseplist"
 
-#--------------------------------------------#
+# --------------------------------------------#
+
+
 def parseplist(file):
     with open(file, 'rb') as fp:
         pl = biplist.readPlist(fp)
-        #pl = plistlib.load(fp)
+        # pl = plistlib.load(fp)
 
     objects = pl['$objects']
 
-    output = {'objects':[]}
+    output = {'objects': []}
 
     for object in objects:
         if type(object) == str:
@@ -59,7 +61,7 @@ def main():
 
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
-    if arguments['-i'] == True:
+    if arguments['-i']:
         try:
             objects = parseplist(arguments['<file>'])
 
@@ -69,10 +71,10 @@ def main():
                 line=[object]
                 lines.append(line)
             print(tabulate(lines, headers=headers))
-        except:
-            print('errorrrrrrrrrr')
+        except Exception as e:
+            print(f'Error: {str(e)}')
 
-    #parseplist("../data/1/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101/logs/Networking/com.apple.networkextension.plist")
+    # parseplist("../data/1/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101/logs/Networking/com.apple.networkextension.plist")
 
     return 0
 

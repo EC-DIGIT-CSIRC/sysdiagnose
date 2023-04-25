@@ -3,6 +3,7 @@
 import sys
 import json
 
+
 def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
     try:

@@ -10,15 +10,16 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
 
-#----- definition for parsing.py script -----#
+# ----- definition for parsing.py script -----#
 
 parser_description = "Parsing Accessibility TCC logs"
 parser_input = "Accessibility-TCC"
 parser_call = "get_accessibility_tcc"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+
 
 def get_accessibility_tcc(dbpath, ios_version=13):
     sys.path.append(os.path.abspath('../'))
@@ -27,7 +28,7 @@ def get_accessibility_tcc(dbpath, ios_version=13):
 
     tcc = sqlite2json.sqlite2struct(dbpath)
     return tcc
-    #return sqlite2json.dump2json(tcc)
+    # return sqlite2json.dump2json(tcc)
 
 
 def print_accessibility_tcc(inputfile):
@@ -58,7 +59,7 @@ def main():
                       help="./logs/Accessibility/TCC.db to be parsed")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
@@ -66,6 +67,7 @@ def main():
     print_accessibility_tcc(options.inputfile)
 
 # --------------------------------------------------------------------------- #
+
 
 """
    Call main function

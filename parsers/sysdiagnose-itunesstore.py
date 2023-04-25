@@ -10,16 +10,17 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing iTunes store logs"
 parser_input = "itunesstore"
 parser_call = "get_itunesstore"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+
 
 def get_itunesstore(dbpath, ios_version=13):
     sys.path.append(os.path.abspath('../'))
@@ -43,33 +44,34 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)    
+        exit(-1)
 
-    print("Running " + version_string + "\n")   
+    print("Running " + version_string + "\n")
 
-    usage = "\n%prog -i inputfile\n"    
+    usage = "\n%prog -i inputfile\n"
 
     parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile", 
+    parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
                       help="./logs/itunesstored/downloads.*.sqlitedb to be parsed")
-    (options, args) = parser.parse_args()   
+    (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)    
+        exit(-1)
 
     print_itunesstore(options.inputfile)
-    
+
 # --------------------------------------------------------------------------- #
+
 
 """
    Call main function
 """
 if __name__ == "__main__":
-    
-    # Create an instance of the Analysis class (called "base") and run main 
+
+    # Create an instance of the Analysis class (called "base") and run main
     main()
 
 # That's all folk ;)

@@ -15,68 +15,71 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-logarchive.py v2020-02-07 Version 1.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing system_logs.logarchive folder"
 parser_input = "logarchive_folder"
 parser_call = "get_logs"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # On 2023-04-13: using ndjson instead of json to avoid parsing issues.
-# Based on manpage: 
+# Based on manpage:
 #       json      JSON output.  Event data is synthesized as an array of JSON dictionaries.
 #
 #       ndjson    Line-delimited JSON output.  Event data is synthesized as JSON dictionaries, each emitted on a single line.
 #                 A trailing record, identified by the inclusion of a "finished" field, is emitted to indicate the end of events.
 #
-cmd_parsing_osx = "/usr/bin/log show %s --style ndjson" # fastest and short version
-#cmd_parsing_osx = "/usr/bin/log show %s --style json" # fastest and short version
-#cmd_parsing_osx = "/usr/bin/log show %s --info --style json" # to enable debug, add --debug
-#cmd_parsing_osx = "/usr/bin/log show %s --info --debug --style json"
+cmd_parsing_osx = "/usr/bin/log show %s --style ndjson"  # fastest and short version
+# cmd_parsing_osx = "/usr/bin/log show %s --style json" # fastest and short version
+# cmd_parsing_osx = "/usr/bin/log show %s --info --style json" # to enable debug, add --debug
+# cmd_parsing_osx = "/usr/bin/log show %s --info --debug --style json"
 
-# Linux parsing relies on UnifiedLogReader: 
+# Linux parsing relies on UnifiedLogReader:
 #       https://github.com/ydkhatri/UnifiedLogReader
-cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py -l INFO -f SQLITE %s %s/timesync/ %s %s" # 3x the same path, last = output
+# 3x the same path, last = output
+cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py -l INFO -f SQLITE %s %s/timesync/ %s %s"
 #   -f FORMAT, --output_format FORMAT
 #                        Output format: SQLITE, TSV_ALL, LOG_DEFAULT  (Default is LOG_DEFAULT)
 #  -l LOG_LEVEL, --log_level LOG_LEVEL
 #                        Log levels: INFO, DEBUG, WARNING, ERROR (Default is INFO)
 
 # --------------------------------------------------------------------------- #
+
+
 def get_logs(filename, ios_version=13, output=None):
     """
         Parse the system_logs.logarchive.  When running on OS X, use native tools.
         On other system use a 3rd party library.
     """
-    if(platform.system() == "Darwin"):
-        return get_logs_on_osx(filename, output) 
+    if (platform.system() == "Darwin"):
+        return get_logs_on_osx(filename, output)
     else:
         outpath = "../tmp.data/"
         __cleanup(outpath)
         os.makedirs(outpath)
-        if(get_logs_on_linux(filename, outpath)):
+        if (get_logs_on_linux(filename, outpath)):
             normalize_unified_logs("%s/unifiedlogs.sqlite" % output)
         __cleanup(outpath)
     return None
 
 
 def __cleanup(outpath):
-    if(os.path.exists(outpath)):
+    if (os.path.exists(outpath)):
         shutil.rmtree(outpath, ignore_errors=True)
     return
 
 
 def get_logs_on_osx(filename, output):
     cmd_line = cmd_parsing_osx % (filename)
-    return __execute_cmd_and_get_result(cmd_line,  filename, output)
+    return __execute_cmd_and_get_result(cmd_line, filename, output)
 
 
 def get_logs_on_linux(filename, output):
     cmd_line = cmd_parsing_linux % (filename, filename, filename, output)
     return __execute_cmd_and_get_result(cmd_line, filename)
-    
+
 
 def normalize_unified_logs(filename="./unifiedlogs.sqlite", output=sys.stdout):
     """
@@ -90,10 +93,10 @@ def normalize_unified_logs(filename="./unifiedlogs.sqlite", output=sys.stdout):
     unifiedlogs = sqlite2json.sqlite2struct(filename)
     try:
         outfd = output
-        if(output is not sys.stdout):
-           outfd = open(output, "w")
+        if (output is not sys.stdout):
+            outfd = open(output, "w")
         outfd.write(sqlite2json.dump2json(unifiedlogs))
-        if(outfd is not sys.stdout):
+        if (outfd is not sys.stdout):
             outfd.close()
     except Exception as e:
         print("Impossible to convert %s to JSON (%s)" % (filename, str(e)))
@@ -115,31 +118,34 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
         process = subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True)
         resulttxt = ""
         outfd = outfile
-        if(outfile is not None): # if none just return the text with return
-            if(outfile is not sys.stdout): # handle case were not printing to stdout
+        if (outfile is not None):  # if none just return the text with return
+            if (outfile is not sys.stdout):  # handle case were not printing to stdout
                 outfd = open(outfile, "w")
         while True:
-            if(process.poll() is None):
+            if (process.poll() is None):
                 output = process.stdout.readline()
-                if(output == ""):
+                if (output == ""):
                     break
                 else:
-                    if(outfile is not None):
+                    if (outfile is not None):
                         outfd.write(output)
                     resulttxt += output
             else:
                 break
-        if((outfd is not sys.stdout) and (outfd is not None)):
+        if ((outfd is not sys.stdout) and (outfd is not None)):
             outfd.close()
         return json.loads(resulttxt)
     except Exception as e:
-         print("Impossible to parse %s: %s" % (filename, str(e)))
+        print("Impossible to parse %s: %s" % (filename, str(e)))
     return False
+
 
 # --------------------------------------------------------------------------- #
 """
     Main function
 """
+
+
 def main():
 
     if sys.version_info[0] < 3:
@@ -159,7 +165,7 @@ def main():
                       help="Proceed with a second pass on the result of UnifiedLogs to produce a JSON file (path to logs.txt file)")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
@@ -173,6 +179,7 @@ def main():
         print("WARNING -i or -j option is mandatory!")
 
 # --------------------------------------------------------------------------- #
+
 
 """
    Call main function

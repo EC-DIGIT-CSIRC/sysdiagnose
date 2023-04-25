@@ -72,12 +72,12 @@ def parsedumpfile(container_dump_file):
             dump[section] = current_section
     # print(dump.keys())
 
-    ## parsing different sections
-    ### header
+    # parsing different sections
+    # header
     header = parse_header(dump['header'])
 
-    ### boot_history
-    #### finding key value
+    # boot_history
+    # finding key value
     # loop through the keys of the dictionary
     for key in dump.keys():
         # check if the key starts with "boot_history"
@@ -87,22 +87,22 @@ def parsedumpfile(container_dump_file):
     # runing the parser
     boot_history = parse_boot_history(dump[bhkey])
 
-    ### server_state
+    # server_state
     server_state = parse_server_state(dump['server_state'])
 
-    #### client_state
+    # client_state
     client_state = parse_client_state(dump['client_state'])
 
-    #### system
+    # system
 
     system = parse_system_scheduler(dump['system'])
 
-    #### scheduler
+    # scheduler
 
     system = parse_system_scheduler(dump['scheduler'])
 
-    #### containers
-    #### finding key value
+    # containers
+    # finding key value
     # loop through the keys of the dictionary
     for key, value in dump.items():
         # check if the key contains "containers matching"
@@ -110,16 +110,16 @@ def parsedumpfile(container_dump_file):
             # print the key and its value
             ckey = key
     # creating several parser with the same data
-    ### applibrary
+    # applibrary
     applibrary = parse_app_library(dump[ckey])
 
-    ### server_items
+    # server_items
     server_items = parse_server_items(dump[ckey])
 
-    #### app library IDs by App ID
+    # app library IDs by App ID
     app_library_id, app_ids = parse_apps_monitor(dump['apps monitor'])
 
-    #### putting together all the parsed data
+    # putting together all the parsed data
 
     result = {
         "header": header,
@@ -321,17 +321,19 @@ def parse_apps_monitor(data):
     parts = data.split("=======================")
 
     # Extract the JSON strings from each part
-    json_str1 = parts[1].strip().replace("=", ":").replace("\\", "").replace("\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
-    json_str2 = parts[2].strip().replace("=", ":").replace("\\", "").replace("\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
+    json_str1 = parts[1].strip().replace("=", ":").replace("\\", "").replace(
+        "\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
+    json_str2 = parts[2].strip().replace("=", ":").replace("\\", "").replace(
+        "\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
 
-    ### ugly fixes
+    # ugly fixes
     last_comma_index = json_str1.rfind(",")
     json_str1_new = json_str1[:last_comma_index] + json_str1[last_comma_index + 1:]
 
     first_brace_index = json_str1_new.find("}")
     json_str1 = json_str1_new[:first_brace_index + 1]
 
-    ### ugly fixes
+    # ugly fixes
     last_comma_index = json_str2.rfind(",")
     json_str2_new = json_str2[:last_comma_index] + json_str2[last_comma_index + 1:]
 

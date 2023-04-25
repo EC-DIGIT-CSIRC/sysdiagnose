@@ -26,47 +26,48 @@ import glob
 import re
 
 
-
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing mobileactivation logs file"
-parser_input = "mobile_activation" #list of log files
+parser_input = "mobile_activation"  # list of log files
 parser_call = "parsemobactiv"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
-## function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
-#Month to numeric with leading zero when month < 10 function
-#Function call: month = month_converter(month)
+# function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
+# Month to numeric with leading zero when month < 10 function
+# Function call: month = month_converter(month)
+
+
 def month_converter(month):
-	months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-	month = months.index(month) + 1
-	if (month < 10):
-		month = f"{month:02d}"
-	return month
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    month = months.index(month) + 1
+    if (month < 10):
+        month = f"{month:02d}"
+    return month
 
-#Day with leading zero if day < 10 function
-#Functtion call: day = day_converter(day)
+# Day with leading zero if day < 10 function
+# Functtion call: day = day_converter(day)
+
+
 def day_converter(day):
-	day = int(day)
-	if (day < 10):
-		day = f"{day:02d}"
-	return day
+    day = int(day)
+    if (day < 10):
+        day = f"{day:02d}"
+    return day
 ##
 
 
-
-
 def parsemobactiv(loglist):
-    events = {"events" : []}
+    events = {"events": []}
     for logfile in loglist:
-        file = open(logfile, 'r', encoding='utf8' )
-        #init
+        file = open(logfile, 'r', encoding='utf8')
+        # init
         status = ''
 
         for line in file:
-            #init
+            # init
             if "____________________ Mobile Activation Startup _____________________" in line.strip():
                 status = 'act_start'
                 act_lines = []
@@ -77,12 +78,13 @@ def parsemobactiv(loglist):
                 act_lines.append(line.strip())
             elif "<notice>" in line.strip():
                 buildlogentry_notice(line.strip())
-    #print(json.dumps(events,indent=4))
+    # print(json.dumps(events,indent=4))
     return events
 
+
 def buildlogentry_actentry(lines):
-    #print(lines)
-    event = {'loglevel':'debug'}
+    # print(lines)
+    event = {'loglevel': 'debug'}
     # get timestamp
     timeregex = re.search(r"(?<=^)(.*)(?= \[)", lines[0])
     timestamp = timeregex.group(1)
@@ -91,7 +93,7 @@ def buildlogentry_actentry(lines):
     month = month_converter(month)
     event['timestamp'] = str(year)+ '-'+ str(month) + '-' + str(day) + ' ' + str(time)
 
-    #build event
+    # build event
     for line in lines:
         splitted = line.split(":")
         if len(splitted) > 1:
@@ -99,8 +101,9 @@ def buildlogentry_actentry(lines):
 
     return event
 
+
 def buildlogentry_notice(line):
-    event = {'loglevel':'notice'}
+    event = {'loglevel': 'notice'}
     # get timestamp
     timeregex = re.search(r"(?<=^)(.*)(?= \[)", line)
     timestamp = timeregex.group(1)
@@ -118,7 +121,7 @@ def buildlogentry_notice(line):
     if eventyperegex:
         event['event_type'] = eventyperegex.group(1)
 
-    #msg
+    # msg
     if 'event_type' in event:
         msgregex = re.search(r"\]\:(.*)", line)
         event['msg'] = msgregex.group(1)
@@ -127,7 +130,6 @@ def buildlogentry_notice(line):
         event['msg'] = msgregex.group(1)
 
     return event
-
 
 
 def main():
@@ -143,14 +145,14 @@ def main():
 
     loglist=[]
 
-    if arguments['-i'] == True:
-    #list files in folder and build list object
-        #try:
+    if arguments['-i']:
+        # list files in folder and build list object
+        # try:
         loglist = glob.glob(arguments['<logfolder>'] + '/mobileactivationd.log*')
-        print(json.dumps(parsemobactiv(loglist),indent=4))
-
+        print(json.dumps(parsemobactiv(loglist), indent=4))
 
     return 0
+
 
 """
    Call main function

@@ -15,20 +15,21 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # Structure:
 # filename : parsing_function
 timestamps_files = {
-    "sysdiagnose-accessibility-tcc.json" : "__extract_ts_accessibility_tcc",
-    ##   appinstallation: TODO
-    ##   itunesstore: TODO
-    "sysdiagnose-mobileactivation.json" : "__extract_ts_mobileactivation",
-    ##    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
-    ## psthread: TODO
-    "sysdiagnose-swcutil.json" : "__extract_ts_swcutil",
-    "sysdiagnose-logarchive.json" : "__extract_ts_logarchive",
+    "sysdiagnose-accessibility-tcc.json": "__extract_ts_accessibility_tcc",
+    # appinstallation: TODO
+    # itunesstore: TODO
+    "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
+    # "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
+    # psthread: TODO
+    "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
+    "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
 }
 
 
 # Timesketch format:
 # {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 timeline = []
+
 
 def __extract_ts_mobileactivation(filename):
     try:
@@ -39,20 +40,21 @@ def __extract_ts_mobileactivation(filename):
                     timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%d %H:%M:%S")
                     ts_event = {
                         "message": "Mobile Activation",
-                        "timestamp" : timestamp.timestamp(),
-                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-                        "timestamp_desc" : "Mobile Activation Time",
-                        "extra_field_1" : "Build Version: %s" % event["build_version"]
+                        "timestamp": timestamp.timestamp(),
+                        "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "Mobile Activation Time",
+                        "extra_field_1": "Build Version: %s" % event["build_version"]
                     }
                     timeline.append(ts_event)
             else:
                 return False
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" %  filename)
+        print("ERROR while extracting timestamp from %s" % filename)
         print(e)
         return False
     return False
+
 
 def __extract_ts_powerlogs(filename):
     try:
@@ -62,10 +64,11 @@ def __extract_ts_powerlogs(filename):
             # -- IMPLEMENT HERE --
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" %  filename)
+        print("ERROR while extracting timestamp from %s" % filename)
         print(e)
         return False
     return False
+
 
 def __extract_ts_swcutil(filename):
     """
@@ -90,15 +93,15 @@ def __extract_ts_swcutil(filename):
                     timestamp = datetime.strptime(service["Last Checked"], "%Y-%m-%d %H:%M:%S %z")
                     ts_event = {
                         "message": service["Service"],
-                        "timestamp" : timestamp.timestamp(),
-                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-                        "timestamp_desc" : "swcutil last checkeed",
-                        "extra_field_1" : "application: %s" % service["App ID"]
+                        "timestamp": timestamp.timestamp(),
+                        "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "swcutil last checkeed",
+                        "extra_field_1": "application: %s" % service["App ID"]
                     }
-                    timeline.append(ts_event) 
+                    timeline.append(ts_event)
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" %  filename)
+        print("ERROR while extracting timestamp from %s" % filename)
         print(e)
         return False
     return False
@@ -126,7 +129,7 @@ def __extract_ts_accessibility_tcc(filename):
             data = json.load(fd)
             if "access" in data.keys():
                 for access in data["access"]:
-                     # convert to hashtable
+                    # convert to hashtable
                     service = {}
                     for line in access:
                         keys = line.keys()
@@ -137,15 +140,15 @@ def __extract_ts_accessibility_tcc(filename):
                     timestamp = datetime.fromtimestamp(int(service["last_modified"]))
                     ts_event = {
                         "message": service["service"],
-                        "timestamp" : timestamp.timestamp(),
-                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-                        "timestamp_desc" : "Accessibility TC Last Modified",
-                        "extra_field_1" : "client: %s" % service["client"]
+                        "timestamp": timestamp.timestamp(),
+                        "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "Accessibility TC Last Modified",
+                        "extra_field_1": "client: %s" % service["client"]
                     }
-                    timeline.append(ts_event) 
+                    timeline.append(ts_event)
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" %  filename)
+        print("ERROR while extracting timestamp from %s" % filename)
         print(e)
         return False
     return False
@@ -176,7 +179,7 @@ def __extract_ts_logarchive(filename):
             "bootUUID" : "2DF74FE0-4876-43B0-828B-F285FA4D42F5",
             "processImagePath" : "\/usr\/sbin\/wifid",
             "timestamp" : "2023-02-23 10:44:02.761747+0100",
-            "senderImagePath" : "\/System\/Library\/PrivateFrameworks\/WiFiPolicy.framework\/WiFiPolicy",
+            "senderImagePath" : "\/System\/Library\/PrivateFrameworks\/WiFiPolicy.framework\/WiFiPolicy",   # XXX FIXME pycodestyle error W605
             "machTimestamp" : 3208860279380,
             "messageType" : "Default",
             "processImageUUID" : "F972AB5A-6713-3F33-8675-E87C631497F6",
@@ -195,21 +198,20 @@ def __extract_ts_logarchive(filename):
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
                     ts_event = {
                         "message": trace["eventMessage"],
-                        "timestamp" : timestamp.timestamp(),
-                        "datetime" : timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-                        "timestamp_desc" : "Entry in logarchive: %s" % trace["eventType"],
-                        "extra_field_1" : "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
+                        "timestamp": timestamp.timestamp(),
+                        "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "Entry in logarchive: %s" % trace["eventType"],
+                        "extra_field_1": "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
                     }
                     timeline.append(ts_event)
                 except Exception as e:
-                   print("WARNING: trace not parsed: %s" %  trace) 
+                    print("WARNING: trace not parsed: %s" % trace)
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" %  filename)
+        print("ERROR while extracting timestamp from %s" % filename)
         print(e)
         return False
     return False
-
 
 
 def parse_json(jsondir):
@@ -230,6 +232,7 @@ def parse_json(jsondir):
     # return the timeline as JSON
     return timeline
 
+
 def save_timeline(timeline, ts_file):
     """
         Save timeline as JSONL (not JSON!!)
@@ -242,10 +245,13 @@ def save_timeline(timeline, ts_file):
     except Exception as e:
         print("ERROR: impossible to save timeline to %s" % timeline)
 
+
 # --------------------------------------------------------------------------- #
 """
     Main function
 """
+
+
 def main():
 
     if sys.version_info[0] < 3:
@@ -265,7 +271,7 @@ def main():
                       help="JSON tile to save the timeline")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
@@ -292,4 +298,3 @@ if __name__ == "__main__":
     main()
 
 # That's all folks ;)
-

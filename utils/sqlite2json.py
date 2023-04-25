@@ -18,6 +18,7 @@ version_string = "sqlite2json.py v2020-02-18 Version 1.0"
 
 # --------------------------------------------------------------------------- #
 
+
 def sqlite2struct(dbpath):
     """
         Transform a SQLite DB to a Python struct.
@@ -56,12 +57,12 @@ def table2struct(dbfd, tablename):
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
     for row in cursor.execute("SELECT * FROM '%s'" % tablename):
-        line  = []
+        line = []
         ptr = 0
         for element in row:
-            if(type(element) not in ["str", "int", "float", "bool"]):
+            if (type(element) not in ["str", "int", "float", "bool"]):
                 element = str(element)
-            line.append({column_names[ptr] : element})
+            line.append({column_names[ptr]: element})
             ptr = ptr + 1
         table.append(line)
     return table
@@ -73,11 +74,12 @@ def dump2json(dbstruct, jsonpath="./db.json"):
         fd = open(jsonpath, "w")
         fd.write(jsontxt)
         fd.close()
-    except:
-        print("Impossible to dump the UUID to Path to %s\n" % jsonpath)    
+    except Exception as e:
+        print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n")
     return jsontxt
 
 # --------------------------------------------------------------------------- #
+
 
 def main():
     if sys.version_info[0] < 3:
@@ -87,12 +89,12 @@ def main():
     usage = "\n%prog -i inputfile\n"
 
     parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile", 
-                     action="store", type="string",
-                    help="SQlite DB To Be Printed")
+    parser.add_option("-i", dest="inputfile",
+                      action="store", type="string",
+                      help="SQlite DB To Be Printed")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if options.inputfile:
         print("Running " + version_string + "\n")
         print(sqlite2struct(options.inputfile))
@@ -101,12 +103,13 @@ def main():
         exit(-1)
     return
 
+
 """
    Call main function
 """
 if __name__ == "__main__":
-    
-    # Create an instance of the Analysis class (called "base") and run main 
+
+    # Create an instance of the Analysis class (called "base") and run main
     main()
 
 # --------------------------------------------------------------------------- #
