@@ -25,14 +25,16 @@ from tabulate import tabulate
 import re
 import pprint
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing spindump-nosymbols file"
 parser_input = "spindump-nosymbols"
 parser_call = "parsespindumpNS"
 
-#--------------------------------------------#
+# --------------------------------------------#
+
+
 def parsespindumpNS(file):
     with open(file, 'r') as f_in:
         # init section
@@ -57,29 +59,30 @@ def parsespindumpNS(file):
                 processes_raw.append(line.strip())
                 continue
 
-
         # call parsing function per section
         output = parse_basic(headers)
         output['processes'] = parse_processes(processes_raw)
 
     return output
 
+
 def parse_basic(data):
     output = {}
     for line in data:
-        splitted = line.split(":",1)
+        splitted = line.split(":", 1)
         if len(splitted) > 1:
             output[splitted[0]] = splitted[1].strip()
     return output
 
+
 def parse_processes(data):
-    #init
+    # init
     processes = []
     init = True
     process = []
     for line in data:
         if "Process:" in line.strip():
-            if init == False:
+            if not init:
                 processes.append(parse_process(process))
                 process = [line.strip()]
             else:
@@ -90,8 +93,9 @@ def parse_processes(data):
     processes.append(parse_process(process))
     return processes
 
+
 def parse_process(data):
-    #init
+    # init
     status = 'infos'
     infos = []
     threads = []
@@ -119,14 +123,15 @@ def parse_process(data):
 
     return process
 
+
 def parse_threads(data):
-    #init
+    # init
     init = True
     threads = []
     thread = []
     for line in data:
         if "Thread 0x" in line.strip():
-            if init == False:
+            if not init:
                 threads.append(parse_thread(thread))
                 thread = [line.strip()]
             else:
@@ -137,12 +142,13 @@ def parse_threads(data):
     threads.append(parse_thread(thread))
     return threads
 
+
 def parse_thread(data):
     output = {}
-    #parse first line
+    # parse first line
     # Thread Hex value
     threadHEXregex = re.search(r"Thread 0x..", data[0])
-    output['thread'] = threadHEXregex.group(0).split(" ",1)[1]
+    output['thread'] = threadHEXregex.group(0).split(" ", 1)[1]
     # Thread Name / DispatchQueue
     if "DispatchQueue \"" in data[0]:
         dispacthregex = re.search(r"DispatchQueue(.*)\"\(", data[0])
@@ -150,32 +156,33 @@ def parse_thread(data):
     if "Thread name \"" in data[0]:
         dispacthregex = re.search(r"Thread name\ \"(.*)\"", data[0])
         output['ThreadName'] = dispacthregex.group(0).split("\"")[1]
-    #priority
+    # priority
     if "priority" in data[0]:
         priorityregex = re.search(r"priority\ [0-9]+", data[0])
-        output['priority'] = priorityregex.group(0).split(" ",1)[1]
+        output['priority'] = priorityregex.group(0).split(" ", 1)[1]
     if "cpu time" in data[0]:
         cputimeregex = re.search(r"cpu\ time\ (.*)\)", data[0])
-        output["cputime"] = cputimeregex.group(0).split("time ",1)[1]
+        output["cputime"] = cputimeregex.group(0).split("time ", 1)[1]
 
     output["loaded"] = []
 
     for line in data[1:]:
         loaded={}
         if "+" in line:
-            loaded["library"] = line.split("(",1)[1].split("+",1)[0].strip()
-            loaded["int"] = line.split("(",1)[1].split("+",1)[1].split(")",1)[0].strip()
-            loaded["hex"] = line.split("[",1)[1][:-1].strip()
+            loaded["library"] = line.split("(", 1)[1].split("+", 1)[0].strip()
+            loaded["int"] = line.split("(", 1)[1].split("+", 1)[1].split(")", 1)[0].strip()
+            loaded["hex"] = line.split("[", 1)[1][:-1].strip()
         elif "truncated backtrace>" not in line:
-            loaded["hex"] = line.split("[",1)[1][:-1].strip()
+            loaded["hex"] = line.split("[", 1)[1][:-1].strip()
         output["loaded"].append(loaded)
     return output
+
 
 def parse_images(data):
     images=[]
     for line in data:
         image = {}
-        if line.strip() != None:
+        if line.strip() is not None:
             clean = ' '.join(line.split(" ")).split()
             image['start'] = clean[0]
             image['end'] = clean[2]
@@ -189,8 +196,6 @@ def parse_images(data):
     return images
 
 
-
-
 def main():
     """
         Main function, to be called when used as CLI tool
@@ -202,9 +207,9 @@ def main():
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
     ### test
-    if arguments['-i'] == True:
-    #Output is good enough, just print
-        print(json.dumps(parsespindumpNS(arguments['<file>']),indent=4))
+    if arguments['-i']:
+        # Output is good enough, just print
+        print(json.dumps(parsespindumpNS(arguments['<file>']), indent=4))
         exit()
     ### test
 
