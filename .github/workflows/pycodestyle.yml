@@ -5,26 +5,28 @@ on:
     branches:
       - main
       - master
-  pull_request:
-    branches:
-      - main
-      - master
 
 jobs:
   pycodestyle:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Set up Python ${{ matrix.python-version }} 
+        uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install pycodestyle
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
 
-      - name: Run pycodestyle
-        run: pycodestyle --exclude=venv --ignore=errors=E221,E225,E251,E501,E266 --max-line-length=128 .
+      - name: Analysing the code with pycodestyle
+        run: |
+          pycodestyle --exclude=venv --ignore=errors=E221,E225,E251,E501,E266 --max-line-length=128 $(git ls-files '*.py')
 
