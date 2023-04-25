@@ -12,15 +12,14 @@ import plistlib
 
 version_string = "sysdiagnose-sys.py v2019-05-10 Version 2.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing SystemVersion plist file"
 parser_input = "systemversion"
 parser_call = "getProductInfo"
 
-#--------------------------------------------#
-
+# --------------------------------------------#
 
 
 # --------------------------------------------------------------------------- #
@@ -36,9 +35,9 @@ def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=
         Non populated field are filled with a None value
     """
     result = {
-        "ProductName" : None,
-        "ProductionVersion" : None,
-        "ProductBuildVersion" : None
+        "ProductName": None,
+        "ProductionVersion": None,
+        "ProductBuildVersion": None
     }
     try:
         fd = open(path, 'rb')
@@ -47,7 +46,7 @@ def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=
             if key in plist.keys():
                 result[key] = plist[key]
             else:
-                print("WARNING: %s not found in %s plist"  % (key, path))
+                print("WARNING: %s not found in %s plist" % (key, path))
         fd.close()
     except Exception as e:
         print("Impossible to parse %s: %s" % (path, str(e)))
@@ -79,7 +78,6 @@ def main():
         print("ProductBuildVersion = %s" % pl["ProductBuildVersion"])
     else:
         print("WARNING -i option is mandatory!")
-
 
 
 # --------------------------------------------------------------------------- #
