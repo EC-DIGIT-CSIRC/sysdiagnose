@@ -14,14 +14,14 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-taskinfo.py v2020-02-07 Version 1.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing taskinfo txt file"
 parser_input = "taskinfo"
 parser_call = "get_tasks"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 
 # --------------------------------------------------------------------------- #
@@ -34,7 +34,7 @@ def get_num_tasks(filename, ios_version=13):
         fd = open(filename, "r")
         for line in fd:
             result = re.search(r'(num tasks: )(\d+)', line)
-            if(result is not None):
+            if (result is not None):
                 num_tasks = int(result.group(2))
                 break
         fd.close()
@@ -42,6 +42,7 @@ def get_num_tasks(filename, ios_version=13):
     except Exception as e:
         print("Impossible to parse taskinfo.txt: %s" % str(e))
     return num_tasks
+
 
 def parse_task_block(fd, current_threat_id, ios_version=13):
     """
@@ -98,11 +99,11 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
 
     for line in fd:
         line = line.strip()
-    
+
         # break if end of task block
-        if len(line) == 0: 
+        if len(line) == 0:
             return result
-        
+
         # global info on task
         elif line.startswith('thread name:'):
             result["thread name"] = line.split()[2]
@@ -183,10 +184,10 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
         elif line.startswith('req internal/external iotier:'):
             result["requested policy"]["req internal iotier"] = line.split()[3]
             result["requested policy"]["req external iotier"] = line.split()[5]
-        
+
         # Effective Policy Part
         elif line.startswith("effective policy:"):
-             continue
+            continue
         elif line.startswith('eff thread qos:'):
             result["effective policy"]["eff thread qos"] = line.split()[3]
         elif line.startswith('eff thread qos relprio:'):
@@ -219,7 +220,7 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
         # Handline unknown
         else:
             print("WARNING: Unexpected line detected for tasks: %s (%s)" % (current_threat_id, line))
-            continue # unknown line
+            continue  # unknown line
 
     return result
 
@@ -241,9 +242,12 @@ def search_task_block(fd, ios_version):
 
     return result
 
+
 """
     Parse all elements
 """
+
+
 def get_tasks(filename, ios_version=13):
     numb_tasks = get_num_tasks(filename, ios_version)
     tasks = {}
@@ -255,7 +259,7 @@ def get_tasks(filename, ios_version=13):
         for line in fd:
             line = line.strip()
             # search for the right place in text file
-            if(line.startswith("threads:")):
+            if (line.startswith("threads:")):
                 tasks = search_task_block(fd, ios_version)
             else:
                 continue
@@ -263,13 +267,17 @@ def get_tasks(filename, ios_version=13):
     except Exception as e:
         print("Impossible to open %s" % filename)
         print(e)
-    
-    return { "numb_tasks" : numb_tasks, "tasks" : tasks}
+
+    return {"numb_tasks": numb_tasks, "tasks": tasks}
 
 # --------------------------------------------------------------------------- #
+
+
 """
     Main function
 """
+
+
 def main():
 
     if sys.version_info[0] < 3:
@@ -286,7 +294,7 @@ def main():
                       help="taskinfo.txt")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
