@@ -53,6 +53,7 @@ def parselistfile(container_list_file):
                 containers['containers'].append(result)
         return containers
 
+
 def parsedumpfile(container_dump_file):
     with open(container_dump_file[0], 'r') as f:
         dump = {}
@@ -268,7 +269,7 @@ def parse_system_scheduler(input):
     data = {}
     lines = input.split('\n')
     for line in lines:
-        ## removing ANSI escape codes
+        # removing ANSI escape codes
         line = re.sub(r'\x1b\[[0-9;]*m', '', line)
         line = line.strip()
         if line.startswith('+'):
