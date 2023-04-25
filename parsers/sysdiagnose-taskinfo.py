@@ -121,7 +121,7 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             result["sched mode"]["real-time period"] = line.split()[2]
         elif line.startswith('real-time computation:'):
             result["sched mode"]["real-time computation"] = line.split()[2]
-        elif line.startswith('real-time constraint:'): 
+        elif line.startswith('real-time constraint:'):
             result["sched mode"]["real-time constraint"] = line.split()[2]
         elif line.startswith('real-time preemptible:'):
             result["sched mode"]["real-time preemptible"] = line.split()[2]
@@ -130,12 +130,12 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
         elif line.startswith('flags:'):
             result["flags"] = line.split()[1:]
         elif line.startswith('suspend count:'):
-            result["suspend count"] = line.split()[2][:-1]       
+            result["suspend count"] = line.split()[2][:-1]
         elif line.startswith('sleep time:'):
-            result["sleep time"] = line.split()[2][:-1] 
+            result["sleep time"] = line.split()[2][:-1]
         elif line.startswith('importance in task:'):
-            result["importance in task"] = line.split()[3][:-1]    
-        
+            result["importance in task"] = line.split()[3][:-1]
+
         # Policy
         elif line.startswith('policy:'):
             result["policy"]["policy"] = line.split()[1:]
@@ -145,7 +145,7 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
             result["policy"]["round-robin base priority"] = line.split()[3]
         elif line.startswith("round-robin quantum:"):
             result["policy"]["round-robin quantum"] = line.split()[2]
-        elif line.startswith("round-robin depressed:"): 
+        elif line.startswith("round-robin depressed:"):
             result["policy"]["round-robin depressed"] = line.split()[2:]
         elif line.startswith("timeshare max  priority"):
             result["policy"]["timeshare max priority"] = line.split()[3][:-1]
