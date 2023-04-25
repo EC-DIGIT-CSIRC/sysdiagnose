@@ -25,30 +25,31 @@ from docopt import docopt
 from tabulate import tabulate
 
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing networkextensioncache plist file"
 parser_input = "networkextensioncache"
 parser_call = "parseplist"
 
-#--------------------------------------------#
+# --------------------------------------------#
+
+
 def parseplist(file):
     with open(file, 'rb') as fp:
         pl = plistlib.load(fp)
 
-    #pprint.pprint(pl)
+    # pprint.pprint(pl)
 
     return pl['app-rules']
 
-    #objects = pl['$objects']
+    # objects = pl['$objects']
 
-    #output = {'objects':[]}
+    # output = {'objects':[]}
 
-    #for object in objects:
+    # for object in objects:
     #    if type(object) == str:
     #        output['objects'].append(object)
-
 
 
 def main():
@@ -62,25 +63,25 @@ def main():
     arguments = docopt(__doc__, version='parser for networkextensioncache.plist v0.1')
 
     ### test
-    #if arguments['-i'] == True:
+    # if arguments['-i'] == True:
     #    parseplist(arguments['<file>'])
     #    exit()
     ### test
 
-    if arguments['-i'] == True:
+    if arguments['-i']:
         try:
             apprules = parseplist(arguments['<file>'])
 
-            headers = ['App','UUIDs']
+            headers = ['App', 'UUIDs']
             lines = []
-            for key,val in apprules.items():
+            for key, val in apprules.items():
                 line=[key, val]
                 lines.append(line)
             print(tabulate(lines, headers=headers))
-        except:
-            print('errorrrrrrrrrr')
+        except Exception as e:
+            print(f'Error: {str(e)}')
 
-    #parseplist("../data/1/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101/logs/Networking/com.apple.networkextension.plist")
+    # parseplist("../data/1/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101/logs/Networking/com.apple.networkextension.plist")
 
     return 0
 
