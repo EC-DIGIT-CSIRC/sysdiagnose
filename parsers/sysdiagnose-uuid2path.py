@@ -15,16 +15,17 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-uuid2path.py v2020-02-07 Version 2.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing UUIDToBinaryLocations plist file"
 parser_input = "UUIDToBinaryLocations"
 parser_call = "getUUID2path"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+
 
 def getUUID2path(filename, ios_version=13):
     try:
@@ -41,25 +42,29 @@ def getUUID2path(filename, ios_version=13):
         print("Impossible to parse %s: %s" % (filename, str(e)))
     return None
 
+
 def printResult(json):
     """
         Print the hashtable produced by getUUID2Path to console as UUID, path
     """
-    if(json is not None):
+
+    if json:
         for uuid in json.keys():
             print("%s, %s" % (str(uuid), str(json[uuid])))
     print("\n %s GUIDs found\n" % str(len(json.keys())))
     return
 
+
 def export_to_json(json, filename="./uuid2path.json"):
     json_u2p = json.dumps(json, indent=4)
     try:
         fd = open(filename, "w")
-        fd.write(json_ps)
+        fd.write(json_ps)       # XXX FIXME! What is json_ps?? XXX FIXME
         fd.close()
-    except:
-        print("Impossible to dump the UUID to Path to %s\n" % filename)
+    except Exception as e:
+        print(f"Impossible to dump the UUID to Path to {filename}. Reason: {str(e)}\n")
     return
+
 
 def exportToMISP(json):
     """
@@ -70,6 +75,7 @@ def exportToMISP(json):
     print("NOT IMPLEMENTED")
     return
 
+
 def main():
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
@@ -79,11 +85,11 @@ def main():
 
     parser = OptionParser(usage=usage)
     parser.add_option("-i", dest="inputfile",
-                     action="store", type="string",
-                    help="logs/tailspindb/UUIDToBinaryLocations plist To Be Printed")
+                      action="store", type="string",
+                      help="logs/tailspindb/UUIDToBinaryLocations plist To Be Printed")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if options.inputfile:
         print("Running " + version_string + "\n")
         printResult(getUUID2path(options.inputfile))
