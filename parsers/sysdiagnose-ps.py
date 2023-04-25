@@ -16,22 +16,23 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-ps.py v2023-03-10 Version 1.1"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing ps.txt file"
 parser_input = "ps"
 parser_call = "parse_ps"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
-def parse_ps(filename, ios_version=16):
-  processes = {}
-  try:
 
+
+def parse_ps(filename, ios_version=16):
+    processes = {}
+    try:
         fd = open(filename, "r")
-        fd.readline() # skip header line
+        fd.readline()   # skip header line
 
         for line in fd:
             """
@@ -45,116 +46,125 @@ def parse_ps(filename, ios_version=16):
             """
             patterns = re.split("\s+", line)
             # key of hash table is PID
-            if(ios_version < 16):
-              processes[int(patterns[2])] = { "USER"    :  patterns[0],
-                                        "UID"     :  patterns[1],
-                                        "PID"     :  int(patterns[2]),
-                                        "PPID"    :  int(patterns[3]),
-                                        "CPU"     :  patterns[4],
-                                        "MEM"     :  patterns[5],
-                                        "PRI"     :  patterns[6],
-                                        "NI"      :  patterns[7],
-                                        "VSZ"     :  patterns[8],
-                                        "RSS"     :  patterns[9],
-                                        "WCHAN"   :  patterns[10],
-                                        "TT"      :  patterns[11],
-                                        "STAT"    :  patterns[12],
-                                        "STARTED" :  patterns[13],
-                                        "TIME"    :  patterns[14],
-                                        "COMMAND" :  patterns[15] }
+            if (ios_version < 16):
+                processes[int(patterns[2])] = {"USER": patterns[0],
+                                               "UID": patterns[1],
+                                               "PID": int(patterns[2]),
+                                               "PPID": int(patterns[3]),
+                                               "CPU": patterns[4],
+                                               "MEM": patterns[5],
+                                               "PRI": patterns[6],
+                                               "NI": patterns[7],
+                                               "VSZ": patterns[8],
+                                               "RSS": patterns[9],
+                                               "WCHAN": patterns[10],
+                                               "TT": patterns[11],
+                                               "STAT": patterns[12],
+                                               "STARTED": patterns[13],
+                                               "TIME": patterns[14],
+                                               "COMMAND": patterns[15]}
             else:
-              processes[int(patterns[3])] = { "USER"    :  patterns[0],
-                                        "UID"     :  patterns[1],
-                                        "PRSNA"   :  patterns[2],
-                                        "PID"     :  int(patterns[3]),
-                                        "PPID"    :  int(patterns[4]),
-                                        "F"       :  patterns[5],
-                                        "CPU"     :  patterns[6],
-                                        "MEM"     :  patterns[7],
-                                        "PRI"     :  patterns[8],
-                                        "NI"      :  patterns[9],
-                                        "VSZ"     :  patterns[10],
-                                        "RSS"     :  patterns[11],
-                                        "WCHAN"   :  patterns[12],
-                                        "TT"      :  patterns[13],
-                                        "STAT"    :  patterns[14],
-                                        "STARTED" :  patterns[15],
-                                        "TIME"    :  patterns[16],
-                                        "COMMAND" :  patterns[17] }        
-               
-        fd.close()
+                processes[int(patterns[3])] = {"USER": patterns[0],
+                                               "UID": patterns[1],
+                                               "PRSNA": patterns[2],
+                                               "PID": int(patterns[3]),
+                                               "PPID": int(patterns[4]),
+                                               "F": patterns[5],
+                                               "CPU": patterns[6],
+                                               "MEM": patterns[7],
+                                               "PRI": patterns[8],
+                                               "NI": patterns[9],
+                                               "VSZ": patterns[10],
+                                               "RSS": patterns[11],
+                                               "WCHAN": patterns[12],
+                                               "TT": patterns[13],
+                                               "STAT": patterns[14],
+                                               "STARTED": patterns[15],
+                                               "TIME": patterns[16],
+                                               "COMMAND": patterns[17]}
 
-  except Exception as e:
-    print("Impossible to parse ps.txt: %s" % str(e))
-  return processes
+        fd.close()
+    except Exception as e:
+        print("Impossible to parse ps.txt: %s" % str(e))
+    return processes
 
 
 """
     Export the process structure to a json file
 """
+
+
 def export_to_json(processes, filename="./ps.json"):
-        json_ps = json.dumps(processes, indent=4)
-        try:
-            fd = open(filename, "w")
-            fd.write(json_ps)
-            fd.close()
-        except:
-            print("Impossible to dump the processes to %s\n" % filename)
+    json_ps = json.dumps(processes, indent=4)
+    try:
+        fd = open(filename, "w")
+        fd.write(json_ps)
+        fd.close()
+    except:
+        print("Impossible to dump the processes to %s\n" % filename)
+
 
 """
     Tree export to stdout like volatility pstree plugin
 """
+
+
 def export_as_tree(processes, with_graph=False):
     ppid = {}
     for pid in processes.keys():
-        if not processes[pid]["PPID"] in ppid.keys(): # not an already a known PPID
-            ppid[processes[pid]["PPID"]] = [] # create an empty array
+        if not processes[pid]["PPID"] in ppid.keys():  # not an already a known PPID
+            ppid[processes[pid]["PPID"]] = []  # create an empty array
         ppid[processes[pid]["PPID"]].append(processes[pid])
 
     # generate first the dot if requested
-    if(with_graph):
-      generate_graph(processes)
+    if (with_graph):
+        generate_graph(processes)
 
     # print tree
     ppid = _print_tree(ppid, 0, 0)
     for pid in ppid.keys():
-      ppid = _print_tree(ppid, pid, 0) # print orphan processes
+        ppid = _print_tree(ppid, pid, 0)  # print orphan processes
     return
+
 
 def _print_tree(ppid, node=0, depth=0):
     # check that node is in ppid list
     if node not in ppid.keys():
-      return ppid
+        return ppid
 
     # loop on all the child of node
     for process in ppid[node]:
-      print(depth*"    " + "%s (PID: %d, PPID: %d, USER: %s)" % (process["COMMAND"], process["PID"], process["PPID"], process["USER"]))
-      ppid = _print_tree(ppid, process["PID"], depth+1) # recurse on childs of current process
-    del ppid[node] # remove the current child from process
+        print(depth *"    " + "%s (PID: %d, PPID: %d, USER: %s)" %
+              (process["COMMAND"], process["PID"], process["PPID"], process["USER"]))
+        ppid = _print_tree(ppid, process["PID"], depth +1)  # recurse on childs of current process
+    del ppid[node]  # remove the current child from process
 
     # return
     return ppid
 
 
 def generate_graph(processes):
-  from graphviz import Digraph
-  dot = Digraph(comment="Process tree")
+    from graphviz import Digraph
+    dot = Digraph(comment="Process tree")
 
-  # generate all nodes
-  for pid in processes.keys():
-    dot.node(str(pid), processes[pid]["COMMAND"])
+    # generate all nodes
+    for pid in processes.keys():
+        dot.node(str(pid), processes[pid]["COMMAND"])
 
-  # add links
-  for pid in processes.keys():
-    dot.edge(str(processes[pid]["PPID"]), str(pid), constraint='false')
+    # add links
+    for pid in processes.keys():
+        dot.edge(str(processes[pid]["PPID"]), str(pid), constraint='false')
 
-  # save and create graph
-  dot.render("./ps.gv", view=True)
+    # save and create graph
+    dot.render("./ps.gv", view=True)
+
 
 # --------------------------------------------------------------------------- #
 """
     Main function
 """
+
+
 def main():
 
     if sys.version_info[0] < 3:
@@ -171,7 +181,7 @@ def main():
                       help="ps.txt")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
