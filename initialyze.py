@@ -103,83 +103,83 @@ def init(sysdiagnose_file):
 
     try:
         new_case_json["ps"] = new_folder +glob.glob('./*/ps.txt')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["swcutil_show"] = new_folder +glob.glob('./*/swcutil_show.txt')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["ps_thread"] = new_folder +glob.glob('./*/ps_thread.txt')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["appupdate_db"] = new_folder +glob.glob('./*/logs/appinstallation/AppUpdates.sqlitedb')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["brctl"] = new_folder +glob.glob('./*/brctl/')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["networkextensioncache"] = new_folder + \
             glob.glob('./*/logs/Networking/com.apple.networkextension.cache.plist')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["networkextension"] = new_folder +glob.glob('./*/logs/Networking/com.apple.networkextension.plist')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["powerlogs"] = new_folder +glob.glob('./*/logs/powerlogs/powerlog_*')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["systemversion"] = new_folder +glob.glob('./*/logs/SystemVersion/SystemVersion.plist')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["UUIDToBinaryLocations"] = new_folder +glob.glob('./*/logs/tailspindb/UUIDToBinaryLocations')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["logarchive_folder"] = new_folder +glob.glob('./*/system_logs.logarchive/')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["taskinfo"] = new_folder +glob.glob('./*/taskinfo.txt')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["spindump-nosymbols"] = new_folder +glob.glob('./*/spindump-nosymbols.txt')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["Accessibility-TCC"] = new_folder +glob.glob('./*/logs/Accessibility/TCC.db')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["appinstallation"] = new_folder +glob.glob('./*/logs/appinstallation/appstored.sqlitedb')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     try:
         new_case_json["itunesstore"] = new_folder +glob.glob('./*/./logs/itunesstored/downloads.*.sqlitedb')[0][1:]
-    except:
+    except:        # noqa: E722
         pass
 
     # ips files
@@ -190,7 +190,7 @@ def init(sysdiagnose_file):
             ips = new_folder +ips[1:]
             ips_files_fullpath.append(ips)
         new_case_json["ips_files"] = ips_files_fullpath
-    except:
+    except:        # noqa: E722
         pass
 
     # mobile activation logs
@@ -201,7 +201,7 @@ def init(sysdiagnose_file):
             log = new_folder +log[1:]
             mobile_activation_fullpath.append(log)
         new_case_json["mobile_activation"] = mobile_activation_fullpath
-    except:
+    except:        # noqa: E722
         pass
 
     # container manager
@@ -212,7 +212,7 @@ def init(sysdiagnose_file):
             log = new_folder +log[1:]
             container_manager_fullpath.append(log)
         new_case_json["container_manager"] = container_manager_fullpath
-    except:
+    except:        # noqa: E722
         pass
 
     # mobile installation
@@ -223,7 +223,7 @@ def init(sysdiagnose_file):
             log = new_folder +log[1:]
             mobile_installation_fullpath.append(log)
         new_case_json["mobile_installation"] = mobile_installation_fullpath
-    except:
+    except:        # noqa: E722
         pass
 
     print(json.dumps(new_case_json, indent=4))
