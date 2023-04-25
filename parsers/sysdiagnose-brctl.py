@@ -80,7 +80,7 @@ def parsedumpfile(container_dump_file):
     #### finding key value
     # loop through the keys of the dictionary
     for key in dump.keys():
-    # check if the key starts with "boot_history"
+        # check if the key starts with "boot_history"
         if key.startswith("boot_history"):
             # print the key and its value
             bhkey = key
@@ -105,7 +105,7 @@ def parsedumpfile(container_dump_file):
     #### finding key value
     # loop through the keys of the dictionary
     for key, value in dump.items():
-    # check if the key contains "containers matching"
+        # check if the key contains "containers matching"
         if "+ app library:" in value:
             # print the key and its value
             ckey = key
@@ -119,7 +119,6 @@ def parsedumpfile(container_dump_file):
     #### app library IDs by App ID
     app_library_id, app_ids = parse_apps_monitor(dump['apps monitor'])
 
-
     #### putting together all the parsed data
 
     result = {
@@ -132,7 +131,7 @@ def parsedumpfile(container_dump_file):
         "server_items": server_items,
         "app_library_id": app_library_id,
         "app_ids": app_ids
-        }
+    }
 
     return result
 
@@ -330,15 +329,14 @@ def parse_apps_monitor(data):
     json_str1_new = json_str1[:last_comma_index] + json_str1[last_comma_index + 1:]
 
     first_brace_index = json_str1_new.find("}")
-    json_str1 = json_str1_new[:first_brace_index+1]
+    json_str1 = json_str1_new[:first_brace_index + 1]
 
     ### ugly fixes
     last_comma_index = json_str2.rfind(",")
     json_str2_new = json_str2[:last_comma_index] + json_str2[last_comma_index + 1:]
 
     first_brace_index = json_str2_new.find("}")
-    json_str2 = json_str2_new[:first_brace_index+1]
-
+    json_str2 = json_str2_new[:first_brace_index + 1]
 
     # Load the JSON strings into Python dictionaries
     json1 = json.loads(json_str1)
@@ -351,7 +349,7 @@ def parsebrctl(brctl_folder):
     container_list_file = [brctl_folder + '/brctl-container-list.txt']
     container_dump_file = [brctl_folder + '/brctl-dump.txt']
 
-    brctl_parsing = {**parselistfile(container_list_file),**parsedumpfile(container_dump_file)}
+    brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
 
     return brctl_parsing
 
@@ -378,7 +376,7 @@ def main():
         except Exception as e:
             print(f'error retrieving log files. Reason: {str(e)}')
 
-    return 
+    return
 
 
 """
