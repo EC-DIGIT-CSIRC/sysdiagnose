@@ -190,7 +190,7 @@ def parse_images(data):
             image['UUID'] = clean[4][1:-1]
             try:
                 image['path'] = clean[5]
-            except:
+            except:     # noqa E722
                 pass
             images.append(image)
     return images
