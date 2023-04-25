@@ -40,7 +40,7 @@ def main():
     usage = "\n%prog -i inputfile\n"
 
     parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile", 
+    parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
                       help="logs/Networking/com.apple.networkextension.cache.plist To Be Searched")
     parser.add_option("-v", dest="verbose",
