@@ -25,7 +25,7 @@ def main():
 
 
 """
-   Call main function   
+   Call main function
 """
 if __name__ == "__main__":
 

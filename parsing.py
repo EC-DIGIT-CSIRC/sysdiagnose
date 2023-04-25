@@ -34,31 +34,29 @@ from docopt import docopt
     List cases
 """
 
+
 def list_cases(case_file):
     try:
         with open(config.cases_file, 'r') as f:
             cases = json.load(f)
-    except:
-        print('error opening cases json file - check config.py')
+    except Exception as e:
+        print(f'error opening cases json file - check config.py. Reason: {str(e)}')
         exit()
 
-    print ('#### case List ####')
-    headers = ['Case ID','Source file','SHA256']
+    print('#### case List ####')
+    headers = ['Case ID', 'Source file', 'SHA256']
     lines = []
     for case in cases['cases']:
-        line = [case['case_id'],case['source_file'],case['source_sha256']]
+        line = [case['case_id'], case['source_file'], case['source_sha256']]
         lines.append(line)
 
     print(tabulate(lines, headers=headers))
 
 
-
-
-
-
 """
     List parsers
 """
+
 
 def list_parsers(folder):
     os.chdir(folder)
@@ -71,23 +69,20 @@ def list_parsers(folder):
             spec.loader.exec_module(module)
             line = [parser[:-3], module.parser_description, module.parser_input]
             lines.append(line)
-        except:
+        except:     # noqa: E722
             continue
 
-    headers = ['Parser Name','Parser Description','Parser Input']
+    headers = ['Parser Name', 'Parser Description', 'Parser Input']
 
     print(tabulate(lines, headers=headers))
-
-
-
-
 
 
 """
     Parse
 """
 
-def parse(parser,case_id):
+
+def parse(parser, case_id):
     try:
         with open(config.cases_file, 'r') as f:
             cases = json.load(f)
@@ -104,41 +99,39 @@ def parse(parser,case_id):
         print('Case ID not found')
         exit()
 
-
     # Load case file
     try:
         with open(case_file, 'r') as f:
             case = json.load(f)
-    except:
+    except:     # noqa: E722
         print('error opening case file')
         exit()
 
-    #print(json.dumps(case, indent=4)) #debug
-
+    # print(json.dumps(case, indent=4)) #debug
 
     # Load parser module
     spec = importlib.util.spec_from_file_location(parser[:-3], config.parsers_folder + parser + '.py')
     print(spec)
-    #print(spec) #debug
+    # print(spec) #debug
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    #building command
+    # building command
     if type(case[module.parser_input]) == str:
         command = 'module.' + module.parser_call + '(\'' + case[module.parser_input] + '\')'
     else:
         command = 'module.' + module.parser_call + '(' + str(case[module.parser_input]) + ')'
 
-    #print(command)
-    #running the command, expecting JSON output
-    #try:
+    # print(command)
+    # running the command, expecting JSON output
+    # try:
     #    result = eval(command)
-    #except Exception as e:
+    # except Exception as e:
     #    print('Error trying to parse ' + case[module.parser_input] + ': ' + str(e))
 
     result = eval(command)
 
-    #saving the parser output
+    # saving the parser output
     output_file = config.parsed_data_folder + case_id + '/' + parser + '.json'
     with open(output_file, 'w') as data_file:
         data_file.write(json.dumps(result, indent=4))
@@ -148,11 +141,11 @@ def parse(parser,case_id):
     return 0
 
 
-
-
 """
     Parse All
 """
+
+
 def parse_all(case_id):
     # get list of working parsers
     # for each parser, run and save which is working
@@ -163,8 +156,8 @@ def parse_all(case_id):
     for parser in modules:
         try:
             print('Trying: ' + parser[:-3])
-            parse(parser[:-3],case_id)
-        except:
+            parse(parser[:-3], case_id)
+        except:     # noqa: E722
             continue
     return 0
 
@@ -172,6 +165,8 @@ def parse_all(case_id):
 """
     Main function
 """
+
+
 def main():
 
     if sys.version_info[0] < 3:
@@ -180,22 +175,23 @@ def main():
 
     arguments = docopt(__doc__, version='Sysdiagnose parsing script v0.1')
 
-    #print(arguments)
+    # print(arguments)
 
-    if arguments['list'] == True and arguments['cases'] == True:
+    if arguments['list'] and arguments['cases']:
         list_cases(config.cases_file)
-    elif arguments['list'] == True and arguments['parsers'] == True:
+    elif arguments['list'] and arguments['parsers']:
         list_parsers(config.parsers_folder)
-    elif arguments['parse'] == True:
-            if arguments['<case_number>'].isdigit():
-                parse(arguments['<parser>'],arguments['<case_number>'])
-            else:
-                print('case number should be ... a number ...')
-    elif arguments['allparsers'] == True:
+    elif arguments['parse']:
+        if arguments['<case_number>'].isdigit():
+            parse(arguments['<parser>'], arguments['<case_number>'])
+        else:
+            print('case number should be ... a number ...')
+    elif arguments['allparsers']:
         if arguments['<case_number>'].isdigit():
             parse_all(arguments['<case_number>'])
         else:
             print('case number should be ... a number ...')
+
 
 """
    Call main function

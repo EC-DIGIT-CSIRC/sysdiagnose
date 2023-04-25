@@ -1,0 +1,30 @@
+name: Pycodestyle Lint
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  pycodestyle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pycodestyle
+
+      - name: Run pycodestyle
+        run: pycodestyle --exclude=venv --ignore=errors=E221,E225,E251,E501,E266 --max-line-length=128 .
+
