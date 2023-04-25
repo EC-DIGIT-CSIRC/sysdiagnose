@@ -24,14 +24,16 @@ from docopt import docopt
 from tabulate import tabulate
 
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing swcutil_show file"
 parser_input = "swcutil_show"
 parser_call = "parseswcutil"
 
-#--------------------------------------------#
+# --------------------------------------------#
+
+
 def parseswcutil(file):
     with open(file, 'r') as f_in:
         # init section
@@ -74,7 +76,6 @@ def parseswcutil(file):
                 memory.append(line.strip())
                 continue
 
-
         # call parsing function per section
         parsed_headers = parse_basic(headers)
         parsed_db = parse_db(db)
@@ -82,18 +83,20 @@ def parseswcutil(file):
         parsed_settings = parse_basic(settings)
         parsed_memory = parse_basic(memory)
 
-    return {'headers':parsed_headers,'db':parsed_db,'network':parsed_network,'settings':parsed_settings,'memory':parsed_memory}
+    return {'headers': parsed_headers, 'db': parsed_db, 'network': parsed_network, 'settings': parsed_settings, 'memory': parsed_memory}
+
 
 def parse_basic(data):
     output = {}
     for line in data:
-        splitted = line.split(":",1)
+        splitted = line.split(":", 1)
         if len(splitted) > 1:
             output[splitted[0]] = splitted[1].strip()
     return output
 
+
 def parse_db(data):
-    #init
+    # init
     db = []
     db_data = []
     for line in data:
@@ -103,7 +106,6 @@ def parse_db(data):
         else:
             db_data.append(line.strip())
     return db
-
 
 
 def main():
@@ -117,12 +119,12 @@ def main():
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
     ### test
-    if arguments['-i'] == True:
-    #Output is good enough, just print
+    if arguments['-i']:
+        # Output is good enough, just print
         with open(arguments['<file>'], 'r') as f_in:
             for line in f_in:
                 print(line.strip())
-        #parseswcutil(arguments['<file>'])
+        # parseswcutil(arguments['<file>'])
         exit()
     ### test
 
