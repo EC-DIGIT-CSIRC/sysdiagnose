@@ -10,16 +10,17 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-powerlogs.py v2020-20-19 Version 1.0"
 
-#----- definition for parsing.py script -----#
-#-----         DO NET DELETE             ----#
+# ----- definition for parsing.py script -----#
+# -----         DO NET DELETE             ----#
 
 parser_description = "Parsing  powerlogs database"
 parser_input = "powerlogs"
 parser_call = "get_powerlogs"
 
-#--------------------------------------------#
+# --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+
 
 def get_powerlogs(dbpath, ios_version=13):
     sys.path.append(os.path.abspath('../'))
@@ -55,7 +56,7 @@ def main():
                       help="./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL to be parsed")
     (options, args) = parser.parse_args()
 
-    #no arguments given by user, print help and exit
+    # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
@@ -63,6 +64,7 @@ def main():
     print_powerlogs(options.inputfile)
 
 # --------------------------------------------------------------------------- #
+
 
 """
    Call main function
