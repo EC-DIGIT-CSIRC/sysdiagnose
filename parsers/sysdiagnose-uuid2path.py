@@ -55,6 +55,13 @@ def printResult(json):
 
 
 def export_to_json(_dict, filename="./uuid2path.json"):
+    """
+    Save a dictionary to a JSON file.
+
+    Args:
+      _dict (dict): the data
+      filename (str): Name of the file to save it to.
+    """
     data = json.dumps(_dict, indent=4)
     try:
         with open(filename, "w") as fd:
