@@ -47,7 +47,6 @@ def printResult(json):
     """
         Print the hashtable produced by getUUID2Path to console as UUID, path
     """
-
     if json:
         for uuid in json.keys():
             print("%s, %s" % (str(uuid), str(json[uuid])))
@@ -55,17 +54,17 @@ def printResult(json):
     return
 
 
-def export_to_json(_json, filename="./uuid2path.json"):
-    data = json.dumps(_json, indent=4)
+def export_to_json(_dict, filename="./uuid2path.json"):
+    data = json.dumps(_dict, indent=4)
     try:
         with open(filename, "w") as fd:
             json.dump(data, fd)
     except Exception as e:
-        print(f"Impossible to dump the UUID to Path to {filename}. Reason: {str(e)}\n")
+        print(f"Could not dump the JSON dict to {filename}. Reason: {str(e)}\n")
     return
 
 
-def exportToMISP(json):
+def exportToMISP(json):     # XXX FIXME: to be deleted . Should be not in the parser
     """
         export the UUID and path to MISP
 
