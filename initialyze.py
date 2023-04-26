@@ -182,6 +182,11 @@ def init(sysdiagnose_file):
     except:        # noqa: E722
         pass
 
+    try:
+        new_case_json["wifisecurity"] = new_folder +glob.glob('./*/Wifi/security.txt')[0][1:]
+    except:        # noqa: E722
+        pass
+
     # ips files
     try:
         ips_files = glob.glob('./*/crashes_and_spins/*.ips')
