@@ -23,6 +23,7 @@ parser_call = "getProductInfo"
 
 
 # --------------------------------------------------------------------------- #
+# XXX FIXME: this is obviously a very generic function and could be generalized and moved to misc/
 
 def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=13):
     """
@@ -32,7 +33,7 @@ def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=
             "ProductionVersion" : "",
             "ProductBuildVersion" : ""
         }
-        Non populated field are filled with a None value
+        Non populated fields are filled with a None value
     """
     result = {
         "ProductName": None,
@@ -46,10 +47,10 @@ def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=
             if key in plist.keys():
                 result[key] = plist[key]
             else:
-                print("WARNING: %s not found in %s plist" % (key, path))
+                print(f"WARNING: {key} not found in plist file {path}. Ignoring key.", file=sys.stderr)
         fd.close()
     except Exception as e:
-        print("Impossible to parse %s: %s" % (path, str(e)))
+        print(f"Could not parse {path}. Reason: {str(e)}", file=sys.stderr)
     return result
 
 
@@ -58,7 +59,7 @@ def main():
         Main function, to be called when used as CLI tool
     """
     if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
+        print("Must be using Python 3! Exiting ...", file=sys.stderr)
         exit(-1)
 
     print("Running " + version_string + "\n")
@@ -66,18 +67,17 @@ def main():
     usage = "\n%prog -i inputfile\n"
 
     parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
+    parser.add_option("-i", dest="inputfile", action="store", type="string",
                       help="/logs/SystemVersion/SystemVersion.plist To Be Searched")
     (options, args) = parser.parse_args()
 
     if options.inputfile:
         pl = getProductInfo(options.inputfile)
-        print("ProductName = %s" % pl["ProductName"])
+        print("ProductName = %s" % pl["ProductName"])       # XXX #9 FIXME: should that return the structure instead of print() ing it?
         print("ProductVersion = %s" % pl["ProductVersion"])
         print("ProductBuildVersion = %s" % pl["ProductBuildVersion"])
     else:
-        print("WARNING -i option is mandatory!")
+        print("WARNING -i option is mandatory!", file=sys.stderr)
 
 
 # --------------------------------------------------------------------------- #
