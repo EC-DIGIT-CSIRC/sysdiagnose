@@ -11,7 +11,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose-powerlogs.py v2020-20-19 Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing  powerlogs database"
 parser_input = "powerlogs"
@@ -23,12 +23,13 @@ parser_call = "get_powerlogs"
 
 
 def get_powerlogs(dbpath, ios_version=13):
+    sys.path.append(os.path.abspath('./'))
     sys.path.append(os.path.abspath('../'))
     from utils import times
     from utils import sqlite2json
 
     powerlogs = sqlite2json.sqlite2struct(dbpath)
-    return sqlite2json.dump2json(powerlogs)
+    return powerlogs
 
 
 def print_powerlogs(inputfile):
@@ -60,7 +61,7 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
-    print(options.inputfile)
+    #print(options.inputfile)
     print_powerlogs(options.inputfile)
 
 # --------------------------------------------------------------------------- #
