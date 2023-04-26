@@ -44,7 +44,7 @@ def parse_ps(filename, ios_version=16):
             USER  UID PRSNA   PID  PPID        F  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
             root  0     -     1     0     4004   0.0  0.0   0  0        0      0 -        ??  ?s   Tue09PM   0:00.00 /sbin/launchd
             """
-            patterns = re.split("\s+", line)    # XXX FIXME? don't we need a \r" string here for the regexp?
+            patterns = re.split(r"\s+", line)    # XXX FIXME? don't we need a \r" string here for the regexp?
             # key of hash table is PID
             if (ios_version < 16):
                 processes[int(patterns[2])] = {"USER": patterns[0],

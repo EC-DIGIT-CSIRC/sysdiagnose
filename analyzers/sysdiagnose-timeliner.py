@@ -155,7 +155,7 @@ def __extract_ts_accessibility_tcc(filename):
 
 
 def __extract_ts_logarchive(filename):
-    """
+    r"""
         Entry format:
         {
             "traceID" : 4928246544425287684,
@@ -179,7 +179,7 @@ def __extract_ts_logarchive(filename):
             "bootUUID" : "2DF74FE0-4876-43B0-828B-F285FA4D42F5",
             "processImagePath" : "\/usr\/sbin\/wifid",
             "timestamp" : "2023-02-23 10:44:02.761747+0100",
-            "senderImagePath" : "\/System\/Library\/PrivateFrameworks\/WiFiPolicy.framework\/WiFiPolicy",   # XXX FIXME pycodestyle error W605
+            "senderImagePath" : "\/System\/Library\/PrivateFrameworks\/WiFiPolicy.framework\/WiFiPolicy",
             "machTimestamp" : 3208860279380,
             "messageType" : "Default",
             "processImageUUID" : "F972AB5A-6713-3F33-8675-E87C631497F6",
@@ -188,7 +188,7 @@ def __extract_ts_logarchive(filename):
             "parentActivityIdentifier" : 0,
             "timezoneName" : ""
         },
-    """
+    """         # XXX FIXME pycodestyle error W605 when not using python's r-strings. Are the backslashes actually there in the data?
     try:
         with open(filename, 'r') as fd:
             for line in fd:
