@@ -59,7 +59,7 @@ def export_to_json(json, filename="./uuid2path.json"):
     json_u2p = json.dumps(json, indent=4)
     try:
         fd = open(filename, "w")
-        fd.write(json_ps)       # XXX FIXME! What is json_ps?? XXX FIXME
+        fd.write(json_u2p)
         fd.close()
     except Exception as e:
         print(f"Impossible to dump the UUID to Path to {filename}. Reason: {str(e)}\n")
