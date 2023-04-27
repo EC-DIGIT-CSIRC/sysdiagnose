@@ -61,7 +61,7 @@ def analyse(analyser, caseid):
 
     # building command
     parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
-    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_formats
+    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_format
     command = "module.%s('%s', '%s')" % (module.analyser_call, parse_data_path, output_file)
     result = eval(command)
 
