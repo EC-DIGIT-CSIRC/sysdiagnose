@@ -61,13 +61,9 @@ def analyse(analyser, caseid):
 
     # building command
     parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
-    command = "module.%s('%s')" % (module.analyser_call, parse_data_path)
+    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_formats
+    command = "module.%s('%s', '%s')" % (module.analyser_call, parse_data_path, output_file)
     result = eval(command)
-
-    # saving the parser output
-    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_format
-    with open(output_file, 'w') as data_file:
-        data_file.write(result)
 
     print(f'Execution success, output saved in: {output_file}')
 

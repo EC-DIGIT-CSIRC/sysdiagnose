@@ -16,7 +16,7 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 # -----         DO NET DELETE             ----#
 
 analyser_description = "Generate a Timesketch compatible timeline"
-analyser_call = "parse_json"
+analyser_call = "generate_timeline"
 analyser_format = "jsonl"
 
 # Structure:
@@ -250,6 +250,15 @@ def save_timeline(timeline, ts_file):
                 f.write("%s\n" % line)
     except Exception as e:
         print("ERROR: impossible to save timeline to %s" % timeline)
+
+
+def generate_timeline(jsondir, filename):
+    """
+    Generate the timeline and save it to filename
+    """
+    timeline = parse_json(jsondir)
+    save_timeline(timeline, filename)
+    return
 
 
 # --------------------------------------------------------------------------- #
