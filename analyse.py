@@ -52,6 +52,32 @@ def list_analysers(folder):
     print(tabulate(lines, headers=headers))
 
 
+def analyse(analyser, caseid):
+    # Load parser module
+    spec = importlib.util.spec_from_file_location(analyser[:-3], config.analysers_folder + "/" + analyser + '.py')
+    print(spec, file=sys.stderr)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # building command
+    parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
+    command = "module.%s('%s')" % (module.analyser_call, parse_data_path)
+    result = eval(command)
+
+    # saving the parser output
+    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_format
+    with open(output_file, 'w') as data_file:
+        data_file.write(result)
+
+    print(f'Execution success, output saved in: {output_file}')
+
+    return 0
+
+
+def allanalysers(caseid):
+    print("NOT IMPLEMENTED")
+    return
+
 # --------------------------------------------------------------------------- #
 
 
@@ -68,6 +94,16 @@ def main():
         parsing.list_cases(config.cases_file)
     elif arguments['list'] and arguments['analysers']:
         list_analysers(config.analysers_folder)
+    elif arguments['analyse']:
+        if arguments['<case_number>'].isdigit():
+            analyse(arguments['<analyser>'], arguments['<case_number>'])
+        else:
+            print('case number should be ... a number ...')
+    elif arguments['allanalysers']:
+        if arguments['<case_number>'].isdigit():
+            allanalysers(arguments['<case_number>'])
+        else:
+            print('case number should be ... a number ...')
 
     print("Running " + version_string + "\n")
     return

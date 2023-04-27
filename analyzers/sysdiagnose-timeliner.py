@@ -17,6 +17,7 @@ version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 
 analyser_description = "Generate a Timesketch compatible timeline"
 analyser_call = "parse_json"
+analyser_format = "jsonl"
 
 # Structure:
 # filename : parsing_function
