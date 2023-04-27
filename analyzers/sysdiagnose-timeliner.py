@@ -191,8 +191,8 @@ def __extract_ts_logarchive(filename):
     """         # XXX FIXME pycodestyle error W605 when not using python's r-strings. Are the backslashes actually there in the data?
     try:
         with open(filename, 'r') as fd:
-            for line in fd:
-                trace = json.loads(line)
+            data = json.load(fd)
+            for trace in data["data"]:
                 try:
                     # create timeline entry
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
@@ -219,7 +219,6 @@ def parse_json(jsondir):
         Call all the functions defined to extract timestamp from various artifacts
         Return a JSON file compatible with TimeSketch
     """
-
     # Loop through all the files to check
     for parser in timestamps_files.keys():
         path = "%s/%s" % (jsondir, parser)
@@ -250,8 +249,6 @@ def save_timeline(timeline, ts_file):
 """
     Main function
 """
-
-
 def main():
 
     if sys.version_info[0] < 3:
