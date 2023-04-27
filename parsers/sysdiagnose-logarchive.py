@@ -54,7 +54,8 @@ def get_logs(filename, ios_version=13, output=None):
         On other system use a 3rd party library.
     """
     if (platform.system() == "Darwin"):
-        return get_logs_on_osx(filename, output)
+        data = get_logs_on_osx(filename, output)
+        return data
     else:
         outpath = "../tmp.data/"
         __cleanup(outpath)
@@ -113,31 +114,31 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
             - path to a file to write to
     """
     import subprocess
-    try:
-        cmd_array = command.split()
-        process = subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True)
-        resulttxt = ""
-        outfd = outfile
-        if (outfile is not None):  # if none just return the text with return
-            if (outfile is not sys.stdout):  # handle case were not printing to stdout
-                outfd = open(outfile, "w")
-        while True:
-            if (process.poll() is None):
-                output = process.stdout.readline()
-                if (output == ""):
-                    break
-                else:
-                    if (outfile is not None):
-                        outfd.write(output)
-                    resulttxt += output
-            else:
+    cmd_array = command.split()
+    process = subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True)
+    result = {"data": []}
+    outfd = outfile
+    if (outfile is not None):  # if none just return the text with return
+        if (outfile is not sys.stdout):  # handle case were not printing to stdout
+            outfd = open(outfile, "w")
+    while True:
+        if (process.poll() is None):
+            output = process.stdout.readline()
+            if (output == ""):
                 break
-        if ((outfd is not sys.stdout) and (outfd is not None)):
-            outfd.close()
-        return json.loads(resulttxt)
-    except Exception as e:
-        print("Impossible to parse %s: %s" % (filename, str(e)))
-    return False
+            else:
+                if (outfile is not None):
+                    outfd.write(output)
+                try:
+                    result['data'].append(json.loads(output))
+                except Exception as e:
+                    print("Something was not properly parsed : %s" % (str(e)))
+                # print(result)
+        else:
+            break
+    if ((outfd is not sys.stdout) and (outfd is not None)):
+        outfd.close()
+    return result
 
 
 # --------------------------------------------------------------------------- #
