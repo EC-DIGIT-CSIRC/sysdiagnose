@@ -12,6 +12,12 @@ from optparse import OptionParser
 
 version_string = "sysdiagnose-timeliner.py v2023-04-05 Version 0.1"
 
+# ----- definition for analyse.py script -----#
+# -----         DO NET DELETE             ----#
+
+analyser_description = "Generate a Timesketch compatible timeline"
+analyser_call = "parse_json"
+
 # Structure:
 # filename : parsing_function
 timestamps_files = {
