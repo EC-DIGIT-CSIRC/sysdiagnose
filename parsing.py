@@ -5,7 +5,7 @@
 # Parse extracted files
 # Also contains listing of existing cases and available parsers
 
-"""sysdiagnose intialize.
+"""sysdiagnose parse.
 
 Usage:
   parsing.py list (cases|parsers)

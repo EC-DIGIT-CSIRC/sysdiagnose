@@ -2,11 +2,30 @@
 
 # For Python3
 # Analyse the results produced by parsers
+
+"""sysdiagnose analyse.
+
+Usage:
+  analyse.py list (cases|analysers)
+  analyse.py analyse <analyser> <case_number>
+  analyse.py allanalysers <case_number>
+  analyse.py (-h | --help)
+  analyse.py --version
+
+Options:
+  -h --help     Show this screen.
+  -v --version     Show version.
+"""
+
+import config
+import parsing
+
 import os
 import sys
 import glob
-import tabulate
-import importlib
+import importlib.util
+from docopt import docopt
+from tabulate import tabulate
 
 version_string = "analyse.py v2023-04-27 Version 1.0"
 
@@ -32,18 +51,27 @@ def list_analysers(folder):
 
     print(tabulate(lines, headers=headers))
 
-# --------------------------------------------------------------------------- #
-"""
-    Main function
-"""
-def main():
 
+# --------------------------------------------------------------------------- #
+
+
+def main():
+    """
+    Main function
+    """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
         exit(-1)
 
+    arguments = docopt(__doc__, version=version_string)
+    if arguments['list'] and arguments['cases']:
+        parsing.list_cases(config.cases_file)
+    elif arguments['list'] and arguments['analysers']:
+        list_analysers(config.analysers_folder)
+
     print("Running " + version_string + "\n")
     return
+
 
 """
    Call main function
