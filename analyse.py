@@ -75,8 +75,16 @@ def analyse(analyser, caseid):
 
 
 def allanalysers(caseid):
-    print("NOT IMPLEMENTED")
-    return
+    os.chdir(config.analysers_folder)
+    modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
+    os.chdir('..')
+    for analyser in modules:
+        try:
+            print('Trying: ' + analyser[:-3])
+            analyse(analyser[:-3], caseid)
+        except:     # noqa: E722
+            continue
+    return 0
 
 # --------------------------------------------------------------------------- #
 
