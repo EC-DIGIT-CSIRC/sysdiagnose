@@ -61,7 +61,7 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help()
         exit(-1)
-    #print(options.inputfile)
+    # print(options.inputfile)
     print_powerlogs(options.inputfile)
 
 # --------------------------------------------------------------------------- #
