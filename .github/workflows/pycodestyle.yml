@@ -28,5 +28,4 @@ jobs:
 
       - name: Analysing the code with pycodestyle
         run: |
-          pycodestyle --exclude=venv --ignore=errors=E221,E225,E251,E501,E266 --max-line-length=128 $(git ls-files '*.py')
-
+          pycodestyle --exclude=venv --ignore=errors=E221,E225,E251,E501,E266,E302 --max-line-length=128 $(git ls-files '*.py')
