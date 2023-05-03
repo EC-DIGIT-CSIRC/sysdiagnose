@@ -1,14 +1,73 @@
-# virtual envs
-.venv/*
-venv/*
-.env/*
-
 # generated data
 data/*
 cases.json
 parsed_data/*
 
-# pycache
-__pycache__/*
+# Byte-compiled / optimized / DLL files
+__pycache__/
 parsers/__pycache__/*
 utils/__pycache__/*
+*.pyc
+*.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# PyInstaller
+# Usually these files are written by a python script from a template
+# before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Virtual environment
+venv/
+ENV/
+env/
+env.bak/
+.venv/
+venv/
+.env/
+.virtualenv/
+.virtualenvs/
+.pyenv/
+
+# PyCharm project settings
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*.swn
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
