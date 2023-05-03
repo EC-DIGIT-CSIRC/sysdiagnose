@@ -52,9 +52,9 @@ def print_appinstall_ios12(dbpath):
             # pid =  struct.pack('>I', pid)
 
             # print result
-            print("%s,%s,%s" % (pid, bundle_id, utctime))
+            print(f"{pid},{bundle_id},{utctime}")
     except Exception as e:
-        print(f"AN UNHANDLED ERRORS OCCURS AND THE DB WAS NOT PARSED. Reason: {str(e)}")
+        print(f"AN UNHANDLED ERROR OCCURED AND THE DB WAS NOT PARSED. Reason: {str(e)}")
 
 
 def get_appinstallation_ios13(dbpath):
@@ -76,7 +76,7 @@ def main():
         print("Must be using Python 3! Exiting ...")
         sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 

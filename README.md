@@ -3,6 +3,8 @@ Sysdiagnose timeliner
 
 # Installation
 
+Note that you will need Python 3.6 or higher.
+
 Create a virtual environment:
 
 ```bash
@@ -56,6 +58,7 @@ Execution success, output saved in: ./parsed_data/1/sysdiagnose-sys.json
 ```
 
 Tested On:
+- python 3.10
 - iOS13
 - iOS14
 - iOS16 (ongoing)

@@ -57,7 +57,7 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
