@@ -39,7 +39,7 @@ cmd_parsing_osx = "/usr/bin/log show %s --style ndjson"  # fastest and short ver
 # Linux parsing relies on UnifiedLogReader:
 #       https://github.com/ydkhatri/UnifiedLogReader
 # 3x the same path, last = output
-cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py -l INFO -f SQLITE %s %s/timesync/ %s %s"
+cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py -l INFO -f SQLITE %s %s/timesync/ %s %s"   # FIXME #17 what is that?
 #   -f FORMAT, --output_format FORMAT
 #                        Output format: SQLITE, TSV_ALL, LOG_DEFAULT  (Default is LOG_DEFAULT)
 #  -l LOG_LEVEL, --log_level LOG_LEVEL
@@ -48,7 +48,7 @@ cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py
 # --------------------------------------------------------------------------- #
 
 
-def get_logs(filename, ios_version=13, output=None):
+def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard coded default version?
     """
         Parse the system_logs.logarchive.  When running on OS X, use native tools.
         On other system use a 3rd party library.
