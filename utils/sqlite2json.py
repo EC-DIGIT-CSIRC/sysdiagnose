@@ -60,7 +60,7 @@ def table2struct(dbfd, tablename):
         line = []
         ptr = 0
         for element in row:
-            if (type(element) not in ["str", "int", "float", "bool"]):
+            if not isinstance(element, (str, int, float, bool)):
                 element = str(element)
             line.append({column_names[ptr]: element})
             ptr = ptr + 1
@@ -71,9 +71,8 @@ def table2struct(dbfd, tablename):
 def dump2json(dbstruct, jsonpath="./db.json"):
     jsontxt = json.dumps(dbstruct, indent=4)
     try:
-        fd = open(jsonpath, "w")
-        fd.write(jsontxt)
-        fd.close()
+        with jsonpath.open("w") as fd:
+            fd.write(jsontxt)
     except Exception as e:
         print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n", file=sys.stderr)
     return jsontxt
