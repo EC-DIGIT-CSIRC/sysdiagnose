@@ -91,7 +91,7 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     arguments = docopt(__doc__, version=version_string)
     if arguments['list'] and arguments['cases']:
