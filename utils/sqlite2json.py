@@ -83,7 +83,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 def main():
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...", file=sys.stderr)
-        exit(-1)
+        sys.exit(-1)
 
     usage = "\n%prog -i inputfile\n"
 
@@ -99,7 +99,7 @@ def main():
         print(sqlite2struct(options.inputfile))
     else:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
     return
 
 

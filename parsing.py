@@ -105,7 +105,7 @@ def parse(parser, case_id):
             case = json.load(f)
     except:     # noqa: E722
         print('error opening case file', file=sys.stderr)
-        exit()
+        sys.exit()
 
     # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
 

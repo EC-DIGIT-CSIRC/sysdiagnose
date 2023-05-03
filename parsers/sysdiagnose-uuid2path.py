@@ -84,7 +84,7 @@ def exportToMISP(json):     # XXX FIXME: to be deleted . Should be not in the pa
 def main():
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     usage = "\n%prog -i inputfile\n"
 
@@ -100,7 +100,7 @@ def main():
         printResult(getUUID2path(options.inputfile))
     else:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
     return
 
 

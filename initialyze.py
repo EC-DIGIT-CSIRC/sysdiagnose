@@ -44,7 +44,7 @@ def init(sysdiagnose_file):
             cases = json.load(f)
     except Exception as e:
         print(f'error opening cases json file - check config.py. Failure reason: f{str(e)}')
-        exit()
+        sys.exit()
 
     # calculate sha256 of sysdiagnose file and compare with past cases
     try:
@@ -60,14 +60,14 @@ def init(sysdiagnose_file):
         case_id = max(case_id, case['case_id'])
         if readable_hash == case['source_sha256']:
             print('this sysdiagnose has already been extracted : caseID:' + str(case['case_id']))
-            exit()
+            sys.exit()
 
     # test sysdiagnose file
     try:
         tf = tarfile.open(sysdiagnose_file)
     except Exception as e:
         print(f'error opening sysdiagnose file. Reason: {str(e)}')
-        exit()
+        sys.exit()
 
     # if sysdiagnose file is new and legit, create new case and extract files
     # create case dictionnary
@@ -244,7 +244,7 @@ def init(sysdiagnose_file):
         new_case_json['ios_version']=version
     except Exception as e:
         print(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
-        exit()
+        sys.exit()
 
     # Save JSON file
     with open(new_case['case_file'], 'w') as data_file:
@@ -285,7 +285,7 @@ def main():
 
     if sys.version_info[0] < 3:
         print("Still using Python 2 ?!?")
-        exit(-1)
+        sys.exit(-1)
 
     arguments = docopt(__doc__, version=f'Sysdiagnose initialize script {version}')
 
@@ -296,7 +296,7 @@ def main():
             init(arguments['<sysdiagnose_file>'])
         else:
             print('file not found')
-            exit()
+            sys.exit()
 
 
 """

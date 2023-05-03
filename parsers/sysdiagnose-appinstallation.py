@@ -74,7 +74,7 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     print("Running " + version_string + "\n")
 
@@ -89,7 +89,7 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
     get_appinstallation(options.inputfile)
 
