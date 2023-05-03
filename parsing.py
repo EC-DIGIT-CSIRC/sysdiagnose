@@ -43,7 +43,7 @@ def list_cases(case_file):
         print(f'error opening cases json file - check config.py. Reason: {str(e)}', file=sys.stderr)
         sys.exit()
 
-    print('#### case List ####')
+    print("#### case List ####")
     headers = ['Case ID', 'Source file', 'SHA256']
     lines = []
     for case in cases['cases']:
@@ -96,7 +96,7 @@ def parse(parser, case_id):
             case_file = case['case_file']
 
     if case_file == '':
-        print('Case ID not found', file=sys.stderr)
+        print("Case ID not found", file=sys.stderr)
         sys.exit()
 
     # Load case file
@@ -104,7 +104,7 @@ def parse(parser, case_id):
         with open(case_file, 'r') as f:
             case = json.load(f)
     except:     # noqa: E722
-        print('error opening case file', file=sys.stderr)
+        print("error opening case file", file=sys.stderr)
         sys.exit()
 
     # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
@@ -153,7 +153,7 @@ def parse_all(case_id):
     os.chdir('..')
     for parser in modules:
         try:
-            print('Trying: ' + parser[:-3], file=sys.stderr)
+            print(f"Trying: {parser[:-3]}", file=sys.stderr)
             parse(parser[:-3], case_id)
         except:     # noqa: E722
             continue
@@ -183,12 +183,12 @@ def main():
         if arguments['<case_number>'].isdigit():
             parse(arguments['<parser>'], arguments['<case_number>'])
         else:
-            print('case number should be ... a number ...', file=sys.stderr)
+            print("case number should be ... a number ...", file=sys.stderr)
     elif arguments['allparsers']:
         if arguments['<case_number>'].isdigit():
             parse_all(arguments['<case_number>'])
         else:
-            print('case number should be ... a number ...', file=sys.stderr)
+            print("case number should be ... a number ...", file=sys.stderr)
 
 
 """

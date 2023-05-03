@@ -113,7 +113,7 @@ def main():
 
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     arguments = docopt(__doc__, version='parser for container manager log files v0.1')
 
@@ -126,7 +126,7 @@ def main():
         events = parsecontainermanager(loglist)
         print(json.dumps(events, indent=4))
         # except:
-        #    print('error retrieving log files')
+        #    print("error retrieving log files")
     # test
 
     return 0

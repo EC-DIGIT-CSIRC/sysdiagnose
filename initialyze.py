@@ -59,7 +59,7 @@ def init(sysdiagnose_file):
         # Take the opportunity to find the highest case_id
         case_id = max(case_id, case['case_id'])
         if readable_hash == case['source_sha256']:
-            print('this sysdiagnose has already been extracted : caseID:' + str(case['case_id']))
+            print(f"this sysdiagnose has already been extracted : caseID: {str(case['case_id'])}")
             sys.exit()
 
     # test sysdiagnose file
@@ -256,8 +256,8 @@ def init(sysdiagnose_file):
     with open(config.cases_file, 'w') as data_file:
         data_file.write(json.dumps(cases, indent=4))
 
-    print('Sysdiagnose file has been processed')
-    print('New case ID: ' + str(new_case['case_id']))
+    print("Sysdiagnose file has been processed")
+    print(f"New case ID: {str(new_case['case_id'])}")
 
 
 """
@@ -295,7 +295,7 @@ def main():
         if os.path.realpath(arguments['<sysdiagnose_file>']):
             init(arguments['<sysdiagnose_file>'])
         else:
-            print('file not found')
+            print("file not found")
             sys.exit()
 
 

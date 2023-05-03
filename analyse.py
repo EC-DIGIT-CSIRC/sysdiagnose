@@ -76,7 +76,7 @@ def allanalysers(caseid):
     os.chdir('..')
     for analyser in modules:
         try:
-            print('Trying: ' + analyser[:-3], file=sys.stderr)
+            print(f'Trying: {analyser[:-3]}', file=sys.stderr)
             analyse(analyser[:-3], caseid)
         except:     # noqa: E722
             continue
@@ -102,14 +102,14 @@ def main():
         if arguments['<case_number>'].isdigit():
             analyse(arguments['<analyser>'], arguments['<case_number>'])
         else:
-            print('case number should be ... a number ...', file=sys.stderr)
+            print("case number should be ... a number ...", file=sys.stderr)
     elif arguments['allanalysers']:
         if arguments['<case_number>'].isdigit():
             allanalysers(arguments['<case_number>'])
         else:
-            print('case number should be ... a number ...', file=sys.stderr)
+            print("case number should be ... a number ...", file=sys.stderr)
 
-    print("Running " + version_string + "\n", file=sys.stderr)
+    print(f"Running {version_string}\n", file=sys.stderr)
     return
 
 

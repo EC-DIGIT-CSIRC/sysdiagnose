@@ -26,7 +26,7 @@ def getNetExtCache(filename, ios_version=13):
                 for key, list1 in pl["app-rules"].items():
                     result.append([str(key), list1])
     except Exception as e:
-        print("Impossible to parse %s: %s" % (filename, str(e)))
+        print(f"Impossible to parse {filename}. Reason: {str(e)}")
     return result
 
 
@@ -35,7 +35,7 @@ def getNetExtCache(filename, ios_version=13):
 def main():
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
     usage = "\n%prog -i inputfile\n"
 
@@ -51,9 +51,9 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     result = getNetExtCache(options.inputfile)
     count = 0
@@ -65,7 +65,7 @@ def main():
         else:
             print(str(key))   # just app names
 
-    print("\n" + str(count) + " cache entries retrieved\n")
+    print(f"\n {str(count)} cache entries retrieved\n")
 
 
 """

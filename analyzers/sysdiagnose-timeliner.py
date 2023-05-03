@@ -57,8 +57,7 @@ def __extract_ts_mobileactivation(filename):
                 return False
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" % filename)
-        print(e)
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
@@ -71,8 +70,7 @@ def __extract_ts_powerlogs(filename):
             # -- IMPLEMENT HERE --
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" % filename)
-        print(e)
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
@@ -108,8 +106,7 @@ def __extract_ts_swcutil(filename):
                     timeline.append(ts_event)
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" % filename)
-        print(e)
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
@@ -155,8 +152,7 @@ def __extract_ts_accessibility_tcc(filename):
                     timeline.append(ts_event)
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" % filename)
-        print(e)
+        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
         return False
     return False
 
@@ -212,11 +208,10 @@ def __extract_ts_logarchive(filename):
                     }
                     timeline.append(ts_event)
                 except Exception as e:
-                    print("WARNING: trace not parsed: %s" % trace)
+                    print(f"WARNING: trace not parsed: {trace}")
         return True
     except Exception as e:
-        print("ERROR while extracting timestamp from %s" % filename)
-        print(e)
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
@@ -249,7 +244,7 @@ def save_timeline(timeline, ts_file):
                 line = json.dumps(event)
                 f.write("%s\n" % line)
     except Exception as e:
-        print("ERROR: impossible to save timeline to %s" % timeline)
+        print(f"ERROR: impossible to save timeline to {timeline}. Reason: {str(e)}")
 
 
 def generate_timeline(jsondir, filename):
@@ -271,7 +266,7 @@ def main():
         print("Must be using Python 3! Exiting ...")
         sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -d JSON directory\n"
 

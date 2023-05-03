@@ -32,7 +32,7 @@ def sqlite2struct(dbpath):
             dbstruct[table] = content
         return dbstruct
     except Exception as e:
-        print("Impossible to parse %s: %s" % (dbpath, str(e)), file=sys.stderr)
+        print(f"Could not parse {dbpath}. Reason: {str(e)}", file=sys.stderr)
     return None
 
 
@@ -95,7 +95,7 @@ def main():
 
     # no arguments given by user, print help and exit
     if options.inputfile:
-        print("Running " + version_string + "\n")
+        print(f"Running {version_string}\n")
         print(sqlite2struct(options.inputfile))
     else:
         parser.print_help()

@@ -39,7 +39,7 @@ def getUUID2path(filename, ios_version=13):
             fp.close()
             return uuid2path
     except Exception as e:
-        print("Impossible to parse %s: %s" % (filename, str(e)))
+        print(f"Could not parse {filename}. Reason: {str(e)}")
     return None
 
 
@@ -49,8 +49,8 @@ def printResult(json):
     """
     if json:
         for uuid in json.keys():
-            print("%s, %s" % (str(uuid), str(json[uuid])))
-    print("\n %s GUIDs found\n" % str(len(json.keys())))
+            print(f"{str(uuid)}, {str(json[uuid])}")
+    print(f"\n {str(len(json.keys()))} GUIDs found\n")
     return
 
 
@@ -96,7 +96,7 @@ def main():
 
     # no arguments given by user, print help and exit
     if options.inputfile:
-        print("Running " + version_string + "\n")
+        print(f"Running {version_string}\n")
         printResult(getUUID2path(options.inputfile))
     else:
         parser.print_help()

@@ -106,7 +106,7 @@ def saveJson(text, output):
 def get_olddsc(folder, ios_version=13, output=sys.stdout):
     # check if folder exists and is really a folder
     if (not (os.path.exists(folder) and os.path.isdir(folder))):
-        print("%s is not a valid folder!" % folder)
+        print(f"{folder} is not a valid folder!")
         return False
     # list all files in the folder and parse files
     # r=root, d=directories, f = files
@@ -127,9 +127,9 @@ def main():
 
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 
@@ -142,7 +142,7 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
     # parse PS file :)
     if options.inputfile:

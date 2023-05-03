@@ -44,9 +44,9 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 
@@ -59,7 +59,7 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
     print_itunesstore(options.inputfile)
 

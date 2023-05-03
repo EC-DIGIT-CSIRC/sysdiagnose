@@ -38,7 +38,7 @@ def main():
         print("Must be using Python 3! Exiting ...")
         exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -d JSON directory\n"
 
@@ -54,7 +54,7 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
     if options.inputdir:
         # do something

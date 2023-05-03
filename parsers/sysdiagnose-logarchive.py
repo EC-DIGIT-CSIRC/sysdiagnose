@@ -100,7 +100,7 @@ def normalize_unified_logs(filename="./unifiedlogs.sqlite", output=sys.stdout):
         if (outfd is not sys.stdout):
             outfd.close()
     except Exception as e:
-        print("Impossible to convert %s to JSON (%s)" % (filename, str(e)))
+        print(f"Impossible to convert {filename} to JSON. Reason: {str(e)}")
     return
 
 
@@ -132,7 +132,7 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
                 try:
                     result['data'].append(json.loads(output))
                 except Exception as e:
-                    print("Something was not properly parsed : %s" % (str(e)))
+                    print(f"Something was not properly parsed : {str(e)}")
                 # print(result)
         else:
             break
@@ -151,9 +151,9 @@ def main():
 
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...")
-        exit(-1)
+        sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 
@@ -169,7 +169,7 @@ def main():
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
-        exit(-1)
+        sys.exit(-1)
 
     # parse PS file :)
     if options.inputfile:

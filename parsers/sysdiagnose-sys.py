@@ -60,9 +60,9 @@ def main():
     """
     if sys.version_info[0] < 3:
         print("Must be using Python 3! Exiting ...", file=sys.stderr)
-        exit(-1)
+        sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 
@@ -73,9 +73,9 @@ def main():
 
     if options.inputfile:
         pl = getProductInfo(options.inputfile)
-        print("ProductName = %s" % pl["ProductName"])       # XXX #9 FIXME: should that return the structure instead of print() ing it?
-        print("ProductVersion = %s" % pl["ProductVersion"])
-        print("ProductBuildVersion = %s" % pl["ProductBuildVersion"])
+        print(f"ProductName = {pl['ProductName']}")       # XXX #9 FIXME: should that return the structure instead of print() ing it?
+        print(f"ProductVersion = {pl['ProductVersion']}")
+        print(f"ProductBuildVersion = {pl['ProductBuildVersion']}")
     else:
         print("WARNING -i option is mandatory!", file=sys.stderr)
 

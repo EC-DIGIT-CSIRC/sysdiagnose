@@ -79,8 +79,7 @@ def get_wifi_security_log(filepath, ios_version=16):
                 wifi_el = {}
         fd.close()
     except Exception as e:
-        print("Impossible to parse: %s" % filepath)
-        print(e)
+        print(f"Could not parse: {filepath}. Reason: {str(e)}")
     return wifi
 
 
@@ -94,7 +93,7 @@ def main():
         print("Must be using Python 3! Exiting ...")
         sys.exit(-1)
 
-    print("Running " + version_string + "\n")
+    print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
 
