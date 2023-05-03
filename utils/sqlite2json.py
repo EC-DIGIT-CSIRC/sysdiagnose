@@ -32,7 +32,7 @@ def sqlite2struct(dbpath):
             dbstruct[table] = content
         return dbstruct
     except Exception as e:
-        print("Impossible to parse %s: %s" % (dbpath, str(e)))
+        print("Impossible to parse %s: %s" % (dbpath, str(e)), file=sys.stderr)
     return None
 
 
@@ -75,7 +75,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
         fd.write(jsontxt)
         fd.close()
     except Exception as e:
-        print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n")
+        print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n", file=sys.stderr)
     return jsontxt
 
 # --------------------------------------------------------------------------- #
@@ -83,7 +83,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 
 def main():
     if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
+        print("Must be using Python 3! Exiting ...", file=sys.stderr)
         exit(-1)
 
     usage = "\n%prog -i inputfile\n"
