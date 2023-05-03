@@ -58,7 +58,7 @@ Execution success, output saved in: ./parsed_data/1/sysdiagnose-sys.json
 ```
 
 Tested On:
-- python 3.10
+- python 3.8.5, 3.10
 - iOS13
 - iOS14
 - iOS16 (ongoing)
