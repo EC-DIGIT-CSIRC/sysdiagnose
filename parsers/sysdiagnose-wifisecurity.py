@@ -89,9 +89,6 @@ def main():
     """
         Main function, to be called when used as CLI tool
     """
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
 
     print(f"Running {version_string}\n")
 

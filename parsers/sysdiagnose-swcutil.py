@@ -112,9 +112,6 @@ def main():
     """
         Main function, to be called when used as CLI tool
     """
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        exit(-1)
 
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
@@ -125,7 +122,7 @@ def main():
             for line in f_in:
                 print(line.strip())
         # parseswcutil(arguments['<file>'])
-        exit()
+        sys.exit()
     ### test
 
     return 0

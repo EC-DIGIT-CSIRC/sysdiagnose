@@ -257,14 +257,12 @@ def generate_timeline(jsondir, filename):
 
 
 # --------------------------------------------------------------------------- #
-"""
-    Main function
-"""
-def main():
 
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
+
+def main():
+    """
+        Main function
+    """
 
     print(f"Running {version_string}\n")
 

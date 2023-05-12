@@ -125,9 +125,6 @@ def get_olddsc(folder, ios_version=13, output=sys.stdout):
 
 def main():
 
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
 
     print(f"Running {version_string}\n")
 

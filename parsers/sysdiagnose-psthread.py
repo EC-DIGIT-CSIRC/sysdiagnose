@@ -50,9 +50,6 @@ def parse_ps_thread(filename, ios_version=13):
 
 def main():
 
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
 
     print(f"Running {version_string}\n")
 

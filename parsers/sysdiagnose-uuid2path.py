@@ -82,9 +82,6 @@ def exportToMISP(json):     # XXX FIXME: to be deleted . Should be not in the pa
 
 
 def main():
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
 
     usage = "\n%prog -i inputfile\n"
 

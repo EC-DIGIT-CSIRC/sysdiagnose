@@ -167,9 +167,6 @@ def generate_graph(processes):
 
 def main():
 
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        sys.exit(-1)
 
     print(f"Running {version_string}\n")
 
