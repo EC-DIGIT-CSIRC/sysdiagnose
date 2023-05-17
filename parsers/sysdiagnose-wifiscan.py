@@ -35,29 +35,27 @@ parser_call = "parsewifiscan"
 def parsewifiscan(wifi_data):
     output = []
     for data in wifi_data:
-      if data.endswith('.txt'):
-        print('parsing: ' + data)
-        with open(data, 'r') as f:
-            for line in f:
-                if line.strip():
-                    content = line.split(',')
-                    # check if the first entry of the dict contains the ssid
-                    if 'ssid=' in content[0]:
-                        parsed_data = {}
-                        for item in content:
-                            key_value = item.split("=")
-                            parsed_data[key_value[0].strip()] = key_value[1]
-                        # cleaning SSID entries
-                        for key in parsed_data.copy().keys():
-                            if ' - ssid' in key:
-                                up_parsed_data = {'ssid': re.sub(' - ssid', '', key), 'ssid_hex': parsed_data[key]}
-                                del parsed_data[key]
-                                up_parsed_data.update(parsed_data)
-                                parsed_data = up_parsed_data
-                        output.append(parsed_data)
+        if data.endswith('.txt'):
+            print('parsing: ' + data)
+            with open(data, 'r') as f:
+                for line in f:
+                    if line.strip():
+                        content = line.split(',')
+                        # check if the first entry of the dict contains the ssid
+                        if 'ssid=' in content[0]:
+                            parsed_data = {}
+                            for item in content:
+                                key_value = item.split("=")
+                                parsed_data[key_value[0].strip()] = key_value[1]
+                            # cleaning SSID entries
+                            for key in parsed_data.copy().keys():
+                                if ' - ssid' in key:
+                                    up_parsed_data = {'ssid': re.sub(' - ssid', '', key), 'ssid_hex': parsed_data[key]}
+                                    del parsed_data[key]
+                                    up_parsed_data.update(parsed_data)
+                                    parsed_data = up_parsed_data
+                            output.append(parsed_data)
     return output
-
-
 
 # --------------------------------------------------------------------------- #
 
@@ -69,10 +67,10 @@ def main():
     arguments = docopt(__doc__, version='parser for container manager log files v0.1')
 
     if arguments['-i']:
-       # list scan files in folder and build a list
-       scanlist = glob.glob(arguments['<logfolder>'] + '/wifi_scan*.txt')
-       output = parsewifiscan(scanlist)
-       print(json.dumps(output, indent=4))
+        # list scan files in folder and build a list
+        scanlist = glob.glob(arguments['<logfolder>'] + '/wifi_scan*.txt')
+        output = parsewifiscan(scanlist)
+        print(json.dumps(output, indent=4))
 
 # --------------------------------------------------------------------------- #
 
