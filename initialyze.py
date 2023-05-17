@@ -8,7 +8,7 @@
 """sysdiagnose initialize.
 
 Usage:
-  initialyze.py file <sysdiagnose_file>
+  initialyze.py file <sysdiagnose_file> [--force]
   initialyze.py (-h | --help)
   initialyze.py --version
 
@@ -37,7 +37,7 @@ version = get_version()
 """
 
 
-def init(sysdiagnose_file):
+def init(sysdiagnose_file, force=False):
     # open case json file
     try:
         with open(config.cases_file, 'r') as f:
@@ -59,8 +59,11 @@ def init(sysdiagnose_file):
         # Take the opportunity to find the highest case_id
         case_id = max(case_id, case['case_id'])
         if readable_hash == case['source_sha256']:
-            print(f"this sysdiagnose has already been extracted : caseID: {str(case['case_id'])}")
-            sys.exit()
+            if force:
+                case_id = case['case_id'] -1
+            else:
+                print(f"this sysdiagnose has already been extracted : caseID: {str(case['case_id'])}")
+                sys.exit()
 
     # test sysdiagnose file
     try:
@@ -183,9 +186,27 @@ def init(sysdiagnose_file):
         pass
 
     try:
-        new_case_json["wifisecurity"] = new_folder +glob.glob('./*/Wifi/security.txt')[0][1:]
+        new_case_json["wifisecurity"] = new_folder +glob.glob('./*/WiFi/security.txt')[0][1:]
     except:        # noqa: E722
         pass
+
+    # wifi data
+    try:
+        # plists
+        wifi_plist = glob.glob('./*/WiFi/*.plist')
+        wifi_data_fullpath = []
+        for data in wifi_plist:
+            data = new_folder +data[1:]
+            wifi_data_fullpath.append(data)
+        # scans
+        wifi_scans = glob.glob('./*/WiFi/wifi_scan_*.txt')
+        for scans in wifi_scans:
+            scans = new_folder +scans[1:]
+            wifi_data_fullpath.append(scans)
+        new_case_json["wifi_data"] = wifi_data_fullpath
+    except:        # noqa: E722
+        pass
+
 
     # ips files
     try:
@@ -293,7 +314,7 @@ def main():
 
     if arguments['file']:
         if os.path.realpath(arguments['<sysdiagnose_file>']):
-            init(arguments['<sysdiagnose_file>'])
+            init(arguments['<sysdiagnose_file>'], arguments['--force'])
         else:
             print("file not found")
             sys.exit()
