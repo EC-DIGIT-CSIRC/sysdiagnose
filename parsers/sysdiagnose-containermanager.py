@@ -110,8 +110,7 @@ def main():
     """
         Main function, to be called when used as CLI tool
     """
-
-
+    # Parse arguments
     arguments = docopt(__doc__, version='parser for container manager log files v0.1')
 
     loglist=[]

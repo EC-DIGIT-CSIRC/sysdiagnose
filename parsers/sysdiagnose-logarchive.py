@@ -148,7 +148,6 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
 
 def main():
 
-
     print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"

@@ -50,7 +50,6 @@ def parse_ps_thread(filename, ios_version=13):
 
 def main():
 
-
     print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"

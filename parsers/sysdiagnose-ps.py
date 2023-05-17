@@ -167,7 +167,6 @@ def generate_graph(processes):
 
 def main():
 
-
     print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"

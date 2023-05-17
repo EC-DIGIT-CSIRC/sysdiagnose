@@ -125,7 +125,6 @@ def get_olddsc(folder, ios_version=13, output=sys.stdout):
 
 def main():
 
-
     print(f"Running {version_string}\n")
 
     usage = "\n%prog -i inputfile\n"
