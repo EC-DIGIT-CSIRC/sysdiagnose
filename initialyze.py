@@ -199,7 +199,7 @@ def init(sysdiagnose_file, force=False):
             data = new_folder +data[1:]
             wifi_data_fullpath.append(data)
         # scans
-        wifi_scans = glob.glob('./*/WiFi/wifi_scan_*.txt')
+        wifi_scans = glob.glob('./*/WiFi/wifi_scan*.txt')
         for scans in wifi_scans:
             scans = new_folder +scans[1:]
             wifi_data_fullpath.append(scans)
@@ -251,7 +251,7 @@ def init(sysdiagnose_file, force=False):
     except:        # noqa: E722
         pass
 
-    print(json.dumps(new_case_json, indent=4))
+    # print(json.dumps(new_case_json, indent=4))
 
     # Get iOS version
     if config.debug:

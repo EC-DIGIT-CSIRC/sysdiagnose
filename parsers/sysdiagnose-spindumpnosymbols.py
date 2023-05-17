@@ -26,7 +26,7 @@ import re
 import pprint
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing spindump-nosymbols file"
 parser_input = "spindump-nosymbols"
