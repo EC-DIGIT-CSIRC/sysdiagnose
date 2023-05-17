@@ -207,7 +207,6 @@ def init(sysdiagnose_file, force=False):
     except:        # noqa: E722
         pass
 
-
     # ips files
     try:
         ips_files = glob.glob('./*/crashes_and_spins/*.ips')
