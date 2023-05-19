@@ -25,7 +25,7 @@ timestamps_files = {
     "sysdiagnose-accessibility-tcc.json": "__extract_ts_accessibility_tcc",
     # itunesstore: TODO
     "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
-    # "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
+    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs",
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
     "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
@@ -65,14 +65,61 @@ def __extract_ts_powerlogs(filename):
     try:
         with open(filename, 'r') as fd:
             data = json.load(fd)
-            print("ERROR: not implemented!!")
-            # -- IMPLEMENT HERE --
+            
+            # extract tables of interest
+            __extract_ts_powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(data)  # PLProcessMonitorAgent_EventPoint_ProcessExit
+            __extract_ts_powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(data)  # PLProcessMonitorAgent_EventBackward_ProcessExitHistogram
+            __extract_ts_powerlogs__PLAccountingOperator_EventNone_Nodes(data)  # PLAccountingOperator_EventNone_Nodes
         return True
     except Exception as e:
         print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
+
+def __extract_ts_powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
+    proc_exit = jdata["PLProcessMonitorAgent_EventPoint_ProcessExit"]
+    for proc in proc_exit:
+        timestamp = datetime.fromtimestamp(int(proc["timestamp"]))
+        ts_event = {
+            "message": proc["ProcessName"],
+            "timestamp": timestamp.timestamp(),
+            "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+            "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (proc["ReasonCode"], proc["ReasonNamespace"]),
+            "extra_field_1": "Is permanent: %d" % proc["IsPermanent"],
+        }
+        timeline.append(ts_event)
+    return
+
+
+def __extract_ts_powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(jdata):
+    events = jdata["PLProcessMonitorAgent_EventBackward_ProcessExitHistogram"]
+    for event in events:
+        timestamp = datetime.fromtimestamp(int(event["timestamp"]))
+        ts_event = {
+            "message": event["ProcessName"],
+            "timestamp": timestamp.timestamp(),
+            "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+            "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (event["ReasonCode"], event["ReasonNamespace"]),
+            "extra_field_1": "Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d" % (event["0s-5s"], event["5s-10s"], event["10s-60s"], event["60s+"])
+        }
+        timeline.append(ts_event)
+    return
+
+
+def __extract_ts_powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
+    eventnone = jdata["PLAccountingOperator_EventNone_Nodes"]
+    for event in eventnone:
+        timestamp = datetime.fromtimestamp(int(event["timestamp"]))
+        ts_event = {
+            "message": event["Name"],
+            "timestamp": timestamp.timestamp(),
+            "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+            "timestamp_desc": "PLAccountingOperator Event",
+            "extra_field_1": "Is permanent: %d" % event["IsPermanent"]
+        }
+        timeline.append(ts_event)
+    return
 
 def __extract_ts_swcutil(filename):
     """
