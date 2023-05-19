@@ -25,7 +25,7 @@ timestamps_files = {
     "sysdiagnose-accessibility-tcc.json": "__extract_ts_accessibility_tcc",
     # itunesstore: TODO
     "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
-    "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs",
+    "sysdiagnose-powerlogs.json": "__extract_ts_powerlogs",
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
     "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
@@ -65,7 +65,7 @@ def __extract_ts_powerlogs(filename):
     try:
         with open(filename, 'r') as fd:
             data = json.load(fd)
-            
+
             # extract tables of interest
             __extract_ts_powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(data)  # PLProcessMonitorAgent_EventPoint_ProcessExit
             __extract_ts_powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(data)  # PLProcessMonitorAgent_EventBackward_ProcessExitHistogram
