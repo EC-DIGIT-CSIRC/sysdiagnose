@@ -322,7 +322,7 @@ def __extract_ts_wifi_known_networks(filename):
                 updated = datetime.strptime(data[wifi]["UpdatedAt"], "%Y-%m-%d %H:%M:%S.%f")
                 modified_password = datetime.strptime(data[wifi]["__OSSpecific__"]["WiFiNetworkPasswordModificationDate"], "%Y-%m-%d %H:%M:%S.%f")
 
-                # WIFI added               
+                # WIFI added
                 ts_event = {
                     "message": "WIFI %s added" % ssid,
                     "timestamp": added.timestamp(),
