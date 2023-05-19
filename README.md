@@ -63,3 +63,17 @@ Tested On:
 - iOS14
 - iOS16 (ongoing)
 
+
+# Timesketch
+
+You might want to visualise timelines which you can extract via sysdiagnose in [Timesketch](https://timesketch.org/guides/admin/install/).
+Note that for a reasonable sysdiagnose log output, we recommend the following base requirements:
+
+- Ubuntu 20.04 or higher
+- 128GB of RAM
+- 4-8 virtual CPUs
+- Minimum 64 GB of HDD space just for timesketch data (add some more GBs for the OS and OS upgrades, etc.)
+- SSDs (NVMEs) for the data.
+
+
+
