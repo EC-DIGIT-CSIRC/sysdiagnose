@@ -1,5 +1,4 @@
-# sysdiagnose-timeline
-Sysdiagnose timeliner
+# Sysdiagnose analysis framework
 
 # Installation
 
@@ -74,6 +73,10 @@ Note that for a reasonable sysdiagnose log output, we recommend the following ba
 - 4-8 virtual CPUs
 - Minimum 64 GB of HDD space just for timesketch data (add some more GBs for the OS and OS upgrades, etc.)
 - SSDs (NVMEs) for the data.
+
+# License
+This project is released under the European Public Licence
+https://commission.europa.eu/content/european-union-public-licence_en
 
 
 
