@@ -29,6 +29,7 @@ timestamps_files = {
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
     "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
+    "sysdiagnose_wifi_known_networks.json": "__extract_ts_wifi_known_networks",
 }
 
 
@@ -307,6 +308,53 @@ def __extract_ts_wifisecurity(filename):
         return True
     except Exception as e:
         print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        return False
+    return False
+
+
+def __extract_ts_wifi_known_networks(filename):
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            for wifi in data.keys():
+                ssid = data[wifi]["SSID"]
+                added = datetime.strptime(data[wifi]["AddedAt"], "%Y-%m-%d %H:%M:%S.%f")
+                updated = datetime.strptime(data[wifi]["UpdatedAt"], "%Y-%m-%d %H:%M:%S.%f")
+                modified_password = datetime.strptime(data[wifi]["__OSSpecific__"]["WiFiNetworkPasswordModificationDate"], "%Y-%m-%d %H:%M:%S.%f")
+
+                # WIFI added               
+                ts_event = {
+                    "message": "WIFI %s added" % ssid,
+                    "timestamp": added.timestamp(),
+                    "datetime": added.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                    "timestamp_desc": "%s added in known networks plist",
+                    "extra_field_1": "Add reason: %s" % data[wifi]["AddReason"]
+                }
+                timeline.append(ts_event)
+
+                # WIFI modified
+                ts_event = {
+                    "message": "WIFI %s added" % updated,
+                    "timestamp": updated.timestamp(),
+                    "datetime": updated.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                    "timestamp_desc": "%s updated in known networks plist",
+                    "extra_field_1": "Add reason: %s" % data[wifi]["AddReason"]
+                }
+                timeline.append(ts_event)
+
+                # Password for wifi modified
+                ts_event = {
+                    "message": "Password for WIFI %s modified" % ssid,
+                    "timestamp": modified_password.timestamp(),
+                    "datetime": modified_password.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                    "timestamp_desc": "%s password modified in known networks plist",
+                    "extra_field_1": "AP mode: %s" % data[wifi]["__OSSpecific__"]["AP_MODE"]
+                }
+                timeline.append(ts_event)
+
+        return True
+    except Exception as e:
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
