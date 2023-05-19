@@ -23,13 +23,12 @@ analyser_format = "jsonl"
 # filename : parsing_function
 timestamps_files = {
     "sysdiagnose-accessibility-tcc.json": "__extract_ts_accessibility_tcc",
-    # appinstallation: TODO
     # itunesstore: TODO
     "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
     # "sysdiagnose-powerlogs.json" : "__extract_ts_powerlogs", #TO DEBUG!!
-    # psthread: TODO
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
+    "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
 }
 
 
@@ -212,6 +211,57 @@ def __extract_ts_logarchive(filename):
         return True
     except Exception as e:
         print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
+        return False
+    return False
+
+
+def __extract_ts_wifisecurity(filename):
+    """
+        "accc": "<SecAccessControlRef: ck>",
+        "acct": "SSID NAME",
+        "agrp": "apple",
+        "cdat": "2020-09-03 15:44:36 +0000",
+        "mdat": "2020-09-03 15:44:36 +0000",
+        "musr": "{length = 0, bytes = 0x}",
+        "pdmn": "ck",
+        "sha1": "{length = 20, bytes = 0x03e144b04a024ddeff9c948ee4d512345679}",
+        "svce": "AirPort",
+        "sync": "1",
+        "tomb": "0"
+    """
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            for wifi in data:
+                if bool(wifi):
+                    continue
+                else:
+                    # create timeline entry
+                    ctimestamp = datetime.strptime(wifi["cdat"], "%Y-%m-%d %H:%M:%S.%f%z")
+                    mtimestamp = datetime.strptime(wifi["mdat"], "%Y-%m-%d %H:%M:%S.%f%z")
+
+                    # Event 1: creation
+                    ts_event = {
+                        "message": wifi["acct"],
+                        "timestamp": ctimestamp.timestamp(),
+                        "datetime": ctimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "SSID added to known secured WIFI list",
+                        "extra_field_1": wifi["accc"]
+                    }
+                    timeline.append(ts_event)
+
+                    # Event 2: modification
+                    ts_event = {
+                        "message": wifi["acct"],
+                        "timestamp": mtimestamp.timestamp(),
+                        "datetime": mtimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                        "timestamp_desc": "SSID modified into the secured WIFI list",
+                        "extra_field_1": wifi["accc"]
+                    }
+                    timeline.append(ts_event)
+        return True
+    except Exception as e:
+        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
         return False
     return False
 
