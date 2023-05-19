@@ -234,8 +234,6 @@ def __extract_ts_wifisecurity(filename):
             data = json.load(fd)
             for wifi in data:
                 if bool(wifi):
-                    continue
-                else:
                     # create timeline entry
                     ctimestamp = datetime.strptime(wifi["cdat"], "%Y-%m-%d %H:%M:%S.%f%z")
                     mtimestamp = datetime.strptime(wifi["mdat"], "%Y-%m-%d %H:%M:%S.%f%z")
