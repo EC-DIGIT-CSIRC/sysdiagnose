@@ -57,12 +57,12 @@ def table2struct(dbfd, tablename):
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
     for row in cursor.execute("SELECT * FROM '%s'" % tablename):
-        line = []
+        line = {}
         ptr = 0
         for element in row:
             if not isinstance(element, (str, int, float, bool)):
                 element = str(element)
-            line.append({column_names[ptr]: element})
+            line[column_names[ptr]] = element
             ptr = ptr + 1
         table.append(line)
     return table

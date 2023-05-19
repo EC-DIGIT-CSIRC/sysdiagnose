@@ -235,8 +235,8 @@ def __extract_ts_wifisecurity(filename):
             for wifi in data:
                 if bool(wifi):
                     # create timeline entry
-                    ctimestamp = datetime.strptime(wifi["cdat"], "%Y-%m-%d %H:%M:%S.%f%z")
-                    mtimestamp = datetime.strptime(wifi["mdat"], "%Y-%m-%d %H:%M:%S.%f%z")
+                    ctimestamp = datetime.strptime(wifi["cdat"], "%Y-%m-%d %H:%M:%S %z")
+                    mtimestamp = datetime.strptime(wifi["mdat"], "%Y-%m-%d %H:%M:%S %z")
 
                     # Event 1: creation
                     ts_event = {
