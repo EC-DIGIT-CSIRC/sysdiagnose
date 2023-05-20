@@ -190,7 +190,7 @@ def init(sysdiagnose_file, force=False):
     except:        # noqa: E722
         pass
 
-    # wifi data
+    # wifi data listing
     try:
         # plists
         wifi_plist = glob.glob('./*/WiFi/*.plist')
