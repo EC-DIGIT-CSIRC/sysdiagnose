@@ -40,27 +40,26 @@ def parsewifinetwork(wifi_data):
         if data.endswith('com.apple.wifi.recent-networks.json'):
             print('parsing: ' + data)
             with open(data, 'r') as f:
-                output['recent_networks'] = json.load(f)            
-        elif data.endswith('com.apple.wifi.plist'):
-            with open(data, 'rb') as f:
-                print('parsing: ' + data)
-                # loading the plist file
-                plist = plistlib.load(f)
-                # resolving datetime objects
-                plist = find_datetime(plist)
-                # cleaning bytes objects
-                plist = find_bytes(plist)
-                output['com.apple.wifi.plist'] = plist
+                output['recent_networks'] = json.load(f)
+        if data.endswith('.plist'):
+            output[data] = load_plist_and_fix(data)
     return output
+
+def load_plist_and_fix(plist):
+    with open(plist, 'rb') as f:
+        plist = plistlib.load(f)
+        plist = find_datetime(plist)
+        plist = find_bytes(plist)
+    return plist
 
 def find_datetime(d):
     for k, v in d.items():
         if isinstance(v, dict):
-            print('dict : ' + str(v))
             find_datetime(v)
         elif isinstance(v, list):
             for item in v:
-                find_datetime(item)
+                if isinstance(item, dict):
+                    find_datetime(item)
         elif isinstance(v, datetime.datetime):
             d[k]=v.isoformat()
     return d
@@ -71,7 +70,8 @@ def find_bytes(d):
             find_bytes(v)
         elif isinstance(v, list):
             for item in v:
-                find_bytes(item)
+                if isinstance(item, dict):
+                    find_bytes(item)
         elif isinstance(v, bytes):
             d[k]=binascii.hexlify(v).decode('utf-8')
     return d
