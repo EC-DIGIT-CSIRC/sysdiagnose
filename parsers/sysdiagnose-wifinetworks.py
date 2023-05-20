@@ -86,11 +86,11 @@ def main():
     arguments = docopt(__doc__, version='parser for com.apple.wifi plist files v0.2')
 
     if arguments['-i']:
-       # list plist files in folder and build a list
-       plist_files = glob.glob(arguments['<logfolder>'] + '/com.apple.wifi*.plist')
-       plist_files.append(arguments['<logfolder>'] + '/com.apple.wifi.recent-networks.json')
-       output = parsewifinetwork(plist_files)
-       print(json.dumps(output, indent=4))
+        # list plist files in folder and build a list
+        plist_files = glob.glob(arguments['<logfolder>'] + '/com.apple.wifi*.plist')
+        plist_files.append(arguments['<logfolder>'] + '/com.apple.wifi.recent-networks.json')
+        output = parsewifinetwork(plist_files)
+        print(json.dumps(output, indent=4))
 
 # --------------------------------------------------------------------------- #
 
