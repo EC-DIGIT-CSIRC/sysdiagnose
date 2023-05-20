@@ -64,7 +64,7 @@ def main():
         Main function, to be called when used as CLI tool
     """
 
-    arguments = docopt(__doc__, version='parser for container manager log files v0.1')
+    arguments = docopt(__doc__, version='parser for wifi_scan files v0.1')
 
     if arguments['-i']:
         # list scan files in folder and build a list

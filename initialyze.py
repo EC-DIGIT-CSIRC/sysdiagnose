@@ -203,6 +203,11 @@ def init(sysdiagnose_file, force=False):
         for scans in wifi_scans:
             scans = new_folder +scans[1:]
             wifi_data_fullpath.append(scans)
+        # recent networks
+        wifi_recent = glob.glob('./*/WiFi/com.apple.wifi.recent-networks.json')
+        for recent in wifi_recent:
+            recent = new_folder +recent[1:]
+            wifi_data_fullpath.append(recent)
         new_case_json["wifi_data"] = wifi_data_fullpath
     except:        # noqa: E722
         pass
