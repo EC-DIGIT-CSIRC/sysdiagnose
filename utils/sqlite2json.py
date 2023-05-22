@@ -71,7 +71,7 @@ def table2struct(dbfd, tablename):
 def dump2json(dbstruct, jsonpath="./db.json"):
     jsontxt = json.dumps(dbstruct, indent=4)
     try:
-        with jsonpath.open("w") as fd:
+        with open(jsonpath, "w") as fd:
             fd.write(jsontxt)
     except Exception as e:
         print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n", file=sys.stderr)

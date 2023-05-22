@@ -32,7 +32,7 @@ version_string = "analyse.py v2023-04-27 Version 1.0"
 
 def list_analysers(folder):
     """
-        List available anlysers
+        List available analysers
     """
     os.chdir(folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
@@ -47,7 +47,7 @@ def list_analysers(folder):
         except:     # noqa: E722
             continue
 
-    headers = ['Analyser Name', 'Parser Description']
+    headers = ['Analyser Name', 'Analyser Description']
 
     print(tabulate(lines, headers=headers))
 

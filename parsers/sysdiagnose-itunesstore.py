@@ -6,6 +6,7 @@
 
 import os
 import sys
+import json
 from optparse import OptionParser
 
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
@@ -28,7 +29,7 @@ def get_itunesstore(dbpath, ios_version=13):
     from utils import sqlite2json
 
     itunes = sqlite2json.sqlite2struct(dbpath)
-    return sqlite2json.dump2json(itunes)
+    return json.loads(sqlite2json.dump2json(itunes))
 
 
 def print_itunesstore(inputfile):
