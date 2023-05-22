@@ -18,15 +18,11 @@ Options:
 
 import sys
 from optparse import OptionParser
-import plistlib
 import json
 from docopt import docopt
 import glob
-import re
-import datetime
-import binascii
-sys.path.append('..')
-from sysdiagnose import misc
+sys.path.append('..')   # noqa: E402
+from sysdiagnose import misc        # noqa: E402
 
 # ----- definition for parsing.py script -----#
 
