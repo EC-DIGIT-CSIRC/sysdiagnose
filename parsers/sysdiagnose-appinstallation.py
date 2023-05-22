@@ -58,7 +58,6 @@ def print_appinstall_ios12(dbpath):
 
 
 def get_appinstallation_ios13(dbpath):
-
     from utils import times
     from utils import sqlite2json
 

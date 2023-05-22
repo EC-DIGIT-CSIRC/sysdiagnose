@@ -28,8 +28,8 @@ def get_version(filename="VERSION.txt"):
 def load_plist_and_fix(plist):
     with open(plist, 'rb') as f:
         plist = biplist.readPlist(f)
-        #plist = find_datetime(plist)
-        #plist = find_bytes(plist)
+        # plist = find_datetime(plist)
+        # plist = find_bytes(plist)
     return json.loads(json.dumps(plist, indent=4, cls=CustomEncoder))
 
 def find_datetime(d):

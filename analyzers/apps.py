@@ -40,7 +40,6 @@ def apps_analysis(jsondir, filename):
 
     apps = {}
 
-
     # building data depending on the source
     for jsonfile in jsondir:
         if jsonfile.endswith('accessibility-tcc.json'):
@@ -48,7 +47,7 @@ def apps_analysis(jsondir, filename):
                 accessibility_data = json.load(f)
                 for entry in accessibility_data['access']:
                     if entry['client'] not in apps.keys():
-                        apps[entry['client']]= {"found":['accessibility-tcc'], "services": [entry['service']]}
+                        apps[entry['client']]= {"found": ['accessibility-tcc'], "services": [entry['service']]}
                     else:
                         apps[entry['client']]["services"].append(entry['service'])
         elif jsonfile.endswith('brctl.json'):
@@ -57,7 +56,7 @@ def apps_analysis(jsondir, filename):
                 # directly going to the list of apps
                 for entry in brctl_data['app_library_id'].keys():
                     if entry not in apps.keys():
-                        apps[entry]= {"found":['brctl'], "libraries": brctl_data['app_library_id'][entry]}
+                        apps[entry]= {"found": ['brctl'], "libraries": brctl_data['app_library_id'][entry]}
                     else:
                         apps[entry]["libraries"] = brctl_data['app_library_id'][entry]
                         apps[entry]["found"].append('brctl')
@@ -67,7 +66,7 @@ def apps_analysis(jsondir, filename):
                 # directly going to the list of apps
                 for entry in itunesstore_data['application_id']:
                     if entry['bundle_id'] not in apps.keys():
-                        apps[entry['bundle_id']]= {"found":['itunesstore']}
+                        apps[entry['bundle_id']]= {"found": ['itunesstore']}
                     else:
                         apps[entry['bundle_id']]["found"].append('itunesstore')
         elif jsonfile.endswith('logarchive.json'):
@@ -78,11 +77,7 @@ def apps_analysis(jsondir, filename):
                     if entry['subsystem'] not in app_list:
                         app_list.append(entry['subsystem'])
                         print(entry['subsystem'])
-
-
-    #print(json.dumps(apps, indent=4))
-
-
+    # print(json.dumps(apps, indent=4))
 
     return
 
