@@ -33,7 +33,7 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
         with open(jsonfile, 'r') as fp:
             json_data = json.load(fp)
     except Exception as e:
-        print(f"Error while parinsg inputfile JSON. Reason: {str(e)}")
+        print(f"Error while parsing inputfile JSON. Reason: {str(e)}")
         sys.exit(-1)
 
     json_entry = json_data.get('com.apple.wifi.known-networks.plist')

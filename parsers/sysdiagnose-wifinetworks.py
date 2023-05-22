@@ -21,7 +21,8 @@ from optparse import OptionParser
 import json
 from docopt import docopt
 import glob
-from .. import misc     # simplify
+sys.path.append('..')
+from sysdiagnose import misc     # simplify
 
 # ----- definition for parsing.py script -----#
 

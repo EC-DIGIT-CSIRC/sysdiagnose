@@ -3,9 +3,16 @@
 import sys
 import json
 import plistlib
-import datetime
+import biplist
+from biplist import Uid, Data
+from datetime import datetime
 import binascii
 
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Uid) or isinstance(obj, Data) or isinstance(obj, datetime):
+            return str(obj)
+        return super().default(obj)
 
 def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
@@ -20,10 +27,10 @@ def get_version(filename="VERSION.txt"):
 
 def load_plist_and_fix(plist):
     with open(plist, 'rb') as f:
-        plist = plistlib.load(f)
-        plist = find_datetime(plist)
-        plist = find_bytes(plist)
-    return plist
+        plist = biplist.readPlist(f)
+        #plist = find_datetime(plist)
+        #plist = find_bytes(plist)
+    return json.loads(json.dumps(plist, indent=4, cls=CustomEncoder))
 
 def find_datetime(d):
     for k, v in d.items():
