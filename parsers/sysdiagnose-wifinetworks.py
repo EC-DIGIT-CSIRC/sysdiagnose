@@ -44,7 +44,7 @@ def parsewifinetwork(wifi_data):
             with open(data, 'r') as f:
                 output['recent_networks'] = json.load(f)
         if data.endswith('.plist'):
-            output[data] = misc.load_plist_and_fix(data)
+            output[data.split("/")[-1]] = misc.load_plist_and_fix(data)
     return output
 
 # --------------------------------------------------------------------------- #
