@@ -21,8 +21,7 @@ from optparse import OptionParser
 import json
 from docopt import docopt
 import glob
-sys.path.append('..')   # noqa: E402
-from sysdiagnose import misc        # noqa: E402
+from .. import misc     # simplify
 
 # ----- definition for parsing.py script -----#
 
