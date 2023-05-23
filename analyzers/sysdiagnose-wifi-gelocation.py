@@ -12,6 +12,10 @@ from optparse import OptionParser
 import gpxpy
 import gpxpy.gpx
 
+sys.path.append('..')   # noqa: E402
+from sysdiagnose import config        # noqa: E402
+
+
 version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
 
 # ----- definition for analyse.py script -----#
@@ -40,7 +44,7 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
     if not json_entry:
         print("Could not find the 'com.apple.wifi.known-networks.plist' section. Bailing out.", file=sys.stderr)
         sys.exit(-2)
-    json_data = json_entry
+    json_data = json_entry      # start here
 
     # Create new GPX object
     gpx = gpxpy.gpx.GPX()
@@ -49,9 +53,15 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
         ssid = network_name
         # timestamps are always tricky
         timestamp_str = network_data.get('AddedAt', '')
+        if config.debug:
+            print(f"AddedAt: {timestamp_str}")
         if not timestamp_str:
-            timestamp_str = network_data.get('JoinedByUserAt')      # second best attempt
+            timestamp_str = network_data.get('JoinedByUserAt', '')      # second best attempt
+        if not timestamp_str:
+            timestamp_str = network_data.get('UpdatedAt', '')           # third best attempt
         # Convert ISO 8601 format to datetime
+        add_reason = network_data.get("AddReason", '')
+
         try:
             timestamp = dateutil.parser.parse(timestamp_str)
         except Exception as e:
@@ -72,8 +82,9 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
                 Channel: {channel}
                 Timestamp: {timestamp_str}
                 LocationAccuracy: {location_accuracy}
-                Latitude {lat}
-                Longitude{lon}'''
+                Latitude: {lat}
+                Longitude: {lon}
+                Reason for Adding: {add_reason}'''
 
             # Add waypoint to gpx file
             gpx.waypoints.append(waypoint)
