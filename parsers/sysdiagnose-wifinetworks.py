@@ -22,7 +22,7 @@ import json
 from docopt import docopt
 import glob
 sys.path.append('..')   # noqa: E402
-from sysdiagnose import misc    # noqa: E402
+from sysdiagnose import misc        # noqa: E402
 
 # ----- definition for parsing.py script -----#
 
@@ -31,6 +31,7 @@ parser_input = "wifi_data"  # list of log files - only get the .txt files from t
 parser_call = "parsewifinetwork"
 
 # --------------------------------------------------------------------------- #
+
 
 def parsewifinetwork(wifi_data):
     output = {}
@@ -44,6 +45,7 @@ def parsewifinetwork(wifi_data):
     return output
 
 # --------------------------------------------------------------------------- #
+
 
 def main():
     """
