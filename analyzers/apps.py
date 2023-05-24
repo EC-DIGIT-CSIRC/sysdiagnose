@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 # For Python3
-# DEMO - Skeleton
 # Author: Emiliern Le Jamtel
 
 """Apps analyzer.
@@ -74,10 +73,19 @@ def apps_analysis(jsondir, filename):
             app_list = []
             with open(jsonfile, 'rb') as f:
                 for entry in ijson.items(f, 'data.item'):
-                    if entry['subsystem'] not in app_list:
-                        app_list.append(entry['subsystem'])
-                        print(entry['subsystem'])
-    # print(json.dumps(apps, indent=4))
+                    if 'subsystem' in entry.keys():
+                        if entry['subsystem'] not in app_list and '.' in entry['subsystem']:
+                            if entry['subsystem'].startswith('pid/'):
+                                pass
+                            elif entry['subsystem'].startswith('user/'):
+                                pass
+                            else:
+                                app_list.append(entry['subsystem'])
+                                if entry['subsystem'] not in apps.keys():
+                                    apps[entry['subsystem']]= {"found": ['logarchive']}
+                                else:
+                                    apps[entry['subsystem']]["found"].append('logarchive')
+    print(json.dumps(apps, indent=4))
 
     return
 
