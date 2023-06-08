@@ -60,7 +60,7 @@ Tested On:
 - python 3.8.5, 3.10
 - iOS13
 - iOS14
-- iOS16 (ongoing)
+- iOS16
 
 
 # Timesketch
