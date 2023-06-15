@@ -1,5 +1,6 @@
 """Miscelanneous helper functions."""
 
+import os
 import sys
 import json
 import plistlib
@@ -17,7 +18,10 @@ class CustomEncoder(json.JSONEncoder):
 def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
     try:
-        with open(filename, "r") as file:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        print(script_dir)
+        version_file = os.path.join(script_dir, filename)
+        with open(version_file, "r") as file:
             data = json.load(file)
             version = data["version"]
             return version
