@@ -13,14 +13,14 @@ from optparse import OptionParser
 version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
 
 # ----- definition for analyse.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 analyser_description = "Do something useful (DEMO)"
 analyser_call = "generate_something"
 analyser_format = "json"
 
 
-def generate_timeline(jsondir, filename):
+def generate_something(jsondir, filename):
     """
     Generate the timeline and save it to filename
     """
