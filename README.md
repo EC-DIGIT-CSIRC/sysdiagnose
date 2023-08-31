@@ -61,6 +61,7 @@ Tested On:
 - iOS13
 - iOS14
 - iOS16
+- iOS17.0 (ongoing)
 
 
 # Timesketch
