@@ -49,7 +49,7 @@ def __extract_ts_mobileactivation(filename):
                     timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%d %H:%M:%S")
                     ts_event = {
                         "message": "Mobile Activation",
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Mobile Activation Time",
                         "extra_field_1": "Build Version: %s" % event["build_version"]
@@ -86,7 +86,7 @@ def __extract_ts_powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
         timestamp = datetime.fromtimestamp(int(proc["timestamp"]))
         ts_event = {
             "message": proc["ProcessName"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
             "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (proc["ReasonCode"], proc["ReasonNamespace"]),
             "extra_field_1": "Is permanent: %d" % proc["IsPermanent"],
@@ -101,7 +101,7 @@ def __extract_ts_powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHisto
         timestamp = datetime.fromtimestamp(int(event["timestamp"]))
         ts_event = {
             "message": event["ProcessName"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
             "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (event["ReasonCode"], event["ReasonNamespace"]),
             "extra_field_1": "Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d" % (event["0s-5s"], event["5s-10s"], event["10s-60s"], event["60s+"])
@@ -116,7 +116,7 @@ def __extract_ts_powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
         timestamp = datetime.fromtimestamp(int(event["timestamp"]))
         ts_event = {
             "message": event["Name"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
             "timestamp_desc": "PLAccountingOperator Event",
             "extra_field_1": "Is permanent: %d" % event["IsPermanent"]
@@ -147,7 +147,7 @@ def __extract_ts_swcutil(filename):
                     timestamp = datetime.strptime(service["Last Checked"], "%Y-%m-%d %H:%M:%S %z")
                     ts_event = {
                         "message": service["Service"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "swcutil last checkeed",
                         "extra_field_1": "application: %s" % service["App ID"]
@@ -193,7 +193,7 @@ def __extract_ts_accessibility_tcc(filename):
                     timestamp = datetime.fromtimestamp(int(service["last_modified"]))
                     ts_event = {
                         "message": service["service"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Accessibility TC Last Modified",
                         "extra_field_1": "client: %s" % service["client"]
@@ -250,7 +250,7 @@ def __extract_ts_logarchive(filename):
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
                     ts_event = {
                         "message": trace["eventMessage"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Entry in logarchive: %s" % trace["eventType"],
                         "extra_field_1": "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
@@ -291,7 +291,7 @@ def __extract_ts_wifisecurity(filename):
                     # Event 1: creation
                     ts_event = {
                         "message": wifi["acct"],
-                        "timestamp": int(ctimestamp.timestamp()*1000000),
+                        "timestamp": int(ctimestamp.timestamp() * 1000000),
                         "datetime": ctimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "SSID added to known secured WIFI list",
                         "extra_field_1": wifi["accc"]
@@ -301,7 +301,7 @@ def __extract_ts_wifisecurity(filename):
                     # Event 2: modification
                     ts_event = {
                         "message": wifi["acct"],
-                        "timestamp": int(mtimestamp.timestamp()*1000000),
+                        "timestamp": int(mtimestamp.timestamp() * 1000000),
                         "datetime": mtimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "SSID modified into the secured WIFI list",
                         "extra_field_1": wifi["accc"]
