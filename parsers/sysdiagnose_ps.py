@@ -17,7 +17,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose_ps.py v2023-03-10 Version 1.1"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing ps.txt file"
 parser_input = "ps"
@@ -62,8 +62,10 @@ def parse_ps(filename, ios_version=16):
                                                "STAT": patterns[12],
                                                "STARTED": patterns[13],
                                                "TIME": patterns[14],
-                                               "COMMAND": patterns[15]}
+                                               "COMMAND": "".join(patterns[15:])}
             else:
+                # Note: bellow - attempt to create a regex but feel it will more lead to errors.  Instead lets merge all parts of the commands (patterns[17:])
+                # regex = r"(?P<USER>\w+)\s+(?P<UID>\d+)\s+(?<PRSNA>\d+|\-)\s+(?<PID>\d+)\s+(?<PPID>\d+)\s+(?<F>\d+)\s+(?<CPU>\d+\.\d+)\s+(?<MEM>\d+\.\d+)\s+(?<PRI>\d+)\s+(?<NI>\d+)\s+(?<VSZ>\d+)\s+(?<WCHAN>\-)"
                 processes[int(patterns[3])] = {"USER": patterns[0],
                                                "UID": patterns[1],
                                                "PRSNA": patterns[2],
@@ -81,7 +83,7 @@ def parse_ps(filename, ios_version=16):
                                                "STAT": patterns[14],
                                                "STARTED": patterns[15],
                                                "TIME": patterns[16],
-                                               "COMMAND": patterns[17]}
+                                               "COMMAND": "".join(patterns[17:])}
 
         fd.close()
     except Exception as e:
