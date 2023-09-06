@@ -16,7 +16,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose_uuid2path.py v2020-02-07 Version 2.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing UUIDToBinaryLocations plist file"
 parser_input = "UUIDToBinaryLocations"

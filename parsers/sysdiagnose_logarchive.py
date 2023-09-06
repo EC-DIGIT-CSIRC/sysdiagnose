@@ -16,7 +16,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose_logarchive.py v2020-02-07 Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing system_logs.logarchive folder"
 parser_input = "logarchive_folder"

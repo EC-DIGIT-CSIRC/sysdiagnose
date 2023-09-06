@@ -17,7 +17,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose_ps.py Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing ps_thread.txt file"
 parser_input = "ps_thread"

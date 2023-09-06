@@ -24,7 +24,7 @@ from sysdiagnose import config        # noqa: E402
 version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
 
 # ----- definition for analyse.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 analyser_description = "Generate GPS Exchange (GPX) of wifi geolocations"
 analyser_call = "generate_gpx"

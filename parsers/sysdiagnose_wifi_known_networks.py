@@ -27,7 +27,7 @@ class CustomEncoder(json.JSONEncoder):
 version_string = "sysdiagnose_wifi_known_networks.py v2023-05-19 Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing Known Wifi Networks plist file"
 parser_input = "wifi_data"

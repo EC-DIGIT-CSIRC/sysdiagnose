@@ -25,7 +25,7 @@ from tabulate import tabulate
 
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing swcutil_show file"
 parser_input = "swcutil_show"

@@ -13,7 +13,7 @@ import plistlib
 version_string = "sysdiagnose_sys.py v2019-05-10 Version 2.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing SystemVersion plist file"
 parser_input = "systemversion"

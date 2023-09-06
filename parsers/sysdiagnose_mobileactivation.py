@@ -27,7 +27,7 @@ import re
 
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing mobileactivation logs file"
 parser_input = "mobile_activation"  # list of log files
