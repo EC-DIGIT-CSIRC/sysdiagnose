@@ -10,9 +10,6 @@ from datetime import datetime
 import dateutil.parser
 from optparse import OptionParser
 
-import gpxpy
-import gpxpy.gpx
-
 from pykml.factory import KML_ElementMaker as KML
 from pykml.factory import GX_ElementMaker as GX
 from lxml import etree
@@ -31,9 +28,10 @@ analyser_call = "generate_gpx"
 analyser_format = "json"
 
 
-def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
+def generate_kml(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
     """
-    Generate the GPX file in <filename>. Reads <jsonfile> as input and extracts all known-wifi-networks and their locations.
+    Generate the KML file in <filename>. Reads <jsonfile> as input and extracts all known-wifi-networks and their locations.
+    KML files include more information for generating a "tour" (fly-through)
 
     """
     try:
@@ -49,8 +47,15 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
         sys.exit(-2)
     json_data = json_entry      # start here
 
-    # Create new GPX object
-    gpx = gpxpy.gpx.GPX()
+    # start with a base KML tour and playlist
+    tour_doc = KML.kml(
+        KML.Document(
+            GX.Tour(
+                KML.name("com.apple.wifi.known-networks "),
+                GX.Playlist(),
+            )
+        )
+    )
 
     for network_name, network_data in json_data.items():
         ssid = network_name
@@ -78,9 +83,23 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
             lon = bss.get('LocationLongitude', '')
             location_accuracy = bss.get('LocationAccuracy', '')
 
-            # Create new waypoint
-            waypoint = gpxpy.gpx.GPXWaypoint(latitude=lat, longitude=lon, time=timestamp)
-            waypoint.name = ssid
+            # fly to the point
+            tour_doc.Document[gxns+"Tour"].Playlist.append(
+                GX.FlyTo(
+                    GX.duration(5),  # adjust as needed
+                    GX.flyToMode("smooth"),
+                    KML.LookAt(
+                        KML.longitude(lon),
+                        KML.latitude(lat),
+                        KML.altitude(0),
+                        KML.heading(0),
+                        KML.tilt(0),
+                        KML.range(10000000.0),  # adjust as needed
+                        KML.altitudeMode("relativeToGround"),
+                    )
+                ),
+            )
+
             waypoint.description = f'''BSSID: {bssid}
                 Channel: {channel}
                 Timestamp: {timestamp_str}
@@ -89,12 +108,22 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
                 Longitude: {lon}
                 Reason for Adding: {add_reason}'''
 
-            # Add waypoint to gpx file
-            gpx.waypoints.append(waypoint)
+            # add a placemark for the point
+            tour_doc.Document.append(
+                KML.Placemark(
+                    KML.name(ESSID),
+                    KML.description(waypoint.description),
+                    KML.Point(
+                        KML.extrude(1),
+                        KML.altitudeMode("relativeToGround"),
+                        KML.coordinates(f"{lon},{lat},10"),
+                    )
+                )
+            )
 
-        # Save gpx file
-        with open(outfile, 'w') as f:
-            f.write(gpx.to_xml())
+        # write the KML document to a file
+        with open('my_tour.kml', 'w') as outfile:
+            outfile.write(etree.tostring(tour_doc, pretty_print=True).decode())
     return
 
 # --------------------------------------------------------------------------- #
