@@ -12,7 +12,7 @@ import sys
 import json
 from optparse import OptionParser
 
-version_string = "sysdiagnose-taskinfo.py v2020-02-07 Version 1.0"
+version_string = "sysdiagnose_taskinfo.py v2020-02-07 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NET DELETE             ----#

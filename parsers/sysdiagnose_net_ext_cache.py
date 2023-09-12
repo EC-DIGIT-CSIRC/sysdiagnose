@@ -11,7 +11,7 @@ from optparse import OptionParser
 import plistlib
 
 
-version_string = "sysdiagnose-net-ext-cache.py v2019-05-10 Version 2.0"
+version_string = "sysdiagnose_net_ext_cache.py v2019-05-10 Version 2.0"
 
 # --------------------------------------------------------------------------- #
 

@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-swcutil.py -i <file>
-  sysdiagnose-swcutil.py (-h | --help)
-  sysdiagnose-swcutil.py --version
+  sysdiagnose_swcutil.py -i <file>
+  sysdiagnose_swcutil.py (-h | --help)
+  sysdiagnose_swcutil.py --version
 
 Options:
   -h --help     Show this screen.

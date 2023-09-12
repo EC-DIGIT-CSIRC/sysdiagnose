@@ -10,7 +10,7 @@ import sys
 from optparse import OptionParser
 import plistlib
 
-version_string = "sysdiagnose-sys.py v2019-05-10 Version 2.0"
+version_string = "sysdiagnose_sys.py v2019-05-10 Version 2.0"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NET DELETE             ----#

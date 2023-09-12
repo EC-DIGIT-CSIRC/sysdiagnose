@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-wifinetwork.py -i <logfolder>
-  sysdiagnose-wifinetwork.py (-h | --help)
-  sysdiagnose-wifinetwork.py --version
+  sysdiagnose_wifinetwork.py -i <logfolder>
+  sysdiagnose_wifinetwork.py (-h | --help)
+  sysdiagnose_wifinetwork.py --version
 
 Options:
   -h --help     Show this screen.

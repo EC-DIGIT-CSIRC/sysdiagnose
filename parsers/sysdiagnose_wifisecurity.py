@@ -12,7 +12,7 @@ import time
 import struct
 import datetime
 
-version_string = "sysdiagnose-wifisecurity.py v2023-04-26 Version 1.0"
+version_string = "sysdiagnose_wifisecurity.py v2023-04-26 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 

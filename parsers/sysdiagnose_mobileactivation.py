@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-mobileactivation.py -i <logfolder>
-  sysdiagnose-mobileactivation.py (-h | --help)
-  sysdiagnose-mobileactivation.py --version
+  sysdiagnose_mobileactivation.py -i <logfolder>
+  sysdiagnose_mobileactivation.py (-h | --help)
+  sysdiagnose_mobileactivation.py --version
 
 Options:
   -h --help     Show this screen.

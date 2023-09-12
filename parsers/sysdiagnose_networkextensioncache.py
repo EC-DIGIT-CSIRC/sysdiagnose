@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagmose-networkextensioncache.py -i <file>
-  sysdiagmose-networkextensioncache.py (-h | --help)
-  sysdiagmose-networkextensioncache.py --version
+  sysdiagmose_networkextensioncache.py -i <file>
+  sysdiagmose_networkextensioncache.py (-h | --help)
+  sysdiagmose_networkextensioncache.py --version
 
 Options:
   -h --help     Show this screen.

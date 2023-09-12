@@ -17,7 +17,7 @@ import struct
 import datetime
 import sqlite3
 
-version_string = "sysdiagnose-appinstallation.py v2019-11-22 Version 2.0"
+version_string = "sysdiagnose_appinstallation.py v2019-11-22 Version 2.0"
 
 # ----- definition for parsing.py script -----#
 

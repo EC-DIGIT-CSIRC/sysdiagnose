@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-wifiscan.py -i <logfolder>
-  sysdiagnose-wifiscan.py (-h | --help)
-  sysdiagnose-wifiscan.py --version
+  sysdiagnose_wifiscan.py -i <logfolder>
+  sysdiagnose_wifiscan.py (-h | --help)
+  sysdiagnose_wifiscan.py --version
 
 Options:
   -h --help     Show this screen.

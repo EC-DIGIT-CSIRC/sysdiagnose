@@ -14,7 +14,7 @@ import sys
 import json
 from optparse import OptionParser
 
-version_string = "sysdiagnose-ps.py v2023-03-10 Version 1.1"
+version_string = "sysdiagnose_ps.py v2023-03-10 Version 1.1"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NET DELETE             ----#

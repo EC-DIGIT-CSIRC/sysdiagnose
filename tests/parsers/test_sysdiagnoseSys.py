@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import mock_open, patch
 import plistlib
 import sys
-from parsers.sysdiagnoseSys import getProductInfo
+from parsers.sysdiagnose_sys import getProductInfo
 
 
 @pytest.fixture

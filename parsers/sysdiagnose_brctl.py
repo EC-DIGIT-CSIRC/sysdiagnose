@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-brctl.py -i <logfolder>
-  sysdiagnose-brctl.py (-h | --help)
-  sysdiagnose-brctl.py --version
+  sysdiagnose_brctl.py -i <logfolder>
+  sysdiagnose_brctl.py (-h | --help)
+  sysdiagnose_brctl.py --version
 
 Options:
   -h --help     Show this screen.

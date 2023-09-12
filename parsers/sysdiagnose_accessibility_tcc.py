@@ -8,7 +8,7 @@ import os
 import sys
 from optparse import OptionParser
 
-version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
+version_string = "sysdiagnose_accessibility_tcc.py v2020-20-20 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 

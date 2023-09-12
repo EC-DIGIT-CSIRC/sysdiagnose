@@ -12,7 +12,7 @@ import time
 import struct
 import datetime
 
-version_string = "sysdiagnose-demo-parser.py v2023-04-26 Version 1.0"
+version_string = "sysdiagnose_demo_parser.py v2023-04-26 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 

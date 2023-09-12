@@ -1,41 +1,39 @@
 #! /usr/bin/env python3
 
 # For Python3
-# Script to print from Accessibility TCC logs
+# Script to print from powerlogs (last 3 days of logs)
 # Author: david@autopsit.org
 
 import os
 import sys
 from optparse import OptionParser
 
-version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
+version_string = "sysdiagnose_powerlogs.py v2020-20-19 Version 1.0"
 
 # ----- definition for parsing.py script -----#
+# -----         DO NOT DELETE             ----#
 
-parser_description = "Parsing Accessibility TCC logs"
-parser_input = "Accessibility-TCC"
-parser_call = "get_accessibility_tcc"
+parser_description = "Parsing  powerlogs database"
+parser_input = "powerlogs"
+parser_call = "get_powerlogs"
 
 # --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
 
 
-def get_accessibility_tcc(dbpath, ios_version=13):
+def get_powerlogs(dbpath, ios_version=13):
+    sys.path.append(os.path.abspath('./'))
     sys.path.append(os.path.abspath('../'))
     from utils import times
     from utils import sqlite2json
 
-    tcc = sqlite2json.sqlite2struct(dbpath)
-    return tcc
-    # return sqlite2json.dump2json(tcc)
+    powerlogs = sqlite2json.sqlite2struct(dbpath)
+    return powerlogs
 
 
-def print_accessibility_tcc(inputfile):
-    sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
-    print(sqlite2json.dump2json(get_accessibility_tcc(inputfile)))
+def print_powerlogs(inputfile):
+    print(get_powerlogs(inputfile))
     return
 
 
@@ -53,15 +51,15 @@ def main():
     parser = OptionParser(usage=usage)
     parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
-                      help="./logs/Accessibility/TCC.db to be parsed")
+                      help="./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL to be parsed")
     (options, args) = parser.parse_args()
 
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(-1)
-
-    print_accessibility_tcc(options.inputfile)
+    # print(options.inputfile)
+    print_powerlogs(options.inputfile)
 
 # --------------------------------------------------------------------------- #
 

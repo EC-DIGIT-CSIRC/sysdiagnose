@@ -18,7 +18,7 @@ sys.path.append('..')   # noqa: E402
 from sysdiagnose import config        # noqa: E402
 
 
-version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
+version_string = "wifiGeolocationKML.py v2023-08-12 Version 0.1"
 
 # ----- definition for analyse.py script -----#
 # -----         DO NET DELETE             ----#

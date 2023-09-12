@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-containermanager.py -i <logfolder>
-  sysdiagnose-containermanager.py (-h | --help)
-  sysdiagnose-containermanager.py --version
+  sysdiagnose_containermanager.py -i <logfolder>
+  sysdiagnose_containermanager.py (-h | --help)
+  sysdiagnose_containermanager.py --version
 
 Options:
   -h --help     Show this screen.

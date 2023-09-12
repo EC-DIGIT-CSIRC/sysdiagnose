@@ -13,7 +13,7 @@ import pprint
 import plistlib
 from optparse import OptionParser
 
-version_string = "sysdiagnose-uuid2path.py v2020-02-07 Version 2.0"
+version_string = "sysdiagnose_uuid2path.py v2020-02-07 Version 2.0"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NET DELETE             ----#

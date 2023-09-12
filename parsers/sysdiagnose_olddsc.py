@@ -11,7 +11,7 @@ import json
 from optparse import OptionParser
 import xml.etree.ElementTree as ElementTree
 
-version_string = "sysdiagnose-olddsc.py v2020-02-26 Version 1.0"
+version_string = "sysdiagnose_olddsc.py v2020-02-26 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NET DELETE             ----#

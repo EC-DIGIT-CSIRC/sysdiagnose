@@ -7,9 +7,9 @@
 """sysdiagnose intialize.
 
 Usage:
-  sysdiagnose-spindumpnosymbols.py -i <file>
-  sysdiagnose-spindumpnosymbols.py (-h | --help)
-  sysdiagnose-spindumpnosymbols.py --version
+  sysdiagnose_spindumpnosymbols.py -i <file>
+  sysdiagnose_spindumpnosymbols.py (-h | --help)
+  sysdiagnose_spindumpnosymbols.py --version
 
 Options:
   -h --help     Show this screen.

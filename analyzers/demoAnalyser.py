@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 from optparse import OptionParser
 
-version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
+version_string = "demoAnalyser.py v2023-08-12 Version 0.1"
 
 # ----- definition for analyse.py script -----#
 # -----         DO NOT DELETE             ----#

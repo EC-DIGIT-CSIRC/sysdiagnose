@@ -1,39 +1,39 @@
 #! /usr/bin/env python3
 
 # For Python3
-# Script to print from powerlogs (last 3 days of logs)
+# Script to print from iTunes Store
 # Author: david@autopsit.org
 
 import os
 import sys
+import json
 from optparse import OptionParser
 
-version_string = "sysdiagnose-powerlogs.py v2020-20-19 Version 1.0"
+version_string = "sysdiagnose_itunesstore.py v2020-20-19 Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
+# -----         DO NET DELETE             ----#
 
-parser_description = "Parsing  powerlogs database"
-parser_input = "powerlogs"
-parser_call = "get_powerlogs"
+parser_description = "Parsing iTunes store logs"
+parser_input = "itunesstore"
+parser_call = "get_itunesstore"
 
 # --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
 
 
-def get_powerlogs(dbpath, ios_version=13):
-    sys.path.append(os.path.abspath('./'))
+def get_itunesstore(dbpath, ios_version=13):
     sys.path.append(os.path.abspath('../'))
     from utils import times
     from utils import sqlite2json
 
-    powerlogs = sqlite2json.sqlite2struct(dbpath)
-    return powerlogs
+    itunes = sqlite2json.sqlite2struct(dbpath)
+    return json.loads(sqlite2json.dump2json(itunes))
 
 
-def print_powerlogs(inputfile):
-    print(get_powerlogs(inputfile))
+def print_itunesstore(inputfile):
+    print(get_itunesstore(inputfile))
     return
 
 
@@ -51,15 +51,15 @@ def main():
     parser = OptionParser(usage=usage)
     parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
-                      help="./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL to be parsed")
+                      help="./logs/itunesstored/downloads.*.sqlitedb to be parsed")
     (options, args) = parser.parse_args()
 
     # no arguments given by user, print help and exit
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(-1)
-    # print(options.inputfile)
-    print_powerlogs(options.inputfile)
+
+    print_itunesstore(options.inputfile)
 
 # --------------------------------------------------------------------------- #
 
