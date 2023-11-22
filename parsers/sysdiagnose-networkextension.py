@@ -45,7 +45,7 @@ def parseplist(file):
     output = {'objects': []}
 
     for object in objects:
-        if type(object) == str:
+        if isinstance(object,str):
             output['objects'].append(object)
 
     return output
