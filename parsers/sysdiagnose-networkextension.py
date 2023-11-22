@@ -16,11 +16,11 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
+# import sys
+# from optparse import OptionParser
+# import plistlib
 import biplist
-import json
+# import json
 from docopt import docopt
 from tabulate import tabulate
 
@@ -45,7 +45,7 @@ def parseplist(file):
     output = {'objects': []}
 
     for object in objects:
-        if isinstance(object,str):
+        if isinstance(object, str):
             output['objects'].append(object)
 
     return output
