@@ -61,7 +61,7 @@ Tested On:
 - iOS13
 - iOS14
 - iOS16
-- iOS17.0 (ongoing)
+- iOS17
 
 
 # Timesketch
@@ -74,6 +74,12 @@ Note that for a reasonable sysdiagnose log output, we recommend the following ba
 - 4-8 virtual CPUs
 - Minimum 64 GB of HDD space just for timesketch data (add some more GBs for the OS and OS upgrades, etc.)
 - SSDs (NVMEs) for the data.
+
+# Contributors
+
+- David DURVAUX (European Commission - EC DIGIT Cybersecurity Operation Centre)
+- Aaron KAPLAN (European  Commission - EC DIGIT Cybersecurity Operation Centre)
+- Emilien  Le Jamtel (CERT-EU)
 
 # License
 This project is released under the European Public Licence

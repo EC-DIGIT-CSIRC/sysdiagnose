@@ -116,7 +116,7 @@ def parse(parser, case_id):
     spec.loader.exec_module(module)
 
     # building command
-    if type(case[module.parser_input]) == str:
+    if isinstance(case[module.parser_input], str):
         command = 'module.' + module.parser_call + '(\'' + case[module.parser_input] + '\')'
     else:
         command = 'module.' + module.parser_call + '(' + str(case[module.parser_input]) + ')'

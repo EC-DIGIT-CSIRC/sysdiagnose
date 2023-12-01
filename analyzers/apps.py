@@ -15,11 +15,11 @@ Options:
   -v --version     Show version.
 """
 import os
-from optparse import OptionParser
+# from optparse import OptionParser
 import json
 import ijson
 from docopt import docopt
-import glob
+# import glob
 
 version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
 
@@ -31,6 +31,7 @@ analyser_call = "apps_analysis"
 analyser_format = "md"
 
 # --------------------------------------------------------------------------- #
+
 
 def apps_analysis(jsondir, filename):
     """
@@ -94,6 +95,8 @@ def apps_analysis(jsondir, filename):
 """
     Main function
 """
+
+
 def main():
     """
         Main function, to be called when used as CLI tool
