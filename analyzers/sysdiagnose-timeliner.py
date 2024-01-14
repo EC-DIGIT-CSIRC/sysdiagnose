@@ -29,6 +29,7 @@ timestamps_files = {
     "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
     "sysdiagnose-powerlogs.json": "__extract_ts_powerlogs",
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
+    "sysdiagnose-shutdownlogs.json": "__extract_ts_shutdownlogs",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
     "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
     "sysdiagnose_wifi_known_networks.json": "__extract_ts_wifi_known_networks",
@@ -197,6 +198,32 @@ def __extract_ts_accessibility_tcc(filename):
         return True
     except Exception as e:
         print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        return False
+    return False
+
+def __extract_ts_shutdownlogs(filename):
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            for ts in data["data"].keys():
+                try:
+                    # create timeline entries
+                    timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S+00:00")
+                    processes = data["data"][ts]
+                    for p in processes:
+                        ts_event = {
+                            "message": p["path"],
+                            "timestamp": int(timestamp.timestamp() * 1000000),
+                            "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                            "timestamp_desc": "Entry in shutdown.log",
+                            "extra_field_1": "pid: %s" % p["pid"]
+                        }
+                        timeline.append(ts_event)
+                except Exception as e:
+                    print(f"WARNING: entry not parsed: {ts}")
+        return True
+    except Exception as e:
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
