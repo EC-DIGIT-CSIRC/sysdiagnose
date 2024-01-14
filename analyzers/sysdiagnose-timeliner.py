@@ -29,6 +29,7 @@ timestamps_files = {
     "sysdiagnose-mobileactivation.json": "__extract_ts_mobileactivation",
     "sysdiagnose-powerlogs.json": "__extract_ts_powerlogs",
     "sysdiagnose-swcutil.json": "__extract_ts_swcutil",
+    "sysdiagnose-shutdownlogs.json": "__extract_ts_shutdownlogs",
     "sysdiagnose-logarchive.json": "__extract_ts_logarchive",
     "sysdiagnose-wifisecurity.json": "__extract_ts_wifisecurity",
     "sysdiagnose_wifi_known_networks.json": "__extract_ts_wifi_known_networks",
@@ -49,7 +50,7 @@ def __extract_ts_mobileactivation(filename):
                     timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%d %H:%M:%S")
                     ts_event = {
                         "message": "Mobile Activation",
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Mobile Activation Time",
                         "extra_field_1": "Build Version: %s" % event["build_version"]
@@ -84,12 +85,16 @@ def __extract_ts_powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
     proc_exit = jdata["PLProcessMonitorAgent_EventPoint_ProcessExit"]
     for proc in proc_exit:
         timestamp = datetime.fromtimestamp(int(proc["timestamp"]))
+
+        extra_field = ""
+        if "IsPermanent" in proc.keys():
+            extra_field = "Is permanent: %d" % proc["IsPermanent"]
         ts_event = {
             "message": proc["ProcessName"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-            "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (proc["ReasonCode"], proc["ReasonNamespace"]),
-            "extra_field_1": "Is permanent: %d" % proc["IsPermanent"],
+            "timestamp_desc": "Process Exit with reason code: %d reason namespace %d" % (proc["ReasonCode"], proc["ReasonNamespace"]),
+            "extra_field_1": extra_field
         }
         timeline.append(ts_event)
     return
@@ -101,9 +106,9 @@ def __extract_ts_powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHisto
         timestamp = datetime.fromtimestamp(int(event["timestamp"]))
         ts_event = {
             "message": event["ProcessName"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-            "timestamp_desc": "Process Exit with reason code: %d reason namespace" % (event["ReasonCode"], event["ReasonNamespace"]),
+            "timestamp_desc": "Process Exit with reason code: %d reason namespace %d" % (event["ReasonCode"], event["ReasonNamespace"]),
             "extra_field_1": "Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d" % (event["0s-5s"], event["5s-10s"], event["10s-60s"], event["60s+"])
         }
         timeline.append(ts_event)
@@ -116,7 +121,7 @@ def __extract_ts_powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
         timestamp = datetime.fromtimestamp(int(event["timestamp"]))
         ts_event = {
             "message": event["Name"],
-            "timestamp": int(timestamp.timestamp()*1000000),
+            "timestamp": int(timestamp.timestamp() * 1000000),
             "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
             "timestamp_desc": "PLAccountingOperator Event",
             "extra_field_1": "Is permanent: %d" % event["IsPermanent"]
@@ -139,25 +144,23 @@ def __extract_ts_swcutil(filename):
             "Next Check": "2023-02-28 22:06:35 +0000"
         },
     """
-    try:
-        with open(filename, 'r') as fd:
-            data = json.load(fd)
-            if "db" in data.keys():
-                for service in data["db"]:
+    with open(filename, 'r') as fd:
+        data = json.load(fd)
+        if "db" in data.keys():
+            for service in data["db"]:
+                try:
                     timestamp = datetime.strptime(service["Last Checked"], "%Y-%m-%d %H:%M:%S %z")
                     ts_event = {
                         "message": service["Service"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "swcutil last checkeed",
                         "extra_field_1": "application: %s" % service["App ID"]
                     }
                     timeline.append(ts_event)
-        return True
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
-        return False
-    return False
+                except Exception as e:
+                    print(f"ERROR {filename} while extracting timestamp from {(service['Service'])} - {(service['App ID'])}. Record not inserted.")
+    return True
 
 
 def __extract_ts_accessibility_tcc(filename):
@@ -182,26 +185,45 @@ def __extract_ts_accessibility_tcc(filename):
             data = json.load(fd)
             if "access" in data.keys():
                 for access in data["access"]:
-                    # convert to hashtable
-                    service = {}
-                    for line in access:
-                        keys = line.keys()
-                        for key in keys:
-                            service[key] = line[key]
-
                     # create timeline entry
-                    timestamp = datetime.fromtimestamp(int(service["last_modified"]))
+                    timestamp = datetime.fromtimestamp(int(access["last_modified"]))
                     ts_event = {
-                        "message": service["service"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "message": access["service"],
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Accessibility TC Last Modified",
-                        "extra_field_1": "client: %s" % service["client"]
+                        "extra_field_1": "client: %s" % access["client"]
                     }
                     timeline.append(ts_event)
         return True
     except Exception as e:
         print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        return False
+    return False
+
+def __extract_ts_shutdownlogs(filename):
+    try:
+        with open(filename, 'r') as fd:
+            data = json.load(fd)
+            for ts in data["data"].keys():
+                try:
+                    # create timeline entries
+                    timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S+00:00")
+                    processes = data["data"][ts]
+                    for p in processes:
+                        ts_event = {
+                            "message": p["path"],
+                            "timestamp": int(timestamp.timestamp() * 1000000),
+                            "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                            "timestamp_desc": "Entry in shutdown.log",
+                            "extra_field_1": "pid: %s" % p["pid"]
+                        }
+                        timeline.append(ts_event)
+                except Exception as e:
+                    print(f"WARNING: entry not parsed: {ts}")
+        return True
+    except Exception as e:
+        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
         return False
     return False
 
@@ -250,7 +272,7 @@ def __extract_ts_logarchive(filename):
                     timestamp = datetime.strptime(trace["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z")
                     ts_event = {
                         "message": trace["eventMessage"],
-                        "timestamp": int(timestamp.timestamp()*1000000),
+                        "timestamp": int(timestamp.timestamp() * 1000000),
                         "datetime": timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "Entry in logarchive: %s" % trace["eventType"],
                         "extra_field_1": "subsystem: %s; processImageUUID: %s; processImagePath: %s" % (trace["subsystem"], trace["processImageUUID"], trace["processImagePath"])
@@ -291,7 +313,7 @@ def __extract_ts_wifisecurity(filename):
                     # Event 1: creation
                     ts_event = {
                         "message": wifi["acct"],
-                        "timestamp": int(ctimestamp.timestamp()*1000000),
+                        "timestamp": int(ctimestamp.timestamp() * 1000000),
                         "datetime": ctimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "SSID added to known secured WIFI list",
                         "extra_field_1": wifi["accc"]
@@ -301,7 +323,7 @@ def __extract_ts_wifisecurity(filename):
                     # Event 2: modification
                     ts_event = {
                         "message": wifi["acct"],
-                        "timestamp": int(mtimestamp.timestamp()*1000000),
+                        "timestamp": int(mtimestamp.timestamp() * 1000000),
                         "datetime": mtimestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00"),
                         "timestamp_desc": "SSID modified into the secured WIFI list",
                         "extra_field_1": wifi["accc"]
@@ -315,14 +337,12 @@ def __extract_ts_wifisecurity(filename):
 
 
 def __extract_ts_wifi_known_networks(filename):
-    try:
-        with open(filename, 'r') as fd:
-            data = json.load(fd)
-            for wifi in data.keys():
-                ssid = data[wifi]["SSID"]
+    with open(filename, 'r') as fd:
+        data = json.load(fd)
+        for wifi in data.keys():
+            ssid = data[wifi]["SSID"]
+            try:
                 added = datetime.strptime(data[wifi]["AddedAt"], "%Y-%m-%d %H:%M:%S.%f")
-                updated = datetime.strptime(data[wifi]["UpdatedAt"], "%Y-%m-%d %H:%M:%S.%f")
-                modified_password = datetime.strptime(data[wifi]["__OSSpecific__"]["WiFiNetworkPasswordModificationDate"], "%Y-%m-%d %H:%M:%S.%f")
 
                 # WIFI added
                 ts_event = {
@@ -333,8 +353,12 @@ def __extract_ts_wifi_known_networks(filename):
                     "extra_field_1": "Add reason: %s" % data[wifi]["AddReason"]
                 }
                 timeline.append(ts_event)
+            except Exception as e:
+                print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
 
                 # WIFI modified
+            try:
+                updated = datetime.strptime(data[wifi]["UpdatedAt"], "%Y-%m-%d %H:%M:%S.%f")
                 ts_event = {
                     "message": "WIFI %s added" % updated,
                     "timestamp": updated.timestamp(),
@@ -343,8 +367,12 @@ def __extract_ts_wifi_known_networks(filename):
                     "extra_field_1": "Add reason: %s" % data[wifi]["AddReason"]
                 }
                 timeline.append(ts_event)
+            except Exception as e:
+                print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
 
                 # Password for wifi modified
+            try:
+                modified_password = datetime.strptime(data[wifi]["__OSSpecific__"]["WiFiNetworkPasswordModificationDate"], "%Y-%m-%d %H:%M:%S.%f")
                 ts_event = {
                     "message": "Password for WIFI %s modified" % ssid,
                     "timestamp": modified_password.timestamp(),
@@ -353,12 +381,10 @@ def __extract_ts_wifi_known_networks(filename):
                     "extra_field_1": "AP mode: %s" % data[wifi]["__OSSpecific__"]["AP_MODE"]
                 }
                 timeline.append(ts_event)
+            except Exception as e:
+                print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
 
-        return True
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
-        return False
-    return False
+    return True
 
 
 def parse_json(jsondir):

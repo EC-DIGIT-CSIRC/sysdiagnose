@@ -16,17 +16,17 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
+# import sys
+# from optparse import OptionParser
+# import plistlib
 import biplist
-import json
+# import json
 from docopt import docopt
 from tabulate import tabulate
 
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing networkextension plist file"
 parser_input = "networkextension"
@@ -45,7 +45,7 @@ def parseplist(file):
     output = {'objects': []}
 
     for object in objects:
-        if type(object) == str:
+        if isinstance(object, str):
             output['objects'].append(object)
 
     return output

@@ -26,7 +26,7 @@ from tabulate import tabulate
 
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing networkextensioncache plist file"
 parser_input = "networkextensioncache"

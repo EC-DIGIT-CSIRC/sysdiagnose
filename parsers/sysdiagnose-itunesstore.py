@@ -12,7 +12,7 @@ from optparse import OptionParser
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
 
 # ----- definition for parsing.py script -----#
-# -----         DO NET DELETE             ----#
+# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing iTunes store logs"
 parser_input = "itunesstore"
