@@ -161,6 +161,11 @@ def init(sysdiagnose_file, force=False):
         pass
 
     try:
+        new_case_json["shutdownlog"] = new_folder +glob.glob('./*/system_logs.logarchive/Extra/shutdown.log')[0][1:]
+    except:        # noqa: E722
+        pass
+
+    try:
         new_case_json["taskinfo"] = new_folder +glob.glob('./*/taskinfo.txt')[0][1:]
     except:        # noqa: E722
         pass

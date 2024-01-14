@@ -3,6 +3,7 @@ data/*
 cases.json
 parsed_data/*
 *.gpx
+db.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
