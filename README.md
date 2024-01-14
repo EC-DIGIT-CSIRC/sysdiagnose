@@ -77,9 +77,12 @@ Note that for a reasonable sysdiagnose log output, we recommend the following ba
 
 # Contributors
 
+- Dario BORREGUERO RINCON (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - David DURVAUX (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - Aaron KAPLAN (European  Commission - EC DIGIT Cybersecurity Operation Centre)
-- Emilien  Le Jamtel (CERT-EU)
+- Emilien  LE JAMTEL (CERT-EU)
+- Benoît ROUSSILLE (European Parliament)
+
 
 # License
 This project is released under the European Public Licence
