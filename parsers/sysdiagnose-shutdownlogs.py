@@ -1,15 +1,11 @@
 #! /usr/bin/env python3
 
 # For Python3
-# Demo blank parsers
-# Author: david@autopsit.org
+# Sysdiagnose Shutdown logs
+# Author: Benoit Roussile
 
-import os
 import sys
-import json
 from optparse import OptionParser
-import time
-import struct
 import datetime
 import re
 
