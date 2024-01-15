@@ -23,7 +23,7 @@ parser_call = "parse_shutdownlog"
 
 # --------------------------------------------#
 
-CLIENTS_ARE_STILL_HERE_LINE =  "these clients are still here"
+CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
 SIGTERM_LINE = "SIGTERM"
 
@@ -47,13 +47,13 @@ def parse_shutdownlog(filepath, ios_version=16):
         # look for begining of shutdown sequence
         if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
             running_processes = []
-            while not(SIGTERM_LINE in log_lines[index]):
+            while not (SIGTERM_LINE in log_lines[index]):
                 if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
                     result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
                     pid = result.groups()[0]
                     binary_path = result.groups()[1]
                     process = pid + ":" + binary_path
-                    if not(process in running_processes):
+                    if not (process in running_processes):
                         running_processes.append(process)
                 index += 1
             # compute timestamp from SIGTERM line
