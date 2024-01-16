@@ -3,7 +3,7 @@
 # For Python3
 # Author: Emiliern Le Jamtel
 
-"""Apps analyzer.
+"""Apps analyser.
 
 Usage:
   apps.py -i <logfolder>
