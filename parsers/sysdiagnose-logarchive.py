@@ -56,6 +56,8 @@ def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard cod
         On other system use a 3rd party library.
     """
     if (platform.system() == "Darwin"):
+        if output is not None:
+            output = os.path.join(output, "logarchive.json")
         data = get_logs_on_osx(filename, output)
         return data
     else:
