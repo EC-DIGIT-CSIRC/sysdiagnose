@@ -25,7 +25,7 @@ Create a virtual environment:
 Add new sysdiagnose case
 
 ```
-$ python initialyze.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz 
+$ python initialyze.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
 Sysdiagnose file has been processed
 New case ID: 1
@@ -78,11 +78,33 @@ Note that for a reasonable sysdiagnose log output, we recommend the following ba
 - Minimum 64 GB of HDD space just for timesketch data (add some more GBs for the OS and OS upgrades, etc.)
 - SSDs (NVMEs) for the data.
 
+# UnifiedLogs
+This unifiedlogs parser tool is natively provided on a MacOS system. Fortunately some entities developed a linux compatible parser.
+
+By default sysdiagnose will use the Apple unifiedlogs `log` binary.
+On linux it expects the Mandiant developed UnifiedLogs tool to be present in the path. Follow below instructions to compile and install it on your system.
+
+## Building macos-UnifiedLogs for linux
+
+First, ensure `cargo` is installed so you can build rust projects.
+```
+sudo apt install cargo
+```
+Now you can download and compile the code:
+```bash
+git clone https://github.com/mandiant/macos-UnifiedLogs
+cd macos-UnifiedLogs/examples/unifiedlog_parser_json/
+cargo build --release
+sudo cp ../target/release/unifiedlog_parser_json /usr/local/bin/
+```
+See `unifiedlog_parser_json --help` for more instructions to use the tool, or use it directly through sysdiagnose.
+
 # Contributors
 
 - Dario BORREGUERO RINCON (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - David DURVAUX (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - Aaron KAPLAN (European  Commission - EC DIGIT Cybersecurity Operation Centre)
+- Christophe VANDEPLAS (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - Emilien  LE JAMTEL (CERT-EU)
 - Benoît ROUSSILLE (European Parliament)
 

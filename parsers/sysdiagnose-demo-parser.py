@@ -19,13 +19,14 @@ version_string = "sysdiagnose-demo-parser.py v2023-04-26 Version 1.0"
 parser_description = "Demo parsers"
 parser_input = "demo_input_file"
 parser_call = "demo_function"
+parser_outputs_in_folder = False  # set to true if parser saves JSON in a folder, and parser_call can accept an output folder as parameter
 
 # --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
 
 
-def demo_function(filepath, ios_version=16):
+def demo_function(filepath, ios_version=16, output=None):
     """
         This is the function that will be called
     """

@@ -10,7 +10,10 @@ import os
 import sys
 import json
 import shutil
+import tempfile
 import platform
+import subprocess
+
 from optparse import OptionParser
 
 version_string = "sysdiagnose-logarchive.py v2020-02-07 Version 1.0"
@@ -21,6 +24,7 @@ version_string = "sysdiagnose-logarchive.py v2020-02-07 Version 1.0"
 parser_description = "Parsing system_logs.logarchive folder"
 parser_input = "logarchive_folder"
 parser_call = "get_logs"
+parser_outputs_in_folder = True
 
 # --------------------------------------------#
 
@@ -37,14 +41,11 @@ cmd_parsing_osx = "/usr/bin/log show %s --style ndjson"  # fastest and short ver
 # cmd_parsing_osx = "/usr/bin/log show %s --info --debug --style json"
 
 # Linux parsing relies on UnifiedLogReader:
-#       https://github.com/ydkhatri/UnifiedLogReader
-# 3x the same path, last = output
-# XXX #19 FIXME: this currently does not work on Linux. Forget about it for now.
-cmd_parsing_linux = "/usr/bin/python3 /home/david/.local/bin/UnifiedLogReader.py -l INFO -f SQLITE %s %s/timesync/ %s %s"   # FIXME #17 what is that?
-#   -f FORMAT, --output_format FORMAT
-#                        Output format: SQLITE, TSV_ALL, LOG_DEFAULT  (Default is LOG_DEFAULT)
-#  -l LOG_LEVEL, --log_level LOG_LEVEL
-#                        Log levels: INFO, DEBUG, WARNING, ERROR (Default is INFO)
+#       https://github.com/mandiant/macos-UnifiedLogs
+# Follow instruction in the README.md in order to install it.
+# TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
+cmd_parsing_linux = "unifiedlog_parser_json --input %s --output %s"
+cmd_parsing_linux_test = ["unifiedlog_parser_json", "--help"]
 
 # --------------------------------------------------------------------------- #
 
@@ -58,19 +59,9 @@ def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard cod
         data = get_logs_on_osx(filename, output)
         return data
     else:
-        outpath = "../tmp.data/"
-        __cleanup(outpath)
-        os.makedirs(outpath)
-        if (get_logs_on_linux(filename, outpath)):
-            normalize_unified_logs("%s/unifiedlogs.sqlite" % output)
-        __cleanup(outpath)
+        data = get_logs_on_linux(filename, output)
+        return data
     return None
-
-
-def __cleanup(outpath):
-    if (os.path.exists(outpath)):
-        shutil.rmtree(outpath, ignore_errors=True)
-    return
 
 
 def get_logs_on_osx(filename, output):
@@ -79,28 +70,37 @@ def get_logs_on_osx(filename, output):
 
 
 def get_logs_on_linux(filename, output):
-    cmd_line = cmd_parsing_linux % (filename, filename, filename, output)
-    return __execute_cmd_and_get_result(cmd_line, filename)
-
-
-def normalize_unified_logs(filename="./unifiedlogs.sqlite", output=sys.stdout):
-    """
-    Parse the SQLite produced by UnifiedLogs to get a JSON file.
-    This required to get a SQLITE output from UnifiedLogs
-    """
-    sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
-
-    unifiedlogs = sqlite2json.sqlite2struct(filename)
+    print("WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X")
+    # check if binary exists in PATH, if not, return an error
     try:
-        outfd = output
-        if (output is not sys.stdout):
-            with open(output, "w") as outf:
-                outfd.write(sqlite2json.dump2json(unifiedlogs))
-    except Exception as e:
-        print(f"Impossible to convert {filename} to JSON. Reason: {str(e)}")
-    return
+        subprocess.check_output(cmd_parsing_linux_test, universal_newlines=True)
+    except FileNotFoundError:
+        print("ERROR: UnifiedLogReader not found, please install it. See README.md for more information.")
+        return ""
+
+    if not output:
+        with tempfile.TemporaryDirectory() as tmp_outpath:
+            cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
+            # run the command and get the result
+            __execute_cmd_and_get_result(cmd_line, filename)
+            # read the content of all the files to a variable, a bit crazy as it will eat memory massively
+            # but at least it will be compatible with the overall logic, when needed
+            data = []
+            print("WARNING: combining all output files in memory, this is slow and eat a LOT of memory. Use with caution.")
+            for fname in os.listdir(tmp_outpath):
+                with open(os.path.join(tmp_outpath, fname), 'r') as f:
+                    try:
+                        json_data = json.load(f)
+                        data.append(json_data)
+                    except json.JSONDecodeError as e:
+                        print(f"WARNING: error parsing JSON {fname}: {str(e)}")
+            return data
+            # tempfolder is cleaned automatically after the block
+    else:
+        cmd_line = cmd_parsing_linux % (filename, output)
+        # run the command and get the result
+        data = __execute_cmd_and_get_result(cmd_line, filename)
+        return data
 
 
 def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
@@ -112,7 +112,6 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
             - sys.stdout: print to stdout
             - path to a file to write to
     """
-    import subprocess
     cmd_array = command.split()
     process = subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True)
     result = {"data": []}
@@ -156,9 +155,9 @@ def main():
     parser.add_option("-i", dest="inputfile",
                       action="store", type="string",
                       help="Provide path to system_logs.logarchive folder")
-    parser.add_option("-j", dest="unifiedlog",
+    parser.add_option("-o", dest="outputfile",
                       action="store", type="string",
-                      help="Proceed with a second pass on the result of UnifiedLogs to produce a JSON file (path to logs.txt file)")
+                      help="Provide path to output folder")
     (options, args) = parser.parse_args()
 
     # no arguments given by user, print help and exit
@@ -167,12 +166,12 @@ def main():
         sys.exit(-1)
 
     # parse PS file :)
-    if options.inputfile:
+    if options.inputfile and options.outputfile:
+        get_logs(options.inputfile, options.outputfile)
+    elif options.inputfile:
         get_logs(options.inputfile, sys.stdout)
-    elif options.unifiedlog:
-        normalize_unified_logs(options.unifiedlog)
     else:
-        print("WARNING -i or -j option is mandatory!")
+        print("WARNING -i option is mandatory!")
 
 # --------------------------------------------------------------------------- #
 

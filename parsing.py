@@ -115,26 +115,28 @@ def parse(parser, case_id):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    # building command
-    if isinstance(case[module.parser_input], str):
-        command = 'module.' + module.parser_call + '(\'' + case[module.parser_input] + '\')'
+    try:
+        if module.parser_outputs_in_folder:
+            pass
+    except AttributeError:
+        module.parser_outputs_in_folder = False
+
+    if module.parser_outputs_in_folder:
+        # parsers that output in a folder themselves
+        output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
+        os.makedirs(output_folder, exist_ok=True)
+        result = getattr(module, module.parser_call)(case[module.parser_input], output=output_folder)
+        print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
     else:
-        command = 'module.' + module.parser_call + '(' + str(case[module.parser_input]) + ')'
+        # parsers that output in the result variable
+        # building command
+        result = getattr(module, module.parser_call)(case[module.parser_input])
 
-    # running the command, expecting JSON output
-    # try:
-    #    result = eval(command)
-    # except Exception as e:
-    #    print(f'Error trying to parse {case[module.parser_input]}: {str(e)}', file=sys.stderr)
-
-    result = eval(command)
-
-    # saving the parser output
-    output_file = config.parsed_data_folder + case_id + '/' + parser + '.json'
-    with open(output_file, 'w') as data_file:
-        data_file.write(json.dumps(result, indent=4))
-
-    print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
+        # saving the parser output
+        output_file = os.path.join(config.parsed_data_folder, case_id, f"{parser}.json")
+        with open(output_file, 'w') as data_file:
+            data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
+        print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
 
     return 0
 
