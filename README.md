@@ -25,7 +25,7 @@ Create a virtual environment:
 Add new sysdiagnose case
 
 ```
-$ python initialyze.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
+$ python initialise.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
 Sysdiagnose file has been processed
 New case ID: 1

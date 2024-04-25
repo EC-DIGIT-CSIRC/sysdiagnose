@@ -8,9 +8,9 @@
 """sysdiagnose initialize.
 
 Usage:
-  initialyze.py file <sysdiagnose_file> [--force]
-  initialyze.py (-h | --help)
-  initialyze.py --version
+  initialise.py file <sysdiagnose_file> [--force]
+  initialise.py (-h | --help)
+  initialise.py --version
 
 Options:
   -h --help     Show this screen.
