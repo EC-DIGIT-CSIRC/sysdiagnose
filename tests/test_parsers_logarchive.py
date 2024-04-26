@@ -7,7 +7,7 @@ from parsers.logarchive import get_logs
 
 class TestParsersLogarchive(unittest.TestCase):
 
-    log_path = "tests/testdata/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/system_logs.logarchive"
+    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/system_logs.logarchive"
 
     def test_get_logs_outputdir(self):
         with tempfile.TemporaryDirectory() as tmp_outpath:

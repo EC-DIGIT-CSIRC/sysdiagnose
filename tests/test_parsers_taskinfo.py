@@ -4,7 +4,7 @@ from parsers.taskinfo import get_tasks
 
 class TestParsersTaskinfo(unittest.TestCase):
 
-    log_path = "tests/testdata/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/taskinfo.txt"
+    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/taskinfo.txt"
 
     def test_get_tasks(self):
         result = get_tasks(self.log_path)

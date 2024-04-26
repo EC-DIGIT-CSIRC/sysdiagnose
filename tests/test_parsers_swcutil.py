@@ -4,7 +4,7 @@ from parsers.swcutil import parseswcutil
 
 class TestParsersSwcutil(unittest.TestCase):
 
-    log_path = "tests/testdata/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/swcutil_show.txt"
+    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/swcutil_show.txt"
 
     db_keys = ['Service', 'App ID', 'App Version', 'App PI', 'Domain', 'Patterns', 'User Approval', 'Site/Fmwk Approval', 'Flags']
 

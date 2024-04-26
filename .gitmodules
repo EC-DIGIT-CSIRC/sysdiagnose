@@ -1,0 +1,4 @@
+[submodule "tests/testdata"]
+	path = tests/testdata
+	url = https://github.com/EC-DIGIT-CSIRC/sysdiagnose-testdata
+	branch = main

@@ -4,7 +4,7 @@ from parsers.spindumpnosymbols import parsespindumpNS
 
 class TestParsersSpindumpnosymbols(unittest.TestCase):
 
-    log_path = "tests/testdata/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/spindump-nosymbols.txt"
+    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/spindump-nosymbols.txt"
 
 
     def test_parsespindumpNS(self):
