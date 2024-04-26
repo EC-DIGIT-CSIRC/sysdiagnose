@@ -25,6 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up unifiedlog_parser_json
+      if: matrix.os == 'ubuntu-latest'
       run: |
         git clone https://github.com/mandiant/macos-UnifiedLogs
         cd macos-UnifiedLogs/examples/unifiedlog_parser_json/
@@ -45,12 +46,11 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Extract sysdiagnose test files
+    - name: Extract sysdiagnose test files ubuntu
       run: |
         git submodule update --init --recursive
         cd tests/testdata
-        find -iname '*.tar.gz' -execdir tar xzf {} \;
-
+        find . -iname '*.tar.gz' -execdir tar xzf {} \; 2> /dev/null
     - name: Test with python unittest
       run: |
         python -m unittest
