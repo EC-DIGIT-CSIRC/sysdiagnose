@@ -15,16 +15,23 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@v4
+    - name: Set up unifiedlog_parser_json
+      run: |
+        git clone https://github.com/mandiant/macos-UnifiedLogs
+        cd macos-UnifiedLogs/examples/unifiedlog_parser_json/
+        cargo build --release
+        sudo cp ../target/release/unifiedlog_parser_json /usr/local/bin/
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: ${{matrix.python-version}}
     - name: Install Python dependencies
@@ -38,6 +45,6 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+    - name: Test with python unittest
       run: |
-        pytest
+        pyhon -m unittest
