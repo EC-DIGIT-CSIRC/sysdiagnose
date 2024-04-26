@@ -100,6 +100,7 @@ def get_logs_on_linux(filename, output):
             # tempfolder is cleaned automatically after the block
     else:
         cmd_line = cmd_parsing_linux % (filename, output)
+        os.makedirs(output, exist_ok=True)
         # run the command and get the result
         data = __execute_cmd_and_get_result(cmd_line, filename)
         return data
@@ -169,7 +170,7 @@ def main():
 
     # parse PS file :)
     if options.inputfile and options.outputfile:
-        get_logs(options.inputfile, options.outputfile)
+        get_logs(options.inputfile, output=options.outputfile)
     elif options.inputfile:
         get_logs(options.inputfile, sys.stdout)
     else:

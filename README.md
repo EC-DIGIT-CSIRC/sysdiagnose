@@ -36,10 +36,32 @@ List available parsers and cases
 
 ```
 $ python parsing.py list parsers
-Parser Name      Parser Description                Parser Input
----------------  --------------------------------  --------------
-sysdiagnose-ps   Parsing ps.txt file               ps
-sysdiagnose-sys  Parsing SystemVersion plist file  systemversion
+Parser Name            Parser Description                        Parser Input
+---------------------  ----------------------------------------  ---------------------
+demo_parser            Demo parsers                              demo_input_file
+logarchive             Parsing system_logs.logarchive folder     logarchive_folder
+ps                     Parsing ps.txt file                       ps
+spindumpnosymbols      Parsing spindump-nosymbols file           spindump-nosymbols
+accessibility_tcc      Parsing Accessibility TCC logs            Accessibility-TCC
+taskinfo               Parsing taskinfo txt file                 taskinfo
+networkextensioncache  Parsing networkextensioncache plist file  networkextensioncache
+mobileactivation       Parsing mobileactivation logs file        mobile_activation
+networkextension       Parsing networkextension plist file       networkextension
+wifisecurity           Parsing WiFi Security logs                wifisecurity
+swcutil                Parsing swcutil_show file                 swcutil_show
+sys                    Parsing SystemVersion plist file          systemversion
+appinstallation        Parsing app installation logs             appinstallation
+powerlogs              Parsing  powerlogs database               powerlogs
+olddsc                 Parsing olddsc files                      olddsc
+mobileinstallation     Parsing mobile_installation logs file     mobile_installation
+itunesstore            Parsing iTunes store logs                 itunesstore
+containermanager       Parsing containermanagerd logs file       container_manager
+wifi_known_networks    Parsing Known Wifi Networks plist file    wifi_data
+psthread               Parsing ps_thread.txt file                ps_thread
+wifiscan               Parsing wifi_scan files                   wifi_data
+shutdownlogs           Parsing shutdown.log file                 shutdownlog
+uuid2path              Parsing UUIDToBinaryLocations plist file  UUIDToBinaryLocations
+brctl                  Parsing brctl files                       brctl
 
 $ python parsing.py list cases
 #### case List ####
@@ -51,16 +73,16 @@ $ python parsing.py list cases
 Run parsers
 
 ```
-$ python parsing.py parse sysdiagnose-ps 1
-Execution success, output saved in: ./parsed_data/1/sysdiagnose-ps.json
+$ python parsing.py parse ps 1
+Execution success, output saved in: ./parsed_data/1/ps.json
 
-$ python parsing.py parse sysdiagnose-sys 1
-Execution success, output saved in: ./parsed_data/1/sysdiagnose-sys.json
+$ python parsing.py parse sys 1
+Execution success, output saved in: ./parsed_data/1/sys.json
 
 ```
 
 Tested On:
-- python 3.8.5, 3.10
+- python 3.8.5, 3.10, 3.11
 - iOS13
 - iOS14
 - iOS16
