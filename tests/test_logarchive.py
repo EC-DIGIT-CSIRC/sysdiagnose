@@ -12,7 +12,7 @@ class TestLogarchive(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_outpath:
             result = get_logs(self.logarchive_path, output=tmp_outpath)
             # check if folder is not empty
-            self.assertNotEquals(os.listdir(tmp_outpath), [])
+            self.assertNotEqual(os.listdir(tmp_outpath), [])
 
             if (platform.system() == "Darwin"):
                 self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive.json")))
