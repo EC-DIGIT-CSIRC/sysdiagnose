@@ -16,13 +16,11 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
 import json
 from docopt import docopt
 import glob
-sys.path.append('..')   # noqa: E402
-from sysdiagnose import misc        # noqa: E402
+# sys.path.append('..')   # noqa: E402
+import misc        # noqa: E402
 
 # ----- definition for parsing.py script -----#
 
@@ -33,15 +31,14 @@ parser_call = "parsewifinetwork"
 # --------------------------------------------------------------------------- #
 
 
-def parsewifinetwork(wifi_data):
+def parsewifinetwork(wifi_data: list):
     output = {}
     for data in wifi_data:
-        if data.endswith('com.apple.wifi.recent-networks.json'):
-            print('parsing: ' + data)
+        if data.endswith('.json'):
             with open(data, 'r') as f:
-                output['recent_networks'] = json.load(f)
+                output[data.split("/")[-1]] = json.load(f)
         if data.endswith('.plist'):
-            output[data.split("/")[-1]] = misc.load_plist_and_fix(data)
+            output[data.split("/")[-1]] = misc.load_plist_as_json(data)
     return output
 
 # --------------------------------------------------------------------------- #
