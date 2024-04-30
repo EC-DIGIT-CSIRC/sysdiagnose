@@ -50,6 +50,7 @@ jobs:
       run: |
         git submodule update --init --recursive
         cd tests/testdata
+        echo "Extracting sysdiagnose test files"
         find . -iname '*.tar.gz' -execdir tar xzf {} \; 2> /dev/null
     - name: Test with python unittest
       run: |

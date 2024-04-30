@@ -5,6 +5,7 @@ import unittest
 
 from parsers.logarchive import get_logs
 
+
 class TestParsersLogarchive(unittest.TestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/system_logs.logarchive"
@@ -14,6 +15,8 @@ class TestParsersLogarchive(unittest.TestCase):
             result = get_logs(self.log_path, output=tmp_outpath)
             # check if folder is not empty
             self.assertNotEqual(os.listdir(tmp_outpath), [])
+            # result should contain at least one entry (linux = stdout, mac = mention it's saved to a file)
+            self.assertTrue(len(result['data']) > 0)
 
             if (platform.system() == "Darwin"):
                 self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive.json")))
@@ -24,6 +27,7 @@ class TestParsersLogarchive(unittest.TestCase):
         result = get_logs(self.log_path)
         # FIXME check result on a mac
         self.assertGreater(len(result), 0)
+
 
 if __name__ == '__main__':
     unittest.main()
