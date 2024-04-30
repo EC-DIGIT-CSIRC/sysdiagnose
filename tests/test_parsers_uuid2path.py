@@ -1,7 +1,8 @@
+from tests import SysdiagnoseTestCase
 import unittest
 
 
-class TestParsersUuid2path(unittest.TestCase):
+class TestParsersUuid2path(SysdiagnoseTestCase):
     pass
     # FIXME write the test functions function
 

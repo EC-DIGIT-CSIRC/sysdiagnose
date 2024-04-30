@@ -1,9 +1,9 @@
+from parsers.swcutil import parseswcutil
+from tests import SysdiagnoseTestCase
 import unittest
 
-from parsers.swcutil import parseswcutil
 
-
-class TestParsersSwcutil(unittest.TestCase):
+class TestParsersSwcutil(SysdiagnoseTestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/swcutil_show.txt"
 

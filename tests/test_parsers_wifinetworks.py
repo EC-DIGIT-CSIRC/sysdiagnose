@@ -1,10 +1,11 @@
+
+from parsers.wifinetworks import parsewifinetwork
+from tests import SysdiagnoseTestCase
 import os
 import unittest
 
-from parsers.wifinetworks import parsewifinetwork
 
-
-class TestParsersWifiNetworks(unittest.TestCase):
+class TestParsersWifiNetworks(SysdiagnoseTestCase):
 
     log_root_path = 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/'
     log_files = [

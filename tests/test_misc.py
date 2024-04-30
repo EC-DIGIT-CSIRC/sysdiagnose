@@ -1,8 +1,9 @@
-import unittest
+from tests import SysdiagnoseTestCase
 import misc
+import unittest
 
 
-class TestMisc(unittest.TestCase):
+class TestMisc(SysdiagnoseTestCase):
 
     def test_load_plist_with_binary_file(self):
         result = misc.load_plist_as_json("tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/WiFi/com.apple.wifi.known-networks.plist")
@@ -17,3 +18,7 @@ class TestMisc(unittest.TestCase):
         self.assertTrue(result['ProductVersion'])
         self.assertTrue(result['BuildID'])
         self.assertTrue(result['SystemImageID'])
+
+
+if __name__ == '__main__':
+    unittest.main()

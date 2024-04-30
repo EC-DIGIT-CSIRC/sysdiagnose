@@ -1,9 +1,9 @@
+from parsers.spindumpnosymbols import parsespindumpNS
+from tests import SysdiagnoseTestCase
 import unittest
 
-from parsers.spindumpnosymbols import parsespindumpNS
 
-
-class TestParsersSpindumpnosymbols(unittest.TestCase):
+class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/spindump-nosymbols.txt"
 

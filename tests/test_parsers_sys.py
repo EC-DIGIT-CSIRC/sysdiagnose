@@ -1,9 +1,9 @@
+from parsers.sys import getProductInfo
+from tests import SysdiagnoseTestCase
 import unittest
 
-from parsers.sys import getProductInfo
 
-
-class TestParsersSys(unittest.TestCase):
+class TestParsersSys(SysdiagnoseTestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/logs/SystemVersion/SystemVersion.plist"
 
