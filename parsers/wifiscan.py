@@ -30,7 +30,6 @@ def parsewifiscan(wifi_data: list):
     output = []
     for data in wifi_data:
         if data.endswith('.txt'):
-            print('parsing: ' + data)
             with open(data, 'r') as f:
                 for line in f:
                     line = line.strip()
@@ -46,24 +45,37 @@ def parsewifiscan(wifi_data: list):
                             parsed_data[key.strip()] = value.strip()
                     else:
                         # extract key-value by string
+
+                        # first ssid and ssid_hex, but need to detect the type first
+                        regexes = [
+                            # iOS 16 and later: FIRSTCONWIFI - ssid=4649525354434f4e57494649
+                            r"(?P<ssid>.+?) - ssid=(?P<ssid_hex>[^,]+)",
+                            # iOS 15: 'FIRSTCONWIFI' (4649525354434f4e57494649)
+                            r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)"
+                        ]
+                        for regex in regexes:
+                            m = re.match(regex, line)
+                            if m:
+                                parsed_data['ssid'] = m.group('ssid')
+                                parsed_data['ssid_hex'] = m.group('ssid_hex')
+                                break
                         # key = first place with =
                         #  check what is after =, if normal char then value is until next ,
                         #                         if [ then value is until ]
                         #                         if { then value is until }
-                        # first ssid and ssid_hex
-                        m = re.match(r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)", line)
-                        parsed_data['ssid'] = m.group('ssid')
-                        parsed_data['ssid_hex'] = m.group('ssid_hex')
                         index_now = line.index(',') + 1
-                        # now the rest
+                        # now the rest of the line
                         while index_now < len(line):
                             index_equals = line.index('=', index_now)
                             key = line[index_now:index_equals].strip()
                             if line[index_equals + 1] in ['[']:
                                 index_close = line.index(']', index_now)
-                                value = line[index_equals + 2:index_close].strip()
+                                value = line[index_equals + 1:index_close].strip()
                             else:
-                                index_close = line.index(',', index_now)
+                                try:
+                                    index_close = line.index(',', index_now)
+                                except ValueError:  # catch end of line
+                                    index_close = len(line)
                                 value = line[index_equals + 1:index_close].strip()
                             index_now = index_close + 2
                             parsed_data[key] = value
