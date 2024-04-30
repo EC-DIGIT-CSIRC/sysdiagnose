@@ -2,10 +2,10 @@ import unittest
 
 from parsers.psthread import parse_ps_thread
 
+
 class TestParsersPsthread(unittest.TestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/ps_thread.txt"
-
 
     def test_parse_psthread(self):
         result = parse_ps_thread(self.log_path)

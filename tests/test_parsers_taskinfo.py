@@ -2,6 +2,7 @@ import unittest
 
 from parsers.taskinfo import get_tasks
 
+
 class TestParsersTaskinfo(unittest.TestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/taskinfo.txt"
