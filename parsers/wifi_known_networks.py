@@ -51,7 +51,7 @@ def getKnownWifiNetworks(plistfiles=[], ios_version=13):
                     result = biplist.readPlist(fp)
                     if config.debug:
                         print(f"Type (result) = {type(result)}", file=sys.stderr)
-                        print(f"XXXX DEBUG:", file=sys.stderr)
+                        print("XXXX DEBUG:", file=sys.stderr)
                         print(json.dumps(result, indent=4, cls=CustomEncoder), file=sys.stderr)
             except Exception as e:
                 print(f"Could not parse {path}. Reason: {str(e)}", file=sys.stderr)

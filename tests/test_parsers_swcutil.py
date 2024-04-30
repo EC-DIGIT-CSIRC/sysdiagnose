@@ -2,6 +2,7 @@ import unittest
 
 from parsers.swcutil import parseswcutil
 
+
 class TestParsersSwcutil(unittest.TestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/swcutil_show.txt"
@@ -18,6 +19,7 @@ class TestParsersSwcutil(unittest.TestCase):
         self.assertGreater(len(result['memory']), 0)
         self.assertGreater(len(result['db']), 0)
         self.assertEqual(list(result['db'][0].keys()), self.db_keys)
+
 
 if __name__ == '__main__':
     unittest.main()

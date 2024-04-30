@@ -9,7 +9,6 @@
 # - tree structure
 # - simplified
 #
-import re
 import sys
 import json
 from optparse import OptionParser
@@ -27,15 +26,15 @@ parser_call = "parse_ps_thread"
 
 
 def parse_ps_thread(filename, ios_version=13):
-    fd = open(filename, "r")
-    input = fd.readlines()
-    input_clean = []
-    for line in input:
-        if "??" in line:
-            input_clean.append(line)
-    headers = [h for h in ' '.join(input[0].strip().split()).split() if h]
-    raw_data = map(lambda s: s.strip().split(None, len(headers) -1), input_clean)
-    return [dict(zip(headers, r)) for r in raw_data]
+    with open(filename, "r") as fd:
+        input = fd.readlines()
+        input_clean = []
+        for line in input:
+            if "??" in line:
+                input_clean.append(line)
+        headers = [h for h in ' '.join(input[0].strip().split()).split() if h]
+        raw_data = map(lambda s: s.strip().split(None, len(headers) - 1), input_clean)
+        return [dict(zip(headers, r)) for r in raw_data]
 
 
 # --------------------------------------------------------------------------- #
