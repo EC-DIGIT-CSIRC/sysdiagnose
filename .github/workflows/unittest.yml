@@ -54,4 +54,4 @@ jobs:
         find . -iname '*.tar.gz' -execdir tar xzf {} \; 2> /dev/null
     - name: Test with python unittest
       run: |
-        python -m unittest
+        python -m unittest -v
