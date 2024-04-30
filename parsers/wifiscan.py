@@ -1,9 +1,5 @@
 #! /usr/bin/env python3
 
-# For Python3
-# Script to parse the swcutil_show.txt file
-# Author: Emilien Le Jamtel
-
 """sysdiagnose intialize.
 
 Usage:
@@ -16,9 +12,6 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
 import json
 from docopt import docopt
 import glob
@@ -32,39 +25,60 @@ parser_call = "parsewifiscan"
 
 # --------------------------------------------------------------------------- #
 
-def parsewifiscan(wifi_data):
+
+def parsewifiscan(wifi_data: list):
     output = []
     for data in wifi_data:
         if data.endswith('.txt'):
             print('parsing: ' + data)
             with open(data, 'r') as f:
                 for line in f:
-                    if line.strip():
-                        content = line.split(',')
-                        # check if the first entry of the dict contains the ssid
-                        if 'ssid=' in content[0]:
-                            parsed_data = {}
-                            for item in content:
-                                key_value = item.split("=")
-                                parsed_data[key_value[0].strip()] = key_value[1]
-                            # cleaning SSID entries
-                            for key in parsed_data.copy().keys():
-                                if ' - ssid' in key:
-                                    up_parsed_data = {'ssid': re.sub(' - ssid', '', key), 'ssid_hex': parsed_data[key]}
-                                    del parsed_data[key]
-                                    up_parsed_data.update(parsed_data)
-                                    parsed_data = up_parsed_data
-                            output.append(parsed_data)
+                    line = line.strip()
+                    # skip empty lines
+                    if not line:
+                        continue
+                    parsed_data = {}
+                    # process header
+                    if line.startswith('total='):
+                        items = line.split(',')
+                        for item in items:
+                            key, value = item.split('=')
+                            parsed_data[key.strip()] = value.strip()
+                    else:
+                        # extract key-value by string
+                        # key = first place with =
+                        #  check what is after =, if normal char then value is until next ,
+                        #                         if [ then value is until ]
+                        #                         if { then value is until }
+                        # first ssid and ssid_hex
+                        m = re.match(r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)", line)
+                        parsed_data['ssid'] = m.group('ssid')
+                        parsed_data['ssid_hex'] = m.group('ssid_hex')
+                        index_now = line.index(',') + 1
+                        # now the rest
+                        while index_now < len(line):
+                            index_equals = line.index('=', index_now)
+                            key = line[index_now:index_equals].strip()
+                            if line[index_equals + 1] in ['[']:
+                                index_close = line.index(']', index_now)
+                                value = line[index_equals + 2:index_close].strip()
+                            else:
+                                index_close = line.index(',', index_now)
+                                value = line[index_equals + 1:index_close].strip()
+                            index_now = index_close + 2
+                            parsed_data[key] = value
+                    output.append(parsed_data)
     return output
 
 # --------------------------------------------------------------------------- #
+
 
 def main():
     """
         Main function, to be called when used as CLI tool
     """
 
-    arguments = docopt(__doc__, version='parser for wifi_scan files v0.3')
+    arguments = docopt(__doc__, version='parser for wifi_scan files v0.4')
 
     if arguments['-i']:
         # list scan files in folder and build a list
