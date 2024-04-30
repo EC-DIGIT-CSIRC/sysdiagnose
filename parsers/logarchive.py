@@ -9,7 +9,6 @@
 import os
 import sys
 import json
-import shutil
 import tempfile
 import platform
 import subprocess
@@ -68,7 +67,7 @@ def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard cod
 
 def get_logs_on_osx(filename, output):
     cmd_line = cmd_parsing_osx % (filename)
-    return __execute_cmd_and_get_result(cmd_line, filename, output)
+    return __execute_cmd_and_get_result(cmd_line, output)
 
 
 def get_logs_on_linux(filename, output):
@@ -84,7 +83,7 @@ def get_logs_on_linux(filename, output):
         with tempfile.TemporaryDirectory() as tmp_outpath:
             cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
             # run the command and get the result
-            __execute_cmd_and_get_result(cmd_line, filename)
+            __execute_cmd_and_get_result(cmd_line)
             # read the content of all the files to a variable, a bit crazy as it will eat memory massively
             # but at least it will be compatible with the overall logic, when needed
             data = []
@@ -101,12 +100,12 @@ def get_logs_on_linux(filename, output):
     else:
         cmd_line = cmd_parsing_linux % (filename, output)
         os.makedirs(output, exist_ok=True)
-        # run the command and get the result
-        data = __execute_cmd_and_get_result(cmd_line, filename)
+        # run the command and get the result, output file is mentioned in cmd_line
+        data = __execute_cmd_and_get_result(cmd_line)
         return data
 
 
-def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
+def __execute_cmd_and_get_result(command, outputfile=None):
     """
         Return None if it failed or the result otherwise.
 
@@ -116,29 +115,24 @@ def __execute_cmd_and_get_result(command, filename, outfile=sys.stdout):
             - path to a file to write to
     """
     cmd_array = command.split()
-    process = subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True)
     result = {"data": []}
-    outfd = outfile
-    if (outfile is not None):  # if none just return the text with return
-        if (outfile is not sys.stdout):  # handle case were not printing to stdout
-            outfd = open(outfile, "w")
-    while True:
-        if (process.poll() is None):
-            output = process.stdout.readline()
-            if (output == ""):
-                break
-            else:
-                if (outfile is not None):
-                    outfd.write(output)
+
+    with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+        if outputfile is None:
+            for line in iter(process.stdout.readline, ''):
                 try:
-                    result['data'].append(json.loads(output))
-                except Exception as e:
-                    print(f"Something was not properly parsed : {str(e)}")
-                # print(result)
+                    result['data'].append(json.loads(line))
+                except Exception:
+                    result['data'].append(line)
+        elif outputfile == sys.stdout:
+            for line in iter(process.stdout.readline, ''):
+                print(line)
         else:
-            break
-    if ((outfd is not sys.stdout) and (outfd is not None)):
-        outfd.close()
+            with open(outputfile, "w") as outfd:
+                for line in iter(process.stdout.readline, ''):
+                    outfd.write(line)
+                result['data'] = f'Output written to {outputfile}'
+
     return result
 
 

@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": "${command:pickArgs}",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: logarchive.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsers/sysdiagnose-logarchive.py",
+            "args": "-i data/1/sysdiagnose_2023.08.25_15-14-14+0200_iPhone-OS_iPhone_21A5319a/system_logs.logarchive",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parsing.py parse logarchive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "parse sysdiagnose-logarchive 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parsing.py parse ps",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "parse sysdiagnose-ps 1",
+            "cwd": "${workspaceFolder}/"
+        }
+    ]
+}
