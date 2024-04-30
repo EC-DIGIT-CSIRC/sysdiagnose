@@ -4,8 +4,6 @@ import os
 import sys
 import json
 import plistlib
-import biplist
-from biplist import Uid, Data
 from datetime import datetime
 import binascii
 
