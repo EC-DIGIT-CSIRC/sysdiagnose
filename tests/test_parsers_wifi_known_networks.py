@@ -1,10 +1,10 @@
+from parsers.wifi_known_networks import getKnownWifiNetworks
+from tests import SysdiagnoseTestCase
 import json
 import unittest
 
-from parsers.wifi_known_networks import getKnownWifiNetworks
 
-
-class TestParsersWifiKnownNetworks(unittest.TestCase):
+class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/WiFi/com.apple.wifi.known-networks.plist"
 

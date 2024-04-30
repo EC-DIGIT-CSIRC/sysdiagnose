@@ -1,12 +1,12 @@
+from parsers.logarchive import get_logs
+from tests import SysdiagnoseTestCase
 import os
 import platform
 import tempfile
 import unittest
 
-from parsers.logarchive import get_logs
 
-
-class TestParsersLogarchive(unittest.TestCase):
+class TestParsersLogarchive(SysdiagnoseTestCase):
 
     log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/system_logs.logarchive"
 
