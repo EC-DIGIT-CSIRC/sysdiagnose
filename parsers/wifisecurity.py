@@ -25,6 +25,16 @@ parser_call = "get_wifi_security_log"
 # --------------------------------------------------------------------------- #
 
 
+def get_log_files(log_root_path: str) -> list:
+    """
+        Get the list of log files to be parsed
+    """
+    log_files = [
+        "WiFi/security.txt"
+    ]
+    return [os.path.join(log_root_path, log_files) for log_files in log_files]
+
+
 def get_wifi_security_log(filepath, ios_version=16):
     """
         Parse ./WiFi/security.txt and extract block of interest:
@@ -43,44 +53,22 @@ def get_wifi_security_log(filepath, ios_version=16):
             sync : 1
             tomb : 0
     """
-    wifi = []
-    wifi_el = {}
+    entries = []
+    element = {}
     try:
-        fd = open(filepath, "r")
-        for line in fd:
-            if line.startswith("accc"):
-                wifi_el["accc"] = line.split(" : ")[1].strip()
-            elif line.startswith("acct"):
-                wifi_el["acct"] = line.split(" : ")[1].strip()
-            elif line.startswith("agrp"):
-                wifi_el["agrp"] = line.split(" : ")[1].strip()
-            elif line.startswith("cdat"):
-                wifi_el["cdat"] = line.split(" : ")[1].strip()
-            elif line.startswith("desc"):
-                wifi_el["desc"] = line.split(" : ")[1].strip()
-            elif line.startswith("labl"):
-                wifi_el["labl"] = line.split(" : ")[1].strip()
-            elif line.startswith("mdat"):
-                wifi_el["mdat"] = line.split(" : ")[1].strip()
-            elif line.startswith("musr"):
-                wifi_el["musr"] = line.split(" : ")[1].strip()
-            elif line.startswith("pdmn"):
-                wifi_el["pdmn"] = line.split(" : ")[1].strip()
-            elif line.startswith("sha1"):
-                wifi_el["sha1"] = line.split(" : ")[1].strip()
-            elif line.startswith("svce"):
-                wifi_el["svce"] = line.split(" : ")[1].strip()
-            elif line.startswith("sync"):
-                wifi_el["sync"] = line.split(" : ")[1].strip()
-            elif line.startswith("tomb"):
-                wifi_el["tomb"] = line.split(" : ")[1].strip()
-            elif line == '\n':
-                wifi.append(wifi_el)
-                wifi_el = {}
-        fd.close()
+        with open(filepath, "r") as f:
+            for line in f:
+                if ' : ' in line:
+                    key, value = line.split(" : ")
+                    # print(f"key: {key.strip()}, value: {value.strip()}")
+                    element[key.strip()] = value.strip()
+                elif element:
+                    entries.append(element)
+                    # print(f"appending {element}")
+                    element = {}
     except Exception as e:
         print(f"Could not parse: {filepath}. Reason: {str(e)}")
-    return wifi
+    return entries
 
 
 # --------------------------------------------------------------------------- #
