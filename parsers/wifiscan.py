@@ -28,11 +28,14 @@ parser_call = "parsewifiscan"
 
 
 def get_log_files(log_root_path: str) -> list:
-    log_files = [
-        "WiFi/wifi_scan.txt"
+    log_files_globs = [
+        'WiFi/wifi_scan*.txt'
     ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
-    return [os.path.join(log_root_path, log_files) for log_files in log_files]
+    return log_files
 
 
 def parsewifiscan(wifi_data: list):
