@@ -4,13 +4,9 @@
 # Demo blank parsers
 # Author: david@autopsit.org
 
-import os
 import sys
-import json
 from optparse import OptionParser
-import time
-import struct
-import datetime
+import os
 
 version_string = "sysdiagnose-demo-parser.py v2023-04-26 Version 1.0"
 
@@ -24,6 +20,16 @@ parser_outputs_in_folder = False  # set to true if parser saves JSON in a folder
 # --------------------------------------------#
 
 # --------------------------------------------------------------------------- #
+
+
+def get_log_files(log_root_path: str) -> list:
+    """
+        Get the list of log files to be parsed
+    """
+    log_files = [
+        "demo_input_file.txt"
+    ]
+    return [os.path.join(log_root_path, log_files) for log_files in log_files]
 
 
 def demo_function(filepath, ios_version=16, output=None):

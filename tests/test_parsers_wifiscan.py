@@ -1,19 +1,15 @@
-from parsers.wifiscan import parsewifiscan
+from parsers.wifiscan import parsewifiscan, get_log_files
 from tests import SysdiagnoseTestCase
-import os
 import unittest
 
 
 class TestParsersWifiScan(SysdiagnoseTestCase):
 
-    log_files = [
-        "WiFi/wifi_scan.txt"
-    ]
     # self.log_root_paths is defined in SysdiagnoseTestCase
 
     def test_parsewifiscan(self):
         for log_root_path in self.log_root_paths:
-            files = [os.path.join(log_root_path, log_file) for log_file in self.log_files]
+            files = [log_file for log_file in get_log_files(log_root_path)]
             for file in files:
                 print(f'Parsing {file}')
                 result = parsewifiscan([file])

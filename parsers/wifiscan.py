@@ -12,9 +12,10 @@ Options:
   -v --version     Show version.
 """
 
-import json
 from docopt import docopt
 import glob
+import json
+import os
 import re
 
 # ----- definition for parsing.py script -----#
@@ -24,6 +25,14 @@ parser_input = "wifi_data"  # list of log files - only get the .txt files from t
 parser_call = "parsewifiscan"
 
 # --------------------------------------------------------------------------- #
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files = [
+        "WiFi/wifi_scan.txt"
+    ]
+
+    return [os.path.join(log_root_path, log_files) for log_files in log_files]
 
 
 def parsewifiscan(wifi_data: list):
