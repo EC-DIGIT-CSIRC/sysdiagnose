@@ -4,9 +4,12 @@
 # Script to print from powerlogs (last 3 days of logs)
 # Author: david@autopsit.org
 
+from optparse import OptionParser
+from utils import sqlite2json
+import glob
 import os
 import sys
-from optparse import OptionParser
+
 
 version_string = "sysdiagnose-powerlogs.py v2020-20-19 Version 1.0"
 
@@ -22,11 +25,22 @@ parser_call = "get_powerlogs"
 # --------------------------------------------------------------------------- #
 
 
+def get_log_files(log_root_path: str) -> list:
+    """
+        Get the list of log files to be parsed
+    """
+    log_files_globs = [
+        'logs/powerlogs/powerlog_*',
+        # 'logs/powerlogs/log_*'  # LATER is this file of interest?
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
+
+
 def get_powerlogs(dbpath, ios_version=13):
-    sys.path.append(os.path.abspath('./'))
-    sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
 
     powerlogs = sqlite2json.sqlite2struct(dbpath)
     return powerlogs
