@@ -6,11 +6,7 @@
 
 import os
 import sys
-import json
 from optparse import OptionParser
-import time
-import struct
-import datetime
 
 version_string = "sysdiagnose-wifisecurity.py v2023-04-26 Version 1.0"
 
