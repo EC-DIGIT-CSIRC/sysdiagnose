@@ -5,11 +5,13 @@
 # Author: david@autopsit.org
 #
 #
+import glob
 import os
 import sys
 import json
 from optparse import OptionParser
 import xml.etree.ElementTree as ElementTree
+import misc
 
 version_string = "sysdiagnose-olddsc.py v2020-02-26 Version 1.0"
 
@@ -23,7 +25,22 @@ parser_call = "get_olddsc"
 # --------------------------------------------#
 
 
-def parse_olddsc_file(file, output):
+def get_log_files(log_root_path: str) -> dict:
+    log_files_globs = [
+        'logs/olddsc/*'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
+
+
+def parse_olddsc_file(filepath: str) -> dict:
+    return misc.load_plist_as_json(filepath)
+
+
+def parse_olddsc_file_old(file, output):
     """
         Parse OLDDSC file
 
@@ -112,7 +129,7 @@ def get_olddsc(folder, ios_version=13, output=sys.stdout):
     # r=root, d=directories, f = files
     for r, d, f in os.walk(folder):
         for file in f:
-            parse_olddsc_file("%s/%s" % (folder, file), output)
+            parse_olddsc_file_old("%s/%s" % (folder, file), output)
     return True
 
 # --------------------------------------------------------------------------- #
