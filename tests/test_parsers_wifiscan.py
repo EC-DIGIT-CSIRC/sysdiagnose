@@ -10,6 +10,7 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
     def test_parsewifiscan(self):
         for log_root_path in self.log_root_paths:
             files = get_log_files(log_root_path)
+            # self.assertTrue(len(files) > 0)  # not all sysdiagnose have wifiscan logs
             for file in files:
                 print(f'Parsing {file}')
                 result = parsewifiscan([file])
