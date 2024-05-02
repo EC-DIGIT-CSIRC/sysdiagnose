@@ -4,9 +4,11 @@
 # Script to print from Accessibility TCC logs
 # Author: david@autopsit.org
 
+from optparse import OptionParser
+from utils import sqlite2json
+import glob
 import os
 import sys
-from optparse import OptionParser
 
 version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
 
@@ -21,11 +23,18 @@ parser_call = "get_accessibility_tcc"
 # --------------------------------------------------------------------------- #
 
 
-def get_accessibility_tcc(dbpath, ios_version=13):
-    sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/Accessibility/TCC.db'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
+    return log_files
+
+
+def get_accessibility_tcc(dbpath, ios_version=13):
     tcc = sqlite2json.sqlite2struct(dbpath)
     return tcc
     # return sqlite2json.dump2json(tcc)
@@ -33,8 +42,6 @@ def get_accessibility_tcc(dbpath, ios_version=13):
 
 def print_accessibility_tcc(inputfile):
     sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
     print(sqlite2json.dump2json(get_accessibility_tcc(inputfile)))
     return
 
