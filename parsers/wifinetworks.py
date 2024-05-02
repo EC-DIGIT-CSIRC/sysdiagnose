@@ -21,6 +21,7 @@ from docopt import docopt
 import glob
 # sys.path.append('..')   # noqa: E402
 import misc        # noqa: E402
+import os
 
 # ----- definition for parsing.py script -----#
 
@@ -29,6 +30,18 @@ parser_input = "wifi_data"  # list of log files - only get the .txt files from t
 parser_call = "parsewifinetwork"
 
 # --------------------------------------------------------------------------- #
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'WiFi/*.plist',
+        'WiFi/com.apple.wifi.recent-networks.json'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def parsewifinetwork(wifi_data: list):

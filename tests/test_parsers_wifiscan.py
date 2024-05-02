@@ -5,8 +5,6 @@ import unittest
 
 class TestParsersWifiScan(SysdiagnoseTestCase):
 
-    # self.log_root_paths is defined in SysdiagnoseTestCase
-
     def test_parsewifiscan(self):
         for log_root_path in self.log_root_paths:
             files = get_log_files(log_root_path)

@@ -9,6 +9,8 @@
 import sys
 from optparse import OptionParser
 import plistlib
+import os
+import glob
 
 version_string = "sysdiagnose-sys.py v2019-05-10 Version 2.0"
 
@@ -20,6 +22,17 @@ parser_input = "systemversion"
 parser_call = "getProductInfo"
 
 # --------------------------------------------#
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/SystemVersion/SystemVersion.plist'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 # --------------------------------------------------------------------------- #

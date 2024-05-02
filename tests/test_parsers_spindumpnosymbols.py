@@ -1,18 +1,20 @@
-from parsers.spindumpnosymbols import parsespindumpNS
+from parsers.spindumpnosymbols import parsespindumpNS, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
 
 class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
-    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/spindump-nosymbols.txt"
-
     def test_parsespindumpNS(self):
-        result = parsespindumpNS(self.log_path)
-        self.assertGreater(len(result), 0)
-        self.assertTrue('iPhone OS' in result['OS Version'])
-        self.assertTrue('rootdev' in result['Boot args'])
-        self.assertGreater(len(result['processes']), 0)
+        for log_root_path in self.log_root_paths:
+            files = get_log_files(log_root_path)
+            self.assertTrue(len(files) > 0)
+            for file in files:
+                print(f'Parsing {file}')
+                result = parsespindumpNS(file)
+                self.assertGreater(len(result), 0)
+                self.assertTrue('OS Version' in result)
+                self.assertGreater(len(result['processes']), 0)
 
 
 if __name__ == '__main__':
