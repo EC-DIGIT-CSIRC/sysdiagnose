@@ -16,13 +16,10 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
-import json
 from docopt import docopt
-from tabulate import tabulate
 import glob
+import json
+import os
 import re
 
 
@@ -33,6 +30,18 @@ parser_input = "container_manager"  # list of log files
 parser_call = "parsecontainermanager"
 
 # --------------------------------------------#
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/MobileContainerManager/containermanagerd.log*'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
+
 
 # function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
 # Month to numeric with leading zero when month < 10 function
@@ -61,26 +70,41 @@ def day_converter(day):
 def parsecontainermanager(loglist):
     events = {"events": []}
     for logfile in loglist:
-        file = open(logfile, 'r', encoding='utf8')
-        for line in file:
-            # getting Timestamp - adding entry only if timestamp is present
-            timeregex = re.search(r"(?<=^)(.*)(?= \[)", line)  # Regex for timestamp
-            if timeregex:
-                new_entry = buildlogentry(line)
-                events['events'].append(new_entry)
-    return events
+        with open(logfile, 'r', encoding="utf-8") as f:
+            # multiline parsing with the following logic:
+            # - build an entry with the seen lines
+            # - upon discovery of a new entry, or the end of the file, consider the entry as complete and process the lines
+            # - discovery of a new entry is done based on the timestamp, as each new entry starts this way
+            prev_lines = []
+            for line in f:
+                timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
+                if timeregex:
+                    # new entry, process the previous entry
+                    if prev_lines:
+                        new_entry = buildlogentry(''.join(prev_lines))
+                        events['events'].append(new_entry)
+                    # build the new entry
+                    prev_lines = []
+                    prev_lines.append(line)
+                else:
+                    # not a new entry, add the line to the previous entry
+                    prev_lines.append(line)
+            # process the last entry
+            new_entry = buildlogentry(''.join(prev_lines))
+            events['events'].append(new_entry)
+            return events
 
 
 def buildlogentry(line):
     entry = {}
     # timestamp
-    timeregex = re.search(r"(?<=^)(.*)(?= \[[0-9]+)", line)  # Regex for timestamp
+    timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
     if timeregex:
         timestamp = timeregex.group(1)
         weekday, month, day, time, year = (str.split(timestamp[:24]))
         day = day_converter(day)
         month = month_converter(month)
-        entry['timestamp'] = str(year)+ '-'+ str(month) + '-' + str(day) + ' ' + str(time)
+        entry['timestamp'] = str(year) + '-' + str(month) + '-' + str(day) + ' ' + str(time)
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)
@@ -97,11 +121,11 @@ def buildlogentry(line):
 
         # msg
         if 'event_type' in entry:
-            msgregex = re.search(r"\]\:(.*)", line)
-            entry['msg'] = msgregex.group(1)
+            msgregex = re.search(r"\]\:(.*)", line, re.MULTILINE | re.DOTALL)
+            entry['msg'] = msgregex.group(1).strip()
         else:
-            msgregex = re.search(r"\)\ (.*)", line)
-            entry['msg'] = msgregex.group(1)
+            msgregex = re.search(r"\)\ (.*)", line, re.MULTILINE | re.DOTALL)
+            entry['msg'] = msgregex.group(1).strip()
 
     return entry
 
@@ -113,7 +137,7 @@ def main():
     # Parse arguments
     arguments = docopt(__doc__, version='parser for container manager log files v0.1')
 
-    loglist=[]
+    loglist = []
 
     if arguments['-i']:
         # list files in folder and build list object
