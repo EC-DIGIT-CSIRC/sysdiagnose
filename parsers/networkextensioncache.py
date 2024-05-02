@@ -16,13 +16,11 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
-import json
-import pprint
 from docopt import docopt
 from tabulate import tabulate
+import glob
+import os
+import misc
 
 
 # ----- definition for parsing.py script -----#
@@ -35,9 +33,20 @@ parser_call = "parseplist"
 # --------------------------------------------#
 
 
-def parseplist(file):
-    with open(file, 'rb') as fp:
-        pl = plistlib.load(fp)
+def get_log_files(log_root_path: str) -> list:
+    # FIXME it looks like there are no files matching the criteria
+    log_files_globs = [
+        'logs/Networking/com.apple.networkextension.cache.plist'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
+
+
+def parseplist(fname):
+    pl = misc.load_plist_as_json(fname)
 
     # pprint.pprint(pl)
 
@@ -59,11 +68,11 @@ def main():
 
     arguments = docopt(__doc__, version='parser for networkextensioncache.plist v0.1')
 
-    ### test
+    # ## test
     # if arguments['-i'] == True:
     #    parseplist(arguments['<file>'])
     #    sys.exit()
-    ### test
+    # ## test
 
     if arguments['-i']:
         try:
@@ -72,7 +81,7 @@ def main():
             headers = ['App', 'UUIDs']
             lines = []
             for key, val in apprules.items():
-                line=[key, val]
+                line = [key, val]
                 lines.append(line)
             print(tabulate(lines, headers=headers))
         except Exception as e:

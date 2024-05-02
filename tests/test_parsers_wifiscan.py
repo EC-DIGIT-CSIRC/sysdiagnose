@@ -9,7 +9,7 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
 
     def test_parsewifiscan(self):
         for log_root_path in self.log_root_paths:
-            files = [log_file for log_file in get_log_files(log_root_path)]
+            files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
                 result = parsewifiscan([file])
