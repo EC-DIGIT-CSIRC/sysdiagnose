@@ -19,10 +19,12 @@ Options:
 # import sys
 # from optparse import OptionParser
 # import plistlib
-import biplist
+import misc
 # import json
 from docopt import docopt
 from tabulate import tabulate
+import os
+import glob
 
 
 # ----- definition for parsing.py script -----#
@@ -35,20 +37,19 @@ parser_call = "parseplist"
 # --------------------------------------------#
 
 
-def parseplist(file):
-    with open(file, 'rb') as fp:
-        pl = biplist.readPlist(fp)
-        # pl = plistlib.load(fp)
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/Networking/com.apple.networkextension.plist'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
-    objects = pl['$objects']
+    return log_files
 
-    output = {'objects': []}
 
-    for object in objects:
-        if isinstance(object, str):
-            output['objects'].append(object)
-
-    return output
+def parseplist(fname):
+    return misc.load_plist_as_json(fname)
 
 
 def main():
@@ -65,7 +66,7 @@ def main():
             headers = ['Interesting extracted object']
             lines = []
             for object in objects['objects']:
-                line=[object]
+                line = [object]
                 lines.append(line)
             print(tabulate(lines, headers=headers))
         except Exception as e:
