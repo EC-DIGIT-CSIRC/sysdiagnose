@@ -6,7 +6,7 @@ parsed_data/*
 db.json
 
 # private test data
-/tests/testdata-private
+/tests/testdata-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
