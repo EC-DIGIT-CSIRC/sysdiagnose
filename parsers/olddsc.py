@@ -37,7 +37,7 @@ def get_log_files(log_root_path: str) -> dict:
 
 
 def parse_olddsc_file(filepath: str) -> dict:
-    return misc.load_plist_as_json(filepath)
+    return misc.load_plist_file_as_json(filepath)
 
 
 def parse_olddsc_file_old(file, output):

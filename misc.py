@@ -7,6 +7,7 @@ import plistlib
 from datetime import datetime
 import binascii
 from functools import singledispatch
+import base64
 
 
 def get_version(filename="VERSION.txt"):
@@ -24,10 +25,15 @@ def get_version(filename="VERSION.txt"):
         sys.exit(-1)
 
 
-def load_plist_as_json(fname: str):
+def load_plist_file_as_json(fname: str):
     with open(fname, 'rb') as f:
         plist = plistlib.load(f)
         return json_serializable(plist)
+
+
+def load_plist_string_as_json(plist_string):
+    plist = plistlib.loads(plist_string)
+    return json_serializable(plist)
 
 
 # https://stackoverflow.com/questions/51674222/how-to-make-json-dumps-in-python-ignore-a-non-serializable-field
@@ -70,6 +76,14 @@ def _handle_sequence(seq, skip_underscore=False):
 @json_serializable.register(type(None))
 def _handle_default_scalar_types(value, skip_underscore=False):
     return value
+
+
+@json_serializable.register(bytes)
+def _handle_bytes(value, skip_underscore=False):
+    try:
+        return value.decode(errors='strict')
+    except Exception:
+        return base64.b64encode(value).decode(errors='ignore')
 
 
 def find_datetime(d):
