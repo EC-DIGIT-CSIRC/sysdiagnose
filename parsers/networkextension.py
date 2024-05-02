@@ -49,7 +49,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parseplist(fname):
-    return misc.load_plist_as_json(fname)
+    return misc.load_plist_file_as_json(fname)
 
 
 def main():

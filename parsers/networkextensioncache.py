@@ -46,7 +46,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parseplist(fname):
-    pl = misc.load_plist_as_json(fname)
+    pl = misc.load_plist_file_as_json(fname)
 
     # pprint.pprint(pl)
 

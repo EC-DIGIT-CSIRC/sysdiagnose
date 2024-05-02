@@ -32,10 +32,6 @@ parser_call = "parsemobinstall"
 
 # --------------------------------------------#
 
-# function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
-# Month to numeric with leading zero when month < 10 function
-# Function call: month = month_converter(month)
-
 
 def get_log_files(log_root_path: str) -> list:
     log_files_globs = [
@@ -46,6 +42,11 @@ def get_log_files(log_root_path: str) -> list:
         log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
     return log_files
+
+
+# function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
+# Month to numeric with leading zero when month < 10 function
+# Function call: month = month_converter(month)
 
 
 def month_converter(month):
@@ -128,6 +129,7 @@ def buildlogentry(line):
     except Exception as e:
         print(f"Error parsing line: {line}. Reason: {str(e)}")
         raise Exception from e
+
     return entry
 
 
