@@ -17,15 +17,11 @@ Options:
 """
 
 import sys
-from optparse import OptionParser
-import plistlib
 import json
 from docopt import docopt
-from tabulate import tabulate
 import glob
 import re
-import csv
-import io
+import os
 
 
 # ----- definition for parsing.py script -----#
@@ -34,6 +30,13 @@ import io
 parser_description = "Parsing brctl files"
 parser_input = "brctl"      # folder containing brctl files
 parser_call = "parsebrctl"
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_folders = [
+        'brctl/'
+    ]
+    return [os.path.join(log_root_path, log_folder) for log_folder in log_folders]
 
 
 def parselistfile(container_list_file):
@@ -348,8 +351,8 @@ def parse_apps_monitor(data):
 
 
 def parsebrctl(brctl_folder):
-    container_list_file = [brctl_folder + '/brctl-container-list.txt']
-    container_dump_file = [brctl_folder + '/brctl-dump.txt']
+    container_list_file = [os.path.join(brctl_folder, 'brctl-container-list.txt')]
+    container_dump_file = [os.path.join(brctl_folder, 'brctl-dump.txt')]
 
     brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
 
