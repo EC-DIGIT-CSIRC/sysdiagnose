@@ -63,7 +63,9 @@ def parsewifiscan(wifi_data: list):
                             # iOS 16 and later: FIRSTCONWIFI - ssid=4649525354434f4e57494649
                             r"(?P<ssid>.+?) - ssid=(?P<ssid_hex>[^,]+)",
                             # iOS 15: 'FIRSTCONWIFI' (4649525354434f4e57494649)
-                            r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)"
+                            r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)",
+                            # hidden:  <HIDDEN>
+                            r"(?P<ssid><HIDDEN>)(?P<ssid_hex>)",
                         ]
                         for regex in regexes:
                             m = re.match(regex, line)
