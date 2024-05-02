@@ -11,4 +11,4 @@ class SysdiagnoseTestCase(unittest.TestCase):
         # - testdata-private/iOSxx/sysdiagnose_YYYY.MM.DD_HH-MM-SS-SSSS_...
         # this allows testing locally with more data, while keeping online tests coherent
 
-        self.log_root_paths = [name for name in glob.glob('tests/testdata*/*/*') if os.path.isdir(name)]
+        self.log_root_paths = [name for name in glob.glob('tests/testdata*/**/sysdiagnose_*', recursive=True) if os.path.isdir(name)]

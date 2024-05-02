@@ -1,18 +1,20 @@
-from parsers.taskinfo import get_tasks
+from parsers.taskinfo import get_tasks, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
 
 class TestParsersTaskinfo(SysdiagnoseTestCase):
 
-    log_path = "tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349/taskinfo.txt"
-
     def test_get_tasks(self):
-        result = get_tasks(self.log_path)
-        self.assertGreater(len(result), 0)
-
-        self.assertEqual(result['numb_tasks'], 244)
-        self.assertGreater(len(result['tasks']), 0)
+        for log_root_path in self.log_root_paths:
+            files = get_log_files(log_root_path)
+            self.assertTrue(len(files) > 0)
+            for file in files:
+                print(f'Parsing {file}')
+                result = get_tasks(file)
+                self.assertGreater(len(result), 0)
+                self.assertGreater(result['numb_tasks'], 0)
+                self.assertGreater(len(result['tasks']), 0)
 
 
 if __name__ == '__main__':

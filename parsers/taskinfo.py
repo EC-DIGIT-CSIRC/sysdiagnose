@@ -9,7 +9,8 @@
 #
 import re
 import sys
-import json
+import glob
+import os
 from optparse import OptionParser
 
 version_string = "sysdiagnose-taskinfo.py v2020-02-07 Version 1.0"
@@ -22,6 +23,17 @@ parser_input = "taskinfo"
 parser_call = "get_tasks"
 
 # --------------------------------------------#
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'taskinfo.txt'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 # --------------------------------------------------------------------------- #
@@ -264,7 +276,7 @@ def get_tasks(filename, ios_version=13):
                 continue
         fd.close()
     except Exception as e:
-        print(f"Could not open {filename}")
+        print(f"Could not open {filename} for reading. Reason: {str(e)}")
 
     return {"numb_tasks": numb_tasks, "tasks": tasks}
 

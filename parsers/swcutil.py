@@ -16,13 +16,10 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
-import json
 from docopt import docopt
-from tabulate import tabulate
-
+import glob
+import os
+import sys
 
 # ----- definition for parsing.py script -----#
 # -----         DO NOT DELETE             ----#
@@ -32,6 +29,17 @@ parser_input = "swcutil_show"
 parser_call = "parseswcutil"
 
 # --------------------------------------------#
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'swcutil_show.txt'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def parseswcutil(file):
@@ -115,7 +123,7 @@ def main():
 
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
-    ### test
+    # ## test
     if arguments['-i']:
         # Output is good enough, just print
         with open(arguments['<file>'], 'r') as f_in:
@@ -123,7 +131,7 @@ def main():
                 print(line.strip())
         # parseswcutil(arguments['<file>'])
         sys.exit()
-    ### test
+    # ## test
 
     return 0
 

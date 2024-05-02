@@ -16,14 +16,13 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
-import json
 from docopt import docopt
-from tabulate import tabulate
+import glob
+import json
+import os
 import re
-import pprint
+import sys
+
 
 # ----- definition for parsing.py script -----#
 # -----         DO NOT DELETE             ----#
@@ -33,6 +32,17 @@ parser_input = "spindump-nosymbols"
 parser_call = "parsespindumpNS"
 
 # --------------------------------------------#
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'spindump-nosymbols.txt'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def parsespindumpNS(file):
@@ -167,7 +177,7 @@ def parse_thread(data):
     output["loaded"] = []
 
     for line in data[1:]:
-        loaded={}
+        loaded = {}
         if "+" in line:
             loaded["library"] = line.split("(", 1)[1].split("+", 1)[0].strip()
             loaded["int"] = line.split("(", 1)[1].split("+", 1)[1].split(")", 1)[0].strip()
@@ -179,7 +189,7 @@ def parse_thread(data):
 
 
 def parse_images(data):
-    images=[]
+    images = []
     for line in data:
         image = {}
         if line.strip() is not None:
@@ -203,12 +213,12 @@ def main():
 
     arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
 
-    ### test
+    # ## test
     if arguments['-i']:
         # Output is good enough, just print
         print(json.dumps(parsespindumpNS(arguments['<file>']), indent=4))
         sys.exit()
-    ### test
+    # ## test
 
     return 0
 
