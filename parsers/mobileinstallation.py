@@ -82,7 +82,7 @@ def parsemobinstall(loglist):
                 if prev_lines:
                     prev_lines.append(line)
                     if line.endswith('}'):
-                        line = ''.join(prev_lines)
+                        line = '\n'.join(prev_lines)
                         prev_lines = []
                     else:
                         continue
