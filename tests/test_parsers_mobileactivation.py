@@ -3,7 +3,7 @@ from tests import SysdiagnoseTestCase
 import unittest
 
 
-class TestParsersMobileinstallation(SysdiagnoseTestCase):
+class TestParsersMobileactivation(SysdiagnoseTestCase):
 
     def test_mobileactivation(self):
         for log_root_path in self.log_root_paths:

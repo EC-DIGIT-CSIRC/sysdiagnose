@@ -4,10 +4,13 @@
 # Script to print from iTunes Store
 # Author: david@autopsit.org
 
+from optparse import OptionParser
+from utils import sqlite2json
+import glob
+import json
 import os
 import sys
-import json
-from optparse import OptionParser
+
 
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
 
@@ -23,11 +26,18 @@ parser_call = "get_itunesstore"
 # --------------------------------------------------------------------------- #
 
 
-def get_itunesstore(dbpath, ios_version=13):
-    sys.path.append(os.path.abspath('../'))
-    from utils import times
-    from utils import sqlite2json
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/itunesstored/downloads.*.sqlitedb'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
+    return log_files
+
+
+def get_itunesstore(dbpath, ios_version=13):
     itunes = sqlite2json.sqlite2struct(dbpath)
     return json.loads(sqlite2json.dump2json(itunes))
 
@@ -43,6 +53,7 @@ def main():
     """
         Main function, to be called when used as CLI tool
     """
+    sys.path.append(os.path.abspath('../'))
 
     print(f"Running {version_string}\n")
 
