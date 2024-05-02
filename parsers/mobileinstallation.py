@@ -16,13 +16,10 @@ Options:
   -v --version     Show version.
 """
 
-import sys
-from optparse import OptionParser
-import plistlib
-import json
 from docopt import docopt
-from tabulate import tabulate
 import glob
+import json
+import os
 import re
 
 
@@ -38,6 +35,17 @@ parser_call = "parsemobinstall"
 # function copied from https://github.com/abrignoni/iOS-Mobile-Installation-Logs-Parser/blob/master/mib_parser.sql.py
 # Month to numeric with leading zero when month < 10 function
 # Function call: month = month_converter(month)
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/MobileInstallation/mobile_installation.log*'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def month_converter(month):
@@ -62,49 +70,64 @@ def day_converter(day):
 def parsemobinstall(loglist):
     events = {"events": []}
     for logfile in loglist:
-        file = open(logfile, 'r', encoding='utf8')
-        for line in file:
-            # getting Timestamp - adding entry only if timestamp is present
-            timeregex = re.search(r"(?<=^)(.*)(?= \[)", line)  # Regex for timestamp
-            if timeregex:
-                new_entry = buildlogentry(line)
-                events['events'].append(new_entry)
+        with open(logfile, 'r', encoding='utf8') as f:
+            prev_lines = []
+            for line in f:
+                line = line.strip()
+                # support multiline entries
+                if line.endswith('{'):
+                    prev_lines.append(line)
+                    continue
+                if prev_lines:
+                    prev_lines.append(line)
+                    if line.endswith('}'):
+                        line = ''.join(prev_lines)
+                        prev_lines = []
+                    else:
+                        continue
+                # normal or previously multiline entry
+                # getting Timestamp - adding entry only if timestamp is present
+                timeregex = re.search(r"(?<=^)(.*)(?= \[)", line)  # Regex for timestamp
+                if timeregex:
+                    new_entry = buildlogentry(line)
+                    events['events'].append(new_entry)
     return events
 
 
 def buildlogentry(line):
-    entry = {}
-    # timestamp
-    print(line)
-    timeregex = re.search(r"(?<=^)(.*)(?= \[[0-9]+)", line)  # Regex for timestamp
-    timestamp = timeregex.group(1)
-    print(timestamp)
-    weekday, month, day, time, year = (str.split(timestamp))
-    day = day_converter(day)
-    month = month_converter(month)
-    entry['timestamp'] = str(year)+ '-'+ str(month) + '-' + str(day) + ' ' + str(time)
+    try:
+        entry = {}
+        # timestamp
+        timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
+        timestamp = timeregex.group(1)
+        weekday, month, day, time, year = (str.split(timestamp))
+        day = day_converter(day)
+        month = month_converter(month)
+        entry['timestamp'] = str(year) + '-' + str(month) + '-' + str(day) + ' ' + str(time)
 
-    # log level
-    loglevelregex = re.search(r"\<(.*?)\>", line)
-    entry['loglevel'] = loglevelregex.group(1)
+        # log level
+        loglevelregex = re.search(r"\<(.*?)\>", line)
+        entry['loglevel'] = loglevelregex.group(1)
 
-    # hex_ID
-    hexIDregex = re.search(r"\(0x(.*?)\)", line)
-    entry['hexID'] = '0x' + hexIDregex.group(1)
+        # hex_ID
+        hexIDregex = re.search(r"\(0x(.*?)\)", line)
+        entry['hexID'] = '0x' + hexIDregex.group(1)
 
-    # event_type
-    eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)
-    if eventyperegex:
-        entry['event_type'] = eventyperegex.group(1)
+        # event_type
+        eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)
+        if eventyperegex:
+            entry['event_type'] = eventyperegex.group(1)
 
-    # msg
-    if 'event_type' in entry:
-        msgregex = re.search(r"\]\:(.*)", line)
-        entry['msg'] = msgregex.group(1)
-    else:
-        msgregex = re.search(r"\)\ (.*)", line)
-        entry['msg'] = msgregex.group(1)
-
+        # msg
+        if 'event_type' in entry:
+            msgregex = re.search(r"\]\:(.*)", line)
+            entry['msg'] = msgregex.group(1).strip()
+        else:
+            msgregex = re.search(r"\)\ (.*)", line)
+            entry['msg'] = msgregex.group(1).strip()
+    except Exception as e:
+        print(f"Error parsing line: {line}. Reason: {str(e)}")
+        raise Exception from e
     return entry
 
 
@@ -115,7 +138,7 @@ def main():
 
     arguments = docopt(__doc__, version='parser for mobile_installation log files v0.1')
 
-    loglist=[]
+    loglist = []
 
     if arguments['-i']:
         # list files in folder and build list object

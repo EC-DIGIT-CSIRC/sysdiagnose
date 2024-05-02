@@ -17,7 +17,7 @@
             "name": "Python Debugger: logarchive.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsers/sysdiagnose-logarchive.py",
+            "program": "${workspaceFolder}/parsers/logarchive.py",
             "args": "-i data/1/sysdiagnose_2023.08.25_15-14-14+0200_iPhone-OS_iPhone_21A5319a/system_logs.logarchive",
             "cwd": "${workspaceFolder}/"
         },
@@ -26,7 +26,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
-            "args": "parse sysdiagnose-logarchive 1",
+            "args": "parse logarchive 1",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -34,7 +34,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
-            "args": "parse sysdiagnose-ps 1",
+            "args": "parse ps 1",
             "cwd": "${workspaceFolder}/"
         }
     ]
