@@ -8,14 +8,15 @@
 # PID: encoded in Litlle Endian??
 # TODO - add support of iOS13...
 
-import os
-import sys
-import json
+
 from optparse import OptionParser
-import time
-import struct
+from utils import sqlite2json
 import datetime
+import glob
+import json
+import os
 import sqlite3
+import sys
 
 version_string = "sysdiagnose-appinstallation.py v2019-11-22 Version 2.0"
 
@@ -30,7 +31,20 @@ parser_call = "get_appinstallation"
 # --------------------------------------------------------------------------- #
 
 
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'logs/appinstallation/AppUpdates.sqlitedb',
+        'logs/appinstallation/appstored.sqlitedb'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
+
+
 def get_appinstallation(dbpath, ios_version=13):
+    # FIXME result can contain data in binary form. Apply the misc.json_serializable function to convert it to clean JSON.
     if ios_version < 13:
         return print_appinstall_ios12(dbpath)
     else:
@@ -58,9 +72,6 @@ def print_appinstall_ios12(dbpath):
 
 
 def get_appinstallation_ios13(dbpath):
-    from utils import times
-    from utils import sqlite2json
-
     appinstallation = sqlite2json.sqlite2struct(dbpath)
     return json.loads(sqlite2json.dump2json(appinstallation))
 
