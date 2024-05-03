@@ -88,21 +88,34 @@ def parsedumpfile(container_dump_file):
             # print the key and its value
             bhkey = key
     # runing the parser
-    boot_history = parse_boot_history(dump[bhkey])
+    try:
+        boot_history = parse_boot_history(dump[bhkey])
+    except UnboundLocalError:
+        boot_history = {}
 
     # server_state
-    server_state = parse_server_state(dump['server_state'])
+    try:
+        server_state = parse_server_state(dump['server_state'])
+    except KeyError:
+        server_state = {}
 
     # client_state
-    client_state = parse_client_state(dump['client_state'])
+    try:
+        client_state = parse_client_state(dump['client_state'])
+    except KeyError:
+        client_state = {}
 
     # system
-
-    system = parse_system_scheduler(dump['system'])
+    try:
+        system = parse_system_scheduler(dump['system'])
+    except KeyError:
+        system = {}
 
     # scheduler
-
-    system = parse_system_scheduler(dump['scheduler'])
+    try:
+        scheduler = parse_system_scheduler(dump['scheduler'])
+    except KeyError:
+        scheduler = {}
 
     # containers
     # finding key value
@@ -113,15 +126,25 @@ def parsedumpfile(container_dump_file):
             # print the key and its value
             ckey = key
     # creating several parser with the same data
+
     # applibrary
-    applibrary = parse_app_library(dump[ckey])
+    try:
+        applibrary = parse_app_library(dump[ckey])
+    except UnboundLocalError:
+        applibrary = {}
 
     # server_items
-    server_items = parse_server_items(dump[ckey])
+    try:
+        server_items = parse_server_items(dump[ckey])
+    except UnboundLocalError:
+        server_items = {}
 
     # app library IDs by App ID
-    app_library_id, app_ids = parse_apps_monitor(dump['apps monitor'])
-
+    try:
+        app_library_id, app_ids = parse_apps_monitor(dump['apps monitor'])
+    except KeyError:
+        app_library_id = {}
+        app_ids = {}
     # putting together all the parsed data
 
     result = {
@@ -130,6 +153,7 @@ def parsedumpfile(container_dump_file):
         "server_state": server_state,
         "client_state": client_state,
         "system": system,
+        "scheduler": scheduler,
         "applibrary": applibrary,
         "server_items": server_items,
         "app_library_id": app_library_id,
@@ -292,7 +316,7 @@ def parse_app_library(data):
     result = []
     for match in matches:
         library = match[0]
-        app_id = match[1]
+        app_id = match[1]  # noqa F841
         ino = match[2]
         apps = match[3].split('; ')
         bundles = match[4].split(', ')
@@ -353,10 +377,10 @@ def parse_apps_monitor(data):
 def parsebrctl(brctl_folder):
     container_list_file = [os.path.join(brctl_folder, 'brctl-container-list.txt')]
     container_dump_file = [os.path.join(brctl_folder, 'brctl-dump.txt')]
-
-    brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
-
-    return brctl_parsing
+    if os.path.exists(container_list_file[0]) and os.path.exists(container_dump_file[0]):
+        brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
+        return brctl_parsing
+    return {}
 
 
 def main():

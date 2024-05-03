@@ -34,7 +34,6 @@ parser_call = "parseplist"
 
 
 def get_log_files(log_root_path: str) -> list:
-    # FIXME it looks like there are no files matching the criteria
     log_files_globs = [
         'logs/Networking/com.apple.networkextension.cache.plist'
     ]
@@ -50,7 +49,7 @@ def parseplist(fname):
 
     # pprint.pprint(pl)
 
-    return pl['app-rules']
+    return pl
 
     # objects = pl['$objects']
 
