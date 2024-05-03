@@ -11,10 +11,7 @@ class TestParsersNetworkExtensionCache(SysdiagnoseTestCase):
             for file in files:
                 print(f'Parsing {file}')
                 result = parseplist(file)
-                for item in result:
-                    # FIXME this test is not complete, but we need matching files to test
-                    pass
-
+                self.assertGreater(len(result), 0)
 
 
 if __name__ == '__main__':

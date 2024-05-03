@@ -13,9 +13,10 @@ class TestParsersShutdownlogs(SysdiagnoseTestCase):
                 print(f'Parsing {file}')
                 result = parse_shutdownlog(file)
                 self.assertGreater(len(result['data']), 0)
-                for item in result['data']:
-                    self.assertTrue('pid' in item)
-                    self.assertTrue('path' in item)
+                for shutdown in result['data'].values():
+                    for process in shutdown:
+                        self.assertTrue('pid' in process)
+                        self.assertTrue('path' in process)
 
 
 if __name__ == '__main__':
