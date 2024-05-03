@@ -11,6 +11,7 @@ class TestParsersMobileinstallation(SysdiagnoseTestCase):
             for file in files:
                 print(f'Parsing {file}')
                 result = parsemobinstall([file])
+                pass
                 for item in result['events']:
                     self.assertTrue('timestamp' in item)
                     self.assertTrue('loglevel' in item)
