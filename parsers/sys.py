@@ -54,14 +54,13 @@ def getProductInfo(path="./logs/SystemVersion/SystemVersion.plist", ios_version=
         "ProductBuildVersion": None
     }
     try:
-        fd = open(path, 'rb')
-        plist = plistlib.load(fd)
+        with open(path, 'rb') as fd:
+            plist = plistlib.load(fd)
         for key in ["ProductName", "ProductVersion", "ProductBuildVersion", "BuildID", "SystemImageID"]:
             if key in plist.keys():
                 result[key] = plist[key]
             else:
                 print(f"WARNING: {key} not found in plist file {path}. Ignoring key.", file=sys.stderr)
-        fd.close()
     except Exception as e:
         print(f"Could not parse {path}. Reason: {str(e)}", file=sys.stderr)
     return result

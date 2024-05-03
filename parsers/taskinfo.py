@@ -43,14 +43,12 @@ def get_num_tasks(filename, ios_version=13):
     """
     num_tasks = -1
     try:
-        fd = open(filename, "r")
-        for line in fd:
-            result = re.search(r'(num tasks: )(\d+)', line)
-            if (result is not None):
-                num_tasks = int(result.group(2))
-                break
-        fd.close()
-
+        with open(filename, "r") as fd:
+            for line in fd:
+                result = re.search(r'(num tasks: )(\d+)', line)
+                if (result is not None):
+                    num_tasks = int(result.group(2))
+                    break
     except Exception as e:
         print(f"Impossible to parse taskinfo.txt: {str(e)}")
     return num_tasks
@@ -266,15 +264,14 @@ def get_tasks(filename, ios_version=13):
     # TODO parses elements before / after tasks
 
     try:
-        fd = open(filename, "r")
-        for line in fd:
-            line = line.strip()
-            # search for the right place in text file
-            if (line.startswith("threads:")):
-                tasks = search_task_block(fd, ios_version)
-            else:
-                continue
-        fd.close()
+        with open(filename, "r") as fd:
+            for line in fd:
+                line = line.strip()
+                # search for the right place in text file
+                if (line.startswith("threads:")):
+                    tasks = search_task_block(fd, ios_version)
+                else:
+                    continue
     except Exception as e:
         print(f"Could not open {filename} for reading. Reason: {str(e)}")
 

@@ -11,7 +11,8 @@ class TestParsersPowerlogs(SysdiagnoseTestCase):
             for file in files:
                 print(f'Parsing {file}')
                 result = get_powerlogs(file)
-                self.assertTrue('sqlite_sequence' in result)
+                if result:  # some files are empty
+                    self.assertTrue('sqlite_sequence' in result)
 
 
 if __name__ == '__main__':

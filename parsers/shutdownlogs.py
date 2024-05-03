@@ -4,10 +4,12 @@
 # Sysdiagnose Shutdown logs
 # Author: Benoit Roussile
 
-import sys
 from optparse import OptionParser
 import datetime
+import glob
+import os
 import re
+import sys
 
 version_string = "sysdiagnose-shutdownlog.py v2024-01-11 Version 1.0"
 
@@ -24,6 +26,17 @@ REMAINING_CLIENT_PID_LINE = "remaining client pid"
 SIGTERM_LINE = "SIGTERM"
 
 # --------------------------------------------------------------------------- #
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_files_globs = [
+        'system_logs.logarchive/Extra/shutdown.log'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def parse_shutdownlog(filepath, ios_version=16):
