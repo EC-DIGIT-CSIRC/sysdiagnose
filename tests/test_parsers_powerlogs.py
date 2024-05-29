@@ -1,4 +1,4 @@
-from parsers.powerlogs import get_powerlogs, get_log_files
+from parsers.powerlogs import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersPowerlogs(SysdiagnoseTestCase):
             files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
-                result = get_powerlogs(file)
+                result = parse_path(file)
                 if result:  # some files are empty
                     self.assertTrue('sqlite_sequence' in result)
 

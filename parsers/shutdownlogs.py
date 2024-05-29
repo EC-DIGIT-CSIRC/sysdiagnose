@@ -39,6 +39,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return parse_shutdownlog(path)
+
+
 def parse_shutdownlog(filepath, ios_version=16):
     """
         This is the function that will be called

@@ -36,6 +36,10 @@ def get_log_files(log_root_path: str) -> dict:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return misc.load_plist_file_as_json(path)
+
+
 def parse_olddsc_file(filepath: str) -> dict:
     return misc.load_plist_file_as_json(filepath)
 

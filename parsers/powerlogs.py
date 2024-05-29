@@ -40,6 +40,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return sqlite2json.sqlite2struct(path)
+
+
 def get_powerlogs(dbpath, ios_version=13):
 
     powerlogs = sqlite2json.sqlite2struct(dbpath)

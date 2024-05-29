@@ -48,6 +48,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return misc.load_plist_file_as_json(path)
+
+
 def parseplist(fname):
     return misc.load_plist_file_as_json(fname)
 

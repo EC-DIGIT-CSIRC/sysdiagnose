@@ -1,4 +1,4 @@
-from parsers.mobileactivation import parsemobactiv, get_log_files
+from parsers.mobileactivation import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,8 +10,7 @@ class TestParsersMobileactivation(SysdiagnoseTestCase):
             files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
-                result = parsemobactiv([file])
-                pass
+                result = parse_path(file)
                 for item in result['events']:
                     self.assertTrue('timestamp' in item)
                     self.assertTrue('loglevel' in item)

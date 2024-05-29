@@ -1,4 +1,4 @@
-from parsers.containermanager import parsecontainermanager, get_log_files
+from parsers.containermanager import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersContainermanager(SysdiagnoseTestCase):
             files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
-                result = parsecontainermanager([file])
+                result = parse_path(file)
                 for item in result['events']:
                     self.assertTrue('timestamp' in item)
                     self.assertTrue('loglevel' in item)

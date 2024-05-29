@@ -1,4 +1,4 @@
-from parsers.brctl import parsebrctl, get_log_files
+from parsers.brctl import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersBrctl(SysdiagnoseTestCase):
             folders = get_log_files(log_root_path)
             for folder in folders:
                 print(f'Parsing {folder}')
-                result = parsebrctl(folder)
+                result = parse_path(folder)
                 if result:
                     self.assertTrue('containers' in result)
                     self.assertTrue('boot_history' in result)

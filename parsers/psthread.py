@@ -38,6 +38,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return parse_ps_thread(path)
+
+
 def parse_ps_thread(filename, ios_version=13):
     with open(filename, "r") as fd:
         input = fd.readlines()

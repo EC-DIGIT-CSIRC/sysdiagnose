@@ -45,6 +45,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return parsespindumpNS(path)
+
+
 def parsespindumpNS(file):
     with open(file, 'r') as f_in:
         # init section

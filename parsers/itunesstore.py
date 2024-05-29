@@ -10,7 +10,7 @@ import glob
 import json
 import os
 import sys
-
+import misc
 
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
 
@@ -35,6 +35,10 @@ def get_log_files(log_root_path: str) -> list:
         log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
     return log_files
+
+
+def parse_path(path: str) -> list | dict:
+    return misc.json_serializable(sqlite2json.sqlite2struct(path))
 
 
 def get_itunesstore(dbpath, ios_version=13):

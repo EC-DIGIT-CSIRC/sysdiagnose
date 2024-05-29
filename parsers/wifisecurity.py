@@ -31,6 +31,10 @@ def get_log_files(log_root_path: str) -> list:
     return [os.path.join(log_root_path, log_files) for log_files in log_files]
 
 
+def parse_path(path: str) -> list | dict:
+    return get_wifi_security_log(path)
+
+
 def get_wifi_security_log(filepath, ios_version=16):
     """
         Parse ./WiFi/security.txt and extract block of interest:

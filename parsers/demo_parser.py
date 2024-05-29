@@ -7,6 +7,7 @@
 import sys
 from optparse import OptionParser
 import os
+import json
 
 version_string = "sysdiagnose-demo-parser.py v2023-04-26 Version 1.0"
 
@@ -30,6 +31,28 @@ def get_log_files(log_root_path: str) -> list:
         "demo_input_file.txt"
     ]
     return [os.path.join(log_root_path, log_files) for log_files in log_files]
+
+
+def parse_path(path: str) -> list | dict:
+    '''
+        this is the function that will be called
+    '''
+    json_object = {}
+    return json_object
+
+
+def parse_path_to_folder(path: str, output: str) -> bool:
+    '''
+        this is the function that will be called
+    '''
+    try:
+        json_object = {}
+        with open(os.path.join(output, "demo_output.json"), "w") as f:
+            json.dump(json_object, f)
+        return True
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
 
 
 def demo_function(filepath, ios_version=16, output=None):
