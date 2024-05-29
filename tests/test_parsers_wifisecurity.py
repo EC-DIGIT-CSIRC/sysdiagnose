@@ -1,4 +1,4 @@
-from parsers.wifisecurity import get_wifi_security_log, get_log_files
+from parsers.wifisecurity import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = get_wifi_security_log(file)
+                result = parse_path(file)
                 for item in result:
                     self.assertTrue('acct' in item)
                     self.assertTrue('agrp' in item)

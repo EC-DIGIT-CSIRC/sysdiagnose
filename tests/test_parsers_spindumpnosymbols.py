@@ -1,4 +1,4 @@
-from parsers.spindumpnosymbols import parsespindumpNS, get_log_files
+from parsers.spindumpnosymbols import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = parsespindumpNS(file)
+                result = parse_path(file)
                 self.assertGreater(len(result), 0)
                 self.assertTrue('OS Version' in result)
                 self.assertGreater(len(result['processes']), 0)

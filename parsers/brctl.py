@@ -39,6 +39,10 @@ def get_log_files(log_root_path: str) -> list:
     return [os.path.join(log_root_path, log_folder) for log_folder in log_folders]
 
 
+def parse_path(path: str) -> list | dict:
+    return parsebrctl(path)
+
+
 def parselistfile(container_list_file):
     containers = {"containers": []}
     result = []

@@ -1,4 +1,4 @@
-from parsers.wifi_known_networks import getKnownWifiNetworks, get_log_files
+from parsers.wifi_known_networks import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = getKnownWifiNetworks([file])
+                result = parse_path(file)
                 self.assertGreater(len(result), 0)
 
 

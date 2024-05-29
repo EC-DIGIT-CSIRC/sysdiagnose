@@ -1,4 +1,4 @@
-from parsers.itunesstore import get_itunesstore, get_log_files
+from parsers.itunesstore import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersIntunesstore(SysdiagnoseTestCase):
             files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
-                result = get_itunesstore(file)
+                result = parse_path(file)
                 self.assertTrue('application_id' in result)
                 self.assertTrue('download' in result)
                 self.assertTrue('persistent_manager' in result)

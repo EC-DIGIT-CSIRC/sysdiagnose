@@ -36,6 +36,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return get_tasks(path)
+
+
 # --------------------------------------------------------------------------- #
 def get_num_tasks(filename, ios_version=13):
     """

@@ -1,4 +1,4 @@
-from parsers.ps import parse_ps, get_log_files
+from parsers.ps import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersPs(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = parse_ps(file)
+                result = parse_path(file)
                 if result:  # not all logs contain data
                     for item in result.values():
                         self.assertTrue('COMMAND' in item)

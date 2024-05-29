@@ -1,4 +1,4 @@
-from parsers.wifiscan import parsewifiscan, get_log_files
+from parsers.wifiscan import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
             # self.assertTrue(len(files) > 0)  # not all sysdiagnose have wifiscan logs
             for file in files:
                 print(f'Parsing {file}')
-                result = parsewifiscan([file])
+                result = parse_path(file)
                 self.assertGreater(len(result), 0)
                 self.assertTrue('total' in result[0])
 

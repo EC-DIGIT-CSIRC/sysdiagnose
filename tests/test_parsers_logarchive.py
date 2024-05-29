@@ -1,4 +1,4 @@
-from parsers.logarchive import get_logs
+from parsers.logarchive import parse_path, parse_path_to_folder
 from tests import SysdiagnoseTestCase
 import os
 import platform
@@ -12,19 +12,19 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
 
     def test_get_logs_outputdir(self):
         with tempfile.TemporaryDirectory() as tmp_outpath:
-            result = get_logs(self.log_path, output=tmp_outpath)
+            result = parse_path_to_folder(self.log_path, output=tmp_outpath)
             # check if folder is not empty
-            self.assertNotEqual(os.listdir(tmp_outpath), [])
+            self.assertNotEqual(os.listdir(os.path.join(tmp_outpath, "logarchive")), [])
             # result should contain at least one entry (linux = stdout, mac = mention it's saved to a file)
-            self.assertTrue(len(result['data']) > 0)
+            self.assertTrue(result)
 
             if (platform.system() == "Darwin"):
-                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive.json")))
+                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "logarchive.json")))
             else:
-                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "liveData.json")))
+                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "liveData.json")))
 
     def test_get_logs_result(self):
-        result = get_logs(self.log_path)
+        result = parse_path(self.log_path)
         # FIXME check result on a mac
         self.assertGreater(len(result), 0)
 

@@ -9,6 +9,7 @@ from utils import sqlite2json
 import glob
 import os
 import sys
+import misc
 
 version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
 
@@ -34,10 +35,12 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return misc.json_serializable(sqlite2json.sqlite2struct(path))
+
+
 def get_accessibility_tcc(dbpath, ios_version=13):
-    tcc = sqlite2json.sqlite2struct(dbpath)
-    return tcc
-    # return sqlite2json.dump2json(tcc)
+    return parse_path(dbpath)
 
 
 def print_accessibility_tcc(inputfile):

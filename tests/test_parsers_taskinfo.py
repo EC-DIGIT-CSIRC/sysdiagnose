@@ -1,4 +1,4 @@
-from parsers.taskinfo import get_tasks, get_log_files
+from parsers.taskinfo import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersTaskinfo(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = get_tasks(file)
+                result = parse_path(file)
                 self.assertGreater(len(result), 0)
                 self.assertGreater(result['numb_tasks'], 0)
                 self.assertGreater(len(result['tasks']), 0)

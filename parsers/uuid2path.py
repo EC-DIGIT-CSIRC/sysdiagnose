@@ -9,7 +9,6 @@
 
 import sys
 import json
-import pprint
 import plistlib
 from optparse import OptionParser
 

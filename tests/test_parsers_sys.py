@@ -1,4 +1,4 @@
-from parsers.sys import getProductInfo, get_log_files
+from parsers.sys import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -12,7 +12,7 @@ class TestParsersSys(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = getProductInfo(file)
+                result = parse_path(file)
                 self.assertGreater(len(result), 0)
 
                 self.assertTrue(result.keys() | self.productinfo_keys == result.keys())  # check if the result contains at least the following keys

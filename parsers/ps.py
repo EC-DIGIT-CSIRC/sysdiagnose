@@ -41,6 +41,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return parse_ps(path)
+
+
 def parse_ps(filename, ios_version=16):
     processes = {}
     try:

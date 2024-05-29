@@ -17,6 +17,8 @@ import json
 import os
 import sqlite3
 import sys
+import misc
+
 
 version_string = "sysdiagnose-appinstallation.py v2019-11-22 Version 2.0"
 
@@ -41,6 +43,10 @@ def get_log_files(log_root_path: str) -> list:
         log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
 
     return log_files
+
+
+def parse_path(path: str) -> list | dict:
+    return misc.json_serializable(sqlite2json.sqlite2struct(path))
 
 
 def get_appinstallation(dbpath, ios_version=13):

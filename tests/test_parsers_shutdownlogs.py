@@ -1,4 +1,4 @@
-from parsers.shutdownlogs import parse_shutdownlog, get_log_files
+from parsers.shutdownlogs import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -11,7 +11,7 @@ class TestParsersShutdownlogs(SysdiagnoseTestCase):
             self.assertTrue(len(files) > 0)
             for file in files:
                 print(f'Parsing {file}')
-                result = parse_shutdownlog(file)
+                result = parse_path(file)
                 self.assertGreater(len(result['data']), 0)
                 for shutdown in result['data'].values():
                     for process in shutdown:

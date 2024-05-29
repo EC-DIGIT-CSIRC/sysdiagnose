@@ -43,6 +43,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return multilinelog.extract_from_file(path)
+
+
 def parsemobinstall(loglist):
     events = {"events": []}
     for logfile in loglist:

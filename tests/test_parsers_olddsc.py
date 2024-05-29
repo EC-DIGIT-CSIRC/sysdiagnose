@@ -1,4 +1,4 @@
-from parsers.olddsc import parse_olddsc_file, get_log_files
+from parsers.olddsc import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersOlddsc(SysdiagnoseTestCase):
             files = get_log_files(log_root_path)
             for file in files:
                 print(f'Parsing {file}')
-                result = parse_olddsc_file(file)
+                result = parse_path(file)
                 self.assertTrue('Unslid_Base_Address' in result)
                 self.assertTrue('Cache_UUID_String' in result)
                 self.assertTrue('Binaries' in result)

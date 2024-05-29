@@ -1,4 +1,4 @@
-from parsers.networkextension import parseplist, get_log_files
+from parsers.networkextension import parse_path, get_log_files
 from tests import SysdiagnoseTestCase
 import unittest
 
@@ -10,7 +10,7 @@ class TestParsersNetworkExtension(SysdiagnoseTestCase):
             files = [log_file for log_file in get_log_files(log_root_path)]
             for file in files:
                 print(f'Parsing {file}')
-                result = parseplist(file)
+                result = parse_path(file)
                 self.assertTrue('$objects' in result)
 
 

@@ -35,6 +35,10 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    return getProductInfo(path)
+
+
 # --------------------------------------------------------------------------- #
 # XXX FIXME: this is obviously a very generic function and could be generalized and moved to misc/
 
