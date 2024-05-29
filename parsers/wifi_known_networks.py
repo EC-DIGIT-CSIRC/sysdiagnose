@@ -10,11 +10,10 @@ import sys
 import json
 import os
 from optparse import OptionParser
-import biplist
 from biplist import Uid, Data
 from datetime import datetime
 import glob
-import config
+import misc
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -58,12 +57,7 @@ def getKnownWifiNetworks(plistfiles=[], ios_version=13):
     for path in plistfiles:
         if os.path.basename(path) == "com.apple.wifi.known-networks.plist":
             try:
-                with open(path, 'rb') as fp:
-                    result = biplist.readPlist(fp)
-                    if config.debug:
-                        print(f"Type (result) = {type(result)}", file=sys.stderr)
-                        print("XXXX DEBUG:", file=sys.stderr)
-                        print(json.dumps(result, indent=4, cls=CustomEncoder), file=sys.stderr)
+                result = misc.load_plist_file_as_json(path)
             except Exception as e:
                 print(f"Could not parse {path}. Reason: {str(e)}", file=sys.stderr)
     return json.loads(json.dumps(result, indent=4, cls=CustomEncoder))
