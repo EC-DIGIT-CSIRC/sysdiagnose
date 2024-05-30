@@ -44,6 +44,14 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
+def parse_path(path: str) -> list | dict:
+    if path.endswith('.json'):
+        with open(path, 'r') as f:
+            return json.load(f)
+    if path.endswith('.plist'):
+        return misc.load_plist_file_as_json(path)
+
+
 def parsewifinetwork(wifi_data: list):
     output = {}
     for data in wifi_data:
