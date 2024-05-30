@@ -4,6 +4,9 @@ import re
 import os
 
 
+parser_description = "Parsing remotectl_dumpstate file containing system information"
+
+
 def get_log_files(log_root_path: str) -> list:
     log_files_globs = [
         'remotectl_dumpstate.txt'
@@ -91,4 +94,3 @@ def parse_block(lines: list) -> list | dict:
 
             n = n + 1  # skip to next line
     return result
-
