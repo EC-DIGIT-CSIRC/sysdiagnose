@@ -49,6 +49,13 @@ cmd_parsing_linux_test = ["unifiedlog_parser_json", "--help"]
 # --------------------------------------------------------------------------- #
 
 
+def get_log_files(log_root_path: str) -> list:
+    log_folders = [
+        'system_logs.logarchive/'
+    ]
+    return [os.path.join(log_root_path, log_folder) for log_folder in log_folders]
+
+
 def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard coded default version?
     """
         Parse the system_logs.logarchive.  When running on OS X, use native tools.

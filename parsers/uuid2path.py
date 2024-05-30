@@ -26,6 +26,14 @@ parser_call = "getUUID2path"
 # --------------------------------------------------------------------------- #
 
 
+def get_log_files(log_root_path: str) -> list:
+    raise NotImplementedError("This function is not implemented")
+
+
+def parse_path(path: str) -> list | dict:
+    raise NotImplementedError("This function is not implemented")
+
+
 def getUUID2path(filename, ios_version=13):
     try:
         with open(filename, 'rb') as fp:

@@ -4,6 +4,8 @@ import glob
 import misc
 import os
 
+parser_description = "Parsing any pslist into json"
+
 
 def get_log_files(log_root_path: str) -> list:
     log_files_globs = [
@@ -18,4 +20,3 @@ def get_log_files(log_root_path: str) -> list:
 
 def parse_path(path: str) -> list | dict:
     return misc.load_plist_file_as_json(path)
-
