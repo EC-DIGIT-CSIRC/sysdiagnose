@@ -4,4 +4,4 @@ tabulate==0.9.0
 biplist==1.0.3
 python-dateutil==2.9.0.post0
 ijson==3.2.3
-gpxpy=1.6.2
+gpxpy==1.6.2
