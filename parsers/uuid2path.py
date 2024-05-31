@@ -11,6 +11,9 @@ import sys
 import json
 import plistlib
 from optparse import OptionParser
+import os
+import glob
+import misc
 
 version_string = "sysdiagnose-uuid2path.py v2020-02-07 Version 2.0"
 
@@ -27,11 +30,18 @@ parser_call = "getUUID2path"
 
 
 def get_log_files(log_root_path: str) -> list:
-    raise NotImplementedError("This function is not implemented")
+    log_files_globs = [
+        'logs/tailspindb/UUIDToBinaryLocations'
+    ]
+    log_files = []
+    for log_files_glob in log_files_globs:
+        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+
+    return log_files
 
 
 def parse_path(path: str) -> list | dict:
-    raise NotImplementedError("This function is not implemented")
+    return misc.load_plist_file_as_json(path)
 
 
 def getUUID2path(filename, ios_version=13):
