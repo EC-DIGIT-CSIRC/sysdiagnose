@@ -3,6 +3,7 @@ import unittest
 import glob
 import os
 import importlib.util
+import config
 
 '''
 Test file structure of parsers
@@ -12,10 +13,9 @@ Test file structure of parsers
 class TestParsers(SysdiagnoseTestCase):
 
     def list_all_parsers(self):
-        parsers_folder = 'parsers'
-        modules = glob.glob(os.path.join(parsers_folder, "*.py"))
+        modules = glob.glob(os.path.join(config.parsers_folder, "*.py"))
         for parser in modules:
-            if parser.endswith('__init__.py') or parser.endswith('demo_parser.py'):
+            if parser.endswith('__init__.py'):
                 continue
             yield parser
 

@@ -22,6 +22,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parsing.py list parsers",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "list parsers",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parsing.py parse logarchive",
             "type": "debugpy",
             "request": "launch",
