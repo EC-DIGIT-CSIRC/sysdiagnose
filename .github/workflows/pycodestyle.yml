@@ -2,21 +2,25 @@ name: Pycodestyle Lint
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
 
 jobs:
   pycodestyle:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ['3.11']
+
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      
-      - name: Set up Python ${{ matrix.python-version }} 
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
