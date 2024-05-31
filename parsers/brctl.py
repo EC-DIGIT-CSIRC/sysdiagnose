@@ -3,33 +3,12 @@
 # For Python3
 # Script to parse the brctl-container-list.txt and brctl-dump.txt files
 # Author: Emilien Le Jamtel
-
-"""sysdiagnose intialize.
-
-Usage:
-  sysdiagnose-brctl.py -i <logfolder>
-  sysdiagnose-brctl.py (-h | --help)
-  sysdiagnose-brctl.py --version
-
-Options:
-  -h --help     Show this screen.
-  -v --version     Show version.
-"""
-
-import sys
 import json
-from docopt import docopt
-import glob
 import re
 import os
 
 
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
-
 parser_description = "Parsing brctl files"
-parser_input = "brctl"      # folder containing brctl files
-parser_call = "parsebrctl"
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -385,36 +364,3 @@ def parsebrctl(brctl_folder):
         brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
         return brctl_parsing
     return {}
-
-
-def main():
-    """
-        Main function, to be called when used as CLI tool
-    """
-
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...")
-        exit(-1)
-
-    arguments = docopt(__doc__, version='parser for brctl files v0.1')
-
-    if arguments['-i']:
-        try:
-            container_list_file = glob.glob(arguments['<logfolder>'] + 'brctl-container-list.txt')
-            container_dump_file = glob.glob(arguments['<logfolder>'] + 'brctl-dump.txt')
-
-            brctl_parsing = {**parselistfile(container_list_file), **parsedumpfile(container_dump_file)}
-
-            print(json.dumps(brctl_parsing, indent=4))
-        except Exception as e:
-            print(f'error retrieving log files. Reason: {str(e)}')
-
-    return
-
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-    # Create an instance of the Analysis class (called "base") and run main
-    main()

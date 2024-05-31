@@ -13,17 +13,13 @@ import tempfile
 import platform
 import subprocess
 
-from optparse import OptionParser
-
 version_string = "sysdiagnose-logarchive.py v2020-02-07 Version 1.0"
 
 # ----- definition for parsing.py script -----#
 # -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing system_logs.logarchive folder"
-parser_input = "logarchive_folder"
-parser_call = "get_logs"
-parser_outputs_in_folder = True
+
 
 # --------------------------------------------#
 
@@ -158,52 +154,3 @@ def __execute_cmd_and_get_result(command, outputfile=None):
                 result['data'] = f'Output written to {outputfile}'
 
     return result
-
-
-# --------------------------------------------------------------------------- #
-"""
-    Main function
-"""
-
-
-def main():
-
-    print(f"Running {version_string}\n")
-
-    usage = "\n%prog -i inputfile\n"
-
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="Provide path to system_logs.logarchive folder")
-    parser.add_option("-o", dest="outputfile",
-                      action="store", type="string",
-                      help="Provide path to output folder")
-    (options, args) = parser.parse_args()
-
-    # no arguments given by user, print help and exit
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(-1)
-
-    # parse PS file :)
-    if options.inputfile and options.outputfile:
-        get_logs(options.inputfile, output=options.outputfile)
-    elif options.inputfile:
-        get_logs(options.inputfile, sys.stdout)
-    else:
-        print("WARNING -i option is mandatory!")
-
-# --------------------------------------------------------------------------- #
-
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-
-    # Create an instance of the Analysis class (called "base") and run main
-    main()
-
-
-# That's all folk ;)
