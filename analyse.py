@@ -38,6 +38,8 @@ def list_analysers(folder):
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
     for analyser in modules:
+        if analyser.endswith('__init__.py'):
+            continue
         try:
             spec = importlib.util.spec_from_file_location(analyser[:-3], analyser)
             module = importlib.util.module_from_spec(spec)

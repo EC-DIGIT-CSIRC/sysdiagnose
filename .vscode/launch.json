@@ -14,6 +14,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse.py list analysers",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "list analysers",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: logarchive.py",
             "type": "debugpy",
             "request": "launch",
@@ -43,6 +51,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
             "args": "parse ps 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parsing.py parse crashlogs",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "parse crashlogs 1",
             "cwd": "${workspaceFolder}/"
         }
     ]
