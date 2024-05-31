@@ -4,28 +4,16 @@
 # Sysdiagnose Shutdown logs
 # Author: Benoit Roussile
 
-from optparse import OptionParser
 import datetime
 import glob
 import os
 import re
-import sys
-
-version_string = "sysdiagnose-shutdownlog.py v2024-01-11 Version 1.0"
-
-# ----- definition for parsing.py script -----#
 
 parser_description = "Parsing shutdown.log file"
-parser_input = "shutdownlog"
-parser_call = "parse_shutdownlog"
-
-# --------------------------------------------#
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
 SIGTERM_LINE = "SIGTERM"
-
-# --------------------------------------------------------------------------- #
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -40,16 +28,9 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return parse_shutdownlog(path)
-
-
-def parse_shutdownlog(filepath, ios_version=16):
-    """
-        This is the function that will be called
-    """
     # read log file content
     log_lines = ""
-    with open(filepath, "r") as f:
+    with open(path, "r") as f:
         log_lines = f.readlines()
 
     json_object = {}
@@ -82,42 +63,3 @@ def parse_shutdownlog(filepath, ios_version=16):
     json_object["data"] = parsed_data
 
     return json_object
-
-
-# --------------------------------------------------------------------------- #
-
-def main():
-    """
-        Main function, to be called when used as CLI tool
-    """
-
-    print(f"Running {version_string}\n")
-
-    usage = "\n%prog -i inputfile\n"
-
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="path to the shutdown.log file")
-    (options, args) = parser.parse_args()
-
-    # no arguments given by user, print help and exit
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(-1)
-
-    # Call the demo function when called directly from CLI
-    print(parse_shutdownlog(options.inputfile))
-
-# --------------------------------------------------------------------------- #
-
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-
-    # Create an instance of the Analysis class (called "base") and run main
-    main()
-
-# That's all folk ;)

@@ -3,7 +3,6 @@
 # For Python3
 # Author: Aaron Kaplan <aaron@lo-res.org>
 
-import os
 import sys
 import json
 import dateutil.parser
@@ -99,6 +98,8 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
 """
     Main function
 """
+
+
 def main():
 
     print(f"Running {version_string}\n")

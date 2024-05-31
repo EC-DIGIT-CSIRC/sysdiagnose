@@ -16,18 +16,8 @@ from optparse import OptionParser
 import glob
 import os
 
-version_string = "sysdiagnose-ps.py v2023-03-10 Version 1.1"
-
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing ps.txt file"
-parser_input = "ps"
-parser_call = "parse_ps"
-
-# --------------------------------------------#
-
-# --------------------------------------------------------------------------- #
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -50,7 +40,7 @@ def parse_ps(filename, ios_version=16):
     try:
         with open(filename, "r") as fd:
             fd.readline()   # skip header line
-
+            # FIXME investigate if it's possible to rewrite it dynamically: extract header, and use header as key for the variables when parsing the line
             for line in fd:
                 """
                 iOS < 16
@@ -185,9 +175,6 @@ def generate_graph(processes):
 
 
 def main():
-
-    print(f"Running {version_string}\n")
-
     usage = "\n%prog -i inputfile\n"
 
     parser = OptionParser(usage=usage)

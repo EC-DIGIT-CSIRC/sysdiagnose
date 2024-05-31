@@ -8,21 +8,11 @@
 # - search this artifact to extract more
 #
 import re
-import sys
 import glob
 import os
-from optparse import OptionParser
 
-version_string = "sysdiagnose-taskinfo.py v2020-02-07 Version 1.0"
-
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing taskinfo txt file"
-parser_input = "taskinfo"
-parser_call = "get_tasks"
-
-# --------------------------------------------#
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -37,11 +27,28 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return get_tasks(path)
+    numb_tasks = get_num_tasks(path)
+    tasks = {}
+
+    # TODO parses elements before / after tasks
+
+    try:
+        with open(path, "r") as fd:
+            for line in fd:
+                line = line.strip()
+                # search for the right place in text file
+                if (line.startswith("threads:")):
+                    tasks = search_task_block(fd)
+                else:
+                    continue
+    except Exception as e:
+        print(f"Could not open {path} for reading. Reason: {str(e)}")
+
+    return {"numb_tasks": numb_tasks, "tasks": tasks}
 
 
 # --------------------------------------------------------------------------- #
-def get_num_tasks(filename, ios_version=13):
+def get_num_tasks(filename):
     """
         Return -1 if parsing failed
     """
@@ -58,7 +65,7 @@ def get_num_tasks(filename, ios_version=13):
     return num_tasks
 
 
-def parse_task_block(fd, current_threat_id, ios_version=13):
+def parse_task_block(fd, current_threat_id):
     """
         Receive a pointer to the start of task file and parse it.
         Return a hash table as a result.
@@ -239,14 +246,14 @@ def parse_task_block(fd, current_threat_id, ios_version=13):
     return result
 
 
-def search_task_block(fd, ios_version):
+def search_task_block(fd):
     result = {}
     try:
         for line in fd:
             line = line.strip()
             if line.startswith('thread ID:'):
                 current_threatID = line.split()[2]
-                result[current_threatID] = parse_task_block(fd, current_threatID, ios_version)
+                result[current_threatID] = parse_task_block(fd, current_threatID)
             else:
                 continue
 
@@ -254,74 +261,3 @@ def search_task_block(fd, ios_version):
         print(f"An unknown error occurs while searching for task block. Reason: {str(e)}")
 
     return result
-
-
-"""
-    Parse all elements
-"""
-
-
-def get_tasks(filename, ios_version=13):
-    numb_tasks = get_num_tasks(filename, ios_version)
-    tasks = {}
-
-    # TODO parses elements before / after tasks
-
-    try:
-        with open(filename, "r") as fd:
-            for line in fd:
-                line = line.strip()
-                # search for the right place in text file
-                if (line.startswith("threads:")):
-                    tasks = search_task_block(fd, ios_version)
-                else:
-                    continue
-    except Exception as e:
-        print(f"Could not open {filename} for reading. Reason: {str(e)}")
-
-    return {"numb_tasks": numb_tasks, "tasks": tasks}
-
-# --------------------------------------------------------------------------- #
-
-
-"""
-    Main function
-"""
-
-
-def main():
-
-    print(f"Running {version_string}\n")
-
-    usage = "\n%prog -i inputfile\n"
-
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="taskinfo.txt")
-    (options, args) = parser.parse_args()
-
-    # no arguments given by user, print help and exit
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(-1)
-
-    # parse PS file :)
-    if options.inputfile:
-        print(f"Number of tasks on device: {get_num_tasks(options.inputfile)}")
-    else:
-        print("WARNING -i option is mandatory!")
-
-
-# --------------------------------------------------------------------------- #
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-
-    # Create an instance of the Analysis class (called "base") and run main
-    main()
-
-
-# That's all folk ;)

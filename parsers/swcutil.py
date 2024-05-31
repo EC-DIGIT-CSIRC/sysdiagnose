@@ -4,31 +4,10 @@
 # Script to parse the swcutil_show.txt file
 # Author: Emilien Le Jamtel
 
-"""sysdiagnose intialize.
-
-Usage:
-  sysdiagnose-swcutil.py -i <file>
-  sysdiagnose-swcutil.py (-h | --help)
-  sysdiagnose-swcutil.py --version
-
-Options:
-  -h --help     Show this screen.
-  -v --version     Show version.
-"""
-
-from docopt import docopt
 import glob
 import os
-import sys
-
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
 
 parser_description = "Parsing swcutil_show file"
-parser_input = "swcutil_show"
-parser_call = "parseswcutil"
-
-# --------------------------------------------#
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -118,37 +97,3 @@ def parse_db(data):
         else:
             db_data.append(line.strip())
     return db
-
-
-def main():
-    """
-        Main function, to be called when used as CLI tool
-    """
-
-    arguments = docopt(__doc__, version='parser for networkextension.plist v0.1')
-
-    # ## test
-    if arguments['-i']:
-        # Output is good enough, just print
-        with open(arguments['<file>'], 'r') as f_in:
-            for line in f_in:
-                print(line.strip())
-        # parseswcutil(arguments['<file>'])
-        sys.exit()
-    # ## test
-
-    return 0
-
-
-# --------------------------------------------------------------------------- #
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-
-    # Create an instance of the Analysis class (called "base") and run main
-    main()
-
-
-# That's all folk ;)
