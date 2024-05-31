@@ -63,16 +63,18 @@ def list_parsers(folder):
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
     for parser in modules:
+        if parser.endswith('__init__.py'):
+            continue
         try:
             spec = importlib.util.spec_from_file_location(parser[:-3], parser)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            line = [parser[:-3], module.parser_description, module.parser_input]
+            line = [parser[:-3], module.parser_description]
             lines.append(line)
-        except:     # noqa: E722
+        except AttributeError:
             continue
 
-    headers = ['Parser Name', 'Parser Description', 'Parser Input']
+    headers = ['Parser Name', 'Parser Description']
 
     print(tabulate(lines, headers=headers))
 
@@ -110,27 +112,26 @@ def parse(parser, case_id):
     # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
 
     # Load parser module
-    spec = importlib.util.spec_from_file_location(parser[:-3], config.parsers_folder + parser + '.py')
+    spec = importlib.util.spec_from_file_location(parser[:-3], os.path.join(config.parsers_folder, parser) + '.py')
     print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    try:
-        if module.parser_outputs_in_folder:
-            pass
-    except AttributeError:
-        module.parser_outputs_in_folder = False
+    case_folder = os.path.join(config.data_folder, case_id)
+    log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
-    if module.parser_outputs_in_folder:
-        # parsers that output in a folder themselves
+    try:
         output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
         os.makedirs(output_folder, exist_ok=True)
-        result = getattr(module, module.parser_call)(case[module.parser_input], output=output_folder)
+        for path in module.get_log_files(log_root_path):
+            result = module.parse_path_to_folder(path=path, output=output_folder)
         print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
-    else:
+    except AttributeError:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
         # parsers that output in the result variable
         # building command
-        result = getattr(module, module.parser_call)(case[module.parser_input])
+        result = []
+        for path in module.get_log_files(log_root_path):
+            result.append(module.parse_path(path=path))
 
         # saving the parser output
         output_file = os.path.join(config.parsed_data_folder, case_id, f"{parser}.json")
