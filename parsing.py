@@ -120,25 +120,21 @@ def parse(parser, case_id):
     case_folder = os.path.join(config.data_folder, case_id)
     log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
-    try:
+    # FIXME exceptions are not yet caught, so things might crash and the user will not know why
+    if hasattr(module, 'parse_path_to_folder'):
         output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
         os.makedirs(output_folder, exist_ok=True)
-        for path in module.get_log_files(log_root_path):
-            result = module.parse_path_to_folder(path=path, output=output_folder)
+        result = module.parse_path_to_folder(path=log_root_path, output=output_folder)
         print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
-    except AttributeError:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
+    else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
         # parsers that output in the result variable
         # building command
-        result = []
-        for path in module.get_log_files(log_root_path):
-            result.append(module.parse_path(path=path))
-
+        result = module.parse_path(path=log_root_path)
         # saving the parser output
         output_file = os.path.join(config.parsed_data_folder, case_id, f"{parser}.json")
         with open(output_file, 'w') as data_file:
             data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
         print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
-
     return 0
 
 
