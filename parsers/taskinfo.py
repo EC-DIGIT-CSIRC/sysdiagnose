@@ -30,7 +30,7 @@ def get_log_files(log_root_path: str) -> list:
 def parse_path(path: str) -> list | dict:
     processes = []
 
-    with open(path, "r") as f:
+    with open(get_log_files(path)[0], "r") as f:
         lines = f.readlines()
 
         result = re.search(r'(num tasks: )(\d+)', lines[0])

@@ -11,18 +11,7 @@ import os
 import glob
 import misc
 
-version_string = "sysdiagnose-uuid2path.py v2020-02-07 Version 2.0"
-
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
-
 parser_description = "Parsing UUIDToBinaryLocations plist file"
-parser_input = "UUIDToBinaryLocations"
-parser_call = "getUUID2path"
-
-# --------------------------------------------#
-
-# --------------------------------------------------------------------------- #
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -37,7 +26,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.load_plist_file_as_json(path)
+    return misc.load_plist_file_as_json(get_log_files(path)[0])
 
 
 def printResult(data):

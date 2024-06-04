@@ -9,14 +9,13 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
         for log_root_path in self.log_root_paths:
             files = get_log_files(log_root_path)
             self.assertTrue(len(files) > 0)
-            for file in files:
-                print(f'Parsing {file}')
-                result = parse_path(file)
-                for item in result:
-                    self.assertTrue('acct' in item)
-                    self.assertTrue('agrp' in item)
-                    self.assertTrue('cdat' in item)
-                    self.assertTrue('mdat' in item)
+            print(f'Parsing {files}')
+            result = parse_path(log_root_path)
+            for item in result:
+                self.assertTrue('acct' in item)
+                self.assertTrue('agrp' in item)
+                self.assertTrue('cdat' in item)
+                self.assertTrue('mdat' in item)
 
 
 if __name__ == '__main__':

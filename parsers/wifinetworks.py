@@ -24,9 +24,30 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
-def parse_path(path: str) -> list | dict:
-    if path.endswith('.json'):
-        with open(path, 'r') as f:
+def parse_file(fname: str) -> dict | list:
+    if fname.endswith('.json'):
+        with open(fname, 'r') as f:
             return json.load(f)
-    if path.endswith('.plist'):
-        return misc.load_plist_file_as_json(path)
+    if fname.endswith('.plist'):
+        return misc.load_plist_file_as_json(fname)
+
+
+def parse_path(path: str) -> dict:
+    result = {}
+    for logfile in get_log_files(path):
+        end_of_path = logfile[len(path):].lstrip(os.path.sep)  # take the path after the root path
+        result[end_of_path] = parse_file(logfile)
+    return result
+
+
+def parse_path_to_folder(path: str, output: str) -> bool:
+    os.makedirs(output, exist_ok=True)
+    for logfile in get_log_files(path):
+        try:
+            json_data = parse_file(logfile)
+        except Exception as e:
+            json_data = {"error": str(e)}
+        end_of_path = logfile[len(path):].lstrip(os.path.sep)   # take the path after the root path
+        output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
+        with open(os.path.join(output, output_filename), 'w') as f:
+            f.write(json_data)
