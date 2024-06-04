@@ -10,6 +10,7 @@
 import re
 import glob
 import os
+from utils import tabbasedhierarchy
 
 
 parser_description = "Parsing taskinfo txt file"
@@ -27,237 +28,45 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    numb_tasks = get_num_tasks(path)
-    tasks = {}
+    processes = []
 
-    # TODO parses elements before / after tasks
+    with open(path, "r") as f:
+        lines = f.readlines()
 
-    try:
-        with open(path, "r") as fd:
-            for line in fd:
-                line = line.strip()
-                # search for the right place in text file
-                if (line.startswith("threads:")):
-                    tasks = search_task_block(fd)
-                else:
-                    continue
-    except Exception as e:
-        print(f"Could not open {path} for reading. Reason: {str(e)}")
-
-    return {"numb_tasks": numb_tasks, "tasks": tasks}
-
-
-# --------------------------------------------------------------------------- #
-def get_num_tasks(filename):
-    """
-        Return -1 if parsing failed
-    """
-    num_tasks = -1
-    try:
-        with open(filename, "r") as fd:
-            for line in fd:
-                result = re.search(r'(num tasks: )(\d+)', line)
-                if (result is not None):
-                    num_tasks = int(result.group(2))
-                    break
-    except Exception as e:
-        print(f"Impossible to parse taskinfo.txt: {str(e)}")
-    return num_tasks
-
-
-def parse_task_block(fd, current_threat_id):
-    """
-        Receive a pointer to the start of task file and parse it.
-        Return a hash table as a result.
-
-        Structure:
-        ----------
-        thread ID: 0xf2e6f / 994927
-        user/system time: 0.000466 s / 0.000000 s
-        CPU usage (over last tick): 0%
-        sched mode: timeshare
-        policy: POLICY_TIMESHARE
-                timeshare max  priority: 63
-                timeshare base priority: 20
-                timeshare cur  priority: 20
-                timeshare depressed: NO, prio -1
-        requested policy:
-                req thread qos: THREAD_QOS_UTILITY, relprio: 0
-                req workqueue/pthread overrides:
-                        req legacy qos override: THREAD_QOS_UNSPECIFIED
-                        req workqueue qos override: THREAD_QOS_UNSPECIFIED
-                req kernel overrides:
-                        req kevent overrides: THREAD_QOS_UNSPECIFIED
-                        req workloop servicer override: THREAD_QOS_UNSPECIFIED
-                req turnstiles sync promotion qos: THREAD_QOS_UNSPECIFIED, user promotion base pri: 0
-                req latency qos: LATENCY_QOS_TIER_UNSPECIFIED
-                req thruput qos: THROUGHPUT_QOS_TIER_UNSPECIFIED
-                req darwin BG: NO
-                req internal/external iotier: THROTTLE_LEVEL_TIER0 (IMPORTANT) / THROTTLE_LEVEL_TIER0 (IMPORTANT)
-                req other:
-        effective policy:
-                eff thread qos: THREAD_QOS_UTILITY
-                eff thread qos relprio: 0
-                eff promotion qos: THREAD_QOS_UTILITY
-                eff latency qos: LATENCY_QOS_TIER_3
-                eff thruput qos: THROUGHPUT_QOS_TIER_2
-                eff darwin BG: NO
-                eff iotier: THROTTLE_LEVEL_TIER1 (STANDARD)
-                eff other: ui-is-urgent (47)
-        run state: TH_STATE_WAITING
-        flags: TH_FLAGS_SWAPPED |  |
-        suspend count: 0
-        sleep time: 0 s
-        importance in task: 0
-
-    """
-    result = {}
-    result["policy"] = {}
-    result["requested policy"] = {}
-    result["effective policy"] = {}
-    result["req kernel overrides"] = {}
-    result["requested policy"]["req workqueue/pthread overrides"] = {}
-
-    for line in fd:
-        line = line.strip()
-
-        # break if end of task block
-        if len(line) == 0:
-            return result
-
-        # global info on task
-        elif line.startswith('thread name:'):
-            result["thread name"] = line.split()[2]
-        elif line.startswith('user/system time:'):
-            result["user time"] = line.split()[3]
-            result["system time"] = line.split()[5]
-        elif line.startswith('CPU usage (over last tick):'):
-            result["CPU usage"] = line.split()[5][:-1]
-        elif line.startswith('sched mode:'):
-            result["sched mode"] = {}
-            result["sched mode"]["mode"] = line.split()[2]
-        elif line.startswith('real-time priority:'):
-            result["sched mode"]["real-time priority"] = line.split()[2]
-        elif line.startswith('real-time period:'):
-            result["sched mode"]["real-time period"] = line.split()[2]
-        elif line.startswith('real-time computation:'):
-            result["sched mode"]["real-time computation"] = line.split()[2]
-        elif line.startswith('real-time constraint:'):
-            result["sched mode"]["real-time constraint"] = line.split()[2]
-        elif line.startswith('real-time preemptible:'):
-            result["sched mode"]["real-time preemptible"] = line.split()[2]
-        elif line.startswith('run state:'):
-            result["run state"] = line.split()[2]
-        elif line.startswith('flags:'):
-            result["flags"] = line.split()[1:]
-        elif line.startswith('suspend count:'):
-            result["suspend count"] = line.split()[2][:-1]
-        elif line.startswith('sleep time:'):
-            result["sleep time"] = line.split()[2][:-1]
-        elif line.startswith('importance in task:'):
-            result["importance in task"] = line.split()[3][:-1]
-
-        # Policy
-        elif line.startswith('policy:'):
-            result["policy"]["policy"] = line.split()[1:]
-        elif line.startswith("round-robin max  priority:"):
-            result["policy"]["round-robin max priority"] = line.split()[3]
-        elif line.startswith("round-robin base priority:"):
-            result["policy"]["round-robin base priority"] = line.split()[3]
-        elif line.startswith("round-robin quantum:"):
-            result["policy"]["round-robin quantum"] = line.split()[2]
-        elif line.startswith("round-robin depressed:"):
-            result["policy"]["round-robin depressed"] = line.split()[2:]
-        elif line.startswith("timeshare max  priority"):
-            result["policy"]["timeshare max priority"] = line.split()[3][:-1]
-        elif line.startswith("timeshare base priority"):
-            result["policy"]["timeshare base priority"] = line.split()[3][:-1]
-        elif line.startswith("timeshare cur  priority"):
-            result["policy"]["timeshare cur priority"] = line.split()[3][:-1]
-        elif line.startswith("timeshare depressed"):
-            result["policy"]["timeshare depressed"] = {}
-            result["policy"]["timeshare depressed"]["status"] = line.split()[2]
-            result["policy"]["timeshare depressed"]["prio"] = line.split()[4]
-
-        # Requested Policy
-        elif line.startswith("requested policy:"):
-            continue
-        elif line.startswith('req thread qos:'):
-            result["requested policy"]["req thread qos"] = line.split()[3][:-1]
-        elif line.startswith("req workqueue/pthread overrides:"):
-            continue
-        elif line.startswith('req legacy qos override:'):
-            result["requested policy"]["req workqueue/pthread overrides"]["req legacy qos override"] = line.split()[4][:-1]
-        elif line.startswith('req workqueue qos override:'):
-            result["requested policy"]["req workqueue/pthread overrides"]["req workqueue qos override"] = line.split()[4][:-1]
-        elif line.startswith('req kevent overrides:'):
-            result["requested policy"]["req kevent overrides"] = line.split()[3][:-1]
-        elif line.startswith('req workloop servicer override:'):
-            result["requested policy"]["req workloop servicer override"] = line.split()[4][:-1]
-        elif line.startswith('req turnstiles sync promotion qos:'):
-            result["requested policy"]["req turnstiles sync promotion qos"] = line.split()[5][:-1]
-        elif line.startswith('req latency qos:'):
-            result["requested policy"]["req latency qos"] = line.split()[3][:-1]
-        elif line.startswith('req thruput qos:'):
-            result["requested policy"]["req thruput qos"] = line.split()[3][:-1]
-        elif line.startswith('req darwin BG:'):
-            result["requested policy"]["req darwin bg"] = line.split()[3]
-        elif line.startswith('req internal/external iotier:'):
-            result["requested policy"]["req internal iotier"] = line.split()[3]
-            result["requested policy"]["req external iotier"] = line.split()[5]
-
-        # Effective Policy Part
-        elif line.startswith("effective policy:"):
-            continue
-        elif line.startswith('eff thread qos:'):
-            result["effective policy"]["eff thread qos"] = line.split()[3]
-        elif line.startswith('eff thread qos relprio:'):
-            result["effective policy"]["eff thread qos relprio"] = line.split()[4]
-        elif line.startswith('eff promotion qos:'):
-            result["effective policy"]["eff promotion qos"] = line.split()[3]
-        elif line.startswith('eff latency qos:'):
-            result["effective policy"]["eff latency qos"] = line.split()[3]
-        elif line.startswith('eff thruput qos:'):
-            result["effective policy"]["eff thruput qos"] = line.split()[3]
-        elif line.startswith('eff darwin BG:'):
-            result["effective policy"]["eff darwin bg"] = line.split()[3]
-        elif line.startswith('eff other:'):
-            result["effective policy"]["eff other"] = line.split()[2:]
-        elif line.startswith('eff iotier:'):
-            result["effective policy"]["eff iotier"] = line.split()[2:]
-
-        # Kernel override
-        elif line.startswith("req kernel overrides"):
-            continue
-        elif line.startswith("req kevent overrides:"):
-            result["req kernel overrides"]["eq kevent overrides"] = line.split()[3:]
-        elif line.startswith("req workloop servicer override:"):
-            result["req kernel overrides"]["req workloop servicer override"] = line.split()[4:]
-
-        # Other
-        elif line.startswith("req other:"):
-            result["flags"] = line.split()[2:]
-
-        # Handline unknown
+        result = re.search(r'(num tasks: )(\d+)', lines[0])
+        if (result is not None):
+            numb_tasks = int(result.group(2))
         else:
-            print(f"WARNING: Unexpected line detected for tasks: {current_threat_id} ({line})")
-            continue  # unknown line
+            numb_tasks = -1
 
-    return result
-
-
-def search_task_block(fd):
-    result = {}
-    try:
-        for line in fd:
-            line = line.strip()
-            if line.startswith('thread ID:'):
-                current_threatID = line.split()[2]
-                result[current_threatID] = parse_task_block(fd, current_threatID)
+        n = 1  # skip lines to right section
+        extracted_block = []
+        while n < len(lines):
+            if 'thread ID:' in lines[n]:
+                # end of main block OR thread block detected
+                if 'threads:' in lines[n - 1]:
+                    # end of main block detected
+                    process = tabbasedhierarchy.parse_block(extracted_block)
+                    process['threads'] = []
+                    pass
+                else:
+                    # start of thread_block detected
+                    # this is also the end of the previous thread block
+                    process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
+                    pass
+                # be ready to accept new thread block
+                extracted_block = []
+                extracted_block.append(lines[n])
+            if n >= 41058:
+                pass
+            if lines[n].strip() == "" and lines[n + 1].strip() == "":
+                # start of new process block detected
+                # this is also the end of the previous thread block
+                process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
+                processes.append(process)
+                extracted_block = []
+                n = n + 1  # add one more to n as we are skipping the empty line
             else:
-                continue
-
-    except Exception as e:
-        print(f"An unknown error occurs while searching for task block. Reason: {str(e)}")
-
-    return result
+                extracted_block.append(lines[n])
+            n = n + 1
+    return {"numb_tasks": numb_tasks, "tasks": processes}
