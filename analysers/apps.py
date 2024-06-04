@@ -40,14 +40,15 @@ def apps_analysis(jsondir, filename):
 
     apps = {}
 
-    # building data depending on the source
-    for jsonfile in jsondir:
+    for jsonfile in os.listdir(jsondir):
+        jsonfile = os.path.join(jsondir, jsonfile)
+        # building data depending on the source
         if jsonfile.endswith('accessibility-tcc.json'):
             with open(jsonfile, 'r') as f:
                 accessibility_data = json.load(f)
                 for entry in accessibility_data['access']:
                     if entry['client'] not in apps.keys():
-                        apps[entry['client']]= {"found": ['accessibility-tcc'], "services": [entry['service']]}
+                        apps[entry['client']] = {"found": ['accessibility-tcc'], "services": [entry['service']]}
                     else:
                         apps[entry['client']]["services"].append(entry['service'])
         elif jsonfile.endswith('brctl.json'):
@@ -56,7 +57,7 @@ def apps_analysis(jsondir, filename):
                 # directly going to the list of apps
                 for entry in brctl_data['app_library_id'].keys():
                     if entry not in apps.keys():
-                        apps[entry]= {"found": ['brctl'], "libraries": brctl_data['app_library_id'][entry]}
+                        apps[entry] = {"found": ['brctl'], "libraries": brctl_data['app_library_id'][entry]}
                     else:
                         apps[entry]["libraries"] = brctl_data['app_library_id'][entry]
                         apps[entry]["found"].append('brctl')
@@ -66,10 +67,10 @@ def apps_analysis(jsondir, filename):
                 # directly going to the list of apps
                 for entry in itunesstore_data['application_id']:
                     if entry['bundle_id'] not in apps.keys():
-                        apps[entry['bundle_id']]= {"found": ['itunesstore']}
+                        apps[entry['bundle_id']] = {"found": ['itunesstore']}
                     else:
                         apps[entry['bundle_id']]["found"].append('itunesstore')
-        elif jsonfile.endswith('logarchive.json'):
+        elif jsonfile.endswith('logarchive.json'):  # FIXME fix the parser to ensure the same result is given for native and non-native unifiedlog parser
             # try something simple
             app_list = []
             with open(jsonfile, 'rb') as f:
@@ -83,7 +84,7 @@ def apps_analysis(jsondir, filename):
                             else:
                                 app_list.append(entry['subsystem'])
                                 if entry['subsystem'] not in apps.keys():
-                                    apps[entry['subsystem']]= {"found": ['logarchive']}
+                                    apps[entry['subsystem']] = {"found": ['logarchive']}
                                 else:
                                     apps[entry['subsystem']]["found"].append('logarchive')
     print(json.dumps(apps, indent=4))

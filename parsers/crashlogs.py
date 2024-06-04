@@ -31,4 +31,6 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
+    files = get_log_files(path)
+    print(f"Files: {files}")
     raise NotImplementedError("not implemented yet")

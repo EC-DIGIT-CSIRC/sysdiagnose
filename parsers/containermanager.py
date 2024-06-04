@@ -24,9 +24,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return multilinelog.extract_from_file(path)
-
-
-def parsecontainermanager(loglist):
-    for logfile in loglist:
-        return multilinelog.extract_from_file(logfile)
+    result = []
+    for logfile in get_log_files(path):
+        result.extend(multilinelog.extract_from_file(logfile))
+    return result
