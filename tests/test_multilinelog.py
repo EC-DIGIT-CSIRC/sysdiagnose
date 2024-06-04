@@ -33,7 +33,7 @@ dGVzdA==
             'msg': 'Activation message:',
             'plist': {'AccountToken': 'test', 'AccountTokenCertificate': 'test', 'unbrick': True}}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result, result['events'][0])
+        self.assertDictEqual(expected_result, result[0])
 
         pass
 
@@ -66,7 +66,7 @@ dGVzdA==
             'hexID': '0x16be43000',
             'msg': '+[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {\n    MCMMetadataActiveDPClass = 0;\n    MCMMetadataContentClass = 2;\n    MCMMetadataIdentifier = "com.apple.VoiceMemos";\n    MCMMetadataInfo =     {\n        "com.apple.MobileInstallation.ContentProtectionClass" = 0;\n    };\n    MCMMetadataSchemaVersion = 1;\n    MCMMetadataUUID = "12036663-1F3A-45B3-A34C-402D5BB7D4FB";\n    MCMMetadataUserIdentity =     {\n        personaUniqueString = "83CB8039-725D-4462-84C2-7F79F0A6EFB3";\n        posixGID = 501;\n        posixUID = 501;\n        type = 0;\n        version = 2;\n    };\n    MCMMetadataVersion = 6;\n} (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result, result['events'][0])
+        self.assertDictEqual(expected_result, result[0])
 
     def test_multilinelog_simple_1(self):
         s = '''Wed May 24 12:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk'''
@@ -77,7 +77,7 @@ dGVzdA==
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
             'msg': 'Rolling system container directory UUIDs on disk'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result, result['events'][0])
+        self.assertDictEqual(expected_result, result[0])
 
     def test_mutlinelog_simple_2(self):
         s = '''Wed May 24 13:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'''
@@ -87,7 +87,7 @@ dGVzdA==
             'hexID': '0x16be43000',
             'msg': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result, result['events'][0])
+        self.assertDictEqual(expected_result, result[0])
 
     def test_multilinelog_simple_multiplelines(self):
         s = '''Wed May 24 13:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete
@@ -104,13 +104,13 @@ Wed May 24 12:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _rege
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
             'msg': 'Rolling system container directory UUIDs on disk'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result_0, result['events'][0])
-        self.assertDictEqual(expected_result_1, result['events'][1])
+        self.assertDictEqual(expected_result_0, result[0])
+        self.assertDictEqual(expected_result_1, result[1])
 
     def test_mutilinelog_emptylines(self):
         s = '''\n\n'''
         result = multilinelog.extract_from_string(s)
-        self.assertEqual(0, len(result['events']))
+        self.assertEqual(0, len(result))
 
     def test_multilinelog_keyvalue(self):
         s = '''Wed May 24 12:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk
@@ -158,8 +158,8 @@ Wed May 24 13:08:13 2023 [135] <debug> (0x16f1db000) MA: main: _________________
             'is_prodfused_demoted': 'false',
             'soc_generation': 'H9'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result_0, result['events'][0])
-        self.assertDictEqual(expected_result_1, result['events'][1])
+        self.assertDictEqual(expected_result_0, result[0])
+        self.assertDictEqual(expected_result_1, result[1])
 
     def test_multilinelog_keyvalue_onlyend(self):
         s = '''Sat Feb 18 09:48:38 2023 [2695] <debug> (0x16dc37000) MA: main: ____________________________________________________________________
@@ -175,8 +175,8 @@ Sat Feb 18 09:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: A
             'hexID': '0x16dc37000',
             'msg': 'MA: dealwith_activation: Activation State: Activated'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result_0, result['events'][0])
-        self.assertDictEqual(expected_result_1, result['events'][1])
+        self.assertDictEqual(expected_result_0, result[0])
+        self.assertDictEqual(expected_result_1, result[1])
 
     def test_multilinelog_keyvalue_onlystart(self):
         s = '''Fri Dec  2 11:32:19 2022 [84816] <debug> (0x16afff000) MA: main: ____________________ Mobile Activation Startup _____________________'''
@@ -186,7 +186,7 @@ Sat Feb 18 09:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: A
             'hexID': '0x16afff000',
             'msg': 'MA: main: ____________________ Mobile Activation Startup _____________________'}
         result = multilinelog.extract_from_string(s)
-        self.assertDictEqual(expected_result, result['events'][0])
+        self.assertDictEqual(expected_result, result[0])
 
 
 if __name__ == '__main__':
