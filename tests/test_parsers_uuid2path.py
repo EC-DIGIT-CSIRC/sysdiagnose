@@ -7,11 +7,12 @@ class TestParsersUuid2path(SysdiagnoseTestCase):
     def test_uuid2path(self):
         for log_root_path in self.log_root_paths:
             files = get_log_files(log_root_path)
-            if files:  # not all sysdiagnose dumps have this log file
-                for file in files:
-                    print(f'Parsing {file}')
-                    result = parse_path(file)
-                    self.assertGreater(len(result), 0)
+            if not files:  # not all sysdiagnose dumps have this log file
+                continue
+
+            print(f'Parsing {files}')
+            result = parse_path(log_root_path)
+            self.assertGreater(len(result), 0)
 
 
 if __name__ == '__main__':

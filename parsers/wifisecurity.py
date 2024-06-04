@@ -40,7 +40,7 @@ def parse_path(path: str) -> list | dict:
     entries = []
     element = {}
     try:
-        with open(path, "r") as f:
+        with open(get_log_files(path)[0], "r") as f:
             for line in f:
                 if ' : ' in line:
                     key, value = line.split(" : ")
@@ -51,5 +51,5 @@ def parse_path(path: str) -> list | dict:
                     # print(f"appending {element}")
                     element = {}
     except Exception as e:
-        print(f"Could not parse: {path}. Reason: {str(e)}")
+        print(f"Could not parse: {get_log_files(path)[0]}. Reason: {str(e)}")
     return entries

@@ -32,7 +32,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return parse_ps(path)
+    return parse_ps(get_log_files(path)[0])
 
 
 def parse_ps(filename, ios_version=16):

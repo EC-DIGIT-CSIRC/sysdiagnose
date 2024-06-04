@@ -28,7 +28,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    with open(path, "r") as fd:
+    with open(get_log_files(path)[0], "r") as fd:
         input = fd.readlines()
         input_clean = []
         for line in input:

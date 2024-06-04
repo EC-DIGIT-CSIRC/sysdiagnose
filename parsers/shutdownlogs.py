@@ -30,7 +30,7 @@ def get_log_files(log_root_path: str) -> list:
 def parse_path(path: str) -> list | dict:
     # read log file content
     log_lines = ""
-    with open(path, "r") as f:
+    with open(get_log_files(path)[0], "r") as f:
         log_lines = f.readlines()
 
     json_object = {}

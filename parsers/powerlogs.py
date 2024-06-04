@@ -27,5 +27,8 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
-def parse_path(path: str) -> list | dict:
-    return sqlite2json.sqlite2struct(path)
+def parse_path(path: str) -> list:
+    result = []
+    for logfile in get_log_files(path):
+        result.extend(sqlite2json.sqlite2struct(logfile))
+    return result
