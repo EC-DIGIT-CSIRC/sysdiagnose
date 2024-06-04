@@ -4,7 +4,7 @@ import unittest
 
 
 class TestParsersUuid2path(SysdiagnoseTestCase):
-    def test_get_tasks(self):
+    def test_uuid2path(self):
         for log_root_path in self.log_root_paths:
             files = get_log_files(log_root_path)
             if files:  # not all sysdiagnose dumps have this log file
