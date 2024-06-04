@@ -19,7 +19,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return parsebrctl(path)
+    return parsebrctl(get_log_files(path)[0])
 
 
 def parselistfile(container_list_file):

@@ -31,4 +31,4 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.json_serializable(sqlite2json.sqlite2struct(path))
+    return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))

@@ -5,7 +5,6 @@
 # Author: david@autopsit.org
 #
 #
-# TODO: fix print bug in main by adding an argument that output > stdout to get_logs
 import os
 import sys
 import json
@@ -52,7 +51,21 @@ def get_log_files(log_root_path: str) -> list:
     return [os.path.join(log_root_path, log_folder) for log_folder in log_folders]
 
 
-def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard coded default version?
+def parse_path(path: str) -> list | dict:
+    return get_logs(get_log_files(path)[0], output=None)
+
+
+def parse_path_to_folder(path: str, output: str) -> bool:
+    result = get_logs(get_log_files(path)[0], output=output)
+    if len(result['data']) > 0:
+        return True
+    else:
+        print("Error:")
+        print(json.dumps(result, indent=4))
+        return False
+
+
+def get_logs(filename, output=None):
     """
         Parse the system_logs.logarchive.  When running on OS X, use native tools.
         On other system use a 3rd party library.
@@ -69,20 +82,6 @@ def get_logs(filename, ios_version=13, output=None):        # FIXME #18 hard cod
         data = get_logs_on_linux(filename, output)
         return data
     return None
-
-
-def parse_path(path: str) -> list | dict:
-    return get_logs(path, output=None)
-
-
-def parse_path_to_folder(path: str, output: str) -> bool:
-    result = get_logs(path, output=output)
-    if len(result['data']) > 0:
-        return True
-    else:
-        print("Error:")
-        print(json.dumps(result, indent=4))
-        return False
 
 
 def get_logs_on_osx(filename, output):

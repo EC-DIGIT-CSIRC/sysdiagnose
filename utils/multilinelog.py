@@ -17,7 +17,7 @@ def extract_from_iowrapper(f: io.TextIOWrapper):
     # - build an entry with the seen lines
     # - upon discovery of a new entry, or the end of the file, consider the entry as complete and process the lines
     # - discovery of a new entry is done based on the timestamp, as each new entry starts this way
-    events = {"events": []}
+    events = []
     prev_lines = []
     kv_section = False  # key-value section separated by a semicolon
     for line in f:
@@ -30,12 +30,12 @@ def extract_from_iowrapper(f: io.TextIOWrapper):
                 kv_section = True
             if kv_section == 'end':
                 kv_section = False
-                events['events'].append(build_from_kv_section(prev_lines))
+                events.append(build_from_kv_section(prev_lines))
                 prev_lines = []
                 continue  # go to next line as current line is just the closure of the section
             elif prev_lines:
                 new_entry = build_from_logentry(''.join(prev_lines))
-                events['events'].append(new_entry)
+                events.append(new_entry)
             # build the new entry
             prev_lines = []
             prev_lines.append(line)
@@ -52,7 +52,7 @@ def extract_from_iowrapper(f: io.TextIOWrapper):
     else:
         new_entry = build_from_logentry(''.join(prev_lines))
     if new_entry:
-        events['events'].append(new_entry)
+        events.append(new_entry)
     return events
 
 

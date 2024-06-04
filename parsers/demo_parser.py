@@ -29,6 +29,9 @@ def parse_path(path: str) -> list | dict:
         this is the function that will be called
     '''
     json_object = {}
+    log_files = get_log_files(path)
+    for log_file in log_files:
+        pass
     return json_object
 
 
@@ -38,6 +41,10 @@ def parse_path_to_folder(path: str, output: str) -> bool:
     '''
     try:
         json_object = {}
+        log_files = get_log_files(path)
+        for log_file in log_files:
+            pass
+        # ideally stream to the file directly
         with open(os.path.join(output, "demo_output.json"), "w") as f:
             json.dump(json_object, f)
         return True
