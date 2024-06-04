@@ -3,7 +3,7 @@
 import glob
 import misc
 import os
-
+import json
 
 parser_description = "Parsing any pslist into json"
 
@@ -41,4 +41,4 @@ def parse_path_to_folder(path: str, output: str) -> bool:
         end_of_path = logfile[len(path):].lstrip(os.path.sep)   # take the path after the root path
         output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
         with open(os.path.join(output, output_filename), 'w') as f:
-            f.write(json_data)
+            json.dump(json_data, f, indent=4)
