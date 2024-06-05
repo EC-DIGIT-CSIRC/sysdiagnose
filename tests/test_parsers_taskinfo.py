@@ -17,7 +17,9 @@ class TestParsersTaskinfo(SysdiagnoseTestCase):
             numb_tasks = result['numb_tasks']
             len_tasks = len(result['tasks'])
             print(f"File says {numb_tasks} tasks - found {len_tasks} tasks, delta {numb_tasks - len_tasks}")
-            # FIXME understand why numb_tasks is (almost) always 2 (once 3) less than len(tasks). Apple bug or mine? Or hidden processes?
+            # a delta is not abnormal, as numb_tasks seems to be taking the count from "ps".
+            # "ps" always has at least two processes running (ps and psauxwww)
+            # Execution of taskinfo happens at another moment, so other processes may have started/stopped
             self.assertTrue((len_tasks > numb_tasks - 4))
             for task in result['tasks']:
                 self.assertGreater(len(task['threads']), 0)
