@@ -47,7 +47,7 @@ def list_analysers(folder):
             spec.loader.exec_module(module)
             line = [analyser[:-3], module.analyser_description]
             lines.append(line)
-        except:     # noqa: E722
+        except AttributeError:
             continue
 
     headers = ['Analyser Name', 'Analyser Description']
@@ -58,14 +58,14 @@ def list_analysers(folder):
 
 def analyse(analyser, caseid):
     # Load parser module
-    spec = importlib.util.spec_from_file_location(analyser[:-3], config.analysers_folder + "/" + analyser + '.py')
-    print(spec, file=sys.stderr)
+    spec = importlib.util.spec_from_file_location(analyser[:-3], os.path.join(config.analysers_folder, analyser + '.py'))
+    # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     # building command
     parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
-    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_format
+    output_file = os.path.join(config.parsed_data_folder, caseid, analyser + "." + module.analyser_format)
     command = "module.%s('%s', '%s')" % (module.analyser_call, parse_data_path, output_file)
     result = eval(command)
 
@@ -85,7 +85,10 @@ def allanalysers(caseid):
         try:
             print(f'Trying: {analyser[:-3]}', file=sys.stderr)
             analyse(analyser[:-3], caseid)
-        except:     # noqa: E722
+        except Exception as e:     # noqa: E722
+            import traceback
+            print(f"Error: Problem while executing module {analyser[:-3]}. Reason: {str(e)}", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
             continue
     os.chdir(prev_folder)
     return 0

@@ -58,9 +58,11 @@ def parse_path(path: str) -> list | dict:
         return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
 
-def parse_path_to_folder(path: str, output: str) -> bool:
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
     try:
-        result = get_logs(get_log_files(path)[0], output=output)
+        output_folder = os.path.join(output_folder, "logarchive")
+        os.makedirs(output_folder, exist_ok=True)
+        result = get_logs(get_log_files(path)[0], output=output_folder)
         if len(result['data']) > 0:
             return True
         else:

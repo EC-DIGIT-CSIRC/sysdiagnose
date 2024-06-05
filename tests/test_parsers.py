@@ -20,7 +20,7 @@ class TestParsers(SysdiagnoseTestCase):
             yield parser
 
     def test_parsers_filestructure(self):
-        required_functions = ['get_log_files', 'parse_path']  # TODO add parse_path_to_folder(path: str, output: str) -> bool:
+        required_functions = ['get_log_files', 'parse_path']  # TODO add parse_path_to_folder(path: str, output_folder: str) -> bool:
         required_variables = ['parser_description']
 
         parsers = self.list_all_parsers()

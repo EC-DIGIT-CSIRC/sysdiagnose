@@ -30,6 +30,30 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse.py analyse wifi_geolocation 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "analyse wifi_geolocation 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: analyse.py analyse wifi_geolocation_kml 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "analyse wifi_geolocation_kml 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: analyse.py analyse timeliner 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "analyse timeliner 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: logarchive.py",
             "type": "debugpy",
             "request": "launch",
@@ -43,6 +67,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
             "args": "list all",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parsing.py parse demo_parser",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "parse demo_parser 1",
             "cwd": "${workspaceFolder}/"
         },
         {

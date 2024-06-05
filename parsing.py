@@ -114,7 +114,7 @@ def parse(parser, case_id):
     # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
 
     # Load parser module
-    spec = importlib.util.spec_from_file_location(parser[:-3], os.path.join(config.parsers_folder, parser) + '.py')
+    spec = importlib.util.spec_from_file_location(parser, os.path.join(config.parsers_folder, parser) + '.py')
     # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -123,9 +123,9 @@ def parse(parser, case_id):
     log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
     if hasattr(module, 'parse_path_to_folder'):
-        output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
+        output_folder = os.path.join(config.parsed_data_folder, case_id)
         os.makedirs(output_folder, exist_ok=True)
-        result = module.parse_path_to_folder(path=log_root_path, output=output_folder)
+        result = module.parse_path_to_folder(path=log_root_path, output_folder=output_folder)
         print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
     else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
         # parsers that output in the result variable
