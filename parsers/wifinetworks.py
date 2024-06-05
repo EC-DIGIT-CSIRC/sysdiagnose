@@ -41,8 +41,9 @@ def parse_path(path: str) -> dict:
     return result
 
 
-def parse_path_to_folder(path: str, output: str) -> bool:
-    os.makedirs(output, exist_ok=True)
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    output_folder = os.path.join(output_folder, __name__.split('.')[-1])
+    os.makedirs(output_folder, exist_ok=True)
     for logfile in get_log_files(path):
         try:
             json_data = parse_file(logfile)
@@ -50,5 +51,5 @@ def parse_path_to_folder(path: str, output: str) -> bool:
             json_data = {"error": str(e)}
         end_of_path = logfile[len(path):].lstrip(os.path.sep)   # take the path after the root path
         output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
-        with open(os.path.join(output, output_filename), 'w') as f:
+        with open(os.path.join(output_folder, output_filename), 'w') as f:
             json.dump(json_data, f, indent=4)

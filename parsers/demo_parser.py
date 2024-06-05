@@ -35,7 +35,7 @@ def parse_path(path: str) -> list | dict:
     return json_object
 
 
-def parse_path_to_folder(path: str, output: str) -> bool:
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
     '''
         this is the function that will be called
     '''
@@ -45,7 +45,9 @@ def parse_path_to_folder(path: str, output: str) -> bool:
         for log_file in log_files:
             pass
         # ideally stream to the file directly
-        with open(os.path.join(output, "demo_output.json"), "w") as f:
+        output_folder = os.path.join(output_folder, __name__.split('.')[-1])
+        os.makedirs(output_folder, exist_ok=True)
+        with open(os.path.join(output_folder, "demo_output.json"), "w") as f:
             json.dump(json_object, f)
         return True
     except Exception as e:

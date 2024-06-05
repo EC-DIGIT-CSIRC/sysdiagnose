@@ -7,7 +7,7 @@ import sys
 import json
 import dateutil.parser
 from optparse import OptionParser
-
+import os
 import gpxpy
 import gpxpy.gpx
 
@@ -21,8 +21,25 @@ version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
 # -----         DO NOT DELETE             ----#
 
 analyser_description = "Generate GPS Exchange (GPX) of wifi geolocations"
-analyser_call = "generate_gpx"
-analyser_format = "json"
+analyser_call = "analyse_path"
+analyser_format = "gpx"
+
+
+def analyse_path(case_folder: str, outfile: str = "wifi-geolocations.gpx") -> bool:
+    potential_source_files = ['wifinetworks/WiFi_com.apple.wifi.known-networks.plist.json', 'plists/WiFi_com.apple.wifi.known-networks.plist.json', 'wifi_known_networks.json']
+    input_file_path = None
+    for fname in potential_source_files:
+        input_file_path = os.path.join(case_folder, fname)
+        if os.path.isfile(input_file_path):
+            break
+    if not input_file_path:
+        # TODO we could call the parser and generate the file for us...and then parse it...
+        raise FileNotFoundError(f"Could not find any of the potential source files: {potential_source_files}.")
+
+    # we have a valid file_path and can generate the gpx file
+    with open(input_file_path, 'r') as f:
+        json_data = json.load(f)
+    return generate_gpx_from_known_networks_json(json_data=json_data, outfile=outfile)
 
 
 def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
@@ -45,11 +62,14 @@ def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
         sys.exit(-2)
     json_data = json_entry      # start here
 
+
+def generate_gpx_from_known_networks_json(json_data: str, outfile: str):
+
     # Create new GPX object
     gpx = gpxpy.gpx.GPX()
 
     for network_name, network_data in json_data.items():
-        ssid = network_name
+        ssid = network_data.get('SSID', network_name)
         # timestamps are always tricky
         timestamp_str = network_data.get('AddedAt', '')
         if config.debug:
