@@ -8,7 +8,7 @@
 """sysdiagnose parse.
 
 Usage:
-  parsing.py list (cases|parsers)
+  parsing.py list (cases|parsers|all)
   parsing.py parse <parser> <case_number>
   parsing.py allparsers <case_number>
   parsing.py (-h | --help)
@@ -35,7 +35,7 @@ from docopt import docopt
 """
 
 
-def list_cases(case_file):
+def list_cases():
     try:
         with open(config.cases_file, 'r') as f:
             cases = json.load(f)
@@ -59,6 +59,7 @@ def list_cases(case_file):
 
 
 def list_parsers(folder):
+    prev_folder = os.getcwd()
     os.chdir(folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
@@ -77,6 +78,7 @@ def list_parsers(folder):
     headers = ['Parser Name', 'Parser Description']
 
     print(tabulate(lines, headers=headers))
+    os.chdir(prev_folder)
 
 
 """
@@ -146,6 +148,7 @@ def parse_all(case_id):
     # get list of working parsers
     # for each parser, run and save which is working
     # display list of successful parses
+    prev_folder = os.getcwd()
     os.chdir(config.parsers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
@@ -160,6 +163,7 @@ def parse_all(case_id):
             print(f"Error: Problem while executing module {parser[:-3]}. Reason: {str(e)}", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
             continue
+    os.chdir(prev_folder)
     return 0
 
 
@@ -179,9 +183,13 @@ def main():
     # print(arguments, file=sys.stderr)
 
     if arguments['list'] and arguments['cases']:
-        list_cases(config.cases_file)
+        list_cases()
     elif arguments['list'] and arguments['parsers']:
         list_parsers(config.parsers_folder)
+    elif arguments['list']:
+        list_parsers(config.parsers_folder)
+        print("\n")
+        list_cases()
     elif arguments['parse']:
         if arguments['<case_number>'].isdigit():
             parse(arguments['<parser>'], arguments['<case_number>'])

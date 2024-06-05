@@ -93,6 +93,7 @@ def init(sysdiagnose_file, force=False):
     # extract sysdiagnose files
     if config.debug:
         print(f"cd'ing to {new_folder}")
+    prev_folder = os.getcwd()
     os.chdir(new_folder)
     try:
         tf.extractall()
@@ -142,6 +143,7 @@ def init(sysdiagnose_file, force=False):
 
     print("Sysdiagnose file has been processed")
     print(f"New case ID: {str(new_case['case_id'])}")
+    os.chdir(prev_folder)
 
 
 """
