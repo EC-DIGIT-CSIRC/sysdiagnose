@@ -6,7 +6,7 @@
 """sysdiagnose analyse.
 
 Usage:
-  analyse.py list (cases|analysers)
+  analyse.py list (cases|analysers|all)
   analyse.py analyse <analyser> <case_number>
   analyse.py allanalysers <case_number>
   analyse.py (-h | --help)
@@ -34,6 +34,7 @@ def list_analysers(folder):
     """
         List available analysers
     """
+    prev_folder = os.getcwd()
     os.chdir(folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
@@ -52,6 +53,7 @@ def list_analysers(folder):
     headers = ['Analyser Name', 'Analyser Description']
 
     print(tabulate(lines, headers=headers))
+    os.chdir(prev_folder)
 
 
 def analyse(analyser, caseid):
@@ -73,6 +75,7 @@ def analyse(analyser, caseid):
 
 
 def allanalysers(caseid):
+    prev_folder = os.getcwd()
     os.chdir(config.analysers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
@@ -84,6 +87,7 @@ def allanalysers(caseid):
             analyse(analyser[:-3], caseid)
         except:     # noqa: E722
             continue
+    os.chdir(prev_folder)
     return 0
 
 # --------------------------------------------------------------------------- #
@@ -99,9 +103,13 @@ def main():
 
     arguments = docopt(__doc__, version=version_string)
     if arguments['list'] and arguments['cases']:
-        parsing.list_cases(config.cases_file)
+        parsing.list_cases()
     elif arguments['list'] and arguments['analysers']:
         list_analysers(config.analysers_folder)
+    elif arguments['list']:
+        list_analysers(config.analysers_folder)
+        print("\n")
+        parsing.list_cases()
     elif arguments['analyse']:
         if arguments['<case_number>'].isdigit():
             analyse(arguments['<analyser>'], arguments['<case_number>'])

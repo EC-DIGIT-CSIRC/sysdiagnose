@@ -38,11 +38,11 @@
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py list parsers",
+            "name": "Python Debugger: parsing.py list all",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
-            "args": "list parsers",
+            "args": "list all",
             "cwd": "${workspaceFolder}/"
         },
         {
