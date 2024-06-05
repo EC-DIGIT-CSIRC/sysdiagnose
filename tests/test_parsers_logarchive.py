@@ -21,9 +21,9 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                 self.assertTrue(result)
 
                 if (platform.system() == "Darwin"):
-                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "logarchive.json")))
+                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive.json")))
                 else:
-                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "liveData.json")))
+                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "liveData.json")))
 
     def test_get_logs_result(self):
         for log_root_path in self.log_root_paths:
