@@ -1,6 +1,6 @@
 import re
 import io
-import misc
+import utils.misc as misc
 
 
 def extract_from_file(fname):

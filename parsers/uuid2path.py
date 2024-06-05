@@ -9,7 +9,7 @@
 
 import os
 import glob
-import misc
+import utils.misc as misc
 
 parser_description = "Parsing UUIDToBinaryLocations plist file"
 
@@ -26,7 +26,11 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.load_plist_file_as_json(get_log_files(path)[0])
+    try:
+        fname = get_log_files(path)[0]
+        return misc.load_plist_file_as_json(fname)
+    except IndexError:
+        return {'error': 'No UUIDToBinaryLocations file present'}
 
 
 def printResult(data):

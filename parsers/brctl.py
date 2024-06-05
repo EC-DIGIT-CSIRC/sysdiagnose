@@ -19,7 +19,10 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return parsebrctl(get_log_files(path)[0])
+    try:
+        return parsebrctl(get_log_files(path)[0])
+    except IndexError:
+        return {'error': 'No brctl folder found'}
 
 
 def parselistfile(container_list_file):

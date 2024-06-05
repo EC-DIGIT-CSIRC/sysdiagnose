@@ -6,7 +6,7 @@
 
 import json
 import glob
-import misc
+import utils.misc as misc
 import os
 
 

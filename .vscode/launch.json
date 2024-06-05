@@ -76,6 +76,14 @@
             "program": "${workspaceFolder}/parsing.py",
             "args": "parse plists 1",
             "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parsing.py parse wifinetworks",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/parsing.py",
+            "args": "parse wifinetworks 1",
+            "cwd": "${workspaceFolder}/"
         }
     ]
 }

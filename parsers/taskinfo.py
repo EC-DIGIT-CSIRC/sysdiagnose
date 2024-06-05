@@ -27,46 +27,48 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
-def parse_path(path: str) -> list | dict:
+def parse_path(path: str) -> dict:
     processes = []
+    try:
+        with open(get_log_files(path)[0], "r") as f:
+            lines = f.readlines()
 
-    with open(get_log_files(path)[0], "r") as f:
-        lines = f.readlines()
+            result = re.search(r'(num tasks: )(\d+)', lines[0])
+            if (result is not None):
+                numb_tasks = int(result.group(2))
+            else:
+                numb_tasks = -1
 
-        result = re.search(r'(num tasks: )(\d+)', lines[0])
-        if (result is not None):
-            numb_tasks = int(result.group(2))
-        else:
-            numb_tasks = -1
-
-        n = 1  # skip lines to right section
-        extracted_block = []
-        while n < len(lines):
-            if 'thread ID:' in lines[n]:
-                # end of main block OR thread block detected
-                if 'threads:' in lines[n - 1]:
-                    # end of main block detected
-                    process = tabbasedhierarchy.parse_block(extracted_block)
-                    process['threads'] = []
+            n = 1  # skip lines to right section
+            extracted_block = []
+            while n < len(lines):
+                if 'thread ID:' in lines[n]:
+                    # end of main block OR thread block detected
+                    if 'threads:' in lines[n - 1]:
+                        # end of main block detected
+                        process = tabbasedhierarchy.parse_block(extracted_block)
+                        process['threads'] = []
+                        pass
+                    else:
+                        # start of thread_block detected
+                        # this is also the end of the previous thread block
+                        process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
+                        pass
+                    # be ready to accept new thread block
+                    extracted_block = []
+                    extracted_block.append(lines[n])
+                if n >= 41058:
                     pass
-                else:
-                    # start of thread_block detected
+                if lines[n].strip() == "" and lines[n + 1].strip() == "":
+                    # start of new process block detected
                     # this is also the end of the previous thread block
                     process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
-                    pass
-                # be ready to accept new thread block
-                extracted_block = []
-                extracted_block.append(lines[n])
-            if n >= 41058:
-                pass
-            if lines[n].strip() == "" and lines[n + 1].strip() == "":
-                # start of new process block detected
-                # this is also the end of the previous thread block
-                process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
-                processes.append(process)
-                extracted_block = []
-                n = n + 1  # add one more to n as we are skipping the empty line
-            else:
-                extracted_block.append(lines[n])
-            n = n + 1
-    return {"numb_tasks": numb_tasks, "tasks": processes}
+                    processes.append(process)
+                    extracted_block = []
+                    n = n + 1  # add one more to n as we are skipping the empty line
+                else:
+                    extracted_block.append(lines[n])
+                n = n + 1
+        return {"numb_tasks": numb_tasks, "tasks": processes}
+    except IndexError:
+        return {'error': 'No taskinfo.txt file present'}

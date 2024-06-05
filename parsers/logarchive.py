@@ -52,16 +52,23 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return get_logs(get_log_files(path)[0], output=None)
+    try:
+        return get_logs(get_log_files(path)[0], output=None)
+    except IndexError:
+        return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
 
 def parse_path_to_folder(path: str, output: str) -> bool:
-    result = get_logs(get_log_files(path)[0], output=output)
-    if len(result['data']) > 0:
-        return True
-    else:
-        print("Error:")
-        print(json.dumps(result, indent=4))
+    try:
+        result = get_logs(get_log_files(path)[0], output=output)
+        if len(result['data']) > 0:
+            return True
+        else:
+            print("Error:")
+            print(json.dumps(result, indent=4))
+            return False
+    except IndexError:
+        print("Error: No system_logs.logarchive/ folder found in logs/ directory")
         return False
 
 
@@ -71,7 +78,7 @@ def get_logs(filename, output=None):
         On other system use a 3rd party library.
     """
     if output is not None:
-        output = os.path.join(output, "logarchive")
+        output = os.path.join(output)
         os.makedirs(output, exist_ok=True)
     if (platform.system() == "Darwin"):
         if output is not None:
