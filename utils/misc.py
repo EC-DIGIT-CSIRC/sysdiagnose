@@ -8,12 +8,13 @@ from datetime import datetime
 import binascii
 from functools import singledispatch
 import base64
+from pathlib import Path
 
 
 def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = Path(__file__).parent.parent
         print(script_dir)
         version_file = os.path.join(script_dir, filename)
         with open(version_file, "r") as file:
