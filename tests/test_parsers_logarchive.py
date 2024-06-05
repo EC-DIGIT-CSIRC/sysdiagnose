@@ -16,7 +16,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                 print(f'Parsing {folders} to {tmp_outpath}')
                 result = parse_path_to_folder(log_root_path, output=tmp_outpath)
                 # check if folder is not empty
-                self.assertNotEqual(os.listdir(os.path.join(tmp_outpath, "logarchive")), [])
+                self.assertNotEqual(os.listdir(tmp_outpath), [])
                 # result should contain at least one entry (linux = stdout, mac = mention it's saved to a file)
                 self.assertTrue(result)
 
