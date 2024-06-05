@@ -6,19 +6,12 @@
 import sys
 import json
 import dateutil.parser
-from optparse import OptionParser
 import os
 import gpxpy
 import gpxpy.gpx
 
 sys.path.append('..')   # noqa: E402
-import config        # noqa: E402
 
-
-version_string = "sysdiagnose-demo-analyser.py v2023-04-28 Version 0.1"
-
-# ----- definition for analyse.py script -----#
-# -----         DO NOT DELETE             ----#
 
 analyser_description = "Generate GPS Exchange (GPX) of wifi geolocations"
 analyser_call = "analyse_path"
@@ -42,27 +35,6 @@ def analyse_path(case_folder: str, outfile: str = "wifi-geolocations.gpx") -> bo
     return generate_gpx_from_known_networks_json(json_data=json_data, outfile=outfile)
 
 
-def generate_gpx(jsonfile: str, outfile: str = "wifi-geolocations.gpx"):
-    """
-    Generate the GPX file in <filename>. Reads <jsonfile> as input and extracts all known-wifi-networks and their locations.
-
-    Sample input JSON snippet:
-    ```json
-    """
-    try:
-        with open(jsonfile, 'r') as fp:
-            json_data = json.load(fp)
-    except Exception as e:
-        print(f"Error while parsing inputfile JSON. Reason: {str(e)}")
-        sys.exit(-1)
-
-    json_entry = json_data.get('com.apple.wifi.known-networks.plist')
-    if not json_entry:
-        print("Could not find the 'com.apple.wifi.known-networks.plist' section. Bailing out.", file=sys.stderr)
-        sys.exit(-2)
-    json_data = json_entry      # start here
-
-
 def generate_gpx_from_known_networks_json(json_data: str, outfile: str):
 
     # Create new GPX object
@@ -72,8 +44,6 @@ def generate_gpx_from_known_networks_json(json_data: str, outfile: str):
         ssid = network_data.get('SSID', network_name)
         # timestamps are always tricky
         timestamp_str = network_data.get('AddedAt', '')
-        if config.debug:
-            print(f"AddedAt: {timestamp_str}")
         if not timestamp_str:
             timestamp_str = network_data.get('JoinedByUserAt', '')      # second best attempt
         if not timestamp_str:
@@ -112,48 +82,3 @@ def generate_gpx_from_known_networks_json(json_data: str, outfile: str):
         with open(outfile, 'w') as f:
             f.write(gpx.to_xml())
     return
-
-
-# --------------------------------------------------------------------------- #
-"""
-    Main function
-"""
-
-
-def main():
-
-    print(f"Running {version_string}\n")
-
-    usage = "\n%prog -d JSON directory\n"
-
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="JSON file from parsers")
-    parser.add_option("-o", dest="outputfile",
-                      action="store", type="string",
-                      help="GPX file to save output")
-    (options, args) = parser.parse_args()
-
-    # no arguments given by user, print help and exit
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(-1)
-
-    if not options.inputfile and not options.outputfile:
-        parser.error("Need to specify inputfile and outputfile")
-    else:
-        generate_gpx(options.inputfile, outfile=options.outputfile)
-
-
-# --------------------------------------------------------------------------- #
-
-"""
-   Call main function
-"""
-if __name__ == "__main__":
-
-    # Create an instance of the Analysis class (called "base") and run main
-    main()
-
-# That's all folks ;)
