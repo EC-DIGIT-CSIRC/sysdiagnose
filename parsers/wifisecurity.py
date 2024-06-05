@@ -50,6 +50,8 @@ def parse_path(path: str) -> list | dict:
                     entries.append(element)
                     # print(f"appending {element}")
                     element = {}
+    except IndexError:
+        return {'error': 'No WiFi/security.txt file present'}
     except Exception as e:
         print(f"Could not parse: {get_log_files(path)[0]}. Reason: {str(e)}")
     return entries

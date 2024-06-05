@@ -30,8 +30,11 @@ def get_log_files(log_root_path: str) -> list:
 def parse_path(path: str) -> list | dict:
     # read log file content
     log_lines = ""
-    with open(get_log_files(path)[0], "r") as f:
-        log_lines = f.readlines()
+    try:
+        with open(get_log_files(path)[0], "r") as f:
+            log_lines = f.readlines()
+    except IndexError:
+        return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
 
     json_object = {}
     parsed_data = {}

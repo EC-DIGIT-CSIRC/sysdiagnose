@@ -77,6 +77,8 @@ def allanalysers(caseid):
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
     for analyser in modules:
+        if analyser.endswith('__init__.py') or analyser.endswith('demo_analyser.py'):
+            continue
         try:
             print(f'Trying: {analyser[:-3]}', file=sys.stderr)
             analyse(analyser[:-3], caseid)

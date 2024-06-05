@@ -18,4 +18,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return parse_tab_based_hierarchal_file(get_log_files(path)[0])
+    try:
+        return parse_tab_based_hierarchal_file(get_log_files(path)[0])
+    except IndexError:
+        return {'error': 'No remotectl_dumpstate.txt file present'}

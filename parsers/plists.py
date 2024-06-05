@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import glob
-import misc
+import utils.misc as misc
 import os
 import json
 

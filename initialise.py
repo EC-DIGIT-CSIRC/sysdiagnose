@@ -27,7 +27,7 @@ import hashlib
 import glob
 from docopt import docopt
 
-from misc import get_version
+from utils.misc import get_version
 
 version = get_version()
 

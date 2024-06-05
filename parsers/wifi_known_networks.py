@@ -8,7 +8,7 @@
 
 import os
 import glob
-import misc
+import utils.misc as misc
 
 
 parser_description = "Parsing Known Wifi Networks plist file"

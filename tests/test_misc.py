@@ -1,5 +1,5 @@
 from tests import SysdiagnoseTestCase
-import misc
+import utils.misc as misc
 import unittest
 
 

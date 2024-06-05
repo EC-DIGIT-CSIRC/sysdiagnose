@@ -8,7 +8,7 @@
 
 import os
 import glob
-import misc
+import utils.misc as misc
 
 parser_description = "Parsing SystemVersion plist file"
 
@@ -25,7 +25,10 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.load_plist_file_as_json(get_log_files(path)[0])
+    try:
+        return misc.load_plist_file_as_json(get_log_files(path)[0])
+    except IndexError:
+        return {'error': 'No SystemVersion.plist file present'}
 
 
 '''

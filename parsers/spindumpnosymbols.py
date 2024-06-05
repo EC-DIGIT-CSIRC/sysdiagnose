@@ -23,34 +23,37 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    with open(get_log_files(path)[0], 'r') as f_in:
-        # init section
-        headers = []
-        processes_raw = []
-        status = 'headers'
+    try:
+        with open(get_log_files(path)[0], 'r') as f_in:
+            # init section
+            headers = []
+            processes_raw = []
+            status = 'headers'
 
-        # stripping
-        for line in f_in:
-            if line.strip() == "" or line.strip() == "Heavy format: stacks are sorted by count" or line.strip() == "Use -i and -timeline to re-report with chronological sorting":
-                continue
-            elif line.strip() == "------------------------------------------------------------":
-                status = 'processes_raw'
-                continue
-            elif line.strip() == "Spindump binary format":
-                status = 'binary'
-                continue
-            elif status == 'headers':
-                headers.append(line.strip())
-                continue
-            elif status == 'processes_raw':
-                processes_raw.append(line.strip())
-                continue
+            # stripping
+            for line in f_in:
+                if line.strip() == "" or line.strip() == "Heavy format: stacks are sorted by count" or line.strip() == "Use -i and -timeline to re-report with chronological sorting":
+                    continue
+                elif line.strip() == "------------------------------------------------------------":
+                    status = 'processes_raw'
+                    continue
+                elif line.strip() == "Spindump binary format":
+                    status = 'binary'
+                    continue
+                elif status == 'headers':
+                    headers.append(line.strip())
+                    continue
+                elif status == 'processes_raw':
+                    processes_raw.append(line.strip())
+                    continue
 
-        # call parsing function per section
-        output = parse_basic(headers)
-        output['processes'] = parse_processes(processes_raw)
+            # call parsing function per section
+            output = parse_basic(headers)
+            output['processes'] = parse_processes(processes_raw)
 
-    return output
+        return output
+    except IndexError:
+        return {'error': 'No spindump-nosymbols.txt file present'}
 
 
 def parse_basic(data):

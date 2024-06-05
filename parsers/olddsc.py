@@ -7,7 +7,7 @@
 #
 import glob
 import os
-import misc
+import utils.misc as misc
 
 parser_description = "Parsing olddsc files"
 
@@ -24,4 +24,7 @@ def get_log_files(log_root_path: str) -> dict:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.load_plist_file_as_json(get_log_files(path)[0])
+    try:
+        return misc.load_plist_file_as_json(get_log_files(path)[0])
+    except IndexError:
+        return {'error': 'No olddsc file present'}

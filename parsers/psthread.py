@@ -28,12 +28,15 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    with open(get_log_files(path)[0], "r") as fd:
-        input = fd.readlines()
-        input_clean = []
-        for line in input:
-            if "??" in line:
-                input_clean.append(line)
-        headers = [h for h in ' '.join(input[0].strip().split()).split() if h]
-        raw_data = map(lambda s: s.strip().split(None, len(headers) - 1), input_clean)
-        return [dict(zip(headers, r)) for r in raw_data]
+    try:
+        with open(get_log_files(path)[0], "r") as fd:
+            input = fd.readlines()
+            input_clean = []
+            for line in input:
+                if "??" in line:
+                    input_clean.append(line)
+            headers = [h for h in ' '.join(input[0].strip().split()).split() if h]
+            raw_data = map(lambda s: s.strip().split(None, len(headers) - 1), input_clean)
+            return [dict(zip(headers, r)) for r in raw_data]
+    except IndexError:
+        return {'error': 'No ps_thread.txt file present'}

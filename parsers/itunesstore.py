@@ -7,7 +7,7 @@
 from utils import sqlite2json
 import glob
 import os
-import misc
+import utils.misc as misc
 
 version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
 
@@ -36,4 +36,7 @@ def get_log_files(log_root_path: str) -> list:
 
 def parse_path(path: str) -> list | dict:
     # there's only one file to parse
-    return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
+    try:
+        return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
+    except IndexError:
+        return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}

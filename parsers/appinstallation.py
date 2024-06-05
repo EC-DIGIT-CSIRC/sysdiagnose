@@ -12,7 +12,7 @@
 from utils import sqlite2json
 import glob
 import os
-import misc
+import utils.misc as misc
 
 
 parser_description = "Parsing app installation logs"
@@ -31,4 +31,7 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
+    try:
+        return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
+    except IndexError:
+        return {'error': 'No AppUpdates.sqlitedb or appstored.sqlitedb file found in logs/appinstallation/ directory'}

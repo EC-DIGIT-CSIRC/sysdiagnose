@@ -113,14 +113,13 @@ def parse(parser, case_id):
 
     # Load parser module
     spec = importlib.util.spec_from_file_location(parser[:-3], os.path.join(config.parsers_folder, parser) + '.py')
-    print(spec, file=sys.stderr)
+    # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     case_folder = os.path.join(config.data_folder, case_id)
     log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
-    # FIXME exceptions are not yet caught, so things might crash and the user will not know why
     if hasattr(module, 'parse_path_to_folder'):
         output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
         os.makedirs(output_folder, exist_ok=True)
@@ -151,10 +150,15 @@ def parse_all(case_id):
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
     for parser in modules:
+        if parser.endswith('__init__.py') or parser.endswith('demo_parser.py'):
+            continue
         try:
             print(f"Trying: {parser[:-3]}", file=sys.stderr)
             parse(parser[:-3], case_id)
-        except:     # noqa: E722
+        except Exception as e:     # noqa: E722
+            import traceback
+            print(f"Error: Problem while executing module {parser[:-3]}. Reason: {str(e)}", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
             continue
     return 0
 

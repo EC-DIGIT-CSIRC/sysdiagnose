@@ -22,55 +22,58 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
-    with open(get_log_files(path)[0], 'r') as f_in:
-        # init section
-        headers = []
-        db = []
-        network = []
-        settings = []
-        memory = []
-        status = 'headers'
+    try:
+        with open(get_log_files(path)[0], 'r') as f_in:
+            # init section
+            headers = []
+            db = []
+            network = []
+            settings = []
+            memory = []
+            status = 'headers'
 
-        # stripping
-        for line in f_in:
-            if line.strip() == "":
-                continue
-            if line.strip() == "=================================== DATABASE ===================================":
-                status = 'db'
-                continue
-            elif line.strip() == "=================================== NETWORK ====================================":
-                status = 'network'
-                continue
-            elif line.strip() == "=================================== SETTINGS ===================================":
-                status = 'settings'
-                continue
-            elif line.strip() == "================================= MEMORY USAGE =================================":
-                status = 'memory'
-                continue
-            elif status == 'headers':
-                headers.append(line.strip())
-                continue
-            elif status == 'db':
-                db.append(line.strip())
-                continue
-            elif status == 'network':
-                network.append(line.strip())
-                continue
-            elif status == 'settings':
-                settings.append(line.strip())
-                continue
-            elif status == 'memory':
-                memory.append(line.strip())
-                continue
+            # stripping
+            for line in f_in:
+                if line.strip() == "":
+                    continue
+                if line.strip() == "=================================== DATABASE ===================================":
+                    status = 'db'
+                    continue
+                elif line.strip() == "=================================== NETWORK ====================================":
+                    status = 'network'
+                    continue
+                elif line.strip() == "=================================== SETTINGS ===================================":
+                    status = 'settings'
+                    continue
+                elif line.strip() == "================================= MEMORY USAGE =================================":
+                    status = 'memory'
+                    continue
+                elif status == 'headers':
+                    headers.append(line.strip())
+                    continue
+                elif status == 'db':
+                    db.append(line.strip())
+                    continue
+                elif status == 'network':
+                    network.append(line.strip())
+                    continue
+                elif status == 'settings':
+                    settings.append(line.strip())
+                    continue
+                elif status == 'memory':
+                    memory.append(line.strip())
+                    continue
 
-        # call parsing function per section
-        parsed_headers = parse_basic(headers)
-        parsed_db = parse_db(db)
-        parsed_network = parse_basic(network)
-        parsed_settings = parse_basic(settings)
-        parsed_memory = parse_basic(memory)
+            # call parsing function per section
+            parsed_headers = parse_basic(headers)
+            parsed_db = parse_db(db)
+            parsed_network = parse_basic(network)
+            parsed_settings = parse_basic(settings)
+            parsed_memory = parse_basic(memory)
 
-    return {'headers': parsed_headers, 'db': parsed_db, 'network': parsed_network, 'settings': parsed_settings, 'memory': parsed_memory}
+        return {'headers': parsed_headers, 'db': parsed_db, 'network': parsed_network, 'settings': parsed_settings, 'memory': parsed_memory}
+    except IndexError:
+        return {'error': 'No swcutil_show.txt file present'}
 
 
 def parse_basic(data):
