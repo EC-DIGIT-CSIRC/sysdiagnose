@@ -3,21 +3,17 @@
 # For Python3
 # Author: Aaron Kaplan <aaron@lo-res.org>
 
-import sys
 import json
 import dateutil.parser
 import os
-import gpxpy
-import gpxpy.gpx
-
-sys.path.append('..')   # noqa: E402
+import xml.etree.ElementTree as ET
 
 
-analyser_description = "Generate GPS Exchange (GPX) of wifi geolocations"
-analyser_format = "gpx"
+analyser_description = "Generate KML file for wifi geolocations"
+analyser_format = "kml"
 
 
-def analyse_path(case_folder: str, output_file: str = "wifi-geolocations.gpx") -> bool:
+def analyse_path(case_folder: str, output_file: str = "wifi-geolocations.kml") -> bool:
     potential_source_files = ['wifinetworks/WiFi_com.apple.wifi.known-networks.plist.json', 'plists/WiFi_com.apple.wifi.known-networks.plist.json', 'wifi_known_networks.json']
     input_file_path = None
     for fname in potential_source_files:
@@ -31,12 +27,19 @@ def analyse_path(case_folder: str, output_file: str = "wifi-geolocations.gpx") -
     # we have a valid file_path and can generate the gpx file
     with open(input_file_path, 'r') as f:
         json_data = json.load(f)
-    return generate_gpx_from_known_networks_json(json_data=json_data, output_file=output_file)
+    return generate_kml_from_known_networks_json(json_data=json_data, output_file=output_file)
 
 
-def generate_gpx_from_known_networks_json(json_data: str, output_file: str):
-    # Create new GPX object
-    gpx = gpxpy.gpx.GPX()
+# LATER merge this and wifi_geolocation.py to share as much common code as possible
+def generate_kml_from_known_networks_json(json_data: str, output_file: str):
+    # Create new KML root
+    kml = ET.Element('kml', xmlns='http://www.opengis.net/kml/2.2')
+    document = ET.SubElement(kml, 'Document')
+
+    # Add tour elements
+    tour = ET.SubElement(document, 'gx:Tour')
+    ET.SubElement(tour, 'name').text = 'WiFi Tour'
+    playlist = ET.SubElement(tour, 'gx:Playlist')
 
     for network_name, network_data in json_data.items():
         ssid = network_data.get('SSID', network_name)
@@ -71,14 +74,28 @@ Longitude: {lon}
 Reason for Adding: {add_reason}'''
 
             # Create new waypoint
-            waypoint = gpxpy.gpx.GPXWaypoint(latitude=lat, longitude=lon, time=timestamp)
-            waypoint.name = ssid
-            waypoint.description = description
+            placemark = ET.SubElement(document, 'Placemark')
+            ET.SubElement(placemark, 'name').text = ssid
+            point = ET.SubElement(placemark, 'Point')
+            ET.SubElement(point, 'coordinates').text = f"{lon},{lat},0"
 
-            # Add waypoint to gpx file
-            gpx.waypoints.append(waypoint)
+            et_description = ET.SubElement(placemark, 'description')
+            et_description.text = description
 
-        # Save gpx file
-        with open(output_file, 'w') as f:
-            f.write(gpx.to_xml())
+            # Add to tour playlist  # TODO ideally the toor should be generated in the same order as the timestamps
+            flyto = ET.SubElement(playlist, 'gx:FlyTo')
+            ET.SubElement(flyto, 'gx:duration').text = '5.0'  # Duration of each flyto
+            ET.SubElement(flyto, 'gx:flyToMode').text = 'smooth'
+            camera = ET.SubElement(flyto, 'Camera')
+            ET.SubElement(camera, 'longitude').text = str(lon)
+            ET.SubElement(camera, 'latitude').text = str(lat)
+            ET.SubElement(camera, 'altitude').text = '500'  # Camera altitude
+            ET.SubElement(camera, 'heading').text = '0'
+            ET.SubElement(camera, 'tilt').text = '45'
+            ET.SubElement(camera, 'roll').text = '0'
+
+    # Convert the ElementTree to a string and save it to a file
+    tree = ET.ElementTree(kml)
+    tree.write(output_file)
+
     return
