@@ -16,7 +16,7 @@ class TestAnalysersWifiGeolocation(SysdiagnoseTestCase):
             with tempfile.TemporaryDirectory() as tmp_outpath:
                 parse_path_to_folder(log_root_path, output_folder=tmp_outpath)
                 output_file = os.path.join(tmp_outpath, 'wifi_geolocation.gpx')
-                analyse_path(case_folder=tmp_outpath, outfile=output_file)
+                analyse_path(case_folder=tmp_outpath, output_file=output_file)
                 self.assertTrue(os.path.isfile(output_file))
                 # check if destination file contain Latitude info if source did
                 with open(os.path.join(tmp_outpath, 'wifi_known_networks.json'), 'r') as f_in:
