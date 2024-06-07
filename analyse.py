@@ -65,10 +65,9 @@ def analyse(analyser, caseid):
 
     # building command
     parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
+    # TODO consider outputting anlaysers output to a different folder defined in config.py
     output_file = os.path.join(config.parsed_data_folder, caseid, analyser + "." + module.analyser_format)
-    command = "module.%s('%s', '%s')" % (module.analyser_call, parse_data_path, output_file)
-    result = eval(command)
-
+    result = module.analyse_path(case_folder=parse_data_path, output_file=output_file)
     print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
 
     return 0
