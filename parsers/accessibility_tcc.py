@@ -8,6 +8,7 @@ from utils import sqlite2json
 import glob
 import os
 import utils.misc as misc
+import json
 
 version_string = "sysdiagnose-Accessibility-TCC.py v2020-20-20 Version 1.0"
 
@@ -33,3 +34,10 @@ def parse_path(path: str) -> list | dict:
         return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
     except IndexError:
         return {'error': 'No TCC.db file found in logs/Accessibility/ directory'}
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)

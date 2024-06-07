@@ -20,6 +20,9 @@ Create a virtual environment:
  sudo apt install graphviz
  ```
 
+On linux systems you may wish to install the unifiedlogs parser. See below for instructions how to do this.
+
+
 # Quickstart
 
 Add new sysdiagnose case

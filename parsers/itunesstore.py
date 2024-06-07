@@ -8,19 +8,9 @@ from utils import sqlite2json
 import glob
 import os
 import utils.misc as misc
-
-version_string = "sysdiagnose-itunesstore.py v2020-20-19 Version 1.0"
-
-# ----- definition for parsing.py script -----#
-# -----         DO NOT DELETE             ----#
+import json
 
 parser_description = "Parsing iTunes store logs"
-parser_input = "itunesstore"
-parser_call = "get_itunesstore"
-
-# --------------------------------------------#
-
-# --------------------------------------------------------------------------- #
 
 
 def get_log_files(log_root_path: str) -> list:
@@ -40,3 +30,10 @@ def parse_path(path: str) -> list | dict:
         return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
     except IndexError:
         return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)
