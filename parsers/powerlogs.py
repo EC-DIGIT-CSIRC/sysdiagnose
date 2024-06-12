@@ -7,6 +7,7 @@
 from utils import sqlite2json
 import glob
 import os
+from utils.misc import merge_dicts
 
 
 parser_description = "Parsing  powerlogs database"
@@ -18,7 +19,7 @@ def get_log_files(log_root_path: str) -> list:
     """
     log_files_globs = [
         'logs/powerlogs/powerlog_*',
-        # 'logs/powerlogs/log_*'  # LATER is this file of interest?
+        'logs/powerlogs/log_*'  # LATER is this file of interest?
     ]
     log_files = []
     for log_files_glob in log_files_globs:
@@ -27,8 +28,9 @@ def get_log_files(log_root_path: str) -> list:
     return log_files
 
 
-def parse_path(path: str) -> list:
-    result = []
+def parse_path(path: str) -> dict:
+    result = {}
     for logfile in get_log_files(path):
-        result.extend(sqlite2json.sqlite2struct(logfile))
+        db_json = sqlite2json.sqlite2struct(logfile)
+        result = merge_dicts(result, db_json)  # merge both
     return result

@@ -12,6 +12,7 @@ class TestParsersPowerlogs(SysdiagnoseTestCase):
             result = parse_path(log_root_path)
             if result:  # some files are empty
                 self.assertTrue('sqlite_sequence' in result)
+                self.assertIsInstance(result['sqlite_sequence'], list)
 
 
 if __name__ == '__main__':
