@@ -36,7 +36,6 @@ def parse_path(path: str) -> list | dict:
     except IndexError:
         return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
 
-    json_object = {}
     parsed_data = {}
     index = 0
     # go through log file
@@ -63,6 +62,4 @@ def parse_path(path: str) -> list | dict:
                 parsed_data[time].append({"pid": p.split(":")[0], "path": p.split(":")[1]})
         index += 1
 
-    json_object["data"] = parsed_data
-
-    return json_object
+    return parsed_data
