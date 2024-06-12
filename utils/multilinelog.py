@@ -1,6 +1,7 @@
 import re
 import io
 import utils.misc as misc
+from datetime import datetime
 
 
 def extract_from_file(fname):
@@ -77,7 +78,9 @@ def build_from_logentry(line):
         weekday, month, day, time, year = (str.split(timestamp[:24]))
         day = day_converter(day)
         month = month_converter(month)
-        entry['timestamp'] = str(year) + '-' + str(month) + '-' + str(day) + ' ' + str(time)
+        timestamp = datetime.strptime(f"{year}-{month}-{day} {time}", "%Y-%m-%d %H:%M:%S")
+        entry['timestamp'] = int(timestamp.timestamp() * 1000000)
+        entry['datetime'] = timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)
