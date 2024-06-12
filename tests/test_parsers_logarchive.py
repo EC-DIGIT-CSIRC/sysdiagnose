@@ -4,6 +4,7 @@ import os
 import platform
 import tempfile
 import unittest
+import json
 
 
 class TestParsersLogarchive(SysdiagnoseTestCase):
@@ -24,6 +25,10 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                     self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "logarchive.json")))
                 else:
                     self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, "logarchive", "liveData.json")))
+                    with open(os.path.join(tmp_outpath, "logarchive", "liveData.json"), 'r') as f:
+                        for line in f:
+                            json_data = json.loads(line)
+                            self.assertTrue('subsystem' in json_data)
 
     def test_get_logs_result(self):
         for log_root_path in self.log_root_paths:
