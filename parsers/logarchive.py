@@ -119,7 +119,8 @@ def get_logs_on_linux(filename, output):
             for fname in os.listdir(tmp_outpath):
                 with open(os.path.join(tmp_outpath, fname), 'r') as f:
                     try:
-                        json_data = json.load(f)
+                        # jsonl format - one json object per line
+                        json_data = [json.loads(line) for line in f]
                         data.append(json_data)
                     except json.JSONDecodeError as e:
                         print(f"WARNING: error parsing JSON {fname}: {str(e)}")
