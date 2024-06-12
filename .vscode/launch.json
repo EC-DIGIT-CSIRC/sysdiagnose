@@ -14,6 +14,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: initialise.py file",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/initialise.py",
+            "args": "file 'tests/testdata-private-TLP-RED/RSF__sysdiagnose_2021.09.20_19-17-52+0200_iPhone-OS_iPhone_18D61 2.tar.gz'",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: analyse.py list analysers",
             "type": "debugpy",
             "request": "launch",
