@@ -74,19 +74,20 @@ def init(sysdiagnose_file, force=False):
 
     # if sysdiagnose file is new and legit, create new case and extract files
     # create case dictionnary
+    new_case_id = case_id + 1
     new_case = {
-        "case_id": case_id + 1,
+        "case_id": new_case_id,
         "source_file": sysdiagnose_file,
         "source_sha256": readable_hash,
-        "case_file": config.data_folder + str(case_id + 1) + ".json"
+        "case_file": os.path.join(config.data_folder, f"{new_case_id}.json")
     }
     # create case folder
-    new_folder = config.data_folder + str(new_case['case_id'])
+    new_folder = os.path.join(config.data_folder, str(new_case['case_id']))
     if not os.path.exists(new_folder):
         os.makedirs(new_folder)
 
     # create parsed_data folder
-    new_parsed_folder = config.parsed_data_folder + str(new_case['case_id'])
+    new_parsed_folder = os.path.join(config.parsed_data_folder, str(new_case['case_id']))
     if not os.path.exists(new_parsed_folder):
         os.makedirs(new_parsed_folder)
 
