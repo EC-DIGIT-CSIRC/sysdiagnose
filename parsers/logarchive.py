@@ -63,7 +63,7 @@ def parse_path_to_folder(path: str, output_folder: str) -> bool:
         output_folder = os.path.join(output_folder, "logarchive")
         os.makedirs(output_folder, exist_ok=True)
         result = get_logs(get_log_files(path)[0], output=output_folder)
-        if len(result['data']) > 0:
+        if len(result) > 0:
             return True
         else:
             print("Error:")
@@ -144,15 +144,15 @@ def __execute_cmd_and_get_result(command, outputfile=None):
             - path to a file to write to
     """
     cmd_array = command.split()
-    result = {"data": []}
+    result = []
 
     with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
         if outputfile is None:
             for line in iter(process.stdout.readline, ''):
                 try:
-                    result['data'].append(json.loads(line))
+                    result.append(json.loads(line))
                 except Exception:
-                    result['data'].append(line)
+                    result.append(line)
         elif outputfile == sys.stdout:
             for line in iter(process.stdout.readline, ''):
                 print(line)
@@ -160,6 +160,6 @@ def __execute_cmd_and_get_result(command, outputfile=None):
             with open(outputfile, "w") as outfd:
                 for line in iter(process.stdout.readline, ''):
                     outfd.write(line)
-                result['data'] = f'Output written to {outputfile}'
+                result = f'Output written to {outputfile}'
 
     return result
