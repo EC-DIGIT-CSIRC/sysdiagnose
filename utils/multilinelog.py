@@ -78,7 +78,7 @@ def build_from_logentry(line):
         weekday, month, day, time, year = (str.split(timestamp[:24]))
         day = day_converter(day)
         month = month_converter(month)
-        timestamp = datetime.strptime(f"{year}-{month}-{day} {time}", "%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.fromisoformat(f"{year}-{month}-{day}T{time}Z")
         entry['timestamp'] = int(timestamp.timestamp() * 1000000)
         entry['datetime'] = timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
