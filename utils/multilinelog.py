@@ -79,7 +79,7 @@ def build_from_logentry(line):
         day = day_converter(day)
         month = month_converter(month)
         timestamp = datetime.fromisoformat(f"{year}-{month}-{day}T{time}Z")
-        entry['timestamp'] = int(timestamp.timestamp() * 1000000)
+        entry['timestamp'] = float(timestamp.timestamp())
         entry['datetime'] = timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
         # log level

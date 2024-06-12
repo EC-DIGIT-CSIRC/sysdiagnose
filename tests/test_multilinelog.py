@@ -26,7 +26,7 @@ dGVzdA==
 
 '''
         expected_result = {
-            'timestamp': 1684933084000000,
+            'timestamp': 1684933084.0,
             'datetime': '2023-05-24T12:58:04+00:00',
             'loglevel': 'debug',
             'hexID': '0x16bf9b000',
@@ -62,7 +62,7 @@ dGVzdA==
 } (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})
 '''
         expected_result = {
-            'timestamp': 1684933536000000,
+            'timestamp': 1684933536.0,
             'datetime': '2023-05-24T13:05:36+00:00',
             'loglevel': 'err',
             'hexID': '0x16be43000',
@@ -73,7 +73,7 @@ dGVzdA==
     def test_multilinelog_simple_1(self):
         s = '''Wed May 24 12:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk'''
         expected_result = {
-            'timestamp': 1684932937000000,
+            'timestamp': 1684932937.0,
             'datetime': '2023-05-24T12:55:37+00:00',
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
@@ -85,7 +85,7 @@ dGVzdA==
     def test_mutlinelog_simple_2(self):
         s = '''Wed May 24 13:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'''
         expected_result = {
-            'timestamp': 1684933530000000,
+            'timestamp': 1684933530.0,
             'datetime': '2023-05-24T13:05:30+00:00',
             'loglevel': 'notice',
             'hexID': '0x16be43000',
@@ -97,13 +97,13 @@ dGVzdA==
         s = '''Wed May 24 13:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete
 Wed May 24 12:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk'''
         expected_result_0 = {
-            'timestamp': 1684933530000000,
+            'timestamp': 1684933530.0,
             'datetime': '2023-05-24T13:05:30+00:00',
             'loglevel': 'notice',
             'hexID': '0x16be43000',
             'msg': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
         expected_result_1 = {
-            'timestamp': 1684932937000000,
+            'timestamp': 1684932937.0,
             'datetime': '2023-05-24T12:55:37+00:00',
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
@@ -138,14 +138,14 @@ Wed May 24 13:08:13 2023 [135] <debug> (0x16f1db000) MA: main: is_prodfused_demo
 Wed May 24 13:08:13 2023 [135] <debug> (0x16f1db000) MA: main: soc_generation: H9
 Wed May 24 13:08:13 2023 [135] <debug> (0x16f1db000) MA: main: ____________________________________________________________________'''
         expected_result_0 = {
-            'timestamp': 1684932937000000,
+            'timestamp': 1684932937.0,
             'datetime': '2023-05-24T12:55:37+00:00',
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
             'msg': 'Rolling system container directory UUIDs on disk'}
         expected_result_1 = {
-            'timestamp': 1684933693000000,
+            'timestamp': 1684933693.0,
             'datetime': '2023-05-24T13:08:13+00:00',
             'loglevel': 'debug',
             'hexID': '0x16f1db000',
@@ -173,13 +173,13 @@ Wed May 24 13:08:13 2023 [135] <debug> (0x16f1db000) MA: main: _________________
         s = '''Sat Feb 18 09:48:38 2023 [2695] <debug> (0x16dc37000) MA: main: ____________________________________________________________________
 Sat Feb 18 09:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: Activation State: Activated'''
         expected_result_0 = {
-            'timestamp': 1676713718000000,
+            'timestamp': 1676713718.0,
             'datetime': '2023-02-18T09:48:38+00:00',
             'loglevel': 'debug',
             'hexID': '0x16dc37000',
             'msg': 'MA: main: ____________________________________________________________________'}
         expected_result_1 = {
-            'timestamp': 1676713719000000,
+            'timestamp': 1676713719.0,
             'datetime': '2023-02-18T09:48:39+00:00',
             'loglevel': 'debug',
             'hexID': '0x16dc37000',
@@ -191,7 +191,7 @@ Sat Feb 18 09:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: A
     def test_multilinelog_keyvalue_onlystart(self):
         s = '''Fri Dec  2 11:32:19 2022 [84816] <debug> (0x16afff000) MA: main: ____________________ Mobile Activation Startup _____________________'''
         expected_result = {
-            'timestamp': 1669980739000000,
+            'timestamp': 1669980739.0,
             'datetime': '2022-12-02T11:32:19+00:00',
             'loglevel': 'debug',
             'hexID': '0x16afff000',
