@@ -19,7 +19,7 @@ version_string = "sqlite2json.py v2020-02-18 Version 1.0"
 # --------------------------------------------------------------------------- #
 
 
-def sqlite2struct(dbpath):
+def sqlite2struct(dbpath) -> dict:
     """
         Transform a SQLite DB to a Python struct.
         If any exception, return None

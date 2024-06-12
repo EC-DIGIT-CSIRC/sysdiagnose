@@ -11,6 +11,20 @@ import base64
 from pathlib import Path
 
 
+def merge_dicts(a: dict, b: dict) -> dict:
+    for key, value in b.items():
+        if key in a:
+            if isinstance(value, dict):
+                a[key] = merge_dicts(a[key], value)
+            elif isinstance(value, list):
+                a[key].extend(value)
+            else:
+                a[key] = value
+        else:
+            a[key] = value
+    return a
+
+
 def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
     try:
