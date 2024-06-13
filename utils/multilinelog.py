@@ -1,7 +1,7 @@
 import re
 import io
 import utils.misc as misc
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def extract_from_file(fname):
@@ -74,13 +74,11 @@ def build_from_logentry(line):
     # timestamp
     timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
     if timeregex:
-        timestamp = timeregex.group(1)
-        weekday, month, day, time, year = (str.split(timestamp[:24]))
-        day = day_converter(day)
-        month = month_converter(month)
-        timestamp = datetime.fromisoformat(f"{year}-{month}-{day}T{time}Z")
-        entry['timestamp'] = float(timestamp.timestamp())
-        entry['datetime'] = timestamp.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        timestamp_str = timeregex.group(1)
+        timestamp = datetime.strptime(timestamp_str, "%a %b %d %H:%M:%S %Y")
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+        entry['timestamp'] = timestamp.timestamp()
+        entry['datetime'] = timestamp.isoformat()
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)
