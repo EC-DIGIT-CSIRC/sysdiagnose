@@ -244,7 +244,8 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
                 ssid = item['SSID']
                 # WIFI added
                 try:
-                    added = datetime.strptime(item['AddedAt'], '%Y-%m-%d %H:%M:%S.%f', tz=timezone.utc)
+                    added = datetime.strptime(item['AddedAt'], '%Y-%m-%d %H:%M:%S.%f')
+                    added = added.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'WIFI %s added' % ssid,
                         'timestamp': added.timestamp(),
@@ -260,7 +261,8 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
 
                 # WIFI modified
                 try:
-                    updated = datetime.strptime(item['UpdatedAt'], '%Y-%m-%d %H:%M:%S.%f', tz=timezone.utc)
+                    updated = datetime.strptime(item['UpdatedAt'], '%Y-%m-%d %H:%M:%S.%f')
+                    updated = updated.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'WIFI %s added' % updated,
                         'timestamp': updated.timestamp(),
@@ -276,7 +278,8 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
 
                 # Password for wifi modified
                 try:
-                    modified_password = datetime.strptime(item['__OSSpecific__']['WiFiNetworkPasswordModificationDate'], '%Y-%m-%d %H:%M:%S.%f', tz=timezone.utc)
+                    modified_password = datetime.strptime(item['__OSSpecific__']['WiFiNetworkPasswordModificationDate'], '%Y-%m-%d %H:%M:%S.%f')
+                    modified_password = modified_password.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'Password for WIFI %s modified' % ssid,
                         'timestamp': modified_password.timestamp(),
@@ -301,6 +304,8 @@ def analyse_path(case_folder: str, output_file: str = 'timeliner.jsonl') -> bool
         with open(output_file, 'w') as f:
             for func in globals():
                 if func.startswith('__extract_ts_'):
+                    if func != '__extract_ts_mobileactivation':
+                        continue
                     for event in globals()[func](case_folder):  # call the function
                         line = json.dumps(event)
                         f.write(line)
