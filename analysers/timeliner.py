@@ -18,8 +18,9 @@ analyser_format = 'jsonl'
 
 
 # Timesketch format:
-# {'message': 'A message','timestamp': 123456789,'datetime': '2015-07-24T19:01:01+00:00','timestamp_desc': 'Write time','extra_field_1': 'foo'}
-
+# https://timesketch.org/guides/user/import-from-json-csv/
+# Mandatory: timestamps must be in miliseconds !!!
+# {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 
 def __extract_ts_mobileactivation(case_folder: str) -> Generator[dict, None, None]:
     try:
@@ -29,7 +30,7 @@ def __extract_ts_mobileactivation(case_folder: str) -> Generator[dict, None, Non
             for event in data:
                 ts_event = {
                     'message': 'Mobile Activation',
-                    'timestamp': event['timestamp'],
+                    'timestamp': event['timestamp'] * 1000000,
                     'datetime': event['datetime'],
                     'timestamp_desc': 'Mobile Activation Time'
                 }
@@ -71,7 +72,7 @@ def __powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
             extra_field = 'Is permanent: %d' % proc['IsPermanent']
         ts_event = {
             'message': proc['ProcessName'],
-            'timestamp': proc['timestamp'],
+            'timestamp': proc['timestamp'] * 1000000,
             'datetime': timestamp.isoformat(),
             'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (proc['ReasonCode'], proc['ReasonNamespace']),
             'extra_field_1': extra_field
@@ -85,7 +86,7 @@ def __powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(jdata)
         timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
         ts_event = {
             'message': event['ProcessName'],
-            'timestamp': event['timestamp'],
+            'timestamp': event['timestamp'] * 1000000,
             'datetime': timestamp.isoformat(),
             'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (event['ReasonCode'], event['ReasonNamespace']),
             'extra_field_1': 'Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d' % (event['0s-5s'], event['5s-10s'], event['10s-60s'], event['60s+'])
@@ -99,7 +100,7 @@ def __powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
         timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
         ts_event = {
             'message': event['Name'],
-            'timestamp': event['timestamp'],
+            'timestamp': event['timestamp'] * 1000000,
             'datetime': timestamp.isoformat(),
             'timestamp_desc': 'PLAccountingOperator Event',
             'extra_field_1': 'Is permanent: %d' % event['IsPermanent']
@@ -118,7 +119,7 @@ def __extract_ts_swcutil(case_folder: str) -> Generator[dict, None, None]:
                         timestamp = datetime.strptime(service['Last Checked'], '%Y-%m-%d %H:%M:%S %z')
                         ts_event = {
                             'message': service['Service'],
-                            'timestamp': float(timestamp.timestamp()),
+                            'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
                             'timestamp_desc': 'swcutil last checkeed',
                             'extra_field_1': 'application: %s' % service['App ID']
@@ -143,7 +144,7 @@ def __extract_ts_accessibility_tcc(case_folder: str) -> Generator[dict, None, No
                     timestamp = datetime.fromtimestamp(access['last_modified'], tz=timezone.utc)
                     ts_event = {
                         'message': access['service'],
-                        'timestamp': float(timestamp.timestamp()),
+                        'timestamp': timestamp.timestamp() * 1000000,
                         'datetime': timestamp.isoformat(),
                         'timestamp_desc': 'Accessibility TC Last Modified',
                         'extra_field_1': 'client: %s' % access['client']
@@ -165,7 +166,7 @@ def __extract_ts_shutdownlogs(case_folder: str) -> Generator[dict, None, None]:
                     for p in processes:
                         ts_event = {
                             'message': p['path'],
-                            'timestamp': float(timestamp.timestamp()),
+                            'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
                             'timestamp_desc': 'Entry in shutdown.log',
                             'extra_field_1': 'pid: %s' % p['pid']
@@ -190,7 +191,7 @@ def __extract_ts_logarchive(case_folder: str) -> Generator[dict, None, None]:
                         timestamp = convert_unifiedlog_time_to_datetime(trace['time'])
                         ts_event = {
                             'message': trace['message'],
-                            'timestamp': timestamp.timestamp(),
+                            'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
                             'timestamp_desc': 'Entry in logarchive: %s' % trace['event_type'],
                             'extra_field_1': f"subsystem: {trace['subsystem']}; process_uuid: {trace['process_uuid']}; process: {trace['process']}; library: {trace['library']}; library_uuid: {trace['library_uuid']}"
@@ -215,7 +216,7 @@ def __extract_ts_wifisecurity(case_folder: str) -> Generator[dict, None, None]:
                 # Event 1: creation
                 ts_event = {
                     'message': wifi['acct'],
-                    'timestamp': float(ctimestamp.timestamp()),
+                    'timestamp': ctimestamp.timestamp() * 1000000,
                     'datetime': ctimestamp.isoformat(),
                     'timestamp_desc': 'SSID added to known secured WIFI list',
                     'extra_field_1': wifi['accc']
@@ -225,7 +226,7 @@ def __extract_ts_wifisecurity(case_folder: str) -> Generator[dict, None, None]:
                 # Event 2: modification
                 ts_event = {
                     'message': wifi['acct'],
-                    'timestamp': float(mtimestamp.timestamp()),
+                    'timestamp': mtimestamp.timestamp() * 1000000,
                     'datetime': mtimestamp.isoformat(),
                     'timestamp_desc': 'SSID modified into the secured WIFI list',
                     'extra_field_1': wifi['accc']
@@ -248,7 +249,7 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
                     added = added.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'WIFI %s added' % ssid,
-                        'timestamp': added.timestamp(),
+                        'timestamp': added.timestamp() * 1000000,
                         'datetime': added.isoformat(),
                         'timestamp_desc': '%s added in known networks plist',
                         'extra_field_1': 'Add reason: %s' % item['AddReason']
@@ -265,7 +266,7 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
                     updated = updated.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'WIFI %s added' % updated,
-                        'timestamp': updated.timestamp(),
+                        'timestamp': updated.timestamp() * 1000000,
                         'datetime': updated.isoformat(),
                         'timestamp_desc': '%s updated in known networks plist',
                         'extra_field_1': 'Add reason: %s' % item['AddReason']
@@ -282,7 +283,7 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
                     modified_password = modified_password.replace(tzinfo=timezone.utc)
                     ts_event = {
                         'message': 'Password for WIFI %s modified' % ssid,
-                        'timestamp': modified_password.timestamp(),
+                        'timestamp': modified_password.timestamp() * 1000000,
                         'datetime': modified_password.isoformat(),
                         'timestamp_desc': '%s password modified in known networks plist',
                         'extra_field_1': 'AP mode: %s' % item['__OSSpecific__']['AP_MODE']
