@@ -5,7 +5,6 @@
 
 import os
 import json
-import ijson
 import re
 
 analyser_description = 'Get list of Apps installed on the device'

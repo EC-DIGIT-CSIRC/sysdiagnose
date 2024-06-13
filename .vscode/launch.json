@@ -30,6 +30,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse.py analyse timeliner",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "analyse timeliner 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: analyse.py analyse apps 1",
             "type": "debugpy",
             "request": "launch",
