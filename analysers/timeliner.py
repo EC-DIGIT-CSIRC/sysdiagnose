@@ -304,8 +304,6 @@ def analyse_path(case_folder: str, output_file: str = 'timeliner.jsonl') -> bool
         with open(output_file, 'w') as f:
             for func in globals():
                 if func.startswith('__extract_ts_'):
-                    if func != '__extract_ts_mobileactivation':
-                        continue
                     for event in globals()[func](case_folder):  # call the function
                         line = json.dumps(event)
                         f.write(line)
