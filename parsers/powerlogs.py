@@ -8,6 +8,7 @@ from utils import sqlite2json
 import glob
 import os
 from utils.misc import merge_dicts
+import json
 
 
 parser_description = "Parsing  powerlogs database"
@@ -34,3 +35,10 @@ def parse_path(path: str) -> dict:
         db_json = sqlite2json.sqlite2struct(logfile)
         result = merge_dicts(result, db_json)  # merge both
     return result
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)

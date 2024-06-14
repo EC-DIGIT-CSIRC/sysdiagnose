@@ -8,6 +8,8 @@ import datetime
 import glob
 import os
 import re
+import json
+
 
 parser_description = "Parsing shutdown.log file"
 
@@ -63,3 +65,10 @@ def parse_path(path: str) -> list | dict:
         index += 1
 
     return parsed_data
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)

@@ -5,6 +5,7 @@
 # Author: david@autopsit.org
 
 import os
+import json
 
 parser_description = "Parsing WiFi Security logs"
 
@@ -55,3 +56,10 @@ def parse_path(path: str) -> list | dict:
     except Exception as e:
         print(f"Could not parse: {get_log_files(path)[0]}. Reason: {str(e)}")
     return entries
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)
