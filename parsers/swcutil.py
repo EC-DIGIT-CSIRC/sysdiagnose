@@ -6,6 +6,8 @@
 
 import glob
 import os
+import json
+
 
 parser_description = "Parsing swcutil_show file"
 
@@ -74,6 +76,13 @@ def parse_path(path: str) -> list | dict:
         return {'headers': parsed_headers, 'db': parsed_db, 'network': parsed_network, 'settings': parsed_settings, 'memory': parsed_memory}
     except IndexError:
         return {'error': 'No swcutil_show.txt file present'}
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    result = parse_path(path)
+    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
+    with open(output_file, 'w') as f:
+        json.dump(result, f, indent=4)
 
 
 def parse_basic(data):
