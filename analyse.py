@@ -9,6 +9,7 @@ Usage:
   analyse.py list (cases|analysers|all)
   analyse.py analyse <analyser> <case_number>
   analyse.py allanalysers <case_number>
+  analyse.py analyseall <case_number>
   analyse.py (-h | --help)
   analyse.py --version
 
@@ -117,7 +118,7 @@ def main():
             analyse(arguments['<analyser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
-    elif arguments['allanalysers']:
+    elif arguments['allanalysers'] or arguments['analyseall']:
         if arguments['<case_number>'].isdigit():
             allanalysers(arguments['<case_number>'])
         else:

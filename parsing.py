@@ -11,6 +11,7 @@ Usage:
   parsing.py list (cases|parsers|all)
   parsing.py parse <parser> <case_number>
   parsing.py allparsers <case_number>
+  parsing.py parseall <case_number>
   parsing.py (-h | --help)
   parsing.py --version
 
@@ -195,7 +196,7 @@ def main():
             parse(arguments['<parser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
-    elif arguments['allparsers']:
+    elif arguments['allparsers'] or arguments['parseall']:
         if arguments['<case_number>'].isdigit():
             parse_all(arguments['<case_number>'])
         else:
