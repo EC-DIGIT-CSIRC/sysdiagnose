@@ -59,7 +59,7 @@ def list_analysers(folder):
 
 def analyse(analyser, caseid):
     # Load parser module
-    spec = importlib.util.spec_from_file_location(analyser[:-3], os.path.join(config.analysers_folder, analyser + '.py'))
+    spec = importlib.util.spec_from_file_location(analyser, os.path.join(config.analysers_folder, analyser + '.py'))
     # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
