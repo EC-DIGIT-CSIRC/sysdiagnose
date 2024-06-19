@@ -30,6 +30,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse.py analyseall",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analyse.py",
+            "args": "analyseall 1",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: analyse.py analyse timeliner",
             "type": "debugpy",
             "request": "launch",
@@ -94,11 +102,11 @@
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse itunesstore",
+            "name": "Python Debugger: parsing.py parse mobileactivation",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/parsing.py",
-            "args": "parse itunesstore 1",
+            "args": "parse mobileactivation 1",
             "cwd": "${workspaceFolder}/"
         },
         {
