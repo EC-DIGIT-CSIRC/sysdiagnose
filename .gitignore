@@ -5,6 +5,9 @@ parsed_data/*
 *.gpx
 db.json
 
+# private test data
+/tests/testdata-*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 parsers/__pycache__/*

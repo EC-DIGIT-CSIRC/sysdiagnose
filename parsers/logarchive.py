@@ -1,0 +1,228 @@
+#! /usr/bin/env python3
+
+# For Python3
+# Script to parse system_logs.logarchive
+# Author: david@autopsit.org
+#
+#
+import os
+import sys
+import json
+import tempfile
+import platform
+import subprocess
+from datetime import datetime, timezone
+
+
+parser_description = 'Parsing system_logs.logarchive folder'
+
+
+# --------------------------------------------#
+
+# On 2023-04-13: using ndjson instead of json to avoid parsing issues.
+# Based on manpage:
+#       json      JSON output.  Event data is synthesized as an array of JSON dictionaries.
+#
+#       ndjson    Line-delimited JSON output.  Event data is synthesized as JSON dictionaries, each emitted on a single line.
+#                 A trailing record, identified by the inclusion of a 'finished' field, is emitted to indicate the end of events.
+#
+cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short version
+# cmd_parsing_osx = '/usr/bin/log show %s --style json' # fastest and short version
+# cmd_parsing_osx = '/usr/bin/log show %s --info --style json' # to enable debug, add --debug
+# cmd_parsing_osx = '/usr/bin/log show %s --info --debug --style json'
+
+# Linux parsing relies on UnifiedLogReader:
+#       https://github.com/mandiant/macos-UnifiedLogs
+# Follow instruction in the README.md in order to install it.
+# TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
+cmd_parsing_linux = 'unifiedlog_parser_json --input %s --output %s'
+cmd_parsing_linux_test = ['unifiedlog_parser_json', '--help']
+
+# --------------------------------------------------------------------------- #
+
+
+def get_log_files(log_root_path: str) -> list:
+    log_folders = [
+        'system_logs.logarchive/'
+    ]
+    return [os.path.join(log_root_path, log_folder) for log_folder in log_folders]
+
+
+def parse_path(path: str) -> list | dict:
+    try:
+        return get_logs(get_log_files(path)[0], output=None)
+    except IndexError:
+        return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
+
+
+def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    try:
+        output_folder = os.path.join(output_folder, 'logarchive')
+        os.makedirs(output_folder, exist_ok=True)
+        result = get_logs(get_log_files(path)[0], output=output_folder)
+        if len(result) > 0:
+            return True
+        else:
+            print('Error:')
+            print(json.dumps(result, indent=4))
+            return False
+    except IndexError:
+        print('Error: No system_logs.logarchive/ folder found in logs/ directory')
+        return False
+
+
+def get_logs(filename, output=None):
+    '''
+        Parse the system_logs.logarchive.  When running on OS X, use native tools.
+        On other system use a 3rd party library.
+    '''
+    if output is not None:
+        output = os.path.join(output)
+        os.makedirs(output, exist_ok=True)
+    if (platform.system() == 'Darwin'):
+        if output is not None:
+            output = os.path.join(output, 'logarchive.json')
+        data = get_logs_on_osx(filename, output)
+        return data
+    else:
+        data = get_logs_on_linux(filename, output)
+        return data
+    return None
+
+
+def get_logs_on_osx(filename, output):
+    cmd_line = cmd_parsing_osx % (filename)
+    return __execute_cmd_and_get_result(cmd_line, output)
+
+
+def get_logs_on_linux(filename, output):
+    print('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+    # check if binary exists in PATH, if not, return an error
+    try:
+        subprocess.check_output(cmd_parsing_linux_test, universal_newlines=True)
+    except FileNotFoundError:
+        print('ERROR: UnifiedLogReader not found, please install it. See README.md for more information.')
+        return ''
+
+    if not output:
+        with tempfile.TemporaryDirectory() as tmp_outpath:
+            cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
+            # run the command and get the result
+            __execute_cmd_and_get_result(cmd_line)
+            # read the content of all the files to a variable, a bit crazy as it will eat memory massively
+            # but at least it will be compatible with the overall logic, when needed
+            data = []
+            print('WARNING: combining all output files in memory, this is slow and eat a LOT of memory. Use with caution.')
+            for fname in os.listdir(tmp_outpath):
+                with open(os.path.join(tmp_outpath, fname), 'r') as f:
+                    try:
+                        # jsonl format - one json object per line
+                        json_data = [json.loads(line) for line in f]
+                        data.append(json_data)
+                    except json.JSONDecodeError as e:
+                        print(f"WARNING: error parsing JSON {fname}: {str(e)}")
+            return data
+            # tempfolder is cleaned automatically after the block
+    else:
+        cmd_line = cmd_parsing_linux % (filename, output)
+        os.makedirs(output, exist_ok=True)
+        # run the command and get the result, output file is mentioned in cmd_line
+        data = __execute_cmd_and_get_result(cmd_line)
+        return data
+
+
+def __execute_cmd_and_get_result(command, outputfile=None):
+    '''
+        Return None if it failed or the result otherwise.
+
+        Outfile can have 3 values:
+            - None: no output except return value
+            - sys.stdout: print to stdout
+            - path to a file to write to
+    '''
+    cmd_array = command.split()
+    result = []
+
+    with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+        if outputfile is None:
+            for line in iter(process.stdout.readline, ''):
+                try:
+                    result.append(json.loads(line))
+                except Exception:
+                    result.append(line)
+        elif outputfile == sys.stdout:
+            for line in iter(process.stdout.readline, ''):
+                print(line)
+        else:
+            with open(outputfile, 'w') as outfd:
+                for line in iter(process.stdout.readline, ''):
+                    outfd.write(line)
+                result = f'Output written to {outputfile}'
+
+    return result
+
+
+def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
+    '''
+        Convert the entry to unifiedlog format
+    '''
+    # already in the Mandiant unifiedlog format
+    if 'event_type' in entry:
+        return entry
+    '''
+    jq '. |= keys' logarchive-native.json > native_keys.txt
+    sort native_keys.txt | uniq -c | sort -n > native_keys_sort_unique.txt
+    '''
+
+    mapper = {
+        'creatorActivityID': 'activity_id',
+        'messageType': 'log_type',
+        # 'source': '',   # not present in the Mandiant format
+        # 'backtrace': '',  # sub-dictionary
+        'activityIdentifier': 'activity_id',
+        'bootUUID': 'boot_uuid',   # remove - in the UUID
+        'category': 'category',
+        'eventMessage': 'message',
+        'eventType': 'event_type',
+        'formatString': 'raw_message',
+        # 'machTimestamp': '',   # not present in the Mandiant format
+        # 'parentActivityIdentifier': '',  # not present in the Mandiant format
+        'processID': 'pid',
+        'processImagePath': 'process',
+        'processImageUUID': 'process_uuid',  # remove - in the UUID
+        'senderImagePath': 'library',
+        'senderImageUUID': 'library_uuid',   # remove - in the UUID
+        # 'senderProgramCounter': '',  # not present in the Mandiant format
+        'subsystem': 'subsystem',
+        'threadID': 'thread_id',
+        'timestamp': 'time',  # requires conversion
+        'timezoneName': 'timezone_name',  # ignore timezone as time and timestamp are correct
+        # 'traceID': '',  # not present in the Mandiant format
+        'userID': 'euid'
+    }
+
+    new_entry = {}
+    for key, value in entry.items():
+        if key in mapper:
+            new_key = mapper[key]
+            if 'uuid' in new_key:  # remove - in UUID
+                new_entry[new_key] = value.replace('-', '')
+            else:
+                new_entry[new_key] = value
+        else:
+            # keep the non-matching entries
+            new_entry[key] = value
+    # convert time
+    new_entry['time'] = convert_native_time_to_unifiedlog_format(new_entry['time'])
+    return new_entry
+
+
+def convert_native_time_to_unifiedlog_format(time: str) -> int:
+    timestamp = datetime.fromisoformat(time)
+    return int(timestamp.timestamp() * 1000000000)
+
+
+def convert_unifiedlog_time_to_datetime(time: int) -> datetime:
+    # convert time to datetime object
+    timestamp = datetime.fromtimestamp(time / 1000000000, tz=timezone.utc)
+    return timestamp

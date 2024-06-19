@@ -6,9 +6,10 @@
 """sysdiagnose analyse.
 
 Usage:
-  analyse.py list (cases|analysers)
+  analyse.py list (cases|analysers|all)
   analyse.py analyse <analyser> <case_number>
   analyse.py allanalysers <case_number>
+  analyse.py analyseall <case_number>
   analyse.py (-h | --help)
   analyse.py --version
 
@@ -34,52 +35,62 @@ def list_analysers(folder):
     """
         List available analysers
     """
+    prev_folder = os.getcwd()
     os.chdir(folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
     for analyser in modules:
+        if analyser.endswith('__init__.py'):
+            continue
         try:
             spec = importlib.util.spec_from_file_location(analyser[:-3], analyser)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             line = [analyser[:-3], module.analyser_description]
             lines.append(line)
-        except:     # noqa: E722
+        except AttributeError:
             continue
 
     headers = ['Analyser Name', 'Analyser Description']
 
     print(tabulate(lines, headers=headers))
+    os.chdir(prev_folder)
 
 
 def analyse(analyser, caseid):
     # Load parser module
-    spec = importlib.util.spec_from_file_location(analyser[:-3], config.analysers_folder + "/" + analyser + '.py')
-    print(spec, file=sys.stderr)
+    spec = importlib.util.spec_from_file_location(analyser, os.path.join(config.analysers_folder, analyser + '.py'))
+    # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     # building command
     parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
-    output_file = config.parsed_data_folder + caseid + '/' + analyser + "." + module.analyser_format
-    command = "module.%s('%s', '%s')" % (module.analyser_call, parse_data_path, output_file)
-    result = eval(command)
-
+    # TODO consider outputting anlaysers output to a different folder defined in config.py
+    output_file = os.path.join(config.parsed_data_folder, caseid, analyser + "." + module.analyser_format)
+    module.analyse_path(case_folder=parse_data_path, output_file=output_file)
     print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
 
     return 0
 
 
 def allanalysers(caseid):
+    prev_folder = os.getcwd()
     os.chdir(config.analysers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
     for analyser in modules:
+        if analyser.endswith('__init__.py') or analyser.endswith('demo_analyser.py'):
+            continue
         try:
             print(f'Trying: {analyser[:-3]}', file=sys.stderr)
             analyse(analyser[:-3], caseid)
-        except:     # noqa: E722
+        except Exception as e:     # noqa: E722
+            import traceback
+            print(f"Error: Problem while executing module {analyser[:-3]}. Reason: {str(e)}", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
             continue
+    os.chdir(prev_folder)
     return 0
 
 # --------------------------------------------------------------------------- #
@@ -95,21 +106,23 @@ def main():
 
     arguments = docopt(__doc__, version=version_string)
     if arguments['list'] and arguments['cases']:
-        parsing.list_cases(config.cases_file)
+        parsing.list_cases()
     elif arguments['list'] and arguments['analysers']:
         list_analysers(config.analysers_folder)
+    elif arguments['list']:
+        list_analysers(config.analysers_folder)
+        print("\n")
+        parsing.list_cases()
     elif arguments['analyse']:
         if arguments['<case_number>'].isdigit():
             analyse(arguments['<analyser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
-    elif arguments['allanalysers']:
+    elif arguments['allanalysers'] or arguments['analyseall']:
         if arguments['<case_number>'].isdigit():
             allanalysers(arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
-
-    print(f"Running {version_string}\n", file=sys.stderr)
     return
 
 

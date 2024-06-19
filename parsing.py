@@ -8,9 +8,10 @@
 """sysdiagnose parse.
 
 Usage:
-  parsing.py list (cases|parsers)
+  parsing.py list (cases|parsers|all)
   parsing.py parse <parser> <case_number>
   parsing.py allparsers <case_number>
+  parsing.py parseall <case_number>
   parsing.py (-h | --help)
   parsing.py --version
 
@@ -35,7 +36,7 @@ from docopt import docopt
 """
 
 
-def list_cases(case_file):
+def list_cases():
     try:
         with open(config.cases_file, 'r') as f:
             cases = json.load(f)
@@ -59,22 +60,26 @@ def list_cases(case_file):
 
 
 def list_parsers(folder):
+    prev_folder = os.getcwd()
     os.chdir(folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     lines = []
     for parser in modules:
+        if parser.endswith('__init__.py'):
+            continue
         try:
             spec = importlib.util.spec_from_file_location(parser[:-3], parser)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            line = [parser[:-3], module.parser_description, module.parser_input]
+            line = [parser[:-3], module.parser_description]
             lines.append(line)
-        except:     # noqa: E722
+        except AttributeError:
             continue
 
-    headers = ['Parser Name', 'Parser Description', 'Parser Input']
+    headers = ['Parser Name', 'Parser Description']
 
     print(tabulate(lines, headers=headers))
+    os.chdir(prev_folder)
 
 
 """
@@ -110,34 +115,28 @@ def parse(parser, case_id):
     # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
 
     # Load parser module
-    spec = importlib.util.spec_from_file_location(parser[:-3], config.parsers_folder + parser + '.py')
-    print(spec, file=sys.stderr)
+    spec = importlib.util.spec_from_file_location(parser, os.path.join(config.parsers_folder, parser) + '.py')
+    # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    try:
-        if module.parser_outputs_in_folder:
-            pass
-    except AttributeError:
-        module.parser_outputs_in_folder = False
+    case_folder = os.path.join(config.data_folder, case_id)
+    log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
-    if module.parser_outputs_in_folder:
-        # parsers that output in a folder themselves
-        output_folder = os.path.join(config.parsed_data_folder, case_id, parser)
+    if hasattr(module, 'parse_path_to_folder'):
+        output_folder = os.path.join(config.parsed_data_folder, case_id)
         os.makedirs(output_folder, exist_ok=True)
-        result = getattr(module, module.parser_call)(case[module.parser_input], output=output_folder)
+        result = module.parse_path_to_folder(path=log_root_path, output_folder=output_folder)
         print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
-    else:
+    else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
         # parsers that output in the result variable
         # building command
-        result = getattr(module, module.parser_call)(case[module.parser_input])
-
+        result = module.parse_path(path=log_root_path)
         # saving the parser output
         output_file = os.path.join(config.parsed_data_folder, case_id, f"{parser}.json")
         with open(output_file, 'w') as data_file:
             data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
         print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
-
     return 0
 
 
@@ -150,15 +149,22 @@ def parse_all(case_id):
     # get list of working parsers
     # for each parser, run and save which is working
     # display list of successful parses
+    prev_folder = os.getcwd()
     os.chdir(config.parsers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
     for parser in modules:
+        if parser.endswith('__init__.py') or parser.endswith('demo_parser.py'):
+            continue
         try:
             print(f"Trying: {parser[:-3]}", file=sys.stderr)
             parse(parser[:-3], case_id)
-        except:     # noqa: E722
+        except Exception as e:     # noqa: E722
+            import traceback
+            print(f"Error: Problem while executing module {parser[:-3]}. Reason: {str(e)}", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
             continue
+    os.chdir(prev_folder)
     return 0
 
 
@@ -178,15 +184,19 @@ def main():
     # print(arguments, file=sys.stderr)
 
     if arguments['list'] and arguments['cases']:
-        list_cases(config.cases_file)
+        list_cases()
     elif arguments['list'] and arguments['parsers']:
         list_parsers(config.parsers_folder)
+    elif arguments['list']:
+        list_parsers(config.parsers_folder)
+        print("\n")
+        list_cases()
     elif arguments['parse']:
         if arguments['<case_number>'].isdigit():
             parse(arguments['<parser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
-    elif arguments['allparsers']:
+    elif arguments['allparsers'] or arguments['parseall']:
         if arguments['<case_number>'].isdigit():
             parse_all(arguments['<case_number>'])
         else:

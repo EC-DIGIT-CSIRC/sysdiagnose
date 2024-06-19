@@ -20,26 +20,50 @@ Create a virtual environment:
  sudo apt install graphviz
  ```
 
+On linux systems you may wish to install the unifiedlogs parser. See below for instructions how to do this.
+
+
 # Quickstart
 
-Add new sysdiagnose case
+Add new sysdiagnose case:
 
 ```
 $ python initialise.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
 Sysdiagnose file has been processed
 New case ID: 1
-
 ```
 
-List available parsers and cases
+List available parsers and cases:
 
 ```
 $ python parsing.py list parsers
-Parser Name      Parser Description                Parser Input
----------------  --------------------------------  --------------
-sysdiagnose-ps   Parsing ps.txt file               ps
-sysdiagnose-sys  Parsing SystemVersion plist file  systemversion
+Parser Name            Parser Description                        Parser Input
+---------------------  ----------------------------------------  ---------------------
+demo_parser            Demo parsers                              demo_input_file
+logarchive             Parsing system_logs.logarchive folder     logarchive_folder
+ps                     Parsing ps.txt file                       ps
+spindumpnosymbols      Parsing spindump-nosymbols file           spindump-nosymbols
+accessibility_tcc      Parsing Accessibility TCC logs            Accessibility-TCC
+taskinfo               Parsing taskinfo txt file                 taskinfo
+networkextensioncache  Parsing networkextensioncache plist file  networkextensioncache
+mobileactivation       Parsing mobileactivation logs file        mobile_activation
+networkextension       Parsing networkextension plist file       networkextension
+wifisecurity           Parsing WiFi Security logs                wifisecurity
+swcutil                Parsing swcutil_show file                 swcutil_show
+sys                    Parsing SystemVersion plist file          systemversion
+appinstallation        Parsing app installation logs             appinstallation
+powerlogs              Parsing  powerlogs database               powerlogs
+olddsc                 Parsing olddsc files                      olddsc
+mobileinstallation     Parsing mobile_installation logs file     mobile_installation
+itunesstore            Parsing iTunes store logs                 itunesstore
+containermanager       Parsing containermanagerd logs file       container_manager
+wifi_known_networks    Parsing Known Wifi Networks plist file    wifi_data
+psthread               Parsing ps_thread.txt file                ps_thread
+wifiscan               Parsing wifi_scan files                   wifi_data
+shutdownlogs           Parsing shutdown.log file                 shutdownlog
+uuid2path              Parsing UUIDToBinaryLocations plist file  UUIDToBinaryLocations
+brctl                  Parsing brctl files                       brctl
 
 $ python parsing.py list cases
 #### case List ####
@@ -48,21 +72,40 @@ $ python parsing.py list cases
         1  test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz  d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
 ```
 
-Run parsers
+Run parsers:
 
 ```
-$ python parsing.py parse sysdiagnose-ps 1
-Execution success, output saved in: ./parsed_data/1/sysdiagnose-ps.json
+$ python parsing.py parse ps 1
+Execution success, output saved in: ./parsed_data/1/ps.json
 
-$ python parsing.py parse sysdiagnose-sys 1
-Execution success, output saved in: ./parsed_data/1/sysdiagnose-sys.json
+$ python parsing.py parse sys 1
+Execution success, output saved in: ./parsed_data/1/sys.json
+```
 
+List analysers:
+
+```
+$ python analyse.py list analysers
+nalyser Name         Analyser Description
+--------------------  ------------------------------------------------
+apps                  Get list of Apps installed on the device
+wifi_geolocation_kml  Generate KML file for wifi geolocations
+timeliner             Generate a Timesketch compatible timeline
+wifi_geolocation      Generate GPS Exchange (GPX) of wifi geolocations
+demo_analyser         Do something useful (DEMO)
+```
+
+Run analyser (make sure you run `allparsers` before)
+```
+$ python analyse.py analyse timeliner 1
+Execution success, output saved in: ./parsed_data/1/timeliner.jsonl
 ```
 
 Tested On:
-- python 3.8.5, 3.10
-- iOS13
-- iOS14
+- python 3.11
+- iOS13 (to be confirmed)
+- iOS14 (to be confirmed)
+- iOS15
 - iOS16
 - iOS17
 
