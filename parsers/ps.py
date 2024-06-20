@@ -68,6 +68,27 @@ def parse_ps(filename):
         return []
 
 
+def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
+    """
+    Exclude known good processes from the given list of processes.
+
+    Args:
+        processes (dict): The output from parse_ps() to check.
+        known_good (dict): The output of parse_ps() from a known good.
+
+    Returns:
+        dict: The updated list of processes with known good processes excluded.
+    """
+
+    known_good_cmd = [x['COMMAND'] for x in known_good]
+
+    for proc in processes:
+        if proc['COMMAND'] in known_good_cmd:
+            processes.remove(proc)
+
+    return processes
+
+
 """
     Export the process structure to a json file
 """

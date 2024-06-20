@@ -1,4 +1,4 @@
-from parsers.ps import parse_path, get_log_files, parse_ps
+from parsers import ps
 from tests import SysdiagnoseTestCase
 import unittest
 import tempfile
@@ -8,10 +8,10 @@ class TestParsersPs(SysdiagnoseTestCase):
 
     def test_parse_ps(self):
         for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
+            files = ps.get_log_files(log_root_path)
             self.assertTrue(len(files) > 0)
             print(f'Parsing {files}')
-            result = parse_path(log_root_path)
+            result = ps.parse_path(log_root_path)
             if result:  # not all logs contain data
                 for item in result:
                     self.assertTrue('COMMAND' in item)
@@ -29,7 +29,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = parse_ps(tmp_inputfile.name)
+        result = ps.parse_ps(tmp_inputfile.name)
         tmp_inputfile.close()
         self.assertEqual(result, expected_result)
 
@@ -44,8 +44,24 @@ class TestParsersPs(SysdiagnoseTestCase):
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = parse_ps(tmp_inputfile.name)
+        result = ps.parse_ps(tmp_inputfile.name)
         tmp_inputfile.close()
+        self.assertEqual(result, expected_result)
+
+    def test_ps_exclude_known_goods(self):
+        processes = [
+            {'COMMAND': 'good', 'PID': 1},
+            {'COMMAND': 'bad', 'PID': 2},
+            {'COMMAND': 'unknown', 'PID': 3}
+        ]
+        known_good = [
+            {'COMMAND': 'good', 'PID': 1}
+        ]
+        expected_result = [
+            {'COMMAND': 'bad', 'PID': 2},
+            {'COMMAND': 'unknown', 'PID': 3}
+        ]
+        result = ps.exclude_known_goods(processes, known_good)
         self.assertEqual(result, expected_result)
 
 
