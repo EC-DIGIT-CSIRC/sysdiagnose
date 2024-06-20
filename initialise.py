@@ -25,6 +25,7 @@ import tarfile
 import json
 import hashlib
 import glob
+from parsers import remotectl_dumpstate
 from docopt import docopt
 
 from utils.misc import get_version
@@ -55,12 +56,15 @@ def init(sysdiagnose_file, force=False):
     except Exception as e:
         print(f'error calculating sha256. Reason: {str(e)}')
     case_id = 0
+    update = False
     for case in cases['cases']:
         # Take the opportunity to find the highest case_id
         case_id = max(case_id, case['case_id'])
         if readable_hash == case['source_sha256']:
             if force:
                 case_id = case['case_id'] - 1
+                update = True
+                break  # exit loop
             else:
                 print(f"this sysdiagnose has already been extracted : caseID: {str(case['case_id'])}")
                 sys.exit()
@@ -137,6 +141,23 @@ def init(sysdiagnose_file, force=False):
         data_file.write(json.dumps(new_case_json, indent=4))
 
     # update cases list file
+    case_folder = os.path.join(config.data_folder, str(new_case_id))
+    log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
+    remotectl_dumpstate_json = remotectl_dumpstate.parse_path(log_root_path)
+    try:
+        new_case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
+        new_case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
+    except KeyError as e:
+        print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
+        new_case['serial_number'] = "<unknown>"
+        new_case['unique_device_id'] = "<unknown>"
+
+    # update case if needed
+    if update:
+        for item in cases['cases']:
+            if item['case_id'] == new_case['case_id']:
+                cases['cases'].remove(item)
+                break
     cases['cases'].append(new_case)
 
     with open(config.cases_file, 'w') as data_file:
