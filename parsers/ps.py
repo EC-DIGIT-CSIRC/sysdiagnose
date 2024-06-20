@@ -9,13 +9,12 @@
 # - tree structure
 # - simplified
 #
-import re
 import sys
 import json
 from optparse import OptionParser
 import glob
 import os
-
+import re
 
 parser_description = "Parsing ps.txt file"
 
@@ -38,68 +37,35 @@ def parse_path(path: str) -> list | dict:
         return {'error': 'No ps.txt file present'}
 
 
-def parse_ps(filename, ios_version=16):
-    processes = {}
+def parse_ps(filename):
+    result = []
     try:
-        with open(filename, "r") as fd:
-            fd.readline()   # skip header line
-            # FIXME investigate if it's possible to rewrite it dynamically: extract header, and use header as key for the variables when parsing the line
-            for line in fd:
-                """
-                iOS < 16
-                USER             UID   PID  PPID  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
-                root               0     1     0   0.0  0.4  37  0  4226848   8912 -        ??  Ss   14Jan19   7:27.40 /sbin/launchd
+        with open(filename, "r") as f:
+            header = re.split(r"\s+", f.readline().strip())
+            header_length = len(header)
 
-                iOS > 16
-                USER  UID PRSNA   PID  PPID        F  %CPU %MEM PRI NI      VSZ    RSS WCHAN    TT  STAT STARTED      TIME COMMAND
-                root  0     -     1     0     4004   0.0  0.0   0  0        0      0 -        ??  ?s   Tue09PM   0:00.00 /sbin/launchd
-                """
-                patterns = re.split(r"\s+", line)    # XXX FIXME? don't we need a \r" string here for the regexp?
-                # key of hash table is PID
-                if (ios_version < 16):
-                    processes[int(patterns[2])] = {
-                        "USER": patterns[0],
-                        "UID": patterns[1],
-                        "PID": int(patterns[2]),
-                        "PPID": int(patterns[3]),
-                        "CPU": patterns[4],
-                        "MEM": patterns[5],
-                        "PRI": patterns[6],
-                        "NI": patterns[7],
-                        "VSZ": patterns[8],
-                        "RSS": patterns[9],
-                        "WCHAN": patterns[10],
-                        "TT": patterns[11],
-                        "STAT": patterns[12],
-                        "STARTED": patterns[13],
-                        "TIME": patterns[14],
-                        "COMMAND": "".join(patterns[15:])}
-                else:
-                    # Note: bellow - attempt to create a regex but feel it will more lead to errors.  Instead lets merge all parts of the commands (patterns[17:])
-                    # regex = r"(?P<USER>\w+)\s+(?P<UID>\d+)\s+(?<PRSNA>\d+|\-)\s+(?<PID>\d+)\s+(?<PPID>\d+)\s+(?<F>\d+)\s+(?<CPU>\d+\.\d+)\s+(?<MEM>\d+\.\d+)\s+(?<PRI>\d+)\s+(?<NI>\d+)\s+(?<VSZ>\d+)\s+(?<WCHAN>\-)"
-                    processes[int(patterns[3])] = {
-                        "USER": patterns[0],
-                        "UID": patterns[1],
-                        "PRSNA": patterns[2],
-                        "PID": int(patterns[3]),
-                        "PPID": int(patterns[4]),
-                        "F": patterns[5],
-                        "CPU": patterns[6],
-                        "MEM": patterns[7],
-                        "PRI": patterns[8],
-                        "NI": patterns[9],
-                        "VSZ": patterns[10],
-                        "RSS": patterns[11],
-                        "WCHAN": patterns[12],
-                        "TT": patterns[13],
-                        "STAT": patterns[14],
-                        "STARTED": patterns[15],
-                        "TIME": patterns[16],
-                        "COMMAND": "".join(patterns[17:])}
-
+            print(f"Found header: {header}")
+            for line in f:
+                patterns = re.split(r"\s+", line.strip())
+                row = {}
+                # merge last entries together, as last entry may contain spaces
+                for col in range(header_length):
+                    # try to cast as int, float and fallback to string
+                    col_name = header[col]
+                    try:
+                        row[col_name] = int(patterns[col])
+                        continue
+                    except ValueError:
+                        try:
+                            row[col_name] = float(patterns[col])
+                        except ValueError:
+                            row[col_name] = patterns[col]
+                row[header[-1]] = " ".join(patterns[header_length - 1:])
+                result.append(row)
+            return result
     except Exception as e:
         print(f"Could not parse ps.txt: {str(e)}")
-    return processes
+        return []
 
 
 """
