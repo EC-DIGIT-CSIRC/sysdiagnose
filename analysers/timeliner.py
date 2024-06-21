@@ -19,7 +19,7 @@ analyser_format = 'jsonl'
 
 # Timesketch format:
 # https://timesketch.org/guides/user/import-from-json-csv/
-# Mandatory: timestamps must be in miliseconds !!!
+# Mandatory: timestamps must be in microseconds !!!
 # {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 
 def __extract_ts_mobileactivation(case_folder: str) -> Generator[dict, None, None]:
