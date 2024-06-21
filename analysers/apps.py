@@ -70,51 +70,47 @@ def analyse_path(case_folder: str, output_file: str = 'apps.json') -> bool:
                     else:
                         apps[entry['bundle_id']]['found'].append('itunesstore')
 
-        elif file_in_dir.endswith('logarchive'):
+        elif file_in_dir.endswith('logarchive.json'):
             re_bundle_id_pattern = r'(([a-zA-Z0-9-_]+\.)+[a-zA-Z0-9-_]+)'
             # list files in here
-            for file_in_logarchive_dir in os.listdir(file_in_dir):
-                file_in_logarchive_dir = os.path.join(file_in_dir, file_in_logarchive_dir)
-                # same parsing for native and mandiant unifiedlog parser, they are in multiline json format
-                print(f"Found logarchive file: {file_in_logarchive_dir}")
-                with open(file_in_logarchive_dir, 'r') as f:
-                    for line in f:  # jsonl format
-                        try:
-                            entry = json.loads(line)
-                            # skip empty entries
-                            if entry['subsystem'] == '':
-                                continue
-                        except KeyError:  # last line of the native logarchive.json file
+            with open(file_in_dir, 'r') as f:
+                for line in f:  # jsonl format
+                    try:
+                        entry = json.loads(line)
+                        # skip empty entries
+                        if entry['subsystem'] == '':
                             continue
-                        except json.decoder.JSONDecodeError:  # last lines of the native logarchive.json file
-                            continue
-                        # extract app/bundle id or process name from the subsystem field
-                        if not re.search(r'^' + re_bundle_id_pattern + r'$', entry['subsystem']):
-                            # extract foo.bar.hello from the substing if it is in that format
-                            matches = re.findall(re_bundle_id_pattern, entry['subsystem'])
+                    except KeyError:  # last line of the native logarchive.json file
+                        continue
+                    except json.decoder.JSONDecodeError:  # last lines of the native logarchive.json file
+                        continue
+                    # extract app/bundle id or process name from the subsystem field
+                    if not re.search(r'^' + re_bundle_id_pattern + r'$', entry['subsystem']):
+                        # extract foo.bar.hello from the substing if it is in that format
+                        matches = re.findall(re_bundle_id_pattern, entry['subsystem'])
+                        if matches:
+                            new_term = matches[0][0]
+                        else:
+                            # below are not really apps...more processes.
+                            # TODO decide if we want to keep them or not.
+                            matches = re.findall(r'\[([a-zA-Z0-9-_]+)\]', entry['subsystem'])
                             if matches:
-                                new_term = matches[0][0]
+                                new_term = matches[0]
                             else:
-                                # below are not really apps...more processes.
-                                # TODO decide if we want to keep them or not.
-                                matches = re.findall(r'\[([a-zA-Z0-9-_]+)\]', entry['subsystem'])
+                                matches = re.findall(r'^([a-zA-Z0-9-_]+)$', entry['subsystem'])
                                 if matches:
                                     new_term = matches[0]
                                 else:
-                                    matches = re.findall(r'^([a-zA-Z0-9-_]+)$', entry['subsystem'])
-                                    if matches:
-                                        new_term = matches[0]
-                                    else:
-                                        # print(f"Skipping entry: {entry['subsystem']}")
-                                        continue
-                            # print(f"New entry: {new_term} - was: {entry['subsystem']}")
-                            entry['subsystem'] = new_term
-                        # add it to the list
-                        if entry['subsystem'] not in apps:
-                            apps[entry['subsystem']] = {'found': ['logarchive']}
-                        else:
-                            if 'logarchive' not in apps[entry['subsystem']]['found']:
-                                apps[entry['subsystem']]['found'].append('logarchive')
+                                    # print(f"Skipping entry: {entry['subsystem']}")
+                                    continue
+                        # print(f"New entry: {new_term} - was: {entry['subsystem']}")
+                        entry['subsystem'] = new_term
+                    # add it to the list
+                    if entry['subsystem'] not in apps:
+                        apps[entry['subsystem']] = {'found': ['logarchive']}
+                    else:
+                        if 'logarchive' not in apps[entry['subsystem']]['found']:
+                            apps[entry['subsystem']]['found'].append('logarchive')
 
     with open(output_file, 'w') as f:
         f.write(json.dumps(apps, indent=4))
