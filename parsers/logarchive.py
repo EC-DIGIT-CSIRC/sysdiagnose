@@ -83,12 +83,17 @@ def __convert_using_native_logparser(filename: str, output_folder: str) -> list:
                 f_out.write(json.dumps(entry_json) + '\n')
             except json.JSONDecodeError as e:
                 print(f"WARNING: error parsing JSON {line}: {str(e)}")
+            except KeyError:
+                # last line of log does not contain 'time' field, nor the rest of the data.
+                # so just ignore it
+                pass
 
 
 def __convert_using_unifiedlogparser(filename: str, output_folder: str) -> list:
     print('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
     # run the conversion tool, saving to a temp folder
     # read the created file/files, add timestamp
+    # sort based on time
     # save to one single file in output folder
 
     # first check if binary exists in PATH, if not, return an error
@@ -99,21 +104,30 @@ def __convert_using_unifiedlogparser(filename: str, output_folder: str) -> list:
         return
 
     # really run the tool now
+    entries = []
+    with tempfile.TemporaryDirectory() as tmp_outpath:
+        cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
+        # run the command and get the result in our tmp_outpath folder
+        __execute_cmd_and_get_result(cmd_line)
+        # read each file, conver line by line and write the output directly to the new file
+        # LATER run this in multiprocessing, one per file to speed up the process
+        for fname_reading in os.listdir(tmp_outpath):
+            with open(os.path.join(tmp_outpath, fname_reading), 'r') as f:
+                for line in f:  # jsonl format - one json object per line
+                    try:
+                        entry_json = convert_entry_to_unifiedlog_format(json.loads(line))
+                        entries.append(entry_json)
+                    except json.JSONDecodeError as e:
+                        print(f"WARNING: error parsing JSON {fname_reading}: {str(e)}")
+    # tempfolder is cleaned automatically after the block
+
+    # sort the data as it's not sorted by default
+    entries.sort(key=lambda x: x['time'])
+    # save to file as JSONL
     with open(os.path.join(output_folder, 'logarchive.json'), 'w') as f_out:
-        with tempfile.TemporaryDirectory() as tmp_outpath:
-            cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
-            # run the command and get the result in our tmp_outpath folder
-            __execute_cmd_and_get_result(cmd_line)
-            # read each file, conver line by line and write the output directly to the new file
-            for fname_reading in os.listdir(tmp_outpath):
-                with open(os.path.join(tmp_outpath, fname_reading), 'r') as f:
-                    for line in f:  # jsonl format - one json object per line
-                        try:
-                            entry_json = convert_entry_to_unifiedlog_format(json.loads(line))
-                            f_out.write(json.dumps(entry_json) + '\n')
-                        except json.JSONDecodeError as e:
-                            print(f"WARNING: error parsing JSON {fname_reading}: {str(e)}")
-            # tempfolder is cleaned automatically after the block
+        for entry in entries:
+            f_out.write(json.dumps(entry))
+            f_out.write('\n')
 
 
 def __execute_cmd_and_yield_result(command: str) -> Generator[dict, None, None]:
@@ -212,6 +226,7 @@ def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
     # convert time
     new_entry['datetime'] = new_entry['time']
     new_entry['time'] = convert_native_time_to_unifiedlog_format(new_entry['time'])
+
     return new_entry
 
 
