@@ -1,7 +1,6 @@
 from parsers.logarchive import get_log_files, parse_path, parse_path_to_folder, convert_entry_to_unifiedlog_format, convert_unifiedlog_time_to_datetime, convert_native_time_to_unifiedlog_format
 from tests import SysdiagnoseTestCase
 import os
-import platform
 import tempfile
 import unittest
 import json
@@ -21,22 +20,21 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                 # result should contain at least one entry (linux = stdout, mac = mention it's saved to a file)
                 self.assertTrue(result)
 
-                if (platform.system() == 'Darwin'):
-                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, 'logarchive', 'logarchive.json')))
-                else:
-                    self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, 'logarchive', 'liveData.json')))
-                    with open(os.path.join(tmp_outpath, 'logarchive', 'liveData.json'), 'r') as f:
-                        for line in f:
-                            json_data = json.loads(line)
-                            self.assertTrue('subsystem' in json_data)
+                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, 'logarchive.json')))
+                with open(os.path.join(tmp_outpath, 'logarchive.json'), 'r') as f:
+                    line = f.readline()
+                    json_data = json.loads(line)
+                    self.assertTrue('subsystem' in json_data)
+                    self.assertTrue('datetime' in json_data)
 
     def test_get_logs_result(self):
         for log_root_path in self.log_root_paths:
             folders = get_log_files(log_root_path)
             print(f'Parsing {folders}')
             result = parse_path(log_root_path)
-            # FIXME check result on a mac
             self.assertGreater(len(result), 0)
+            self.assertTrue('subsystem' in result[0])
+            self.assertTrue('datetime' in result[0])
 
     def test_convert_native_time_to_unifiedlog(self):
         input = '2023-05-24 13:03:28.908085-0700'
@@ -111,10 +109,11 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             'traceID': 444438921084932,
             'pid': 0,
             'senderProgramCounter': 6084,
-            'parentActivityIdentifier': 0
+            'parentActivityIdentifier': 0,
+            'datetime': '2023-05-24 13:03:28.908085-0700'
         }
         result = convert_entry_to_unifiedlog_format(input)
-        self.assertEqual(result, expected_output)
+        self.assertDictEqual(result, expected_output)
 
 
 if __name__ == '__main__':

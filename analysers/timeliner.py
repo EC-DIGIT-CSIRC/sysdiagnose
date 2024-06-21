@@ -9,7 +9,7 @@
 import os
 import json
 from datetime import datetime, timezone
-from parsers.logarchive import convert_entry_to_unifiedlog_format, convert_unifiedlog_time_to_datetime
+from parsers.logarchive import convert_unifiedlog_time_to_datetime
 from collections.abc import Generator
 
 
@@ -179,28 +179,26 @@ def __extract_ts_shutdownlogs(case_folder: str) -> Generator[dict, None, None]:
 
 
 def __extract_ts_logarchive(case_folder: str) -> Generator[dict, None, None]:
-    logarchive_dir = os.path.join(case_folder, 'logarchive')
-    for file_in_logarchive_dir in os.listdir(logarchive_dir):
-        try:
-            with open(os.path.join(logarchive_dir, file_in_logarchive_dir), 'r') as fd:
-                for line in fd:
-                    # standardise the logarchive entryto unifiedlog format
-                    try:
-                        trace = convert_entry_to_unifiedlog_format(json.loads(line))
-                        # create timeline entry
-                        timestamp = convert_unifiedlog_time_to_datetime(trace['time'])
-                        ts_event = {
-                            'message': trace['message'],
-                            'timestamp': timestamp.timestamp() * 1000000,
-                            'datetime': timestamp.isoformat(),
-                            'timestamp_desc': 'Entry in logarchive: %s' % trace['event_type'],
-                            'extra_field_1': f"subsystem: {trace['subsystem']}; process_uuid: {trace['process_uuid']}; process: {trace['process']}; library: {trace['library']}; library_uuid: {trace['library_uuid']}"
-                        }
-                        yield ts_event
-                    except KeyError as e:
-                        print(f"WARNING: trace not parsed: {trace}. Error {e}")
-        except Exception as e:
-            print(f"ERROR while extracting timestamp from {file_in_logarchive_dir}. Reason: {str(e)}")
+    logarchive_file = os.path.join(case_folder, 'logarchive.json')
+    try:
+        with open(logarchive_file, 'r') as fd:
+            for line in fd:
+                try:
+                    trace = json.loads(line)
+                    # create timeline entry
+                    timestamp = convert_unifiedlog_time_to_datetime(trace['time'])
+                    ts_event = {
+                        'message': trace['message'],
+                        'timestamp': timestamp.timestamp() * 1000000,
+                        'datetime': trace['datetime'],
+                        'timestamp_desc': 'Entry in logarchive: %s' % trace['event_type'],
+                        'extra_field_1': f"subsystem: {trace['subsystem']}; process_uuid: {trace['process_uuid']}; process: {trace['process']}; library: {trace['library']}; library_uuid: {trace['library_uuid']}"
+                    }
+                    yield ts_event
+                except KeyError as e:
+                    print(f"WARNING: trace not parsed: {trace}. Error {e}")
+    except Exception as e:
+        print(f"ERROR while extracting timestamp from {logarchive_file}. Reason: {str(e)}")
 
 
 def __extract_ts_wifisecurity(case_folder: str) -> Generator[dict, None, None]:

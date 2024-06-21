@@ -12,6 +12,7 @@ import tempfile
 import platform
 import subprocess
 from datetime import datetime, timezone
+from collections.abc import Generator
 
 
 parser_description = 'Parsing system_logs.logarchive folder'
@@ -37,7 +38,6 @@ cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short ver
 # TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
 cmd_parsing_linux = 'unifiedlog_parser_json --input %s --output %s'
 cmd_parsing_linux_test = ['unifiedlog_parser_json', '--help']
-
 # --------------------------------------------------------------------------- #
 
 
@@ -49,86 +49,82 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
+    # OK, this is really inefficient as we're reading a file that we just wrote to a temporary folder
+    # but who cares, nobody uses this function anyway...
     try:
-        return get_logs(get_log_files(path)[0], output=None)
+        with tempfile.TemporaryDirectory() as tmp_outpath:
+            parse_path_to_folder(path, tmp_outpath)
+            with open(os.path.join(tmp_outpath, 'logarchive.json'), 'r') as f:
+                return [json.loads(line) for line in f]
     except IndexError:
         return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
 
 def parse_path_to_folder(path: str, output_folder: str) -> bool:
+    filename = get_log_files(path)[0]
     try:
-        output_folder = os.path.join(output_folder, 'logarchive')
-        os.makedirs(output_folder, exist_ok=True)
-        result = get_logs(get_log_files(path)[0], output=output_folder)
-        if len(result) > 0:
-            return True
+        if (platform.system() == 'Darwin'):
+            __convert_using_native_logparser(filename, output_folder)
         else:
-            print('Error:')
-            print(json.dumps(result, indent=4))
-            return False
+            __convert_using_unifiedlogparser(filename, output_folder)
+        return True
     except IndexError:
         print('Error: No system_logs.logarchive/ folder found in logs/ directory')
         return False
 
 
-def get_logs(filename, output=None):
-    '''
-        Parse the system_logs.logarchive.  When running on OS X, use native tools.
-        On other system use a 3rd party library.
-    '''
-    if output is not None:
-        output = os.path.join(output)
-        os.makedirs(output, exist_ok=True)
-    if (platform.system() == 'Darwin'):
-        if output is not None:
-            output = os.path.join(output, 'logarchive.json')
-        data = get_logs_on_osx(filename, output)
-        return data
-    else:
-        data = get_logs_on_linux(filename, output)
-        return data
-    return None
+def __convert_using_native_logparser(filename: str, output_folder: str) -> list:
+    with open(os.path.join(output_folder, 'logarchive.json'), 'w') as f_out:
+        cmd_line = cmd_parsing_osx % (filename)
+        # read each line, conver line by line and write the output directly to the new file
+        for line in __execute_cmd_and_yield_result(cmd_line):
+            try:
+                entry_json = convert_entry_to_unifiedlog_format(json.loads(line))
+                f_out.write(json.dumps(entry_json) + '\n')
+            except json.JSONDecodeError as e:
+                print(f"WARNING: error parsing JSON {line}: {str(e)}")
 
 
-def get_logs_on_osx(filename, output):
-    cmd_line = cmd_parsing_osx % (filename)
-    return __execute_cmd_and_get_result(cmd_line, output)
-
-
-def get_logs_on_linux(filename, output):
+def __convert_using_unifiedlogparser(filename: str, output_folder: str) -> list:
     print('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
-    # check if binary exists in PATH, if not, return an error
+    # run the conversion tool, saving to a temp folder
+    # read the created file/files, add timestamp
+    # save to one single file in output folder
+
+    # first check if binary exists in PATH, if not, return an error
     try:
         subprocess.check_output(cmd_parsing_linux_test, universal_newlines=True)
     except FileNotFoundError:
         print('ERROR: UnifiedLogReader not found, please install it. See README.md for more information.')
-        return ''
+        return
 
-    if not output:
+    # really run the tool now
+    with open(os.path.join(output_folder, 'logarchive.json'), 'w') as f_out:
         with tempfile.TemporaryDirectory() as tmp_outpath:
             cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
-            # run the command and get the result
+            # run the command and get the result in our tmp_outpath folder
             __execute_cmd_and_get_result(cmd_line)
-            # read the content of all the files to a variable, a bit crazy as it will eat memory massively
-            # but at least it will be compatible with the overall logic, when needed
-            data = []
-            print('WARNING: combining all output files in memory, this is slow and eat a LOT of memory. Use with caution.')
-            for fname in os.listdir(tmp_outpath):
-                with open(os.path.join(tmp_outpath, fname), 'r') as f:
-                    try:
-                        # jsonl format - one json object per line
-                        json_data = [json.loads(line) for line in f]
-                        data.append(json_data)
-                    except json.JSONDecodeError as e:
-                        print(f"WARNING: error parsing JSON {fname}: {str(e)}")
-            return data
+            # read each file, conver line by line and write the output directly to the new file
+            for fname_reading in os.listdir(tmp_outpath):
+                with open(os.path.join(tmp_outpath, fname_reading), 'r') as f:
+                    for line in f:  # jsonl format - one json object per line
+                        try:
+                            entry_json = convert_entry_to_unifiedlog_format(json.loads(line))
+                            f_out.write(json.dumps(entry_json) + '\n')
+                        except json.JSONDecodeError as e:
+                            print(f"WARNING: error parsing JSON {fname_reading}: {str(e)}")
             # tempfolder is cleaned automatically after the block
-    else:
-        cmd_line = cmd_parsing_linux % (filename, output)
-        os.makedirs(output, exist_ok=True)
-        # run the command and get the result, output file is mentioned in cmd_line
-        data = __execute_cmd_and_get_result(cmd_line)
-        return data
+
+
+def __execute_cmd_and_yield_result(command: str) -> Generator[dict, None, None]:
+    '''
+        Return None if it failed or the result otherwise.
+
+    '''
+    cmd_array = command.split()
+    with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+        for line in iter(process.stdout.readline, ''):
+            yield line
 
 
 def __execute_cmd_and_get_result(command, outputfile=None):
@@ -168,6 +164,7 @@ def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
     '''
     # already in the Mandiant unifiedlog format
     if 'event_type' in entry:
+        entry['datetime'] = convert_unifiedlog_time_to_datetime(entry['time']).isoformat()
         return entry
     '''
     jq '. |= keys' logarchive-native.json > native_keys.txt
@@ -213,6 +210,7 @@ def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
             # keep the non-matching entries
             new_entry[key] = value
     # convert time
+    new_entry['datetime'] = new_entry['time']
     new_entry['time'] = convert_native_time_to_unifiedlog_format(new_entry['time'])
     return new_entry
 
