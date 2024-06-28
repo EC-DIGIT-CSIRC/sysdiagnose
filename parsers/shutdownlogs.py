@@ -44,24 +44,27 @@ def parse_path(path: str) -> list | dict:
     while index < len(log_lines):
         # look for begining of shutdown sequence
         if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-            running_processes = []
+            running_processes = {}
+            time_waiting = 0
             while not (SIGTERM_LINE in log_lines[index]):
+                if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
+                    time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
                 if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
                     result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
                     pid = result.groups()[0]
                     binary_path = result.groups()[1]
-                    process = pid + ":" + binary_path
-                    if not (process in running_processes):
-                        running_processes.append(process)
+                    running_processes[pid] = {
+                        "pid": pid,
+                        "path": binary_path,
+                        "time_waiting": time_waiting
+                    }
                 index += 1
             # compute timestamp from SIGTERM line
             result = re.search(r".*\[(\d+)\].*", log_lines[index])
             timestamp = result.groups()[0]
             time = str(datetime.datetime.fromtimestamp(int(timestamp), datetime.UTC))
             # add entries
-            parsed_data[time] = []
-            for p in running_processes:
-                parsed_data[time].append({"pid": p.split(":")[0], "path": p.split(":")[1]})
+            parsed_data[time] = list(running_processes.values())
         index += 1
 
     return parsed_data
