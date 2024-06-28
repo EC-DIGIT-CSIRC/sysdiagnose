@@ -11,7 +11,7 @@
 #
 import glob
 import os
-
+import re
 
 parser_description = "Parsing ps_thread.txt file"
 
@@ -28,15 +28,37 @@ def get_log_files(log_root_path: str) -> list:
 
 
 def parse_path(path: str) -> list | dict:
+    result = []
     try:
-        with open(get_log_files(path)[0], "r") as fd:
-            input = fd.readlines()
-            input_clean = []
-            for line in input:
-                if "??" in line:
-                    input_clean.append(line)
-            headers = [h for h in ' '.join(input[0].strip().split()).split() if h]
-            raw_data = map(lambda s: s.strip().split(None, len(headers) - 1), input_clean)
-            return [dict(zip(headers, r)) for r in raw_data]
+        with open(get_log_files(path)[0], "r") as f:
+            header = re.split(r"\s+", f.readline().strip())
+            header_length = len(header)
+            row = None
+            for line in f:
+                if '??' in line:
+                    # append previous entry
+                    if row:
+                        result.append(row)
+
+                    patterns = line.strip().split(None, header_length - 1)
+                    row = {'THREADS': 1}
+                    # merge last entries together, as last entry may contain spaces
+                    for col in range(header_length):
+                        # try to cast as int, float and fallback to string
+                        col_name = header[col]
+                        try:
+                            row[col_name] = int(patterns[col])
+                            continue
+                        except ValueError:
+                            try:
+                                row[col_name] = float(patterns[col])
+                            except ValueError:
+                                row[col_name] = patterns[col]
+                else:
+                    row['THREADS'] += 1
+            # append last entry
+            if row:
+                result.append(row)
+            return result
     except IndexError:
         return {'error': 'No ps_thread.txt file present'}

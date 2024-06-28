@@ -44,9 +44,9 @@ def parse_ps(filename):
             header = re.split(r"\s+", f.readline().strip())
             header_length = len(header)
 
-            print(f"Found header: {header}")
+            # print(f"Found header: {header}")
             for line in f:
-                patterns = re.split(r"\s+", line.strip())
+                patterns = line.strip().split(None, header_length - 1)
                 row = {}
                 # merge last entries together, as last entry may contain spaces
                 for col in range(header_length):
@@ -60,7 +60,6 @@ def parse_ps(filename):
                             row[col_name] = float(patterns[col])
                         except ValueError:
                             row[col_name] = patterns[col]
-                row[header[-1]] = " ".join(patterns[header_length - 1:])
                 result.append(row)
             return result
     except Exception as e:
