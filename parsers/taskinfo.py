@@ -47,7 +47,9 @@ def parse_path(path: str) -> dict:
                     if 'threads:' in lines[n - 1]:
                         # end of main block detected
                         process = tabbasedhierarchy.parse_block(extracted_block)
-                        # TODO extract process id and process_name from process['process'] line
+                        # extract process id and process_name from process['process'] line
+                        process['pid'] = int(re.search(r'\[(\d+)\]', process['process']).group(1))
+                        process['name'] = re.search(r'"([^"]+)"', process['process']).group(1)
                         process['threads'] = []
                         pass
                     else:
