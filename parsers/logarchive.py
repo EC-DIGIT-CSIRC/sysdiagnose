@@ -27,7 +27,7 @@ parser_description = 'Parsing system_logs.logarchive folder'
 #       ndjson    Line-delimited JSON output.  Event data is synthesized as JSON dictionaries, each emitted on a single line.
 #                 A trailing record, identified by the inclusion of a 'finished' field, is emitted to indicate the end of events.
 #
-cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short version
+# cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short version
 # cmd_parsing_osx = '/usr/bin/log show %s --style json' # fastest and short version
 # cmd_parsing_osx = '/usr/bin/log show %s --info --style json' # to enable debug, add --debug
 # cmd_parsing_osx = '/usr/bin/log show %s --info --debug --style json'
@@ -36,7 +36,7 @@ cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short ver
 #       https://github.com/mandiant/macos-UnifiedLogs
 # Follow instruction in the README.md in order to install it.
 # TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
-cmd_parsing_linux = 'unifiedlog_parser_json --input %s --output %s'
+# cmd_parsing_linux = 'unifiedlog_parser_json --input %s --output %s'
 cmd_parsing_linux_test = ['unifiedlog_parser_json', '--help']
 # --------------------------------------------------------------------------- #
 
@@ -75,9 +75,9 @@ def parse_path_to_folder(path: str, output_folder: str) -> bool:
 
 def __convert_using_native_logparser(filename: str, output_folder: str) -> list:
     with open(os.path.join(output_folder, 'logarchive.json'), 'w') as f_out:
-        cmd_line = cmd_parsing_osx % (filename)
+        cmd_array = ['/usr/bin/log', 'show', filename, '--style', 'ndjson']
         # read each line, conver line by line and write the output directly to the new file
-        for line in __execute_cmd_and_yield_result(cmd_line):
+        for line in __execute_cmd_and_yield_result(cmd_array):
             try:
                 entry_json = convert_entry_to_unifiedlog_format(json.loads(line))
                 f_out.write(json.dumps(entry_json) + '\n')
@@ -106,9 +106,9 @@ def __convert_using_unifiedlogparser(filename: str, output_folder: str) -> list:
     # really run the tool now
     entries = []
     with tempfile.TemporaryDirectory() as tmp_outpath:
-        cmd_line = cmd_parsing_linux % (filename, tmp_outpath)
+        cmd_array = ['unifiedlog_parser_json', '--input', filename, '--output', tmp_outpath]
         # run the command and get the result in our tmp_outpath folder
-        __execute_cmd_and_get_result(cmd_line)
+        __execute_cmd_and_get_result(cmd_array)
         # read each file, conver line by line and write the output directly to the new file
         # LATER run this in multiprocessing, one per file to speed up the process
         for fname_reading in os.listdir(tmp_outpath):
@@ -130,18 +130,17 @@ def __convert_using_unifiedlogparser(filename: str, output_folder: str) -> list:
             f_out.write('\n')
 
 
-def __execute_cmd_and_yield_result(command: str) -> Generator[dict, None, None]:
+def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[dict, None, None]:
     '''
         Return None if it failed or the result otherwise.
 
     '''
-    cmd_array = command.split()
     with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
         for line in iter(process.stdout.readline, ''):
             yield line
 
 
-def __execute_cmd_and_get_result(command, outputfile=None):
+def __execute_cmd_and_get_result(cmd_array: list, outputfile=None):
     '''
         Return None if it failed or the result otherwise.
 
@@ -150,7 +149,6 @@ def __execute_cmd_and_get_result(command, outputfile=None):
             - sys.stdout: print to stdout
             - path to a file to write to
     '''
-    cmd_array = command.split()
     result = []
 
     with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
