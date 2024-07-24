@@ -88,31 +88,10 @@ def list_parsers(folder):
 
 
 def parse(parser, case_id):
-    try:
-        with open(config.cases_file, 'r') as f:
-            cases = json.load(f)
-    except Exception as e:
-        print(f'error opening cases json file - check config.py. Error: {str(e)}', file=sys.stderr)
-        sys.exit()
-
-    case_file = ''
-    for case in cases['cases']:
-        if int(case_id) == case['case_id']:
-            case_file = case['case_file']
-
-    if case_file == '':
-        print("Case ID not found", file=sys.stderr)
-        sys.exit()
-
-    # Load case file
-    try:
-        with open(case_file, 'r') as f:
-            case = json.load(f)
-    except:     # noqa: E722
-        print("error opening case file", file=sys.stderr)
-        sys.exit()
-
-    # print(json.dumps(case, indent=4), file=sys.stderr)   #debug
+    case_folder = os.path.join(config.data_folder, case_id)
+    if not os.path.isdir(case_folder):
+        print(f"Case {case_id} does not exist", file=sys.stderr)
+        return -1
 
     # Load parser module
     spec = importlib.util.spec_from_file_location(parser, os.path.join(config.parsers_folder, parser) + '.py')
@@ -120,7 +99,6 @@ def parse(parser, case_id):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    case_folder = os.path.join(config.data_folder, case_id)
     log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
 
     if hasattr(module, 'parse_path_to_folder'):
@@ -146,6 +124,11 @@ def parse(parser, case_id):
 
 
 def parse_all(case_id):
+    case_folder = os.path.join(config.data_folder, case_id)
+    if not os.path.isdir(case_folder):
+        print(f"Case {case_id} does not exist", file=sys.stderr)
+        return -1
+
     # get list of working parsers
     # for each parser, run and save which is working
     # display list of successful parses

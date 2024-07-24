@@ -80,10 +80,12 @@ def init(sysdiagnose_file, force=False):
     # create case dictionnary
     new_case_id = case_id + 1
     new_case = {
-        "case_id": new_case_id,
-        "source_file": sysdiagnose_file,
-        "source_sha256": readable_hash,
-        "case_file": os.path.join(config.data_folder, f"{new_case_id}.json")
+        'case_id': new_case_id,
+        'source_file': sysdiagnose_file,
+        'source_sha256': readable_hash,
+        'case_file': os.path.join(config.data_folder, f"{new_case_id}.json"),
+        'serial_number': "<unknown>",
+        'unique_device_id': "<unknown>"
     }
     # create case folder
     new_folder = os.path.join(config.data_folder, str(new_case['case_id']))
@@ -127,11 +129,13 @@ def init(sysdiagnose_file, force=False):
     if config.debug:
         print("cd'ing to ../..")
     os.chdir('../..')
+    version = '<unknown>'
     try:
         with open(new_case_json['sysdiagnose.log'], 'r') as f:
             line_version = [line for line in f if 'iPhone OS' in line][0]
             version = line_version.split()[4]
         new_case_json['ios_version'] = version
+        new_case['ios_version'] = version
     except Exception as e:
         print(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
         sys.exit()
@@ -149,8 +153,6 @@ def init(sysdiagnose_file, force=False):
         new_case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
     except KeyError as e:
         print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
-        new_case['serial_number'] = "<unknown>"
-        new_case['unique_device_id'] = "<unknown>"
 
     # update case if needed
     if update:
