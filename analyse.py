@@ -72,13 +72,13 @@ def analyse(analyser, case_id):
 
     for case_id in case_ids:
         # building command
-        case_folder = os.path.join(config.data_folder, case_id)
-        if not os.path.isdir(case_folder):
+        parse_data_path = os.path.join(config.parsed_data_folder, case_id)
+        if not os.path.isdir(parse_data_path):
             print(f"Case {case_id} does not exist", file=sys.stderr)
             return -1
         # TODO consider outputting anlaysers output to a different folder defined in config.py
         output_file = os.path.join(config.parsed_data_folder, str(case_id), analyser + "." + module.analyser_format)
-        module.analyse_path(case_folder=case_folder, output_file=output_file)
+        module.analyse_path(case_folder=parse_data_path, output_file=output_file)
         print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
 
     return 0
