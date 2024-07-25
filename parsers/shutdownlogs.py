@@ -56,6 +56,7 @@ def parse_path(path: str) -> list | dict:
                     running_processes[pid] = {
                         "pid": pid,
                         "path": binary_path,
+                        "command": '/'.join(binary_path.split('/')[:-1]),
                         "time_waiting": time_waiting
                     }
                 index += 1
