@@ -85,10 +85,8 @@ def analyse(analyser, case_id):
 
 
 def allanalysers(case_id):
-    prev_folder = os.getcwd()
-    os.chdir(config.analysers_folder)
-    modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
-    os.chdir('..')
+    modules = glob.glob("*.py", dir_fd=config.analysers_folder)
+    modules.sort()
     for analyser in modules:
         if analyser.endswith('__init__.py') or analyser.endswith('demo_analyser.py'):
             continue
@@ -100,7 +98,6 @@ def allanalysers(case_id):
             print(f"Error: Problem while executing module {analyser[:-3]}. Reason: {str(e)}", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
             continue
-    os.chdir(prev_folder)
     return 0
 
 # --------------------------------------------------------------------------- #

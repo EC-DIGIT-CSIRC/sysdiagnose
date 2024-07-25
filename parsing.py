@@ -145,10 +145,7 @@ def parse_all(case_id):
     # get list of working parsers
     # for each parser, run and save which is working
     # display list of successful parses
-    prev_folder = os.getcwd()
-    os.chdir(config.parsers_folder)
-    modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
-    os.chdir('..')
+    modules = glob.glob("*.py", dir_fd=config.parsers_folder)
     modules.sort()
     for parser in modules:
         if parser.endswith('__init__.py') or parser.endswith('demo_parser.py'):
@@ -161,7 +158,6 @@ def parse_all(case_id):
             print(f"Error: Problem while executing module {parser[:-3]}. Reason: {str(e)}", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
             continue
-    os.chdir(prev_folder)
     return 0
 
 
