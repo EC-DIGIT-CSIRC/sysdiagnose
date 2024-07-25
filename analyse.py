@@ -72,7 +72,7 @@ def analyse(analyser, case_id):
 
     for case_id in case_ids:
         # building command
-        parse_data_path = os.path.join(config.parsed_data_folder, case_id)
+        parse_data_path = os.path.join(config.parsed_data_folder, str(case_id))
         if not os.path.isdir(parse_data_path):
             print(f"Case {case_id} does not exist", file=sys.stderr)
             return -1
