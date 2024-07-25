@@ -110,7 +110,15 @@ def parse_process(data):
     process = parse_basic(infos)
     process['threads'] = parse_threads(threads)
     process['images'] = parse_images(images)
-
+    # parse special substrings
+    process['PID'] = int(re.search(r'\[(\d+)\]', process['Process']).group(1))
+    process['Process'] = process['Process'].split("[", 1)[0].strip()
+    try:
+        process['PPID'] = int(re.search(r'\[(\d+)\]', process['Parent']).group(1))
+        process['Parent'] = process['Parent'].split("[", 1)[0].strip()
+    except KeyError:  # some don't have a parent
+        pass
+    process['UID'] = 501
     return process
 
 
