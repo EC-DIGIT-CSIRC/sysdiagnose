@@ -54,12 +54,12 @@ def parse_block(lines: list) -> list | dict:
                 match = re.match(regex, line.strip())
                 if match:
                     key = match.group(1).strip()
-                    value = match.group(2).strip()
+                    value = clean_value(match.group(2))
                     break
             if key:
                 if not result:
                     result = {}
-                result[key.strip()] = value.strip()
+                result[key.strip()] = clean_value(value)
             else:
                 if not result:
                     result = []
@@ -67,3 +67,13 @@ def parse_block(lines: list) -> list | dict:
 
             n = n + 1  # skip to next line
     return result
+
+
+def clean_value(value: str) -> str:
+    value = value.strip()
+    if value.startswith('"') and value.endswith('"'):
+        value = clean_value(value[1:-1])
+    if value.startswith("'") and value.endswith("'"):
+        value = clean_value(value[1:-1])
+
+    return value
