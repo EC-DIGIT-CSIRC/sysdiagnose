@@ -9,9 +9,9 @@
 
 Usage:
   parsing.py list (cases|parsers|all)
-  parsing.py parse <parser> <case_number>
-  parsing.py allparsers <case_number>
-  parsing.py parseall <case_number>
+  parsing.py parse <parser> (<case_number>|all)
+  parsing.py allparsers (<case_number>|all)
+  parsing.py parseall (<case_number>|all)
   parsing.py (-h | --help)
   parsing.py --version
 
@@ -54,6 +54,18 @@ def list_cases():
     print(tabulate(lines, headers=headers))
 
 
+def get_case_ids():
+    try:
+        with open(config.cases_file, 'r') as f:
+            cases = json.load(f)
+    except Exception as e:
+        print(f'error opening cases json file - check config.py. Reason: {str(e)}', file=sys.stderr)
+        sys.exit()
+    case_ids = [case['case_id'] for case in cases['cases']]
+    case_ids.sort()
+    return case_ids
+
+
 """
     List parsers
 """
@@ -88,33 +100,39 @@ def list_parsers(folder):
 
 
 def parse(parser, case_id):
-    case_folder = os.path.join(config.data_folder, case_id)
-    if not os.path.isdir(case_folder):
-        print(f"Case {case_id} does not exist", file=sys.stderr)
-        return -1
-
     # Load parser module
     spec = importlib.util.spec_from_file_location(parser, os.path.join(config.parsers_folder, parser) + '.py')
     # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
+    if case_id == 'all':
+        case_ids = get_case_ids()
+    else:
+        case_ids = [case_id]
 
-    if hasattr(module, 'parse_path_to_folder'):
-        output_folder = os.path.join(config.parsed_data_folder, case_id)
-        os.makedirs(output_folder, exist_ok=True)
-        result = module.parse_path_to_folder(path=log_root_path, output_folder=output_folder)
-        print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
-    else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
-        # parsers that output in the result variable
-        # building command
-        result = module.parse_path(path=log_root_path)
-        # saving the parser output
-        output_file = os.path.join(config.parsed_data_folder, case_id, f"{parser}.json")
-        with open(output_file, 'w') as data_file:
-            data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
-        print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
+    for case_id in case_ids:
+        case_folder = os.path.join(config.data_folder, str(case_id))
+        if not os.path.isdir(case_folder):
+            print(f"Case {case_id} does not exist", file=sys.stderr)
+            return -1
+
+        log_root_path = os.path.join(case_folder, os.listdir(case_folder).pop())
+
+        if hasattr(module, 'parse_path_to_folder'):
+            output_folder = os.path.join(config.parsed_data_folder, str(case_id))
+            os.makedirs(output_folder, exist_ok=True)
+            result = module.parse_path_to_folder(path=log_root_path, output_folder=output_folder)
+            print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
+        else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
+            # parsers that output in the result variable
+            # building command
+            result = module.parse_path(path=log_root_path)
+            # saving the parser output
+            output_file = os.path.join(config.parsed_data_folder, str(case_id), f"{parser}.json")
+            with open(output_file, 'w') as data_file:
+                data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
+            print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
     return 0
 
 
@@ -124,11 +142,6 @@ def parse(parser, case_id):
 
 
 def parse_all(case_id):
-    case_folder = os.path.join(config.data_folder, case_id)
-    if not os.path.isdir(case_folder):
-        print(f"Case {case_id} does not exist", file=sys.stderr)
-        return -1
-
     # get list of working parsers
     # for each parser, run and save which is working
     # display list of successful parses
@@ -136,6 +149,7 @@ def parse_all(case_id):
     os.chdir(config.parsers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
     os.chdir('..')
+    modules.sort()
     for parser in modules:
         if parser.endswith('__init__.py') or parser.endswith('demo_parser.py'):
             continue
@@ -175,12 +189,12 @@ def main():
         print("\n")
         list_cases()
     elif arguments['parse']:
-        if arguments['<case_number>'].isdigit():
+        if arguments['<case_number>'].isdigit() or arguments['<case_number>'] == 'all':
             parse(arguments['<parser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
     elif arguments['allparsers'] or arguments['parseall']:
-        if arguments['<case_number>'].isdigit():
+        if arguments['<case_number>'].isdigit() or arguments['<case_number>'] == 'all':
             parse_all(arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)

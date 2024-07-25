@@ -7,9 +7,9 @@
 
 Usage:
   analyse.py list (cases|analysers|all)
-  analyse.py analyse <analyser> <case_number>
-  analyse.py allanalysers <case_number>
-  analyse.py analyseall <case_number>
+  analyse.py analyse <analyser> (<case_number>|all)
+  analyse.py allanalysers (<case_number>|all)
+  analyse.py analyseall (<case_number>|all)
   analyse.py (-h | --help)
   analyse.py --version
 
@@ -27,6 +27,7 @@ import glob
 import importlib.util
 from docopt import docopt
 from tabulate import tabulate
+from parsing import get_case_ids
 
 version_string = "analyse.py v2023-04-27 Version 1.0"
 
@@ -57,24 +58,33 @@ def list_analysers(folder):
     os.chdir(prev_folder)
 
 
-def analyse(analyser, caseid):
+def analyse(analyser, case_id):
     # Load parser module
     spec = importlib.util.spec_from_file_location(analyser, os.path.join(config.analysers_folder, analyser + '.py'))
     # print(spec, file=sys.stderr)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    # building command
-    parse_data_path = "%s/%s/" % (config.parsed_data_folder, caseid)
-    # TODO consider outputting anlaysers output to a different folder defined in config.py
-    output_file = os.path.join(config.parsed_data_folder, caseid, analyser + "." + module.analyser_format)
-    module.analyse_path(case_folder=parse_data_path, output_file=output_file)
-    print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
+    if case_id == 'all':
+        case_ids = get_case_ids()
+    else:
+        case_ids = [case_id]
+
+    for case_id in case_ids:
+        # building command
+        case_folder = os.path.join(config.data_folder, case_id)
+        if not os.path.isdir(case_folder):
+            print(f"Case {case_id} does not exist", file=sys.stderr)
+            return -1
+        # TODO consider outputting anlaysers output to a different folder defined in config.py
+        output_file = os.path.join(config.parsed_data_folder, str(case_id), analyser + "." + module.analyser_format)
+        module.analyse_path(case_folder=case_folder, output_file=output_file)
+        print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
 
     return 0
 
 
-def allanalysers(caseid):
+def allanalysers(case_id):
     prev_folder = os.getcwd()
     os.chdir(config.analysers_folder)
     modules = glob.glob(os.path.join(os.path.dirname('.'), "*.py"))
@@ -84,7 +94,7 @@ def allanalysers(caseid):
             continue
         try:
             print(f'Trying: {analyser[:-3]}', file=sys.stderr)
-            analyse(analyser[:-3], caseid)
+            analyse(analyser[:-3], case_id)
         except Exception as e:     # noqa: E722
             import traceback
             print(f"Error: Problem while executing module {analyser[:-3]}. Reason: {str(e)}", file=sys.stderr)
@@ -114,12 +124,12 @@ def main():
         print("\n")
         parsing.list_cases()
     elif arguments['analyse']:
-        if arguments['<case_number>'].isdigit():
+        if arguments['<case_number>'].isdigit() or arguments['<case_number>'] == 'all':
             analyse(arguments['<analyser>'], arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
     elif arguments['allanalysers'] or arguments['analyseall']:
-        if arguments['<case_number>'].isdigit():
+        if arguments['<case_number>'].isdigit() or arguments['<case_number>'] == 'all':
             allanalysers(arguments['<case_number>'])
         else:
             print("case number should be ... a number ...", file=sys.stderr)
