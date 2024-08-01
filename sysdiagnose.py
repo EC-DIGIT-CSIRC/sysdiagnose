@@ -2,7 +2,6 @@
 
 from tabulate import tabulate
 import argparse
-import config
 import glob
 import hashlib
 import importlib.util
@@ -11,6 +10,8 @@ import os
 import re
 import sys
 import tarfile
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # FIXME should be addressed by setup.py
+import config  # noqa: E402
 
 
 def main():
@@ -31,10 +32,12 @@ def main():
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
     parse_parser.add_argument('parser', help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
+    parse_parser.error = parse_parser_error
 
     # analyse mode
     analyse_parser = subparsers.add_parser('analyse', help='Analyse a case')
     analyse_parser.add_argument('analyser', help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers')
+    analyse_parser.error = analyse_parser_error
 
     # list mode
     list_parser = subparsers.add_parser('list', help='List ...')
@@ -60,7 +63,7 @@ def main():
         if not os.path.isfile(filename) and filename.endswith('.tar.gz'):
             exit(f"File {filename} does not exist or is not a tar.gz file")
         # create the case
-        if args.case_id:
+        if args.case_id and args.case_id != 'all':
             case_id = args.case_id
             create_case(filename, force, case_id)
         else:
@@ -131,6 +134,22 @@ def main():
                     print(f"Analyser '{analyser}' is not implemented yet, skipping")
     else:
         parser.print_help()
+
+
+def parse_parser_error(message):
+    print(message, file=sys.stderr)
+    print("Available parsers:")
+    print("")
+    print_parsers_list()
+    sys.exit(2)
+
+
+def analyse_parser_error(message):
+    print(message, file=sys.stderr)
+    print("Available analysers:")
+    print("")
+    print_analysers_list()
+    sys.exit(2)
 
 
 def create_case(sysdiagnose_file: str, force: bool = False, case_id: bool | str = False) -> int:
