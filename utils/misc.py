@@ -1,7 +1,6 @@
 """Miscelanneous helper functions."""
 
 import os
-import sys
 import json
 import plistlib
 from datetime import datetime
@@ -29,15 +28,13 @@ def get_version(filename="VERSION.txt"):
     """Read the program version from VERSION.txt"""
     try:
         script_dir = Path(__file__).parent.parent
-        print(script_dir)
         version_file = os.path.join(script_dir, filename)
         with open(version_file, "r") as file:
             data = json.load(file)
             version = data["version"]
             return version
     except Exception as e:
-        print(f"Could not read version info, bailing out. Something is wrong: {str(e)}")
-        sys.exit(-1)
+        exit(f"Could not read version info, bailing out. Something is wrong: {str(e)}")
 
 
 def load_plist_file_as_json(fname: str):

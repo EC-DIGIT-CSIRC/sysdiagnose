@@ -14,131 +14,139 @@
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: initialise.py file 1",
+            "name": "Python Debugger: init ios15",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/initialise.py",
-            "args": "file 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py list analysers",
+            "name": "Python Debugger: -c 1234-345-1345 init ios15",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "list analysers",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1234-345-1345 init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyseall",
+            "name": "Python Debugger: analyse list",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyseall 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "analyse list",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyse timeliner",
+            "name": "Python Debugger: analyse all",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyse timeliner 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse all",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyse apps 1",
+            "name": "Python Debugger: analyse timeliner",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyse apps 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyse wifi_geolocation 1",
+            "name": "Python Debugger: analyse apps 1",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyse wifi_geolocation 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse apps",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyse wifi_geolocation_kml 1",
+            "name": "Python Debugger: analyse wifi_geolocation 1",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyse wifi_geolocation_kml 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse wifi_geolocation",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse.py analyse timeliner 1",
+            "name": "Python Debugger: analyse wifi_geolocation_kml 1",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analyse.py",
-            "args": "analyse timeliner 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse wifi_geolocation_kml",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py list all",
+            "name": "Python Debugger: analyse timeliner 1",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "list all",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse demo_parser",
+            "name": "Python Debugger: parse demo_parser",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse demo_parser 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse demo_parser",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse logarchive",
+            "name": "Python Debugger: parse logarchive",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse logarchive 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse logarchive",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse mobileactivation",
+            "name": "Python Debugger: parse mobileactivation",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse mobileactivation 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse mobileactivation",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse ps",
+            "name": "Python Debugger: parse ps",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse ps 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse ps",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse crashlogs",
+            "name": "Python Debugger: parse ps ALL",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse crashlogs 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c all parse ps",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse plists",
+            "name": "Python Debugger: parse crashlogs",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse plists 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse crashlogs",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: parsing.py parse wifinetworks",
+            "name": "Python Debugger: parse plists",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/parsing.py",
-            "args": "parse wifinetworks 1",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse plists",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse wifinetworks",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse wifinetworks",
             "cwd": "${workspaceFolder}/"
         }
     ]

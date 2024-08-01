@@ -25,79 +25,97 @@ On linux systems you may wish to install the unifiedlogs parser. See below for i
 
 # Quickstart
 
-Add new sysdiagnose case:
+## Case management:
 
+Creating a new case, with the optional `-c` parameter if you want to specify the case number yourself. (such as an uuid)
 ```
-$ python initialise.py file test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
-d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
+$ sysdiagnose init test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
+
 Sysdiagnose file has been processed
-New case ID: 1
+Case ID: 1
 ```
 
-List available parsers and cases:
+Listing existing cases can be done easily:
 
 ```
-$ python parsing.py list parsers
-Parser Name            Parser Description                        Parser Input
----------------------  ----------------------------------------  ---------------------
-demo_parser            Demo parsers                              demo_input_file
-logarchive             Parsing system_logs.logarchive folder     logarchive_folder
-ps                     Parsing ps.txt file                       ps
-spindumpnosymbols      Parsing spindump-nosymbols file           spindump-nosymbols
-accessibility_tcc      Parsing Accessibility TCC logs            Accessibility-TCC
-taskinfo               Parsing taskinfo txt file                 taskinfo
-networkextensioncache  Parsing networkextensioncache plist file  networkextensioncache
-mobileactivation       Parsing mobileactivation logs file        mobile_activation
-networkextension       Parsing networkextension plist file       networkextension
-wifisecurity           Parsing WiFi Security logs                wifisecurity
-swcutil                Parsing swcutil_show file                 swcutil_show
-sys                    Parsing SystemVersion plist file          systemversion
-appinstallation        Parsing app installation logs             appinstallation
-powerlogs              Parsing  powerlogs database               powerlogs
-olddsc                 Parsing olddsc files                      olddsc
-mobileinstallation     Parsing mobile_installation logs file     mobile_installation
-itunesstore            Parsing iTunes store logs                 itunesstore
-containermanager       Parsing containermanagerd logs file       container_manager
-wifi_known_networks    Parsing Known Wifi Networks plist file    wifi_data
-psthread               Parsing ps_thread.txt file                ps_thread
-wifiscan               Parsing wifi_scan files                   wifi_data
-shutdownlogs           Parsing shutdown.log file                 shutdownlog
-uuid2path              Parsing UUIDToBinaryLocations plist file  UUIDToBinaryLocations
-brctl                  Parsing brctl files                       brctl
-
-$ python parsing.py list cases
-#### case List ####
-  Case ID  Source file                                                                          SHA256
----------  -----------------------------------------------------------------------------------  ----------------------------------------------------------------
-        1  test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz  d280f515593b3570a781890296b2a394b3dffc298212af0d195765a7cf1cd777
+$ sysdiagnose list cases
+  Case ID  Source file                                                                                                        serial number
+---------  -----------------------------------------------------------------------------------------------------------------  ---------------
+        1  tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz                           F4GT2K24HG7K
 ```
+
+## Parsing data and converting it to a usable format:
+Data of sysdiagnose is not always usable directly, use parsers to convert them to a nice json file.
 
 Run parsers:
 
 ```
-$ python parsing.py parse ps 1
+$ sysdiagnose -c 1 parse ps
 Execution success, output saved in: ./parsed_data/1/ps.json
 
-$ python parsing.py parse sys 1
+$ sysdiagnose -c 1 parse sys
 Execution success, output saved in: ./parsed_data/1/sys.json
 ```
 
+To run on all cases do not specify a case number or use `-c all`.
+
+List available parsers :
+
+```
+$ sysdiagnose list parsers
+Parser Name            Parser Description
+---------------------  --------------------------------------------------------------
+all                    Run all parsers
+accessibility_tcc      Parsing Accessibility TCC logs
+appinstallation        Parsing app installation logs
+brctl                  Parsing brctl files
+containermanager       Parsing containermanagerd logs file
+crashlogs              Parsing crashes folder
+demo_parser            Demo parsers
+itunesstore            Parsing iTunes store logs
+logarchive             Parsing system_logs.logarchive folder
+mobileactivation       Parsing mobileactivation logs file
+mobileinstallation     Parsing mobile_installation logs file
+networkextension       Parsing networkextension plist file
+networkextensioncache  Parsing networkextensioncache plist file
+olddsc                 Parsing olddsc files
+plists                 Parsing any pslist into json
+powerlogs              Parsing  powerlogs database
+ps                     Parsing ps.txt file
+psthread               Parsing ps_thread.txt file
+remotectl_dumpstate    Parsing remotectl_dumpstate file containing system information
+shutdownlogs           Parsing shutdown.log file
+spindumpnosymbols      Parsing spindump-nosymbols file
+swcutil                Parsing swcutil_show file
+sys                    Parsing SystemVersion plist file
+taskinfo               Parsing taskinfo txt file
+uuid2path              Parsing UUIDToBinaryLocations plist file
+wifi_known_networks    Parsing Known Wifi Networks plist file
+wifinetworks           Parsing com.apple.wifi plist files
+wifiscan               Parsing wifi_scan files
+wifisecurity           Parsing WiFi Security logs
+```
+
+## Analysers to process parsed data
 List analysers:
 
 ```
-$ python analyse.py list analysers
-nalyser Name         Analyser Description
+$ sysdiagnose list analysers
+Analyser Name         Analyser Description
 --------------------  ------------------------------------------------
+all                   Run all analysers
 apps                  Get list of Apps installed on the device
-wifi_geolocation_kml  Generate KML file for wifi geolocations
+demo_analyser         Do something useful (DEMO)
+ps_everywhere         List all processes we can find a bit everywhere.
+ps_matrix             Makes a matrix comparing ps, psthread, taskinfo
 timeliner             Generate a Timesketch compatible timeline
 wifi_geolocation      Generate GPS Exchange (GPX) of wifi geolocations
-demo_analyser         Do something useful (DEMO)
+wifi_geolocation_kml  Generate KML file for wifi geolocations
 ```
 
-Run analyser (make sure you run `allparsers` before)
+Run analyser (make sure you run `parse all` before)
 ```
-$ python analyse.py analyse timeliner 1
+$ sysdiagnose -c 1 analyse timeliner
 Execution success, output saved in: ./parsed_data/1/timeliner.jsonl
 ```
 
