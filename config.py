@@ -8,11 +8,20 @@ config_folder = os.path.dirname(os.path.abspath(__file__))
 parsers_folder = os.path.join(config_folder, "parsers")
 analysers_folder = os.path.join(config_folder, "analysers")
 
-# case data is in current working directory
-cases_file = os.path.join('.', "cases.json")
-data_folder = os.path.join('.', "data")
-parsed_data_folder = os.path.join('.', "parsed_data")  # stay in current folder
-debug = True
+# case data is in current working directory by default
+cases_root_folder = os.getenv('SYSDIAGNOSE_CASES_PATH')
+if not cases_root_folder:
+    cases_root_folder = '.'
+
+os.makedirs(cases_root_folder, exist_ok=True)
+
+cases_file = os.path.join(cases_root_folder, "cases.json")
+data_folder = os.path.join(cases_root_folder, "data")
+parsed_data_folder = os.path.join(cases_root_folder, "parsed_data")  # stay in current folder
+
+os.makedirs(data_folder, exist_ok=True)
+os.makedirs(parsed_data_folder, exist_ok=True)
+
 
 # migration of old cases format to new format
 try:

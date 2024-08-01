@@ -44,6 +44,14 @@ $ sysdiagnose list cases
         1  tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz                           F4GT2K24HG7K
 ```
 
+The case folder is the current folder by default.
+You can change this using the environment variable `SYSDIAGNOSE_CASES_PATH`, for example.
+```
+$ export SYSDIAGNOSE_CASES_PATH='/path/to/folder'
+$ sysdiagnose list cases
+```
+
+
 ## Parsing data and converting it to a usable format:
 Data of sysdiagnose is not always usable directly, use parsers to convert them to a nice json file.
 
@@ -127,7 +135,6 @@ Tested On:
 - iOS16
 - iOS17
 
-
 # Timesketch
 
 You might want to visualise timelines which you can extract via sysdiagnose in [Timesketch](https://timesketch.org/guides/admin/install/).
@@ -159,6 +166,8 @@ cargo build --release
 sudo cp ../target/release/unifiedlog_parser_json /usr/local/bin/
 ```
 See `unifiedlog_parser_json --help` for more instructions to use the tool, or use it directly through sysdiagnose.
+
+
 
 # Contributors
 
