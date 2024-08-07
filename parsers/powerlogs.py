@@ -11,7 +11,7 @@ from utils.misc import merge_dicts
 import json
 
 
-parser_description = "Parsing  powerlogs database"
+parser_description = "Parsing powerlogs database"
 
 
 def get_log_files(log_root_path: str) -> list:
