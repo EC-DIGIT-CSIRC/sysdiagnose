@@ -1,13 +1,13 @@
 """Miscelanneous helper functions."""
 
-import os
-import json
-import plistlib
 from datetime import datetime
-import binascii
 from functools import singledispatch
-import base64
 from pathlib import Path
+import base64
+import binascii
+import json
+import nska_deserialize
+import os
 
 
 def merge_dicts(a: dict, b: dict) -> dict:
@@ -38,13 +38,15 @@ def get_version(filename="VERSION.txt"):
 
 
 def load_plist_file_as_json(fname: str):
+    if os.path.getsize(fname) == 0:
+        return {'error': 'Empty file'}
     with open(fname, 'rb') as f:
-        plist = plistlib.load(f)
+        plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True)
         return json_serializable(plist)
 
 
-def load_plist_string_as_json(plist_string):
-    plist = plistlib.loads(plist_string)
+def load_plist_string_as_json(plist_string: str):
+    plist = nska_deserialize.deserialize_plist_from_string(plist_string, full_recurse_convert_nska=True)
     return json_serializable(plist)
 
 
