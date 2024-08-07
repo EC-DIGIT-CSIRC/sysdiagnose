@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import tarfile
+import fcntl
 
 
 def main():
@@ -176,10 +177,10 @@ class Sysdiagnose:
         os.makedirs(self.data_folder, exist_ok=True)
         os.makedirs(self.parsed_data_folder, exist_ok=True)
 
-    def cases(self):
+    def cases(self, force: bool = False) -> dict:
         # singleton, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
-        if not self._cases:
+        if not self._cases or force:
             try:
                 with open(self.cases_file, 'r') as f:
                     self._cases = json.load(f)
@@ -320,12 +321,16 @@ class Sysdiagnose:
         except KeyError as e:
             print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
 
-        # update case if needed
-        self.cases()[case['case_id']] = case
-
-        # FIXME implement file locking mechanism for concurrent access
-        with open(self.cases_file, 'w') as f:
-            json.dump(self.cases(), f, indent=4)
+        # update case with new data
+        with open(self.cases_file, 'r+') as f:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
+                self._cases = json.load(f)           # load latest version
+                self._cases[case['case_id']] = case  # update own case
+                f.seek(0)                            # go back to the beginning of the file
+                json.dump(self._cases, f, indent=4)  # save the updated version
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)        # release lock whatever happens
 
         print("Sysdiagnose file has been processed")
         print(f"Case ID: {str(case['case_id'])}")
