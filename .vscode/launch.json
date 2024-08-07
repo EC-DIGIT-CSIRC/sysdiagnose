@@ -110,6 +110,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse networkextension",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 2 parse networkextension",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse ps",
             "type": "debugpy",
             "request": "launch",
