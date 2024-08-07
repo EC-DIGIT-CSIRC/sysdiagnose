@@ -159,19 +159,19 @@ def analyse_parser_error(message):
 
 
 class Sysdiagnose:
-    def __init__(self):
+    def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', '.')):
         self.config_folder = os.path.dirname(os.path.abspath(__file__))
         self.parsers_folder = os.path.join(self.config_folder, "parsers")
         self.analysers_folder = os.path.join(self.config_folder, "analysers")
 
         # case data is in current working directory by default
-        self.cases_root_folder = os.getenv('SYSDIAGNOSE_CASES_PATH', '.')
+        self.cases_root_folder = cases_path
 
         self.cases_file = os.path.join(self.cases_root_folder, "cases.json")
         self.data_folder = os.path.join(self.cases_root_folder, "data")
         self.parsed_data_folder = os.path.join(self.cases_root_folder, "parsed_data")  # stay in current folder
 
-        self._cases = False
+        self._cases = False   # will be populated through cases() singleton method
 
         os.makedirs(self.cases_root_folder, exist_ok=True)
         os.makedirs(self.data_folder, exist_ok=True)
@@ -182,19 +182,31 @@ class Sysdiagnose:
         # load cases + migration of old cases format to new format
         if not self._cases or force:
             try:
-                with open(self.cases_file, 'r') as f:
-                    self._cases = json.load(f)
-                    if 'cases' in self._cases:  # conversion is needed
-                        new_format = {}
-                        for case in self._cases['cases']:
-                            case['case_id'] = str(case['case_id'])
-                            new_format[case['case_id']] = case
+                with open(self.cases_file, 'r+') as f:
+                    try:
+                        fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
+                        self._cases = json.load(f)
+                        if 'cases' in self._cases:  # conversion is needed
+                            new_format = {}
+                            for case in self._cases['cases']:
+                                case['case_id'] = str(case['case_id'])
+                                new_format[case['case_id']] = case
 
-                        cases = new_format
-                        with open(self.cases_file, 'w') as f:
+                            cases = new_format
+                            f.seek(0)
                             json.dump(cases, f, indent=4)
+                            f.truncate()
+                    finally:
+                        fcntl.flock(f, fcntl.LOCK_UN)
             except FileNotFoundError:
                 self._cases = {}
+                with open(self.cases_file, 'w') as f:
+                    try:
+                        fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
+                        json.dump(self._cases, f, indent=4)
+                    finally:
+                        fcntl.flock(f, fcntl.LOCK_UN)
+
         return self._cases
 
     def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False) -> int:
@@ -329,6 +341,7 @@ class Sysdiagnose:
                 self._cases[case['case_id']] = case  # update own case
                 f.seek(0)                            # go back to the beginning of the file
                 json.dump(self._cases, f, indent=4)  # save the updated version
+                f.truncate()                         # truncate the rest of the file ensuring no old data is left
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)        # release lock whatever happens
 
