@@ -119,6 +119,7 @@ ps_matrix             Makes a matrix comparing ps, psthread, taskinfo
 timeliner             Generate a Timesketch compatible timeline
 wifi_geolocation      Generate GPS Exchange (GPX) of wifi geolocations
 wifi_geolocation_kml  Generate KML file for wifi geolocations
+yarascan              Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)
 ```
 
 Run analyser (make sure you run `parse all` before)
