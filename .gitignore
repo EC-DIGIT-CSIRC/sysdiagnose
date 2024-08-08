@@ -1,9 +1,11 @@
 # generated data
+cases/*
 data/*
 cases.json
 parsed_data/*
 *.gpx
 db.json
+yara/*
 
 # private test data
 /tests/testdata-*
