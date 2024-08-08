@@ -42,6 +42,11 @@ def main():
     list_parser = subparsers.add_parser('list', help='List ...')
     list_parser.add_argument('what', choices=['cases', 'parsers', 'analysers'], help='List cases, parsers or analysers')
 
+    # just for convenience
+    subparsers.add_parser('cases', help='List cases')
+    subparsers.add_parser('parsers', help='List parsers')
+    subparsers.add_parser('analysers', help='List analysers')
+
     parser.parse_args()
 
     args = parser.parse_args()
@@ -55,6 +60,15 @@ def main():
             sd.print_parsers_list()
         elif args.what == 'analysers':
             sd.print_analysers_list()
+
+    elif args.mode == 'cases':
+        sd.print_list_cases()
+
+    elif args.mode == 'parsers':
+        sd.print_parsers_list()
+
+    elif args.mode == 'analysers':
+        sd.print_analysers_list()
 
     elif args.mode == 'init':
         # Handle init mode
@@ -159,7 +173,7 @@ def analyse_parser_error(message):
 
 
 class Sysdiagnose:
-    def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', '.')):
+    def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
         self.config_folder = os.path.dirname(os.path.abspath(__file__))
         self.parsers_folder = os.path.join(self.config_folder, "parsers")
         self.analysers_folder = os.path.join(self.config_folder, "analysers")
