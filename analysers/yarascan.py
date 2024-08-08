@@ -2,7 +2,8 @@ import json
 import yara
 import os
 import glob
-# import hashlib
+import threading
+import queue
 
 analyser_description = "Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)"
 analyser_format = "json"
@@ -21,13 +22,14 @@ externals = {
 }
 # Question: What is the impact of externals? (single threaded)
 # - timing without externals at all   : 1m30 - we discard a few (useful?) rules, so faster? ...
+#                                         45s multithreaded (have 2 large files and 16 threads)
 # - timing without externals per file : 1m30 - loaded empty externals, just to ensure rules are equivalent
-# - timing with externals per file    : 4 minutes  - delays caused by the many yara.compile calls.
-# FIXME Is it worth it? 1m30 vs 4m00
-externals = {}
+#                                         47s multithreaded (have 2 large files and 16 threads)
+# - timing with externals per file    : 4m  - delays caused by the many yara.compile calls.
+# - timing with externals per file MT:  1m    multithreaded (have 2 large files and 16 threads)
 
 
-def analyse_path(case_folder: str, output_file: str = "yara.json") -> bool:
+def analyse_path(case_folder: str, output_file: str = "yarascan.json") -> bool:
     results = {'errors': [], 'matches': []}
 
     if not os.path.isdir(yara_rules_path):
@@ -43,7 +45,7 @@ def analyse_path(case_folder: str, output_file: str = "yara.json") -> bool:
         namespace = rule_file[len(yara_rules_path):].strip(os.path.sep)
         rule_filepaths[namespace] = rule_file
 
-    matches, errors = scan_directory(case_folder, rule_filepaths)
+    matches, errors = scan_directory(case_folder, rule_filepaths, ignore_files=[output_file])
     if errors:
         results['errors'].extend(errors)
     results['matches'] = matches
@@ -77,41 +79,69 @@ def get_valid_yara_rule_files(rules_path: str) -> tuple[list, list]:
     return rule_files_validated, errors
 
 
-def scan_directory(directory: str, rule_filepaths: dict) -> tuple[list, list]:
+def scan_directory(directory: str, rule_filepaths: dict, ignore_files: list) -> tuple[list, list]:
+    results_lock = threading.Lock()
     matches = {}
     errors = []
 
-    rules = yara.compile(filepaths=rule_filepaths, externals=externals)
+    # multi-threaded file scanning, really speeds up if multiple large files are present
 
-    # TODO consider multithreading this to speed up the process
+    # build and fill the queue
+    file_queue = queue.Queue()
     for root, _, files in os.walk(directory):
         for file in files:
-            file_path = os.path.join(root, file)
+            if file in ignore_files:  # skip the output file, as we know we may have matches on ourselves
+                continue
+            file_queue.put(os.path.join(root, file))
+
+    # define our consumer that will run in the threads
+    def consumer():
+        while True:
+            print(f"Consumer thread seeing {file_queue.qsize()} files in queue, and taking one")
+            file_path = file_queue.get()
+            if file_path is None:
+                print("Consumer thread exiting")
+                break
 
             print(f"Scanning file: {file_path}")
             # set the externals for this file
             externals['filename'] = file
-            externals['filepath'] = file_path[len(directory):]  # exclude the case root directory that installation specific
+            externals['filepath'] = file_path[len(directory) + 1:]  # exclude the case root directory that installation specific
             externals['extension'] = os.path.splitext(file)[1]
-
-            # rules = yara.compile(filepaths=rule_filepaths, externals=externals)
+            rules = yara.compile(filepaths=rule_filepaths, externals=externals)
             try:
                 m = rules.match(file_path)
                 if m:
-                    key = file_path[len(directory):]
-                    matches[key] = {}
-                    for match in m:
-                        matches[key][match.rule] = {
-                            'tags': match.tags,
-                            'meta': match.meta,
-                            'strings': [str(s) for s in match.strings],
-                            'rule_file': match.namespace
-                        }
+                    key = file_path[len(directory) + 1:]
+                    with results_lock:
+                        matches[key] = {}
+                        for match in m:
+                            matches[key][match.rule] = {
+                                'tags': match.tags,
+                                'meta': match.meta,
+                                'strings': [str(s) for s in match.strings],
+                                'rule_file': match.namespace
+                            }
             except yara.Error as e:
-                errors.append(f"Error matching file {file_path}: {e}")
+                with results_lock:
+                    errors.append(f"Error matching file {file_path}: {e}")
+            file_queue.task_done()  # signal that the file has been processed
+
+    max_threads = os.cpu_count() or 4  # default to 4 if we can't determine the number of CPUs
+    # Create and start consumer threads
+    consumer_threads = []
+    for _ in range(max_threads):
+        t = threading.Thread(target=consumer)
+        t.start()
+        consumer_threads.append(t)
+
+    # Wait for the queue to be empty
+    file_queue.join()
+
+    # Stop the consumer threads
+    for _ in range(max_threads):
+        file_queue.put(None)
+    for t in consumer_threads:
+        t.join()
+
     return matches, errors
-
-
-if __name__ == "__main__":
-    fname = './cases/parsed_data/4/'
-    analyse_path(fname)
