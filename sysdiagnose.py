@@ -290,6 +290,7 @@ class Sysdiagnose:
         if not case:
             # if sysdiagnose file is new and legit, create new case and extract files
             case = {
+                'date': "<unknown>",  # date when sysdiagnose was taken
                 'case_id': case_id,
                 'source_file': sysdiagnose_file,
                 'source_sha256': readable_hash,
@@ -326,6 +327,7 @@ class Sysdiagnose:
         version = '<unknown>'
         try:
             with open(new_case_json['sysdiagnose.log'], 'r') as f:
+                case['date'] = f.readline().split(': ')[0]  # we don't know the timezone !!!
                 line_version = [line for line in f if 'iPhone OS' in line][0]
                 version = line_version.split()[4]
             new_case_json['ios_version'] = version
