@@ -62,6 +62,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse ps_everywhere 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse ps_everywhere",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: analyse wifi_geolocation 1",
             "type": "debugpy",
             "request": "launch",
@@ -99,6 +107,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
             "args": "-c 1 parse logarchive",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse security_sysdiagnose",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse security_sysdiagnose",
             "cwd": "${workspaceFolder}/"
         },
         {
