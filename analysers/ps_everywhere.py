@@ -93,6 +93,14 @@ def analyse_path(case_folder: str, output_file: str = "ps_everywhere.json") -> b
                     pass
     print(f"{len(all_ps)} entries after taskinfo")
 
+    # processes no full path, no parameters, no threads
+    with open(os.path.join(case_folder, "remotectl_dumpstate.json"), "r") as f:
+        remotectl_dumpstate_json = json.load(f)
+        for p in remotectl_dumpstate_json['Local device']['Services']:
+            add_if_full_path_is_not_in_set(p, all_ps)
+
+    print(f"{len(all_ps)} entries after remotectl_dumpstate")
+
     all_ps = list(all_ps)
     all_ps.sort()
     with open(output_file, 'w') as f:
