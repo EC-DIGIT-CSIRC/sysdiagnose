@@ -9,7 +9,6 @@ class TestAnalysersYarascan(SysdiagnoseTestCase):
     def test_analyse_yarascan(self):
         # FIXME we need to first create a yara rule
 
-
         for case_id, case in self.sd.cases().items():
             print(f"Running Yarascan for {case_id}")
             # run the analyser
