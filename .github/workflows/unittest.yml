@@ -46,6 +46,8 @@ jobs:
           elif [ ${{ matrix.os }} == 'macos-latest' ]; then
             brew install yara
           fi
+          mkdir yara
+          echo -e 'rule match_for_sure_on_ios\n{\n    strings:\n        $a01 = "/System/Library/CoreServices/powerd.bundle/powerd"\n\n   condition:\n        any of them\n}\n'  > yara/match_for_sure.yar
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
