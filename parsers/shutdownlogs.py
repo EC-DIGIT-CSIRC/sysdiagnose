@@ -8,71 +8,69 @@ import datetime
 import glob
 import os
 import re
-import json
-
-
-parser_description = "Parsing shutdown.log file"
+from utils.base import BaseParserInterface
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
 SIGTERM_LINE = "SIGTERM"
 
 
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'system_logs.logarchive/Extra/shutdown.log'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+class ShutdownLogsParser(BaseParserInterface):
+    description = "Parsing shutdown.log file"
 
-    return log_files
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'system_logs.logarchive/Extra/shutdown.log'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
 
-def parse_path(path: str) -> list | dict:
-    # read log file content
-    log_lines = ""
-    try:
-        with open(get_log_files(path)[0], "r") as f:
-            log_lines = f.readlines()
-    except IndexError:
-        return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
+        return log_files
 
-    parsed_data = {}
-    index = 0
-    # go through log file
-    while index < len(log_lines):
-        # look for begining of shutdown sequence
-        if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-            running_processes = {}
-            time_waiting = 0
-            while not (SIGTERM_LINE in log_lines[index]):
-                if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-                    time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
-                if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
-                    result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
-                    pid = result.groups()[0]
-                    binary_path = result.groups()[1]
-                    running_processes[pid] = {
-                        "pid": pid,
-                        "path": binary_path,
-                        "command": '/'.join(binary_path.split('/')[:-1]),
-                        "time_waiting": time_waiting
-                    }
-                index += 1
-            # compute timestamp from SIGTERM line
-            result = re.search(r".*\[(\d+)\].*", log_lines[index])
-            timestamp = result.groups()[0]
-            time = str(datetime.datetime.fromtimestamp(int(timestamp), datetime.UTC))
-            # add entries
-            parsed_data[time] = list(running_processes.values())
-        index += 1
+    def execute(self) -> list | dict:
+        return ShutdownLogsParser.parse_file(self.get_log_files()[0])
 
-    return parsed_data
+    def parse_file(path: str) -> list | dict:
+        # read log file content
+        log_lines = ""
+        try:
+            with open(path, "r") as f:
+                log_lines = f.readlines()
+        except IndexError:
+            return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
 
+        parsed_data = {}
+        index = 0
+        # go through log file
+        while index < len(log_lines):
+            # look for begining of shutdown sequence
+            if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
+                running_processes = {}
+                time_waiting = 0
+                while not (SIGTERM_LINE in log_lines[index]):
+                    if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
+                        time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
+                    if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
+                        result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
+                        pid = result.groups()[0]
+                        binary_path = result.groups()[1]
+                        running_processes[pid] = {
+                            "pid": pid,
+                            "path": binary_path,
+                            "command": '/'.join(binary_path.split('/')[:-1]),
+                            "time_waiting": time_waiting
+                        }
+                    index += 1
+                # compute timestamp from SIGTERM line
+                result = re.search(r".*\[(\d+)\].*", log_lines[index])
+                timestamp = result.groups()[0]
+                time = str(datetime.datetime.fromtimestamp(int(timestamp), datetime.UTC))
+                # add entries
+                parsed_data[time] = list(running_processes.values())
+            index += 1
 
-def parse_path_to_folder(path: str, output_folder: str) -> bool:
-    result = parse_path(path)
-    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
-    with open(output_file, 'w') as f:
-        json.dump(result, f, indent=4)
+        return parsed_data

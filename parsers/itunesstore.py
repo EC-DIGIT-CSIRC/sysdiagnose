@@ -8,32 +8,31 @@ from utils import sqlite2json
 import glob
 import os
 import utils.misc as misc
-import json
-
-parser_description = "Parsing iTunes store logs"
+from utils.base import BaseParserInterface
 
 
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'logs/itunesstored/downloads.*.sqlitedb'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+class iTunesStoreParser(BaseParserInterface):
+    description = "Parsing iTunes store logs"
 
-    return log_files
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'logs/itunesstored/downloads.*.sqlitedb'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
 
-def parse_path(path: str) -> list | dict:
-    # there's only one file to parse
-    try:
-        return misc.json_serializable(sqlite2json.sqlite2struct(get_log_files(path)[0]))
-    except IndexError:
-        return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}
+        return log_files
 
+    def execute(self) -> list | dict:
+        # there's only one file to parse
+        try:
+            return iTunesStoreParser.parse_file(self.get_log_files()[0])
+        except IndexError:
+            return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}
 
-def parse_path_to_folder(path: str, output_folder: str) -> bool:
-    result = parse_path(path)
-    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
-    with open(output_file, 'w') as f:
-        json.dump(result, f, indent=4)
+    def parse_file(path: str) -> list | dict:
+        return misc.json_serializable(sqlite2json.sqlite2struct(path))

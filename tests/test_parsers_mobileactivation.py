@@ -1,15 +1,21 @@
-from parsers.mobileactivation import parse_path, get_log_files
+from parsers.mobileactivation import MobileActivationParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersMobileactivation(SysdiagnoseTestCase):
 
     def test_mobileactivation(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
-            print(f'Parsing {files}')
-            result = parse_path(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = MobileActivationParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+            self.assertTrue(len(files) > 0)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
             for item in result:
                 self.assertTrue('timestamp' in item)
                 self.assertTrue('loglevel' in item)

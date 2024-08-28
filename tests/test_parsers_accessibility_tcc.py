@@ -1,16 +1,21 @@
-from parsers.accessibility_tcc import parse_path, get_log_files
+from parsers.accessibility_tcc import AccessibilityTccParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersAccessibilityTcc(SysdiagnoseTestCase):
 
     def test_get_accessibility_tcc(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
-            print(f'Parsing {files}')
-            self.assertEqual(len(files), 1)
-            result = parse_path(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = AccessibilityTccParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+            self.assertTrue(len(files) > 0)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
             self.assertTrue('admin' in result)
             self.assertTrue('policies' in result)
             self.assertTrue('active_policy' in result)

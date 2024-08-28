@@ -1,16 +1,24 @@
-from parsers.security_sysdiagnose import parse_path, get_log_files, process_buffer_keychain_state, process_buffer_client, process_buffer_keys_and_values
+from parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
 
     def test_get_security_sysdiagnose(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
-            print(f'Parsing {files}')
-            parse_path(log_root_path)
-            # just test for no exceptions
+        for case_id, case in self.sd.cases().items():
+            p = SecuritySysdiagnoseParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+            self.assertEqual(len(files), 1)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
+            if result:
+                # test for no errors
+                self.assertEqual(result.get('errors'), [])
 
     def test_process_buffer_keychain_state(self):
         input = [
@@ -23,7 +31,7 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
             ]
         }
         result = {}
-        process_buffer_keychain_state(input, result)
+        SecuritySysdiagnoseParser.process_buffer_keychain_state(input, result)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
@@ -42,7 +50,7 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
             ]
         }
         result = {}
-        process_buffer_client(input, result)
+        SecuritySysdiagnoseParser.process_buffer_client(input, result)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
@@ -57,7 +65,7 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
             }
         }
         result = {}
-        process_buffer_keys_and_values(input, result)
+        SecuritySysdiagnoseParser.process_buffer_keys_and_values(input, result)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 

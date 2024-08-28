@@ -30,11 +30,11 @@
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: analyse list",
+            "name": "Python Debugger: analysers list",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "analyse list",
+            "args": "analysers",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -51,6 +51,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
             "args": "-c 1 analyse timeliner",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: analyse demo_analyser",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse demo_analyser",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -94,6 +102,22 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse yarascan",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 analyse yarascan",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: list parsers",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "parsers",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse demo_parser",
             "type": "debugpy",
             "request": "launch",
@@ -131,6 +155,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
             "args": "-c 2 parse networkextension",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse psthread",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse psthread",
             "cwd": "${workspaceFolder}/"
         },
         {

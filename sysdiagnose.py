@@ -12,6 +12,8 @@ import sys
 import tarfile
 import fcntl
 
+from utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -93,13 +95,13 @@ def main():
             sd.print_parsers_list()
             return
         elif args.parser == 'all':
-            parsers = list(sd.get_parsers().keys())
+            parsers_list = list(sd.get_parsers().keys())
         elif not sd.is_valid_parser_name(args.parser):
             sd.print_parsers_list()
             print("")
             exit(f"Parser '{args.parser}' does not exist, possible options are listed above.")
         else:
-            parsers = [args.parser]
+            parsers_list = [args.parser]
 
         if args.case_id == 'all':
             case_ids = sd.get_case_ids()
@@ -112,7 +114,7 @@ def main():
 
         for case_id in case_ids:
             print(f"Case ID: {case_id}")
-            for parser in parsers:
+            for parser in parsers_list:
                 print(f"Parser '{parser}' for case ID '{case_id}'")
                 try:
                     sd.parse(parser, case_id)
@@ -125,13 +127,13 @@ def main():
             sd.print_analysers_list()
             return
         elif args.analyser == 'all':
-            analysers = list(sd.get_analysers().keys())
+            analysers_list = list(sd.get_analysers().keys())
         elif not sd.is_valid_analyser_name(args.analyser):
             sd.print_analysers_list()
             print("")
             exit(f"Analyser '{args.analyser}' does not exist, possible options are listed above.")
         else:
-            analysers = [args.analyser]
+            analysers_list = [args.analyser]
 
         if args.case_id == 'all':
             case_ids = sd.get_case_ids()
@@ -144,7 +146,7 @@ def main():
 
         for case_id in case_ids:
             print(f"Case ID: {case_id}")
-            for analyser in analysers:
+            for analyser in analysers_list:
                 print(f"  Analyser '{analyser}' for case ID '{case_id}'")
                 try:
                     sd.analyse(analyser, case_id)
@@ -174,29 +176,15 @@ def analyse_parser_error(message):
 
 class Sysdiagnose:
     def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
-        self.config_folder = os.path.dirname(os.path.abspath(__file__))
-        self.parsers_folder = os.path.join(self.config_folder, "parsers")
-        self.analysers_folder = os.path.join(self.config_folder, "analysers")
-
-        # case data is in current working directory by default
-        self.cases_root_folder = cases_path
-
-        self.cases_file = os.path.join(self.cases_root_folder, "cases.json")
-        self.data_folder = os.path.join(self.cases_root_folder, "data")
-        self.parsed_data_folder = os.path.join(self.cases_root_folder, "parsed_data")  # stay in current folder
-
         self._cases = False   # will be populated through cases() singleton method
-
-        os.makedirs(self.cases_root_folder, exist_ok=True)
-        os.makedirs(self.data_folder, exist_ok=True)
-        os.makedirs(self.parsed_data_folder, exist_ok=True)
+        self.config = SysdiagnoseConfig(cases_path)
 
     def cases(self, force: bool = False) -> dict:
-        # singleton, so it's not loaded unless necessary
+        # pseudo singleton, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
             try:
-                with open(self.cases_file, 'r+') as f:
+                with open(self.config.cases_file, 'r+') as f:
                     try:
                         fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
                         self._cases = json.load(f)
@@ -214,7 +202,7 @@ class Sysdiagnose:
                         fcntl.flock(f, fcntl.LOCK_UN)
             except FileNotFoundError:
                 self._cases = {}
-                with open(self.cases_file, 'w') as f:
+                with open(self.config.cases_file, 'w') as f:
                     try:
                         fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
                         json.dump(self._cases, f, indent=4)
@@ -299,11 +287,11 @@ class Sysdiagnose:
             }
 
         # create case folder
-        case_folder = os.path.join(self.data_folder, str(case['case_id']))
+        case_folder = os.path.join(self.config.data_folder, str(case['case_id']))
         os.makedirs(case_folder, exist_ok=True)
 
         # create parsed_data folder
-        parsed_folder = os.path.join(self.parsed_data_folder, str(case['case_id']))
+        parsed_folder = os.path.join(self.config.parsed_data_folder, str(case['case_id']))
         os.makedirs(parsed_folder, exist_ok=True)
 
         # extract sysdiagnose files
@@ -336,21 +324,20 @@ class Sysdiagnose:
             raise Exception(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
 
         # Save JSON file
-        case_fname = os.path.join(self.data_folder, f"{case_id}.json")
+        case_fname = os.path.join(self.config.data_folder, f"{case_id}.json")
         with open(case_fname, 'w') as data_file:
             data_file.write(json.dumps(new_case_json, indent=4))
 
         # update cases list file
-        extracted_files_path = os.path.join(case_folder, os.listdir(case_folder).pop())
-        remotectl_dumpstate_json = remotectl_dumpstate.parse_path(extracted_files_path)
+        remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id).get_result()
         try:
             case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
             case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
-        except KeyError as e:
+        except (KeyError, TypeError) as e:
             print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
 
         # update case with new data
-        with open(self.cases_file, 'r+') as f:
+        with open(self.config.cases_file, 'r+') as f:
             try:
                 fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
                 self._cases = json.load(f)           # load latest version
@@ -367,47 +354,32 @@ class Sysdiagnose:
 
     def parse(self, parser: str, case_id: str):
         # Load parser module
-        spec = importlib.util.spec_from_file_location(parser, os.path.join(self.parsers_folder, parser) + '.py')
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = importlib.import_module(f'parsers.{parser}')
+        parser_instance = None
+        # figure out the class name and create an instance of it
+        for attr in dir(module):
+            obj = getattr(module, attr)
+            if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+                parser_instance: BaseParserInterface = obj(config=self.config, case_id=case_id)
+                break
+        if not parser_instance:
+            raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
 
-        case_folder = os.path.join(self.data_folder, case_id)
-        if not os.path.isdir(case_folder):
-            print(f"Case {case_id} does not exist", file=sys.stderr)
-            return -1
-
-        extracted_files_path = os.path.join(case_folder, os.listdir(case_folder).pop())
-
-        if hasattr(module, 'parse_path_to_folder'):
-            output_folder = os.path.join(self.parsed_data_folder, case_id)
-            os.makedirs(output_folder, exist_ok=True)
-            result = module.parse_path_to_folder(path=extracted_files_path, output_folder=output_folder)
-            print(f'Execution finished, output saved in: {output_folder}', file=sys.stderr)
-        else:  # if the module cannot (yet) save directly to a folder, we wrap around by doing it ourselves
-            # parsers that output in the result variable
-            # building command
-            result = module.parse_path(path=extracted_files_path)
-            # saving the parser output
-            output_file = os.path.join(self.parsed_data_folder, case_id, f"{parser}.json")
-            with open(output_file, 'w') as data_file:
-                data_file.write(json.dumps(result, indent=4, ensure_ascii=False))
-            print(f'Execution finished, output saved in: {output_file}', file=sys.stderr)
+        parser_instance.save_result(force=True)  # force parsing
         return 0
 
     def analyse(self, analyser: str, case_id: str):
-        # Load parser module
-        spec = importlib.util.spec_from_file_location(analyser, os.path.join(self.analysers_folder, analyser + '.py'))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = importlib.import_module(f'analysers.{analyser}')
+        analyser_instance = None
+        for attr in dir(module):
+            obj = getattr(module, attr)
+            if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
+                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case_id=case_id)
+                break
+        if not analyser_instance:
+            raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")
 
-        # building command
-        parse_data_path = os.path.join(self.parsed_data_folder, case_id)
-        if not os.path.isdir(parse_data_path):
-            print(f"Case {case_id} does not exist", file=sys.stderr)
-            return -1
-        output_file = os.path.join(self.parsed_data_folder, case_id, analyser + "." + module.analyser_format)
-        module.analyse_path(case_folder=parse_data_path, output_file=output_file)
-        print(f'Execution success, output saved in: {output_file}', file=sys.stderr)
+        analyser_instance.save_result(force=True)  # force parsing
 
         return 0
 
@@ -432,7 +404,7 @@ class Sysdiagnose:
     def is_valid_parser_name(self, name):
         if name == '__init__':
             return False
-        fname = os.path.join(self.parsers_folder, f'{name}.py')
+        fname = os.path.join(self.config.parsers_folder, f'{name}.py')
         if os.path.isfile(fname):
             try:
                 spec = importlib.util.spec_from_file_location(name, fname)
@@ -446,7 +418,7 @@ class Sysdiagnose:
     def is_valid_analyser_name(self, name):
         if name == '__init__':
             return False
-        fname = os.path.join(self.analysers_folder, f'{name}.py')
+        fname = os.path.join(self.config.analysers_folder, f'{name}.py')
         if os.path.isfile(fname):
             try:
                 spec = importlib.util.spec_from_file_location(name, fname)
@@ -458,38 +430,46 @@ class Sysdiagnose:
         return False
 
     def get_parsers(self) -> dict:
-        modules = glob.glob(os.path.join(self.parsers_folder, '*.py'))
-        parsers = {}
-        for parser in modules:
-            if parser.endswith('__init__.py'):
+        modules = glob.glob(os.path.join(self.config.parsers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
                 continue
             try:
-                name = parser[len(self.parsers_folder) + 1:-3]
-                spec = importlib.util.spec_from_file_location(name, parser)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                parsers[name] = module.parser_description
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'parsers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+                        results[name] = obj.description
+                        break
             except AttributeError:
                 continue
-        parsers = dict(sorted(parsers.items()))
-        return parsers
+
+        results = dict(sorted(results.items()))
+        return results
 
     def get_analysers(self) -> dict:
-        modules = glob.glob(os.path.join(self.analysers_folder, '*.py'))
-        analysers = {}
-        for parser in modules:
-            if parser.endswith('__init__.py'):
+        modules = glob.glob(os.path.join(self.config.analysers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
                 continue
             try:
-                name = parser[len(self.analysers_folder) + 1:-3]
-                spec = importlib.util.spec_from_file_location(name, parser)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                analysers[name] = module.analyser_description
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'analysers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
+                        results[name] = obj.description
+                        break
             except AttributeError:
                 continue
-        analysers = dict(sorted(analysers.items()))
-        return analysers
+
+        results = dict(sorted(results.items()))
+        return results
 
     def print_parsers_list(self) -> None:
         lines = [['all', 'Run all parsers']]

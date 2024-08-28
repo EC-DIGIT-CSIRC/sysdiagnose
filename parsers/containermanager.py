@@ -7,24 +7,27 @@
 import glob
 import os
 from utils import multilinelog
+from utils.base import BaseParserInterface
 
 
-parser_description = "Parsing containermanagerd logs file"
+class ContainerManagerParser(BaseParserInterface):
+    description = "Parsing containermanagerd logs file"
 
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'logs/MobileContainerManager/containermanagerd.log*'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'logs/MobileContainerManager/containermanagerd.log*'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
 
-    return log_files
+        return log_files
 
-
-def parse_path(path: str) -> list | dict:
-    result = []
-    for logfile in get_log_files(path):
-        result.extend(multilinelog.extract_from_file(logfile))
-    return result
+    def execute(self) -> list | dict:
+        result = []
+        for logfile in self.get_log_files():
+            result.extend(multilinelog.extract_from_file(logfile))
+        return result

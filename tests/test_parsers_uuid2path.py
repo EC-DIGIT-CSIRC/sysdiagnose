@@ -1,17 +1,21 @@
 from tests import SysdiagnoseTestCase
-from parsers.uuid2path import parse_path, get_log_files
+from parsers.uuid2path import UUID2PathParser
 import unittest
+import os
 
 
 class TestParsersUuid2path(SysdiagnoseTestCase):
     def test_uuid2path(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
-            if not files:  # not all sysdiagnose dumps have this log file
+        for case_id, case in self.sd.cases().items():
+            p = UUID2PathParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+            if not files:
                 continue
 
-            print(f'Parsing {files}')
-            result = parse_path(log_root_path)
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
             self.assertGreater(len(result), 0)
 
 

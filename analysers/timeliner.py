@@ -4,29 +4,36 @@
 # Script to extract timestamp and generate a timesketch output
 # Author: david@autopsit.org
 #
-# Important note: timestamp are in microseconds! standard epoch is in seconds. # FIXME is this correct?
 
-import os
-import json
 from datetime import datetime, timezone
-from parsers.logarchive import convert_unifiedlog_time_to_datetime
+from parsers.logarchive import LogarchiveParser
+from parsers.mobileactivation import MobileActivationParser
+from parsers.powerlogs import PowerLogsParser
+from parsers.swcutil import SwcutilParser
+from parsers.accessibility_tcc import AccessibilityTccParser
+from parsers.shutdownlogs import ShutdownLogsParser
+from parsers.wifisecurity import WifiSecurityParser
+from parsers.wifi_known_networks import WifiKnownNetworksParser
 from collections.abc import Generator
+from utils.base import BaseAnalyserInterface
 
 
-analyser_description = 'Generate a Timesketch compatible timeline'
-analyser_format = 'jsonl'
+class TimelinerAnalyser(BaseAnalyserInterface):
+    description = 'Generate a Timesketch compatible timeline'
+    format = 'jsonl'
 
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
-# Timesketch format:
-# https://timesketch.org/guides/user/import-from-json-csv/
-# Mandatory: timestamps must be in microseconds !!!
-# {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
+    # Timesketch format:
+    # https://timesketch.org/guides/user/import-from-json-csv/
+    # Mandatory: timestamps must be in microseconds !!!
+    # {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 
-def __extract_ts_mobileactivation(case_folder: str) -> Generator[dict, None, None]:
-    try:
-        filename = 'mobileactivation.json'
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_mobileactivation(self) -> Generator[dict, None, None]:
+        try:
+            p = MobileActivationParser(self.config, self.case_id)
+            data = p.get_result()
             for event in data:
                 ts_event = {
                     'message': 'Mobile Activation',
@@ -41,78 +48,27 @@ def __extract_ts_mobileactivation(case_folder: str) -> Generator[dict, None, Non
                     # FIXME what should we do? the log file (now) contains nice timestamps, do we want to extract less, but summarized, data?
                     continue
                 yield ts_event
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from mobileactivation file. Reason: {str(e)}")
 
-
-def __extract_ts_powerlogs(case_folder: str) -> Generator[dict, None, None]:
-    try:
-        filename = 'powerlogs.json'
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
-
+    def __extract_ts_powerlogs(self) -> Generator[dict, None, None]:
+        try:
+            p = PowerLogsParser(self.config, self.case_id)
+            data = p.get_result()
             # extract tables of interest
-            for entry in __powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(data):
+            for entry in TimelinerAnalyser.__powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(data):
                 yield entry
-            for entry in __powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(data):
+            for entry in TimelinerAnalyser.__powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(data):
                 yield entry
-            for entry in __powerlogs__PLAccountingOperator_EventNone_Nodes(data):
+            for entry in TimelinerAnalyser.__powerlogs__PLAccountingOperator_EventNone_Nodes(data):
                 yield entry
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from powerlogs. Reason: {str(e)}")
 
-
-def __powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
-    proc_exit = jdata['PLProcessMonitorAgent_EventPoint_ProcessExit']
-    for proc in proc_exit:
-        timestamp = datetime.fromtimestamp(proc['timestamp'], tz=timezone.utc)
-
-        extra_field = ''
-        if 'IsPermanent' in proc.keys():
-            extra_field = 'Is permanent: %d' % proc['IsPermanent']
-        ts_event = {
-            'message': proc['ProcessName'],
-            'timestamp': proc['timestamp'] * 1000000,
-            'datetime': timestamp.isoformat(),
-            'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (proc['ReasonCode'], proc['ReasonNamespace']),
-            'extra_field_1': extra_field
-        }
-        yield ts_event
-
-
-def __powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(jdata):
-    events = jdata['PLProcessMonitorAgent_EventBackward_ProcessExitHistogram']
-    for event in events:
-        timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
-        ts_event = {
-            'message': event['ProcessName'],
-            'timestamp': event['timestamp'] * 1000000,
-            'datetime': timestamp.isoformat(),
-            'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (event['ReasonCode'], event['ReasonNamespace']),
-            'extra_field_1': 'Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d' % (event['0s-5s'], event['5s-10s'], event['10s-60s'], event['60s+'])
-        }
-        yield ts_event
-
-
-def __powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
-    eventnone = jdata['PLAccountingOperator_EventNone_Nodes']
-    for event in eventnone:
-        timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
-        ts_event = {
-            'message': event['Name'],
-            'timestamp': event['timestamp'] * 1000000,
-            'datetime': timestamp.isoformat(),
-            'timestamp_desc': 'PLAccountingOperator Event',
-            'extra_field_1': 'Is permanent: %d' % event['IsPermanent']
-        }
-        yield ts_event
-
-
-def __extract_ts_swcutil(case_folder: str) -> Generator[dict, None, None]:
-    filename = 'swcutil.json'
-    try:
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_swcutil(self) -> Generator[dict, None, None]:
+        try:
+            p = SwcutilParser(self.config, self.case_id)
+            data = p.get_result()
             if 'db' in data.keys():
                 for service in data['db']:
                     try:
@@ -129,15 +85,13 @@ def __extract_ts_swcutil(case_folder: str) -> Generator[dict, None, None]:
                         # some entries do not have a Last Checked or timestamp field
                         # print(f"WARNING {filename} while extracting timestamp from {(service['Service'])} - {(service['App ID'])}. Record not inserted.")
                         pass
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from swcutil. Reason {str(e)}")
 
-
-def __extract_ts_accessibility_tcc(case_folder: str) -> Generator[dict, None, None]:
-    filename = 'accessibility_tcc.json'
-    try:
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_accessibility_tcc(self) -> Generator[dict, None, None]:
+        try:
+            p = AccessibilityTccParser(self.config, self.case_id)
+            data = p.get_result()
             if 'access' in data.keys():
                 for access in data['access']:
                     # create timeline entry
@@ -150,15 +104,13 @@ def __extract_ts_accessibility_tcc(case_folder: str) -> Generator[dict, None, No
                         'extra_field_1': 'client: %s' % access['client']
                     }
                     yield ts_event
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from accessibility_tcc. Reason {str(e)}")
 
-
-def __extract_ts_shutdownlogs(case_folder: str) -> Generator[dict, None, None]:
-    filename = 'shutdownlogs.json'
-    try:
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_shutdownlogs(self) -> Generator[dict, None, None]:
+        try:
+            p = ShutdownLogsParser(self.config, self.case_id)
+            data = p.get_result()
             for ts, processes in data.items():
                 try:
                     # create timeline entries
@@ -174,19 +126,17 @@ def __extract_ts_shutdownlogs(case_folder: str) -> Generator[dict, None, None]:
                         yield ts_event
                 except Exception as e:
                     print(f"WARNING: shutdownlog entry not parsed: {ts}. Reason: {str(e)}")
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason: {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from shutdownlog. Reason: {str(e)}")
 
-
-def __extract_ts_logarchive(case_folder: str) -> Generator[dict, None, None]:
-    logarchive_file = os.path.join(case_folder, 'logarchive.json')
-    try:
-        with open(logarchive_file, 'r') as fd:
-            for line in fd:
+    def __extract_ts_logarchive(self) -> Generator[dict, None, None]:
+        try:
+            p = LogarchiveParser(self.config, self.case_id)
+            data = p.get_result()
+            for trace in data:
                 try:
-                    trace = json.loads(line)
                     # create timeline entry
-                    timestamp = convert_unifiedlog_time_to_datetime(trace['time'])
+                    timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(trace['time'])
                     ts_event = {
                         'message': trace['message'],
                         'timestamp': timestamp.timestamp() * 1000000,
@@ -197,15 +147,13 @@ def __extract_ts_logarchive(case_folder: str) -> Generator[dict, None, None]:
                     yield ts_event
                 except KeyError as e:
                     print(f"WARNING: trace not parsed: {trace}. Error {e}")
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {logarchive_file}. Reason: {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from logarchive. Reason: {str(e)}")
 
-
-def __extract_ts_wifisecurity(case_folder: str) -> Generator[dict, None, None]:
-    filename = 'wifisecurity.json'
-    try:
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_wifisecurity(self) -> Generator[dict, None, None]:
+        try:
+            p = WifiSecurityParser(self.config, self.case_id)
+            data = p.get_result()
             for wifi in data:
                 # create timeline entry
                 ctimestamp = datetime.strptime(wifi['cdat'], '%Y-%m-%d %H:%M:%S %z')
@@ -230,15 +178,13 @@ def __extract_ts_wifisecurity(case_folder: str) -> Generator[dict, None, None]:
                     'extra_field_1': wifi['accc']
                 }
                 yield ts_event
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from wifisecurity. Reason {str(e)}")
 
-
-def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, None]:
-    filename = 'wifi_known_networks.json'
-    try:
-        with open(os.path.join(case_folder, filename), 'r') as fd:
-            data = json.load(fd)
+    def __extract_ts_wifi_known_networks(self) -> Generator[dict, None, None]:
+        try:
+            p = WifiKnownNetworksParser(self.config, self.case_id)
+            data = p.get_result()
             for item in data.values():
                 ssid = item['SSID']
                 # WIFI added
@@ -291,23 +237,57 @@ def __extract_ts_wifi_known_networks(case_folder: str) -> Generator[dict, None, 
                     # some wifi networks do not have a password modification date
                     # print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
                     pass
-    except Exception as e:
-        print(f"ERROR while extracting timestamp from {filename}. Reason {str(e)}")
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from wifi_known_networks. Reason {str(e)}")
 
+    def execute(self):
+        # Get all the functions that start with '__extract_ts_'
+        # and call these with the case_folder as parameter
+        # do this using generators, as this eats much less memory and is just so much more efficient
+        for func in dir(self):
+            if func.startswith(f"_{self.__class__.__name__}__extract_ts_"):
+                for event in getattr(self, func)():  # call the function
+                    yield event
 
-def analyse_path(case_folder: str, output_file: str = 'timeliner.jsonl') -> bool:
-    # Get all the functions that start with '__extract_ts_'
-    # and call these with the case_folder as parameter
-    # do this using generators, as this eats much less memory and is just so much more efficient
-    try:
-        with open(output_file, 'w') as f:
-            for func in globals():
-                if func.startswith('__extract_ts_'):
-                    for event in globals()[func](case_folder):  # call the function
-                        line = json.dumps(event)
-                        f.write(line)
-                        f.write('\n')
-    except Exception as e:
-        print(f"ERROR: impossible to save timeline to {output_file}. Reason: {str(e)}")
-        return False
-    return True
+    def __powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
+        proc_exit = jdata.get('PLProcessMonitorAgent_EventPoint_ProcessExit', [])
+        for proc in proc_exit:
+            timestamp = datetime.fromtimestamp(proc['timestamp'], tz=timezone.utc)
+
+            extra_field = ''
+            if 'IsPermanent' in proc.keys():
+                extra_field = 'Is permanent: %d' % proc['IsPermanent']
+            ts_event = {
+                'message': proc['ProcessName'],
+                'timestamp': proc['timestamp'] * 1000000,
+                'datetime': timestamp.isoformat(),
+                'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (proc['ReasonCode'], proc['ReasonNamespace']),
+                'extra_field_1': extra_field
+            }
+            yield ts_event
+
+    def __powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(jdata):
+        events = jdata.get('PLProcessMonitorAgent_EventBackward_ProcessExitHistogram', [])
+        for event in events:
+            timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
+            ts_event = {
+                'message': event['ProcessName'],
+                'timestamp': event['timestamp'] * 1000000,
+                'datetime': timestamp.isoformat(),
+                'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (event['ReasonCode'], event['ReasonNamespace']),
+                'extra_field_1': 'Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d' % (event['0s-5s'], event['5s-10s'], event['10s-60s'], event['60s+'])
+            }
+            yield ts_event
+
+    def __powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
+        eventnone = jdata.get('PLAccountingOperator_EventNone_Nodes', [])
+        for event in eventnone:
+            timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
+            ts_event = {
+                'message': event['Name'],
+                'timestamp': event['timestamp'] * 1000000,
+                'datetime': timestamp.isoformat(),
+                'timestamp_desc': 'PLAccountingOperator Event',
+                'extra_field_1': 'Is permanent: %d' % event['IsPermanent']
+            }
+            yield ts_event

@@ -9,43 +9,41 @@
 import os
 import glob
 import utils.misc as misc
-import json
-
-parser_description = "Parsing Known Wifi Networks plist file"
+from utils.base import BaseParserInterface
 
 
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'WiFi/com.apple.wifi.known-networks.plist'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+class WifiKnownNetworksParser(BaseParserInterface):
+    description = "Parsing Known Wifi Networks plist file"
 
-    return log_files
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
+
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'WiFi/com.apple.wifi.known-networks.plist'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
+
+        return log_files
+
+    def execute(self) -> list | dict:
+        return WifiKnownNetworksParser.parse_file(self.get_log_files()[0])
+
+    def parse_file(path: str) -> list | dict:
+        return misc.load_plist_file_as_json(path)
+
+    '''
+    code usefull for future printing function
+
+    class CustomEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Uid) or isinstance(obj, Data) or isinstance(obj, datetime):
+                return str(obj)
+            return super().default(obj)
 
 
-def parse_path(path: str) -> list | dict:
-    return misc.load_plist_file_as_json(get_log_files(path)[0])
-
-
-def parse_path_to_folder(path: str, output_folder: str) -> bool:
-    result = parse_path(path)
-    output_file = os.path.join(output_folder, f"{__name__.split('.')[-1]}.json")
-    with open(output_file, 'w') as f:
-        json.dump(result, f, indent=4)
-
-
-'''
-code usefull for future printing function
-
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Uid) or isinstance(obj, Data) or isinstance(obj, datetime):
-            return str(obj)
-        return super().default(obj)
-
-
-        pl = getKnownWifiNetworks(options.inputfile)
-        print(json.dumps(pl, indent=4, cls=CustomEncoder), file=sys.stderr)
-'''
+            pl = getKnownWifiNetworks(options.inputfile)
+            print(json.dumps(pl, indent=4, cls=CustomEncoder), file=sys.stderr)
+    '''

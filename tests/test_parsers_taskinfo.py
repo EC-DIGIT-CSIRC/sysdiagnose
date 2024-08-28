@@ -1,16 +1,21 @@
-from parsers.taskinfo import parse_path, get_log_files
+from parsers.taskinfo import TaskinfoParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersTaskinfo(SysdiagnoseTestCase):
 
     def test_get_tasks(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = TaskinfoParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
             self.assertTrue(len(files) > 0)
-            print(f'Parsing {files}')
-            result = parse_path(log_root_path)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
             self.assertGreater(len(result), 0)
             self.assertGreater(result['numb_tasks'], 0)
             self.assertGreater(len(result['tasks']), 0)

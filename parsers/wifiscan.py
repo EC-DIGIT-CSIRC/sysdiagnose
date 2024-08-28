@@ -3,26 +3,34 @@
 import glob
 import os
 import re
+from utils.base import BaseParserInterface
 
 
-parser_description = "Parsing wifi_scan files"
+class WifiScanParser(BaseParserInterface):
+    description = "Parsing wifi_scan files"
 
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'WiFi/wifi_scan*.txt'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'WiFi/wifi_scan*.txt'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
 
-    return log_files
+        return log_files
 
+    def execute(self) -> list | dict:
+        output = []
+        for logfile in self.get_log_files():
+            output.extend(WifiScanParser.parse_file(logfile))
+        return output
 
-def parse_path(path: str) -> list | dict:
-    output = []
-    for logfile in get_log_files(path):
-        with open(logfile, 'r') as f:
+    def parse_file(path: str) -> list | dict:
+        output = []
+        with open(path, 'r') as f:
             for line in f:
                 line = line.strip()
                 # skip empty lines
@@ -74,4 +82,4 @@ def parse_path(path: str) -> list | dict:
                         index_now = index_close + 2
                         parsed_data[key] = value
                 output.append(parsed_data)
-    return output
+        return output

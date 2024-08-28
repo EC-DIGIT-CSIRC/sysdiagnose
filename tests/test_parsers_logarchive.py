@@ -1,56 +1,45 @@
-from parsers.logarchive import get_log_files, parse_path, parse_path_to_folder, convert_entry_to_unifiedlog_format, convert_unifiedlog_time_to_datetime, convert_native_time_to_unifiedlog_format
+from parsers.logarchive import LogarchiveParser
 from tests import SysdiagnoseTestCase
 import os
-import tempfile
 import unittest
 import json
 
 
 class TestParsersLogarchive(SysdiagnoseTestCase):
 
-    def test_get_logs_outputdir(self):
-        for log_root_path in self.log_root_paths:
-            folders = get_log_files(log_root_path)
+    def test_parse_logarchive(self):
+        for case_id, case in self.sd.cases().items():
+            print(f'Parsing logarchive for {case_id}')
+            p = LogarchiveParser(self.sd.config, case_id=case_id)
 
-            with tempfile.TemporaryDirectory() as tmp_outpath:
-                print(f'Parsing {folders} to {tmp_outpath}')
-                result = parse_path_to_folder(log_root_path, output_folder=tmp_outpath)
-                # check if folder is not empty
-                self.assertNotEqual(os.listdir(tmp_outpath), [])
-                # result should contain at least one entry (linux = stdout, mac = mention it's saved to a file)
-                self.assertTrue(result)
+            files = p.get_log_files()
+            self.assertTrue(len(files) > 0)
 
-                self.assertTrue(os.path.isfile(os.path.join(tmp_outpath, 'logarchive.json')))
-                with open(os.path.join(tmp_outpath, 'logarchive.json'), 'r') as f:
-                    line = f.readline()
-                    json_data = json.loads(line)
-                    self.assertTrue('subsystem' in json_data)
-                    self.assertTrue('datetime' in json_data)
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
 
-    def test_get_logs_result(self):
-        for log_root_path in self.log_root_paths:
-            folders = get_log_files(log_root_path)
-            print(f'Parsing {folders}')
-            result = parse_path(log_root_path)
-            self.assertGreater(len(result), 0)
-            self.assertTrue('subsystem' in result[0])
-            self.assertTrue('datetime' in result[0])
+            # we don't test getting result in memory, but check one line in the output.
+            with open(p.output_file, 'r') as f:
+                line = f.readline()
+                json_data = json.loads(line)
+                self.assertTrue('subsystem' in json_data)
+                self.assertTrue('datetime' in json_data)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = '2023-05-24 13:03:28.908085-0700'
         expected_output = 1684958608908084992
-        result = convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
         input = '2023-05-24 20:03:28.908085-0000'
         expected_output = 1684958608908084992
-        result = convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
     def test_convert_unifiedlog_time_to_datetime(self):
         input = 1684958608908085200
         expected_output = '2023-05-24T20:03:28.908085+00:00'
-        result = convert_unifiedlog_time_to_datetime(input).isoformat()
+        result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat()
         self.assertEqual(result, expected_output)
 
     def test_convert_entry_to_un(self):
@@ -112,7 +101,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             'parentActivityIdentifier': 0,
             'datetime': '2023-05-24 13:03:28.908085-0700'
         }
-        result = convert_entry_to_unifiedlog_format(input)
+        result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
         self.assertDictEqual(result, expected_output)
 
 

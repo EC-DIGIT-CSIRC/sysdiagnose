@@ -1,16 +1,23 @@
-from parsers.plists import parse_path, get_log_files
+from parsers.plists import PlistParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersPlist(SysdiagnoseTestCase):
 
     def test_get_plists(self):
-        for log_root_path in self.log_root_paths:
-            files = get_log_files(log_root_path)
-            self.assertGreater(len(files), 0)
-            print(f'Parsing {files}')
-            result = parse_path(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = PlistParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+            self.assertTrue(len(files) > 0)
+
+            # first run to store in memory
+            result = p.get_result()
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isdir(p.output_folder))
+
             self.assertGreater(len(result), 0)
             print(result.keys())
             self.assertIn('hidutil.plist', result.keys())

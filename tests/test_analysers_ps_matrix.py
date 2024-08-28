@@ -1,15 +1,16 @@
-from analysers.apps import AppsAnalyser
+from analysers.ps_matrix import PsMatrixAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
 
 
-class TestAnalysersApps(SysdiagnoseTestCase):
+class TestAnalysersPsMatrix(SysdiagnoseTestCase):
 
-    def test_analyse_apps(self):
+    def test_analyse_ps_matrix(self):
         for case_id, case in self.sd.cases().items():
+            print(f"Running PsMatrix for {case_id}")
             # run the analyser
-            a = AppsAnalyser(self.sd.config, case_id=case_id)
+            a = PsMatrixAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)

@@ -15,77 +15,76 @@ from optparse import OptionParser
 import glob
 import os
 import re
-
-parser_description = "Parsing ps.txt file"
-
-
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'ps.txt'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
-
-    return log_files
+from utils.base import BaseParserInterface
 
 
-def parse_path(path: str) -> list | dict:
-    try:
-        return parse_ps(get_log_files(path)[0])
-    except IndexError:
-        return {'error': 'No ps.txt file present'}
+class PsParser(BaseParserInterface):
+    description = "Parsing ps.txt file"
 
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
-def parse_ps(filename):
-    result = []
-    try:
-        with open(filename, "r") as f:
-            header = re.split(r"\s+", f.readline().strip())
-            header_length = len(header)
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'ps.txt'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
 
-            # print(f"Found header: {header}")
-            for line in f:
-                patterns = line.strip().split(None, header_length - 1)
-                row = {}
-                # merge last entries together, as last entry may contain spaces
-                for col in range(header_length):
-                    # try to cast as int, float and fallback to string
-                    col_name = header[col]
-                    try:
-                        row[col_name] = int(patterns[col])
-                        continue
-                    except ValueError:
+        return log_files
+
+    def execute(self) -> list | dict:
+        return PsParser.parse_file(self.get_log_files()[0])
+
+    def parse_file(filename):
+        result = []
+        try:
+            with open(filename, "r") as f:
+                header = re.split(r"\s+", f.readline().strip())
+                header_length = len(header)
+
+                # print(f"Found header: {header}")
+                for line in f:
+                    patterns = line.strip().split(None, header_length - 1)
+                    row = {}
+                    # merge last entries together, as last entry may contain spaces
+                    for col in range(header_length):
+                        # try to cast as int, float and fallback to string
+                        col_name = header[col]
                         try:
-                            row[col_name] = float(patterns[col])
+                            row[col_name] = int(patterns[col])
+                            continue
                         except ValueError:
-                            row[col_name] = patterns[col]
-                result.append(row)
-            return result
-    except Exception as e:
-        print(f"Could not parse ps.txt: {str(e)}")
-        return []
+                            try:
+                                row[col_name] = float(patterns[col])
+                            except ValueError:
+                                row[col_name] = patterns[col]
+                    result.append(row)
+                return result
+        except Exception as e:
+            print(f"Could not parse ps.txt: {str(e)}")
+            return []
 
+    def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
+        """
+        Exclude known good processes from the given list of processes.
 
-def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
-    """
-    Exclude known good processes from the given list of processes.
+        Args:
+            processes (dict): The output from parse_file() to check.
+            known_good (dict): The output of parse_file() from a known good.
 
-    Args:
-        processes (dict): The output from parse_ps() to check.
-        known_good (dict): The output of parse_ps() from a known good.
+        Returns:
+            dict: The updated list of processes with known good processes excluded.
+        """
 
-    Returns:
-        dict: The updated list of processes with known good processes excluded.
-    """
+        known_good_cmd = [x['COMMAND'] for x in known_good]
 
-    known_good_cmd = [x['COMMAND'] for x in known_good]
+        for proc in processes:
+            if proc['COMMAND'] in known_good_cmd:
+                processes.remove(proc)
 
-    for proc in processes:
-        if proc['COMMAND'] in known_good_cmd:
-            processes.remove(proc)
-
-    return processes
+        return processes
 
 
 """
@@ -179,7 +178,7 @@ def main():
 
     # parse PS file :)
     if options.inputfile:
-        processes = parse_ps(options.inputfile)
+        processes = PsParser.parse_file(options.inputfile)
         export_as_tree(processes, True)
     else:
         print("WARNING -i option is mandatory!")

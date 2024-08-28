@@ -1,19 +1,25 @@
-from parsers import ps
+from parsers.ps import PsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import tempfile
+import os
 
 
 class TestParsersPs(SysdiagnoseTestCase):
 
     def test_parse_ps(self):
-        for log_root_path in self.log_root_paths:
-            files = ps.get_log_files(log_root_path)
+        for case_id, case in self.sd.cases().items():
+
+            p = PsParser(self.sd.config, case_id=case_id)
+
+            files = p.get_log_files()
             self.assertTrue(len(files) > 0)
-            print(f'Parsing {files}')
-            result = ps.parse_path(log_root_path)
-            if result:  # not all logs contain data
-                for item in result:
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            if p.get_result():  # not all logs contain data
+                for item in p.get_result():
                     self.assertTrue('COMMAND' in item)
                     self.assertTrue('PID' in item)
                     self.assertTrue('USER' in item)
@@ -29,7 +35,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = ps.parse_ps(tmp_inputfile.name)
+        result = PsParser.parse_file(tmp_inputfile.name)
         tmp_inputfile.close()
         self.assertEqual(result, expected_result)
 
@@ -44,7 +50,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = ps.parse_ps(tmp_inputfile.name)
+        result = PsParser.parse_file(tmp_inputfile.name)
         tmp_inputfile.close()
         self.assertEqual(result, expected_result)
 
@@ -61,7 +67,7 @@ class TestParsersPs(SysdiagnoseTestCase):
             {'COMMAND': 'bad', 'PID': 2},
             {'COMMAND': 'unknown', 'PID': 3}
         ]
-        result = ps.exclude_known_goods(processes, known_good)
+        result = PsParser.exclude_known_goods(processes, known_good)
         self.assertEqual(result, expected_result)
 
 

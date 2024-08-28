@@ -1,16 +1,21 @@
-from parsers import spindumpnosymbols
+from parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
     def test_parsespindumpNS(self):
-        for log_root_path in self.log_root_paths:
-            files = spindumpnosymbols.get_log_files(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = SpindumpNoSymbolsParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
             self.assertTrue(len(files) > 0)
-            print(f'Parsing {files}')
-            result = spindumpnosymbols.parse_path(log_root_path)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            result = p.get_result()
             self.assertGreater(len(result), 0)
             self.assertTrue('OS Version' in result)
             self.assertGreater(len(result['processes']), 0)
@@ -24,7 +29,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             'Report Version:   35.1',
         ]
         expected_result = {'Date/Time': '2023-05-24 13:29:15.759 -0700', 'End time': '2023-05-24 13:29:17.757 -0700', 'OS Version': 'iPhone OS 15.7.6 (Build 19H349)', 'Architecture': 'arm64', 'Report Version': '35.1'}
-        result = spindumpnosymbols.parse_basic(lines)
+        result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
         self.assertDictEqual(expected_result, result)
 
@@ -89,7 +94,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
                 {'start': '0x1bb3f9000', 'end': '0x1bb42cfff', 'image': 'libsystem_kernel.dylib', 'UUID': 'D3BAC787-09EE-3319-BE24-4115817391E2', 'path': '/usr/lib/system/libsystem_kernel.dylib'}
             ]
         }
-        result = spindumpnosymbols.parse_process(lines)
+        result = SpindumpNoSymbolsParser.parse_process(lines)
         self.maxDiff = None
         self.assertDictEqual(expected_result, result)
 

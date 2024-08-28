@@ -1,15 +1,16 @@
-from analysers.apps import AppsAnalyser
+from analysers.ps_everywhere import PsEverywhereAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
 
 
-class TestAnalysersApps(SysdiagnoseTestCase):
+class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
 
-    def test_analyse_apps(self):
+    def test_analyse_ps_everywhere(self):
         for case_id, case in self.sd.cases().items():
+            print(f"Running PsEverywhereAnalyser for {case_id}")
             # run the analyser
-            a = AppsAnalyser(self.sd.config, case_id=case_id)
+            a = PsEverywhereAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)

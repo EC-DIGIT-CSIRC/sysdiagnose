@@ -2,6 +2,7 @@ import re
 
 
 def parse_tab_based_hierarchal_file(path: str) -> list | dict:
+    result = {}
     with open(path, 'r') as f:
         lines = f.readlines()
         result = parse_block(lines)
@@ -9,7 +10,7 @@ def parse_tab_based_hierarchal_file(path: str) -> list | dict:
 
 
 def parse_block(lines: list) -> list | dict:
-    result = None
+    result = {}
     n = 0
     while n < len(lines):
         line = lines[n]

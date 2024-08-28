@@ -1,16 +1,22 @@
-from parsers.brctl import parse_path, get_log_files
+from parsers.brctl import BrctlParser
 from tests import SysdiagnoseTestCase
 import unittest
+import os
 
 
 class TestParsersBrctl(SysdiagnoseTestCase):
 
     def test_parsebrctl(self):
-        for log_root_path in self.log_root_paths:
-            folders = get_log_files(log_root_path)
+        for case_id, case in self.sd.cases().items():
+            p = BrctlParser(self.sd.config, case_id=case_id)
+            folders = p.get_log_files()
             self.assertEqual(len(folders), 1)
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
             print(f'Parsing {folders}')
-            result = parse_path(log_root_path)
+            result = p.get_result()
             if result:
                 self.assertTrue('containers' in result)
                 self.assertTrue('boot_history' in result)

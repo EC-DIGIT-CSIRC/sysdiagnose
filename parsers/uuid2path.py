@@ -10,35 +10,43 @@
 import os
 import glob
 import utils.misc as misc
-
-parser_description = "Parsing UUIDToBinaryLocations plist file"
-
-
-def get_log_files(log_root_path: str) -> list:
-    log_files_globs = [
-        'logs/tailspindb/UUIDToBinaryLocations'
-    ]
-    log_files = []
-    for log_files_glob in log_files_globs:
-        log_files.extend(glob.glob(os.path.join(log_root_path, log_files_glob)))
-
-    return log_files
+from utils.base import BaseParserInterface
 
 
-def parse_path(path: str) -> list | dict:
-    try:
-        fname = get_log_files(path)[0]
-        return misc.load_plist_file_as_json(fname)
-    except IndexError:
-        return {'error': 'No UUIDToBinaryLocations file present'}
+class UUID2PathParser(BaseParserInterface):
+    description = "Parsing UUIDToBinaryLocations plist file"
 
+    def __init__(self, config: dict, case_id: str):
+        super().__init__(__file__, config, case_id)
 
-def printResult(data):
-    """
-        Print the hashtable produced by getUUID2Path to console as UUID, path
-    """
-    if data:
-        for uuid in data.keys():
-            print(f"{str(uuid)}, {str(data[uuid])}")
-    print(f"\n {str(len(data.keys()))} GUIDs found\n")
-    return
+    def get_log_files(self) -> list:
+        log_files_globs = [
+            'logs/tailspindb/UUIDToBinaryLocations'
+        ]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
+
+        return log_files
+
+    def execute(self) -> list | dict:
+        try:
+            return UUID2PathParser.parse_file(self.get_log_files()[0])
+        except IndexError:
+            return {'error': 'No UUIDToBinaryLocations file present'}
+
+    def parse_file(path: str) -> list | dict:
+        try:
+            return misc.load_plist_file_as_json(path)
+        except IndexError:
+            return {'error': 'No UUIDToBinaryLocations file present'}
+
+    def printResult(data):
+        """
+            Print the hashtable produced by getUUID2Path to console as UUID, path
+        """
+        if data:
+            for uuid in data.keys():
+                print(f"{str(uuid)}, {str(data[uuid])}")
+        print(f"\n {str(len(data.keys()))} GUIDs found\n")
+        return
