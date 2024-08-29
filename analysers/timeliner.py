@@ -14,6 +14,7 @@ from parsers.accessibility_tcc import AccessibilityTccParser
 from parsers.shutdownlogs import ShutdownLogsParser
 from parsers.wifisecurity import WifiSecurityParser
 from parsers.wifi_known_networks import WifiKnownNetworksParser
+from parsers.crashlogs import CrashLogsParser
 from collections.abc import Generator
 from utils.base import BaseAnalyserInterface
 
@@ -30,7 +31,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
     # Mandatory: timestamps must be in microseconds !!!
     # {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
 
-    def __extract_ts_mobileactivation(self) -> Generator[dict, None, None]:
+    def a__extract_ts_mobileactivation(self) -> Generator[dict, None, None]:
         try:
             p = MobileActivationParser(self.config, self.case_id)
             data = p.get_result()
@@ -51,7 +52,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from mobileactivation file. Reason: {str(e)}")
 
-    def __extract_ts_powerlogs(self) -> Generator[dict, None, None]:
+    def a__extract_ts_powerlogs(self) -> Generator[dict, None, None]:
         try:
             p = PowerLogsParser(self.config, self.case_id)
             data = p.get_result()
@@ -65,7 +66,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from powerlogs. Reason: {str(e)}")
 
-    def __extract_ts_swcutil(self) -> Generator[dict, None, None]:
+    def a__extract_ts_swcutil(self) -> Generator[dict, None, None]:
         try:
             p = SwcutilParser(self.config, self.case_id)
             data = p.get_result()
@@ -88,7 +89,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from swcutil. Reason {str(e)}")
 
-    def __extract_ts_accessibility_tcc(self) -> Generator[dict, None, None]:
+    def a__extract_ts_accessibility_tcc(self) -> Generator[dict, None, None]:
         try:
             p = AccessibilityTccParser(self.config, self.case_id)
             data = p.get_result()
@@ -107,7 +108,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from accessibility_tcc. Reason {str(e)}")
 
-    def __extract_ts_shutdownlogs(self) -> Generator[dict, None, None]:
+    def a__extract_ts_shutdownlogs(self) -> Generator[dict, None, None]:
         try:
             p = ShutdownLogsParser(self.config, self.case_id)
             data = p.get_result()
@@ -129,7 +130,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from shutdownlog. Reason: {str(e)}")
 
-    def __extract_ts_logarchive(self) -> Generator[dict, None, None]:
+    def a__extract_ts_logarchive(self) -> Generator[dict, None, None]:
         try:
             p = LogarchiveParser(self.config, self.case_id)
             data = p.get_result()
@@ -150,7 +151,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from logarchive. Reason: {str(e)}")
 
-    def __extract_ts_wifisecurity(self) -> Generator[dict, None, None]:
+    def a__extract_ts_wifisecurity(self) -> Generator[dict, None, None]:
         try:
             p = WifiSecurityParser(self.config, self.case_id)
             data = p.get_result()
@@ -181,7 +182,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         except Exception as e:
             print(f"ERROR while extracting timestamp from wifisecurity. Reason {str(e)}")
 
-    def __extract_ts_wifi_known_networks(self) -> Generator[dict, None, None]:
+    def a__extract_ts_wifi_known_networks(self) -> Generator[dict, None, None]:
         try:
             p = WifiKnownNetworksParser(self.config, self.case_id)
             data = p.get_result()
@@ -239,6 +240,26 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                     pass
         except Exception as e:
             print(f"ERROR while extracting timestamp from wifi_known_networks. Reason {str(e)}")
+
+    def __extract_ts_crashlogs(self) -> Generator[dict, None, None]:
+        try:
+            p = CrashLogsParser(self.config, self.case_id)
+            data = p.get_result()
+            # process summary
+            for event in data.get('summary', []):
+                if event['datetime'] == '':
+                    continue
+                timestamp = datetime.fromisoformat(event['datetime'])
+                ts_event = {
+                    'message': f"Application {event['app']} crashed.",
+                    'timestamp': timestamp.timestamp() * 1000000,
+                    'datetime': event['datetime'],
+                    'timestamp_desc': 'Application crash'
+                }
+                yield ts_event
+            # no need to also process the detailed crashes, as we already have the summary
+        except Exception as e:
+            print(f"ERROR while extracting timestamp from crashlog. Reason {str(e)}")
 
     def execute(self):
         # Get all the functions that start with '__extract_ts_'
