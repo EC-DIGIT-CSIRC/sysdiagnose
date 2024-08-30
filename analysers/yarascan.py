@@ -38,7 +38,7 @@ class YaraAnalyser(BaseAnalyserInterface):
         if not os.path.isdir(self.yara_rules_path):
             raise FileNotFoundError(f"Could not find the YARA rules folder: {self.yara_rules_path}")
 
-        rule_files, errors = self.get_valid_yara_rule_files(self.yara_rules_path)
+        rule_files, errors = self.get_valid_yara_rule_files()
         if errors:
             results['errors'] = errors
         if len(rule_files) == 0:
@@ -48,7 +48,7 @@ class YaraAnalyser(BaseAnalyserInterface):
             namespace = rule_file[len(self.yara_rules_path):].strip(os.path.sep)
             rule_filepaths[namespace] = rule_file
 
-        matches, errors = scan_directory(
+        matches, errors = YaraAnalyser.scan_directory(
             [
                 self.case_parsed_data_folder,
                 self.case_data_folder
@@ -67,7 +67,7 @@ class YaraAnalyser(BaseAnalyserInterface):
 
         return results
 
-    def get_valid_yara_rule_files(self, rules_path: str) -> tuple[list, list]:
+    def get_valid_yara_rule_files(self) -> tuple[list, list]:
         rule_files_to_test = glob.glob(os.path.join(self.yara_rules_path, '**', '*.yar'), recursive=True)
         rule_files_validated = []
         errors = []
@@ -90,90 +90,89 @@ class YaraAnalyser(BaseAnalyserInterface):
 
         return rule_files_validated, errors
 
+    def scan_directory(directories: list, rule_filepaths: dict, ignore_files: list, ignore_folders: list) -> tuple[list, list]:
+        results_lock = threading.Lock()
+        matches = {}
+        errors = []
 
-def scan_directory(directories: list, rule_filepaths: dict, ignore_files: list, ignore_folders: list) -> tuple[list, list]:
-    results_lock = threading.Lock()
-    matches = {}
-    errors = []
+        # multi-threaded file scanning, really speeds up if multiple large files are present
 
-    # multi-threaded file scanning, really speeds up if multiple large files are present
-
-    # build and fill the queue
-    file_queue = queue.Queue()
-    for directory in directories:
-        for root, _, files in os.walk(directory):
-            stop = False
-            for ignore_folder in ignore_folders:
-                if root.startswith(ignore_folder):
-                    stop = True
-                    print(f"Skipping folder: {root}")
-                    continue
-            if stop:
-                continue
-            for file in files:
-                file_full_path = os.path.join(root, file)
+        # build and fill the queue
+        file_queue = queue.Queue()
+        for directory in directories:
+            for root, _, files in os.walk(directory):
                 stop = False
-                for ignore_file in ignore_files:
-                    if file_full_path.startswith(ignore_file):
+                for ignore_folder in ignore_folders:
+                    if root.startswith(ignore_folder):
                         stop = True
-                        print(f"Skipping file: {file_full_path}")
+                        print(f"Skipping folder: {root}")
                         continue
                 if stop:
                     continue
-                file_queue.put(file_full_path)
+                for file in files:
+                    file_full_path = os.path.join(root, file)
+                    stop = False
+                    for ignore_file in ignore_files:
+                        if file_full_path.startswith(ignore_file):
+                            stop = True
+                            print(f"Skipping file: {file_full_path}")
+                            continue
+                    if stop:
+                        continue
+                    file_queue.put(file_full_path)
 
-    # define our consumer that will run in the threads
-    def consumer():
-        # compile rules only once ... and ignore file specific externals. Massive speedup
-        rules = yara.compile(filepaths=rule_filepaths, externals=externals)
+        # define our consumer that will run in the threads
+        def consumer():
+            # compile rules only once ... and ignore file specific externals. Massive speedup
+            rules = yara.compile(filepaths=rule_filepaths, externals=externals)
 
-        while True:
-            print(f"Consumer thread seeing {file_queue.qsize()} files in queue, and taking one")
-            file_path = file_queue.get()
-            if file_path is None:
-                print("Consumer thread exiting")
-                break
+            while True:
+                print(f"Consumer thread seeing {file_queue.qsize()} files in queue, and taking one")
+                file_path = file_queue.get()
+                if file_path is None:
+                    print("Consumer thread exiting")
+                    break
 
-            print(f"Scanning file: {file_path}")
-            # set the externals for this file - massive slowdown
-            # externals_local = externals.copy()
-            # externals_local['filename'] = file
-            # externals_local['filepath'] = file_path[len(directory) + 1:]  # exclude the case root directory that installation specific
-            # externals_local['extension'] = os.path.splitext(file)[1]
-            # rules = yara.compile(filepaths=rule_filepaths, externals=externals_local)
-            try:
-                m = rules.match(file_path)
-                if m:
-                    key = file_path[len(directory) + 1:]
+                print(f"Scanning file: {file_path}")
+                # set the externals for this file - massive slowdown
+                # externals_local = externals.copy()
+                # externals_local['filename'] = file
+                # externals_local['filepath'] = file_path[len(directory) + 1:]  # exclude the case root directory that installation specific
+                # externals_local['extension'] = os.path.splitext(file)[1]
+                # rules = yara.compile(filepaths=rule_filepaths, externals=externals_local)
+                try:
+                    m = rules.match(file_path)
+                    if m:
+                        key = file_path[len(directory) + 1:]
+                        with results_lock:
+                            matches[key] = {}
+                            for match in m:
+                                matches[key][match.rule] = {
+                                    'tags': match.tags,
+                                    'meta': match.meta,
+                                    'strings': [str(s) for s in match.strings],
+                                    'rule_file': match.namespace
+                                }
+                except yara.Error as e:
                     with results_lock:
-                        matches[key] = {}
-                        for match in m:
-                            matches[key][match.rule] = {
-                                'tags': match.tags,
-                                'meta': match.meta,
-                                'strings': [str(s) for s in match.strings],
-                                'rule_file': match.namespace
-                            }
-            except yara.Error as e:
-                with results_lock:
-                    errors.append(f"Error matching file {file_path}: {e}")
-            file_queue.task_done()  # signal that the file has been processed
+                        errors.append(f"Error matching file {file_path}: {e}")
+                file_queue.task_done()  # signal that the file has been processed
 
-    max_threads = os.cpu_count() * 2 or 4  # default to 4 if we can't determine the number of CPUs
-    # Create and start consumer threads
-    consumer_threads = []
-    for _ in range(max_threads):
-        t = threading.Thread(target=consumer)
-        t.start()
-        consumer_threads.append(t)
+        max_threads = os.cpu_count() * 2 or 4  # default to 4 if we can't determine the number of CPUs
+        # Create and start consumer threads
+        consumer_threads = []
+        for _ in range(max_threads):
+            t = threading.Thread(target=consumer)
+            t.start()
+            consumer_threads.append(t)
 
-    # Wait for the queue to be empty
-    file_queue.join()
+        # Wait for the queue to be empty
+        file_queue.join()
 
-    # Stop the consumer threads
-    for _ in range(max_threads):
-        file_queue.put(None)
-    for t in consumer_threads:
-        t.join()
+        # Stop the consumer threads
+        for _ in range(max_threads):
+            file_queue.put(None)
+        for t in consumer_threads:
+            t.join()
 
-    return matches, errors
+        return matches, errors

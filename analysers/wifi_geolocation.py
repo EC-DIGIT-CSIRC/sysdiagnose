@@ -3,12 +3,11 @@
 # For Python3
 # Author: Aaron Kaplan <aaron@lo-res.org>
 
-import json
 import dateutil.parser
-import os
 import gpxpy
 import gpxpy.gpx
 from utils.base import BaseAnalyserInterface
+from parsers.wifi_known_networks import WifiKnownNetworksParser
 
 
 class WifiGeolocationAnalyser(BaseAnalyserInterface):
@@ -25,19 +24,7 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
         self.execute()
 
     def execute(self):
-        potential_source_files = ['wifinetworks/WiFi_com.apple.wifi.known-networks.plist.json', 'plists/WiFi_com.apple.wifi.known-networks.plist.json', 'wifi_known_networks.json']
-        input_file_path = None
-        for fname in potential_source_files:
-            input_file_path = os.path.join(self.case_parsed_data_folder, fname)
-            if os.path.isfile(input_file_path):
-                break
-        if not input_file_path:
-            # TODO we could call the parser and generate the file for us...and then parse it...
-            raise FileNotFoundError(f"Could not find any of the potential source files: {potential_source_files}.")
-
-        # we have a valid file_path and can generate the gpx file
-        with open(input_file_path, 'r') as f:
-            json_data = json.load(f)
+        json_data = WifiKnownNetworksParser(self.config, self.case_id).get_result()
         return WifiGeolocationAnalyser.generate_gpx_from_known_networks_json(json_data=json_data, output_file=self.output_file)
 
     def generate_gpx_from_known_networks_json(json_data: str, output_file: str):
