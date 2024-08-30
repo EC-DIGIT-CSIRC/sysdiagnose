@@ -9,13 +9,13 @@
 # - tree structure
 # - simplified
 #
-import sys
-import json
-from optparse import OptionParser
+from utils.base import BaseParserInterface
+import argparse
 import glob
+import json
 import os
 import re
-from utils.base import BaseParserInterface
+import sys
 
 
 class PsParser(BaseParserInterface):
@@ -162,25 +162,19 @@ def generate_graph(processes):
 
 
 def main():
-    usage = "\n%prog -i inputfile\n"
+    parser = argparse.ArgumentParser(description="Parsing ps.txt file")
+    parser.add_argument("-i", "--inputfile", dest="inputfile", type=str, help="ps.txt")
 
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="ps.txt")
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
     # no arguments given by user, print help and exit
-    if len(sys.argv) == 1:
+    if not args.inputfile:
         parser.print_help()
         sys.exit(-1)
 
     # parse PS file :)
-    if options.inputfile:
-        processes = PsParser.parse_file(options.inputfile)
-        export_as_tree(processes, True)
-    else:
-        print("WARNING -i option is mandatory!")
+    processes = PsParser.parse_file(args.inputfile)
+    export_as_tree(processes, True)
 
 
 # --------------------------------------------------------------------------- #

@@ -12,7 +12,7 @@
 import sys
 import json
 import sqlite3
-from optparse import OptionParser
+import argparse
 
 version_string = "sqlite2json.py v2020-02-18 Version 1.0"
 
@@ -85,18 +85,15 @@ def main():
         print("Must be using Python 3! Exiting ...", file=sys.stderr)
         sys.exit(-1)
 
-    usage = "\n%prog -i inputfile\n"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", dest="inputfile", type=str, help="SQlite DB To Be Printed")
 
-    parser = OptionParser(usage=usage)
-    parser.add_option("-i", dest="inputfile",
-                      action="store", type="string",
-                      help="SQlite DB To Be Printed")
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
     # no arguments given by user, print help and exit
-    if options.inputfile:
+    if args.inputfile:
         print(f"Running {version_string}\n")
-        print(sqlite2struct(options.inputfile))
+        print(sqlite2struct(args.inputfile))
     else:
         parser.print_help()
         sys.exit(-1)
