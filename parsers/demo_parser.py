@@ -18,12 +18,12 @@ class DemoParser(BaseParserInterface):
         ]
         return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
 
-    def execute(self, path: str) -> list | dict:
+    def execute(self) -> list | dict:
         '''
         this is the function that will be called
         '''
         json_object = {}
-        log_files = self.get_log_files(path)
+        log_files = self.get_log_files()
         for log_file in log_files:
             pass
         return json_object

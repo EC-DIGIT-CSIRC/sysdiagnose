@@ -11,7 +11,6 @@ import re
 import sys
 import tarfile
 import fcntl
-
 from utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 
 

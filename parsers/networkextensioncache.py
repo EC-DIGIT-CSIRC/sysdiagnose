@@ -28,7 +28,11 @@ class NetworkExtensionCacheParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        return NetworkExtensionCacheParser.parse_file(self.get_log_files()[0])
+        files = self.get_log_files()
+        if files:
+            return NetworkExtensionCacheParser.parse_file(self.get_log_files()[0])
+        else:
+            return {'error': 'No com.apple.networkextension.cache.plist file present'}
 
     def parse_file(path: str) -> list | dict:
         try:
