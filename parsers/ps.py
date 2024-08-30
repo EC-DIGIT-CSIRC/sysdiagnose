@@ -131,8 +131,7 @@ def _print_tree(ppid, node=0, depth=0):
 
     # loop on all the child of node
     for process in ppid[node]:
-        print(depth * "    " + "%s (PID: %d, PPID: %d, USER: %s)" %
-              (process["COMMAND"], process["PID"], process["PPID"], process["USER"]))
+        print(depth * "    " + f"{process['COMMAND']} (PID: {process['PID']}, PPID: {process['PPID']}, USER: {process['USER']})")
         ppid = _print_tree(ppid, process["PID"], depth + 1)  # recurse on childs of current process
     del ppid[node]  # remove the current child from process
 

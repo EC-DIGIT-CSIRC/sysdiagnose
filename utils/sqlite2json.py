@@ -47,7 +47,7 @@ def gettables(dbfd):
 
 def getcolumnsfromtable(dbfd, tablename):
     cursor = dbfd.cursor()
-    cursor.execute("SELECT * FROM '%s'" % tablename)
+    cursor.execute(f"SELECT * FROM '{tablename}'")
     col_name_list = [tuple[0] for tuple in cursor.description]
     return col_name_list
 
@@ -56,7 +56,7 @@ def table2struct(dbfd, tablename):
     table = []
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
-    for row in cursor.execute("SELECT * FROM '%s'" % tablename):
+    for row in cursor.execute(f"SELECT * FROM '{tablename}'"):
         line = {}
         ptr = 0
         for element in row:

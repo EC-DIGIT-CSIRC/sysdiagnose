@@ -43,7 +43,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                     'timestamp_desc': 'Mobile Activation Time'
                 }
                 try:
-                    ts_event['extra_field_1'] = 'Build Version: %s' % event['build_version']
+                    ts_event['extra_field_1'] = f"Build Version: {event['build_version']}"
                 except KeyError:
                     # skip other type of event
                     # FIXME what should we do? the log file (now) contains nice timestamps, do we want to extract less, but summarized, data?
@@ -79,7 +79,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                             'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
                             'timestamp_desc': 'swcutil last checkeed',
-                            'extra_field_1': 'application: %s' % service['App ID']
+                            'extra_field_1': f"application: {service['App ID']}"
                         }
                         yield ts_event
                     except KeyError:
@@ -102,7 +102,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                         'timestamp': timestamp.timestamp() * 1000000,
                         'datetime': timestamp.isoformat(),
                         'timestamp_desc': 'Accessibility TC Last Modified',
-                        'extra_field_1': 'client: %s' % access['client']
+                        'extra_field_1': f"client: {access['client']}"
                     }
                     yield ts_event
         except Exception as e:
@@ -122,7 +122,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                             'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
                             'timestamp_desc': 'Entry in shutdown.log',
-                            'extra_field_1': 'pid: %s' % p['pid']
+                            'extra_field_1': f"pid: {p['pid']}"
                         }
                         yield ts_event
                 except Exception as e:
@@ -142,7 +142,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                         'message': trace['message'],
                         'timestamp': timestamp.timestamp() * 1000000,
                         'datetime': trace['datetime'],
-                        'timestamp_desc': 'Entry in logarchive: %s' % trace['event_type'],
+                        'timestamp_desc': f"Entry in logarchive: {trace['event_type']}",
                         'extra_field_1': f"subsystem: {trace['subsystem']}; process_uuid: {trace['process_uuid']}; process: {trace['process']}; library: {trace['library']}; library_uuid: {trace['library_uuid']}"
                     }
                     yield ts_event
@@ -193,11 +193,11 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                     added = datetime.strptime(item['AddedAt'], '%Y-%m-%d %H:%M:%S.%f')
                     added = added.replace(tzinfo=timezone.utc)
                     ts_event = {
-                        'message': 'WIFI %s added' % ssid,
+                        'message': f"WIFI {ssid} added",
                         'timestamp': added.timestamp() * 1000000,
                         'datetime': added.isoformat(),
-                        'timestamp_desc': '%s added in known networks plist',
-                        'extra_field_1': 'Add reason: %s' % item['AddReason']
+                        'timestamp_desc': 'added in known networks plist',
+                        'extra_field_1': f"Add reason: {item['AddReason']}"
                     }
                     yield ts_event
                 except KeyError:
@@ -210,11 +210,11 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                     updated = datetime.strptime(item['UpdatedAt'], '%Y-%m-%d %H:%M:%S.%f')
                     updated = updated.replace(tzinfo=timezone.utc)
                     ts_event = {
-                        'message': 'WIFI %s added' % updated,
+                        'message': f"WIFI {ssid} updated",
                         'timestamp': updated.timestamp() * 1000000,
                         'datetime': updated.isoformat(),
-                        'timestamp_desc': '%s updated in known networks plist',
-                        'extra_field_1': 'Add reason: %s' % item['AddReason']
+                        'timestamp_desc': 'updated in known networks plist',
+                        'extra_field_1': f"Add reason: {item['AddReason']}"
                     }
                     yield ts_event
                 except KeyError:
@@ -227,11 +227,11 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                     modified_password = datetime.strptime(item['__OSSpecific__']['WiFiNetworkPasswordModificationDate'], '%Y-%m-%d %H:%M:%S.%f')
                     modified_password = modified_password.replace(tzinfo=timezone.utc)
                     ts_event = {
-                        'message': 'Password for WIFI %s modified' % ssid,
+                        'message': f"Password for WIFI {ssid} modified",
                         'timestamp': modified_password.timestamp() * 1000000,
                         'datetime': modified_password.isoformat(),
-                        'timestamp_desc': '%s password modified in known networks plist',
-                        'extra_field_1': 'AP mode: %s' % item['__OSSpecific__']['AP_MODE']
+                        'timestamp_desc': 'password modified in known networks plist',
+                        'extra_field_1': f"AP mode: {item['__OSSpecific__']['AP_MODE']}"
                     }
                     yield ts_event
                 except KeyError:
@@ -277,12 +277,12 @@ class TimelinerAnalyser(BaseAnalyserInterface):
 
             extra_field = ''
             if 'IsPermanent' in proc.keys():
-                extra_field = 'Is permanent: %d' % proc['IsPermanent']
+                extra_field = f"Is permanent: {proc['IsPermanent']}"
             ts_event = {
                 'message': proc['ProcessName'],
                 'timestamp': proc['timestamp'] * 1000000,
                 'datetime': timestamp.isoformat(),
-                'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (proc['ReasonCode'], proc['ReasonNamespace']),
+                'timestamp_desc': f"Process Exit with reason code: {proc['ReasonCode']} reason namespace {proc['ReasonNamespace']}",
                 'extra_field_1': extra_field
             }
             yield ts_event
@@ -295,8 +295,8 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                 'message': event['ProcessName'],
                 'timestamp': event['timestamp'] * 1000000,
                 'datetime': timestamp.isoformat(),
-                'timestamp_desc': 'Process Exit with reason code: %d reason namespace %d' % (event['ReasonCode'], event['ReasonNamespace']),
-                'extra_field_1': 'Crash frequency: [0-5s]: %d, [5-10s]: %d, [10-60s]: %d, [60s+]: %d' % (event['0s-5s'], event['5s-10s'], event['10s-60s'], event['60s+'])
+                'timestamp_desc': f"Process Exit with reason code: {event['ReasonCode']} reason namespace {event['ReasonNamespace']}",
+                'extra_field_1': f"Crash frequency: [0-5s]: {event['0s-5s']}, [5-10s]: {event['5s-10s']}, [10-60s]: {event['10s-60s']}, [60s+]: {event['60s+']}"
             }
             yield ts_event
 
@@ -309,6 +309,6 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                 'timestamp': event['timestamp'] * 1000000,
                 'datetime': timestamp.isoformat(),
                 'timestamp_desc': 'PLAccountingOperator Event',
-                'extra_field_1': 'Is permanent: %d' % event['IsPermanent']
+                'extra_field_1': f"Is permanent: {event['IsPermanent']}"
             }
             yield ts_event
