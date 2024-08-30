@@ -37,7 +37,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
+          pip install flake8 pytest coverage
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Install yara
         run: |
@@ -62,4 +62,8 @@ jobs:
           find . -iname '*.tar.gz' -execdir tar xzf {} \; 2> /dev/null
       - name: Test with python unittest
         run: |
-          python -m unittest -v
+          python -m coverage run -m unittest -v
+
+      - name: Generate coverage report
+        run: |
+          python -m coverage report -m
