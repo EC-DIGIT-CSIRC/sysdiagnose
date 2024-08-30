@@ -72,7 +72,7 @@ List available parsers :
 ```
 $ sysdiagnose list parsers
 Parser Name            Parser Description
----------------------  --------------------------------------------------------------
+---------------------  ---------------------------------------------------------------------
 all                    Run all parsers
 accessibility_tcc      Parsing Accessibility TCC logs
 appinstallation        Parsing app installation logs
@@ -88,10 +88,11 @@ networkextension       Parsing networkextension plist file
 networkextensioncache  Parsing networkextensioncache plist file
 olddsc                 Parsing olddsc files
 plists                 Parsing any pslist into json
-powerlogs              Parsing  powerlogs database
+powerlogs              Parsing powerlogs database
 ps                     Parsing ps.txt file
 psthread               Parsing ps_thread.txt file
 remotectl_dumpstate    Parsing remotectl_dumpstate file containing system information
+security_sysdiagnose   Parsing security-sysdiagnose.txt file containing keychain information
 shutdownlogs           Parsing shutdown.log file
 spindumpnosymbols      Parsing spindump-nosymbols file
 swcutil                Parsing swcutil_show file
@@ -110,7 +111,7 @@ List analysers:
 ```
 $ sysdiagnose list analysers
 Analyser Name         Analyser Description
---------------------  ------------------------------------------------
+--------------------  -------------------------------------------------------------------------------
 all                   Run all analysers
 apps                  Get list of Apps installed on the device
 demo_analyser         Do something useful (DEMO)
@@ -135,6 +136,7 @@ Tested On:
 - iOS15
 - iOS16
 - iOS17
+- iOS18
 
 # Timesketch
 
