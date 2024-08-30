@@ -40,7 +40,7 @@ class BaseInterface(ABC):
         self.module_name = os.path.basename(module_filename).split('.')[0]
         self.case_id = case_id
         self.case_data_folder = config.get_case_data_folder(case_id)
-        self.case_data_subfolder = next(os.scandir(self.case_data_folder)).path
+        self.case_data_subfolder = os.path.join(self.case_data_folder, os.listdir(self.case_data_folder)[0])
         self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
 
         if not os.path.isdir(self.case_data_folder):
