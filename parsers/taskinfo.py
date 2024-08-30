@@ -16,6 +16,7 @@ from utils.base import BaseParserInterface
 
 class TaskinfoParser(BaseParserInterface):
     description = "Parsing taskinfo txt file"
+    json_pretty = False
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)

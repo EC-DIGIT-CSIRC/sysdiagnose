@@ -13,6 +13,7 @@ from utils.base import BaseParserInterface
 
 class OldDscParser(BaseParserInterface):
     description = "Parsing olddsc files"
+    json_pretty = False
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)

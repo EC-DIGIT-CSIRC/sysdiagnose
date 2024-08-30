@@ -33,6 +33,7 @@ class BaseInterface(ABC):
 
     description = '<not documented>'  # implementation should set this
     format = 'json'  # implementation should set this
+    json_pretty = True  # implementation should set this to false for large data sets
 
     def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
         self.config = config
@@ -116,7 +117,10 @@ class BaseInterface(ABC):
             if self.format == 'json':
                 # json.dumps is MUCH faster than json.dump, but less efficient on memory level
                 # also no indent as that's terribly slow
-                f.write(json.dumps(self.get_result(force), ensure_ascii=False, indent=indent))
+                if self.json_pretty:
+                    f.write(json.dumps(self.get_result(force), ensure_ascii=False, indent=2, sort_keys=True))
+                else:
+                    f.write(json.dumps(self.get_result(force), ensure_ascii=False, indent=indent))
             elif self.format == 'jsonl':
                 for line in self.get_result(force):
                     f.write(json.dumps(line, ensure_ascii=False, indent=indent))

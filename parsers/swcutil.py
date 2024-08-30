@@ -11,6 +11,7 @@ from utils.base import BaseParserInterface
 
 class SwcutilParser(BaseParserInterface):
     description = "Parsing swcutil_show file"
+    json_pretty = False
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)

@@ -11,7 +11,7 @@ from utils.base import BaseParserInterface
 
 
 class MobileActivationParser(BaseParserInterface):
-    parser_description = "Parsing mobileactivation logs file"
+    description = "Parsing mobileactivation logs file"
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
