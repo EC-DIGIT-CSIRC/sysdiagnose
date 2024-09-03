@@ -3,6 +3,9 @@ import os
 import json
 import sys
 from pathlib import Path
+from datetime import datetime
+import re
+from functools import cached_property
 
 
 class SysdiagnoseConfig:
@@ -51,6 +54,26 @@ class BaseInterface(ABC):
         self.output_file = os.path.join(self.case_parsed_data_folder, self.module_name + '.' + self.format)
 
         self._result: dict | list = None  # empty result set, used for caching
+
+    @cached_property
+    def sysdiagnose_creation_datetime(self) -> datetime:
+        """
+        Returns the creation date and time of the sysdiagnose as a datetime object.
+
+        Returns:
+            datetime: The creation date and time of the sysdiagnose.
+        """
+        with open(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'), 'r') as f:
+            for line in f:
+                if 'IN_PROGRESS_sysdiagnose' in line:
+                    timestamp_regex = r"IN_PROGRESS_sysdiagnose_(\d{4}\.\d{2}\.\d{2}_\d{2}-\d{2}-\d{2}[\+,-]\d{4})_"
+                    match = re.search(timestamp_regex, line)
+                    if match:
+                        timestamp = match.group(1)
+                        parsed_timestamp = datetime.strptime(timestamp, "%Y.%m.%d_%H-%M-%S%z")
+                        return parsed_timestamp
+                    else:
+                        raise ValueError("Invalid timestamp format in sysdiagnose.log. Cannot figure out time of sysdiagnose creation.")
 
     def output_exists(self) -> bool:
         """

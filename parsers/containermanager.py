@@ -12,6 +12,7 @@ from utils.base import BaseParserInterface
 
 class ContainerManagerParser(BaseParserInterface):
     description = "Parsing containermanagerd logs file"
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)

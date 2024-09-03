@@ -12,11 +12,12 @@ import glob
 import os
 from utils import tabbasedhierarchy
 from utils.base import BaseParserInterface
+from datetime import timedelta
 
 
 class TaskinfoParser(BaseParserInterface):
     description = "Parsing taskinfo txt file"
-    json_pretty = False
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -31,11 +32,9 @@ class TaskinfoParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> dict:
-        return TaskinfoParser.parse_file(self.get_log_files()[0])
-
-    def parse_file(path: str) -> dict:
-        processes = []
+    def execute(self) -> list:
+        path = self.get_log_files()[0]
+        events = []
         try:
             with open(path, "r") as f:
                 lines = f.readlines()
@@ -43,8 +42,12 @@ class TaskinfoParser(BaseParserInterface):
                 result = re.search(r'(num tasks: )(\d+)', lines[0])
                 if (result is not None):
                     numb_tasks = int(result.group(2))
-                else:
-                    numb_tasks = -1
+                    events.append({
+                        'timestamp': self.sysdiagnose_creation_datetime.timestamp(),
+                        'datetime': self.sysdiagnose_creation_datetime.isoformat(),
+                        'tasks': numb_tasks,
+                        'datetime_description': f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
+                    })
 
                 n = 1  # skip lines to right section
                 extracted_block = []
@@ -73,12 +76,18 @@ class TaskinfoParser(BaseParserInterface):
                         # start of new process block detected
                         # this is also the end of the previous thread block
                         process['threads'].append(tabbasedhierarchy.parse_block(extracted_block))
-                        processes.append(process)
+                        # compute start time: start time = sysdiagnose_creation_time minus process['run time']
+                        seconds = int(process['run time'].split()[0])
+                        timestamp = self.sysdiagnose_creation_datetime - timedelta(seconds=seconds)
+                        process['timestamp'] = timestamp.timestamp()
+                        process['datetime'] = timestamp.isoformat()
+                        process['datetime_description'] = "Process launched at the timestamp, calculated from sysdiagnose creation time minus process run time"
+                        events.append(process)
                         extracted_block = []
                         n = n + 1  # add one more to n as we are skipping the empty line
                     else:
                         extracted_block.append(lines[n])
                     n = n + 1
-            return {"numb_tasks": numb_tasks, "tasks": processes}
+            return events
         except IndexError:
-            return {'error': 'No taskinfo.txt file present'}
+            return []

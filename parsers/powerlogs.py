@@ -7,12 +7,14 @@
 from utils import sqlite2json
 import glob
 import os
-from utils.misc import merge_dicts
 from utils.base import BaseParserInterface
+from datetime import datetime
 
 
 class PowerLogsParser(BaseParserInterface):
-    description = "Parsing powerlogs database"
+    description = 'Parsing powerlogs database'
+    json_pretty = False
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -31,11 +33,29 @@ class PowerLogsParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> list | dict:
-        result = {}
+    def execute(self) -> list:
+        result = []
+        skipped = set()
         for logfile in self.get_log_files():
-            db_json = PowerLogsParser.parse_file(logfile)
-            result = merge_dicts(result, db_json)  # merge both
+            db_json = PowerLogsParser.parse_file_to_json(logfile)
+            for key, values in db_json.items():
+                if 'sqlite_sequence' in key:
+                    continue
+                for value in values:
+                    if 'timestamp' not in value:
+                        skipped.add(key)
+                        continue
+
+                    try:
+                        value['subsource'] = key
+                        value['datetime'] = datetime.fromtimestamp(value['timestamp']).isoformat()
+                        result.append(value)
+                    except TypeError:
+                        # skip "None" values and such
+                        pass
+
+        print("Skipped the following tables as there are not timestamps:")
+        [print(f"  {table}") for table in skipped]
         return result
 
     def parse_file(path: str) -> dict:

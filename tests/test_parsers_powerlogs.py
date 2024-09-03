@@ -17,8 +17,10 @@ class TestParsersPowerlogs(SysdiagnoseTestCase):
 
             result = p.get_result()
             if result:  # some files are empty
-                self.assertTrue('sqlite_sequence' in result)
-                self.assertIsInstance(result['sqlite_sequence'], list)
+                for log in result:
+                    self.assertTrue('subsource' in log)
+                    self.assertTrue('datetime' in log)
+                    self.assertTrue('timestamp' in log)
 
 
 if __name__ == '__main__':

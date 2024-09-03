@@ -16,7 +16,8 @@ SIGTERM_LINE = "SIGTERM"
 
 
 class ShutdownLogsParser(BaseParserInterface):
-    description = "Parsing shutdown.log file"
+    description = 'Parsing shutdown.log file'
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -31,10 +32,10 @@ class ShutdownLogsParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> list | dict:
+    def execute(self) -> list:
         return ShutdownLogsParser.parse_file(self.get_log_files()[0])
 
-    def parse_file(path: str) -> list | dict:
+    def parse_file(path: str) -> list:
         # read log file content
         log_lines = ""
         try:
@@ -43,7 +44,7 @@ class ShutdownLogsParser(BaseParserInterface):
         except IndexError:
             return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
 
-        parsed_data = {}
+        events = []
         index = 0
         # go through log file
         while index < len(log_lines):
@@ -59,18 +60,22 @@ class ShutdownLogsParser(BaseParserInterface):
                         pid = result.groups()[0]
                         binary_path = result.groups()[1]
                         running_processes[pid] = {
-                            "pid": pid,
+                            "pid": int(pid),
                             "path": binary_path,
                             "command": '/'.join(binary_path.split('/')[:-1]),
-                            "time_waiting": time_waiting
+                            "time_waiting": float(time_waiting)
                         }
                     index += 1
                 # compute timestamp from SIGTERM line
                 result = re.search(r".*\[(\d+)\].*", log_lines[index])
-                timestamp = result.groups()[0]
-                time = str(datetime.datetime.fromtimestamp(int(timestamp), datetime.UTC))
+                timestamp = datetime.datetime.fromtimestamp(int(result.groups()[0]), datetime.UTC)
+
                 # add entries
-                parsed_data[time] = list(running_processes.values())
+                for item in running_processes.values():
+                    item['timestamp'] = timestamp.timestamp()
+                    item['datetime'] = timestamp.isoformat()
+                    item['event'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
+                    events.append(item)
             index += 1
 
-        return parsed_data
+        return events

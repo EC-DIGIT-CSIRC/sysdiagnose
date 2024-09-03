@@ -6,7 +6,7 @@ import os
 
 class TestParsersCrashlogs(SysdiagnoseTestCase):
 
-    def test_parse_psthread(self):
+    def test_parse_crashlogs(self):
         for case_id, case in self.sd.cases().items():
             p = CrashLogsParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
@@ -16,8 +16,8 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('summary' in result)
-            for item in result.get('items', []):
+            for item in result:
+                self.assertTrue('timestamp' in item)
                 print(item)
 
 

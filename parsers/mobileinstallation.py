@@ -12,6 +12,7 @@ from utils.base import BaseParserInterface
 
 class MobileInstallationParser(BaseParserInterface):
     description = "Parsing mobile_installation logs file"
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
