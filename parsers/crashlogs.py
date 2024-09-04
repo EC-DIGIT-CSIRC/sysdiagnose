@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 class CrashLogsParser(BaseParserInterface):
     '''
-    # FIXME Have a look at the interesting evidence first, see which files are there that are not on other devices
+    # TODO Have a look at the interesting evidence first, see which files are there that are not on other devices
     - crashes_and_spins folder
     - ExcUserFault file
     - crashes_and_spins/Panics subfolder

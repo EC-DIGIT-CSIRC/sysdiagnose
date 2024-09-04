@@ -14,8 +14,6 @@ class TestAnalysersWifiGeolocation(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)
 
-            # FIXME check for something else within the file...
-
 
 if __name__ == '__main__':
     unittest.main()

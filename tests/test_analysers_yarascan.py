@@ -7,8 +7,6 @@ import os
 class TestAnalysersYarascan(SysdiagnoseTestCase):
 
     def test_analyse_yarascan(self):
-        # FIXME we need to first create a yara rule
-
         for case_id, case in self.sd.cases().items():
             print(f"Running Yarascan for {case_id}")
             # run the analyser
@@ -19,6 +17,11 @@ class TestAnalysersYarascan(SysdiagnoseTestCase):
 
             result = a.get_result()
             self.assertGreater(len(result), 0)
+            self.assertGreater(len(result['matches']), 0)
+            # check if the rule matched the file
+            for match in result['matches'].values():
+                self.assertTrue('match_for_sure_on_ios' in match.keys())
+                break
 
 
 if __name__ == '__main__':

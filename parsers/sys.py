@@ -41,7 +41,7 @@ class SystemVersionParser(BaseParserInterface):
     old code to print the values
         if options.inputfile:
             pl = getProductInfo(options.inputfile)
-            print(f"ProductName = {pl['ProductName']}")       # XXX #9 FIXME: should that return the structure instead of print() ing it?
+            print(f"ProductName = {pl['ProductName']}")       # XXX #9 TODO: should that return the structure instead of print() ing it?
             print(f"ProductVersion = {pl['ProductVersion']}")
             print(f"ProductBuildVersion = {pl['ProductBuildVersion']}")
         else:

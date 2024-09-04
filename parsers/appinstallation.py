@@ -6,7 +6,6 @@
 # Author: david@autopsit.org
 
 # PID: encoded in Litlle Endian??
-# TODO - add support of iOS13...
 
 
 from utils import sqlite2json

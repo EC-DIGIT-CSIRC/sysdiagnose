@@ -4,9 +4,7 @@
 # Script to parse taskinfo.txt to ease parsing
 # Author: david@autopsit.org
 #
-# TODO define output
-# - search this artifact to extract more
-#
+
 import re
 import glob
 import os
