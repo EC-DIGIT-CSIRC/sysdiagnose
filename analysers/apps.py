@@ -18,7 +18,7 @@ class AppsAnalyser(BaseAnalyserInterface):
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
 
-    # TODO this code is terribly slow. I would expect this is due to all the if key in lookups. It took 49 seconds for case 1
+    # this code is quite slow, but that's due to logarchive.jsonl being slow to parse
     def execute(self):
         '''
         Go through all json files in the folder and generate the json list of apps
@@ -28,21 +28,19 @@ class AppsAnalyser(BaseAnalyserInterface):
         for entry in json_data:
             if entry['db_table'] != 'access':
                 continue
-            if entry['client'] not in apps:
-                apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
-            else:
+            try:
                 try:
                     apps[entry['client']]['services'].append(entry['service'])
                 except KeyError:
                     apps[entry['client']]['services'] = [entry['service']]
+            except (KeyError, TypeError):
+                apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
 
         json_data = BrctlParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
             # directly going to the list of apps
             for entry in json_data['app_library_id']:
-                if entry not in apps:
-                    apps[entry] = {'found': ['brctl'], 'libraries': json_data['app_library_id'][entry]}
-                else:
+                try:
                     try:
                         apps[entry]['libraries'] = json_data['app_library_id'][entry]
                     except KeyError:
@@ -50,14 +48,17 @@ class AppsAnalyser(BaseAnalyserInterface):
 
                     apps[entry]['found'].append('brctl')
 
+                except (KeyError, TypeError):
+                    apps[entry] = {'found': ['brctl'], 'libraries': json_data['app_library_id'][entry]}
+
         json_data = iTunesStoreParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
             # directly going to the list of apps
             for entry in json_data['application_id']:
-                if entry['bundle_id'] not in apps:
-                    apps[entry['bundle_id']] = {'found': ['itunesstore']}
-                else:
+                try:
                     apps[entry['bundle_id']]['found'].append('itunesstore')
+                except (KeyError, TypeError):
+                    apps[entry['bundle_id']] = {'found': ['itunesstore']}
 
         re_bundle_id_pattern = r'(([a-zA-Z0-9-_]+\.)+[a-zA-Z0-9-_]+)'
         # list files in here
@@ -92,10 +93,11 @@ class AppsAnalyser(BaseAnalyserInterface):
                 # print(f"New entry: {new_term} - was: {entry['subsystem']}")
                 entry['subsystem'] = new_term
             # add it to the list
-            if entry['subsystem'] not in apps:
-                apps[entry['subsystem']] = {'found': ['logarchive']}
-            else:
+            try:
                 if 'logarchive' not in apps[entry['subsystem']]['found']:
                     apps[entry['subsystem']]['found'].append('logarchive')
+
+            except (KeyError, TypeError):
+                apps[entry['subsystem']] = {'found': ['logarchive']}
 
         return apps
