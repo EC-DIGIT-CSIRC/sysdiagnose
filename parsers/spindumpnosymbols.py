@@ -91,7 +91,10 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             if "Process:" in line.strip():
                 if not init:
                     process = SpindumpNoSymbolsParser.parse_process(process_buffer)
-                    timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+                    try:
+                        timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+                    except KeyError:  # some don't have a time since fork, like zombie processes
+                        timestamp = start_time
                     process['timestamp'] = timestamp.timestamp()
                     process['datetime'] = timestamp.isoformat()
                     processes.append(process)

@@ -46,6 +46,7 @@ class BaseInterface(ABC):
         self.case_data_folder = config.get_case_data_folder(case_id)
         self.case_data_subfolder = os.path.join(self.case_data_folder, os.listdir(self.case_data_folder)[0])
         self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
+        os.makedirs(self.case_parsed_data_folder, exist_ok=True)
 
         if not os.path.isdir(self.case_data_folder):
             print(f"Case {case_id} does not exist", file=sys.stderr)
