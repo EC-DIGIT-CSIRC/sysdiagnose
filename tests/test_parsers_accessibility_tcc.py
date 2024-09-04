@@ -16,12 +16,9 @@ class TestParsersAccessibilityTcc(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('admin' in result)
-            self.assertTrue('policies' in result)
-            self.assertTrue('active_policy' in result)
-            self.assertTrue('access_overrides' in result)
-            self.assertTrue('expired' in result)
-            self.assertTrue('access' in result)
+            for item in result:
+                self.assertTrue('db_table' in item)
+                self.assertTrue('datetime' in item)
 
 
 if __name__ == '__main__':

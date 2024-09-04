@@ -9,10 +9,12 @@ import glob
 import os
 import utils.misc as misc
 from utils.base import BaseParserInterface
+from datetime import datetime, timezone
 
 
 class AccessibilityTccParser(BaseParserInterface):
-    description = "Parsing Accessibility TCC logs"
+    description = 'Parsing Accessibility TCC logs'
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -30,6 +32,27 @@ class AccessibilityTccParser(BaseParserInterface):
     def execute(self) -> list | dict:
         # only one file to parse
         try:
-            return misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
+            result = []
+            skipped = set()
+            json_db = misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
+            for key, values in json_db.items():
+                if 'sqlite_sequence' in key:
+                    continue
+                for value in values:
+                    if 'last_modified' not in value:
+                        skipped.add(key)
+                        continue
+
+                    try:
+                        value['db_table'] = key
+                        value['datetime'] = datetime.fromtimestamp(value['last_modified'], tz=timezone.utc).isoformat()
+                        value['timestamp'] = value['last_modified']
+                        result.append(value)
+                    except TypeError:
+                        # skip "None" values and such
+                        pass
+
+            return result
+
         except IndexError:
-            return {'error': 'No TCC.db file found in logs/Accessibility/ directory'}
+            return []

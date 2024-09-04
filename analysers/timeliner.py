@@ -93,18 +93,20 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         try:
             p = AccessibilityTccParser(self.config, self.case_id)
             data = p.get_result()
-            if 'access' in data.keys():
-                for access in data['access']:
-                    # create timeline entry
-                    timestamp = datetime.fromtimestamp(access['last_modified'], tz=timezone.utc)
-                    ts_event = {
-                        'message': access['service'],
-                        'timestamp': timestamp.timestamp() * 1000000,
-                        'datetime': timestamp.isoformat(),
-                        'timestamp_desc': 'Accessibility TC Last Modified',
-                        'extra_field_1': f"client: {access['client']}"
-                    }
-                    yield ts_event
+
+            for item in data:
+                if item['db_table'] != 'access':
+                    continue
+                # create timeline entry
+                timestamp = datetime.fromtimestamp(item['last_modified'], tz=timezone.utc)
+                ts_event = {
+                    'message': item['service'],
+                    'timestamp': timestamp.timestamp() * 1000000,
+                    'datetime': timestamp.isoformat(),
+                    'timestamp_desc': 'Accessibility TC Last Modified',
+                    'extra_field_1': f"client: {item['client']}"
+                }
+                yield ts_event
         except Exception as e:
             print(f"ERROR while extracting timestamp from accessibility_tcc. Reason {str(e)}")
 

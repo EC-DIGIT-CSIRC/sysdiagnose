@@ -24,18 +24,17 @@ class AppsAnalyser(BaseAnalyserInterface):
         Go through all json files in the folder and generate the json list of apps
         '''
         apps = {}
-        # TODO add a check to see if the files exist, and if necessary, call the parsers (or ask the user to call them), or maybe using a flag in the function call
-
         json_data = AccessibilityTccParser(self.config, self.case_id).get_result()
-        if json_data and not json_data.get('error'):
-            for entry in json_data['access']:
-                if entry['client'] not in apps:
-                    apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
-                else:
-                    try:
-                        apps[entry['client']]['services'].append(entry['service'])
-                    except KeyError:
-                        apps[entry['client']]['services'] = [entry['service']]
+        for entry in json_data:
+            if entry['db_table'] != 'access':
+                continue
+            if entry['client'] not in apps:
+                apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
+            else:
+                try:
+                    apps[entry['client']]['services'].append(entry['service'])
+                except KeyError:
+                    apps[entry['client']]['services'] = [entry['service']]
 
         json_data = BrctlParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
