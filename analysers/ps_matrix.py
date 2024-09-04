@@ -43,7 +43,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
 
         spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
         spindumpnosymbols_dict = {}
-        for p in spindumpnosymbols_json['processes']:
+        for p in spindumpnosymbols_json:
             spindumpnosymbols_dict[int(p['PID'])] = {
                 'PID': p['PID'],
                 'PPID': p.get('PPID', ''),

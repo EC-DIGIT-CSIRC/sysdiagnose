@@ -16,9 +16,8 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertGreater(len(result), 0)
-            self.assertTrue('OS Version' in result)
-            self.assertGreater(len(result['processes']), 0)
+            self.assertGreater(len(result), 1)
+            self.assertTrue('OS Version' in result[0])
 
     def test_parse_basic(self):
         lines = [
@@ -28,7 +27,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             'Architecture:     arm64',
             'Report Version:   35.1',
         ]
-        expected_result = {'Date/Time': '2023-05-24 13:29:15.759 -0700', 'End time': '2023-05-24 13:29:17.757 -0700', 'OS Version': 'iPhone OS 15.7.6 (Build 19H349)', 'Architecture': 'arm64', 'Report Version': '35.1'}
+        expected_result = {'timestamp': 1684960155.759, 'datetime': '2023-05-24T13:29:15.759000-07:00', 'Date/Time': '2023-05-24 13:29:15.759 -0700', 'End time': '2023-05-24 13:29:17.757 -0700', 'OS Version': 'iPhone OS 15.7.6 (Build 19H349)', 'Architecture': 'arm64', 'Report Version': '35.1'}
         result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
         self.assertDictEqual(expected_result, result)

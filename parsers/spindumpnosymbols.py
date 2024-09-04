@@ -8,10 +8,12 @@ import glob
 import os
 import re
 from utils.base import BaseParserInterface
+from datetime import datetime, timedelta
 
 
 class SpindumpNoSymbolsParser(BaseParserInterface):
-    description = "Parsing spindump-nosymbols file"
+    description = 'Parsing spindump-nosymbols file'
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -26,10 +28,10 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> list | dict:
+    def execute(self) -> list:
         return SpindumpNoSymbolsParser.parse_file(self.get_log_files()[0])
 
-    def parse_file(path: str) -> list | dict:
+    def parse_file(path: str) -> list:
         try:
             with open(path, 'r') as f_in:
                 # init section
@@ -55,37 +57,56 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                         continue
 
                 # call parsing function per section
-                output = SpindumpNoSymbolsParser.parse_basic(headers)
-                output['processes'] = SpindumpNoSymbolsParser.parse_processes(processes_raw)
+                events = []
+                basic = SpindumpNoSymbolsParser.parse_basic(headers)
+                events.append(basic)
+                events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['timestamp']))
 
-            return output
+                return events
+
         except IndexError:
-            return {'error': 'No spindump-nosymbols.txt file present'}
+            return []
 
-    def parse_basic(data):
+    def parse_basic(data: list) -> dict:
         output = {}
         for line in data:
             splitted = line.split(":", 1)
             if len(splitted) > 1:
                 output[splitted[0]] = splitted[1].strip()
+
+        if 'Date/Time' in output:
+            timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S.%f %z")
+            output['timestamp'] = timestamp.timestamp()
+            output['datetime'] = timestamp.isoformat()
+
         return output
 
-    def parse_processes(data):
+    def parse_processes(data: list, start_timestamp: int) -> list[dict]:
         # init
+        start_time = datetime.fromtimestamp(start_timestamp)
         processes = []
         init = True
-        process = []
+        process_buffer = []
         for line in data:
             if "Process:" in line.strip():
                 if not init:
-                    processes.append(SpindumpNoSymbolsParser.parse_process(process))
-                    process = [line.strip()]
+                    process = SpindumpNoSymbolsParser.parse_process(process_buffer)
+                    timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+                    process['timestamp'] = timestamp.timestamp()
+                    process['datetime'] = timestamp.isoformat()
+                    processes.append(process)
+                    process_buffer = [line.strip()]
                 else:
                     init = False
-                    process.append(line.strip())
+                    process_buffer.append(line.strip())
             else:
-                process.append(line.strip())
-        processes.append(SpindumpNoSymbolsParser.parse_process(process))
+                process_buffer.append(line.strip())
+
+        process = SpindumpNoSymbolsParser.parse_process(process_buffer)
+        timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+        process['timestamp'] = timestamp.timestamp()
+        process['datetime'] = timestamp.isoformat()
+        processes.append(process)
         return processes
 
     def parse_process(data):
