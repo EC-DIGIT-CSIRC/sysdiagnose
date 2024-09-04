@@ -39,6 +39,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         # processes with full path, no parameters, with threads
         spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
         for p in spindumpnosymbols_json:
+            if 'Process' not in p:
+                continue
             try:
                 self.add_if_full_command_is_not_in_set(p['Path'])
                 # all_ps.add(f"{p['Path']}::#{len(p['threads'])}") # count is different than in taskinfo
