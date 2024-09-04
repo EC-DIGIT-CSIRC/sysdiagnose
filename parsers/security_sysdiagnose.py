@@ -2,6 +2,12 @@ import os
 import re
 from utils.base import BaseParserInterface
 
+# TODO make a security sysdiagnose analyser exporting in time based jsonl for timeline.
+# - client_trust: date
+# - client_transparency: date
+# - client_pcs: date
+# - client_local: date
+
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
     description = "Parsing security-sysdiagnose.txt file containing keychain information"

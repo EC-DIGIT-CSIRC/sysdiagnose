@@ -8,6 +8,7 @@ import re
 import os
 from utils.base import BaseParserInterface
 
+# TODO brctl analyser for boot_history section -> timeline
 
 class BrctlParser(BaseParserInterface):
     description = "Parsing brctl files"

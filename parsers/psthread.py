@@ -32,6 +32,8 @@ class PsThreadParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
+        # TODO not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
+
         result = []
         try:
             with open(self.get_log_files()[0], "r") as f:

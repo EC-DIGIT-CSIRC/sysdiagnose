@@ -35,6 +35,7 @@ class PsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
+        # TODO not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
         return PsParser.parse_file(self.get_log_files()[0])
 
     def parse_file(filename):
