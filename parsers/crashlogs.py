@@ -188,7 +188,7 @@ class CrashLogsParser(BaseParserInterface):
                 break
             # fallback, basename
             app = os.path.basename(filename)
-            return app, datetime.fromtimestamp(0)
+            return app, datetime.fromtimestamp(0, tz=timezone.utc)
 
         app = m.group(1)
         # FIXME timezone is from local phone time at file creation. Not UTC

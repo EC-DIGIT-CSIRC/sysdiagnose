@@ -8,7 +8,7 @@ import glob
 import os
 import re
 from utils.base import BaseParserInterface
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class SpindumpNoSymbolsParser(BaseParserInterface):
@@ -83,7 +83,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
     def parse_processes(data: list, start_timestamp: int) -> list[dict]:
         # init
-        start_time = datetime.fromtimestamp(start_timestamp)
+        start_time = datetime.fromtimestamp(start_timestamp, tz=timezone.utc)
         processes = []
         init = True
         process_buffer = []

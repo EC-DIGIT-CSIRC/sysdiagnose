@@ -18,19 +18,9 @@ class TestParsersAppinstallation(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('application' in result)
-            self.assertTrue('asset' in result)
-            self.assertTrue('client' in result)
-            self.assertTrue('download_policy' in result)
-            self.assertTrue('download_state' in result)
-            self.assertTrue('download' in result)
-            self.assertTrue('finished_download' in result)
-            self.assertTrue('job_restore' in result)
-            self.assertTrue('job_software' in result)
-            self.assertTrue('job' in result)
-            self.assertTrue('persistent_job' in result)
-            self.assertTrue('persistent_manager' in result)
-            self.assertTrue('purchase' in result)
+            for item in result:
+                self.assertTrue('db_table' in item)
+                self.assertTrue('datetime' in item)
 
 
 if __name__ == '__main__':

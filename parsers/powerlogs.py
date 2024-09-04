@@ -8,7 +8,7 @@ from utils import sqlite2json
 import glob
 import os
 from utils.base import BaseParserInterface
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class PowerLogsParser(BaseParserInterface):
@@ -47,8 +47,8 @@ class PowerLogsParser(BaseParserInterface):
                         continue
 
                     try:
-                        value['subsource'] = key
-                        value['datetime'] = datetime.fromtimestamp(value['timestamp']).isoformat()
+                        value['db_table'] = key
+                        value['datetime'] = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc).isoformat()
                         result.append(value)
                     except TypeError:
                         # skip "None" values and such

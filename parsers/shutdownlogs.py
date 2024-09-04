@@ -4,7 +4,7 @@
 # Sysdiagnose Shutdown logs
 # Author: Benoit Roussile
 
-import datetime
+from datetime import datetime, timezone
 import glob
 import os
 import re
@@ -68,7 +68,7 @@ class ShutdownLogsParser(BaseParserInterface):
                     index += 1
                 # compute timestamp from SIGTERM line
                 result = re.search(r".*\[(\d+)\].*", log_lines[index])
-                timestamp = datetime.datetime.fromtimestamp(int(result.groups()[0]), datetime.UTC)
+                timestamp = datetime.fromtimestamp(int(result.groups()[0]), tz=timezone.utc)
 
                 # add entries
                 for item in running_processes.values():

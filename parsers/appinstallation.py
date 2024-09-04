@@ -14,6 +14,7 @@ import glob
 import os
 import utils.misc as misc
 from utils.base import BaseParserInterface
+from datetime import datetime, timezone
 
 
 class AppInstallationParser(BaseParserInterface):
@@ -35,6 +36,24 @@ class AppInstallationParser(BaseParserInterface):
 
     def execute(self) -> list | dict:
         try:
-            return misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
+            result = []
+            db_json = misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
+            skipped = set()
+            for key, values in db_json.items():
+                if 'sqlite_sequence' in key:
+                    continue
+                for value in values:
+                    if 'timestamp' not in value:
+                        skipped.add(key)
+                        continue
+
+                    try:
+                        value['db_table'] = key
+                        value['datetime'] = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc).isoformat()
+                        result.append(value)
+                    except TypeError:
+                        # skip "None" values and such
+                        pass
+            return result
         except IndexError:
-            return {'error': 'No AppUpdates.sqlitedb or appstored.sqlitedb file found in logs/appinstallation/ directory'}
+            return []
