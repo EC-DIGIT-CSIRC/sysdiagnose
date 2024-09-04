@@ -56,10 +56,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         # processes with full path, no parameters, no threads
         shutdownlogs_json = ShutdownLogsParser(self.config, self.case_id).get_result()
-        for section in shutdownlogs_json.values():
+        for p in shutdownlogs_json:
             # not using 'path' but 'command', as the path being appended by the UUID will be counter productive to normalisation
-            for p in section:
-                self.add_if_full_command_is_not_in_set(p['command'])
+            self.add_if_full_command_is_not_in_set(p['command'])
         print(f"{len(self.all_ps)} entries after shutdownlogs")
 
         # processes with full path, no parameters, no threads
@@ -86,7 +85,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         # on the other hand it may contain valuable stuff, so we use it in 2 formats
         # - name::#num_of_threads
         # - name::thread name
-        for p in taskinfo_json['tasks']:
+        for p in taskinfo_json:
+            if 'name' not in p:
+                continue
             self.add_if_full_path_is_not_in_set(p['name'])
             # add_if_full_path_is_not_in_set(f"{p['name']}::#{len(p['threads'])}") # count is different than in spindumpnosymbols
             for t in p['threads']:

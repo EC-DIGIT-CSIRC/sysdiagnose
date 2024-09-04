@@ -58,5 +58,5 @@ class PowerLogsParser(BaseParserInterface):
         [print(f"  {table}") for table in skipped]
         return result
 
-    def parse_file(path: str) -> dict:
+    def parse_file_to_json(path: str) -> dict:
         return sqlite2json.sqlite2struct(path)

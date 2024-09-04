@@ -17,7 +17,7 @@ find .  -type f -name "*.plist" -exec sh -c 'plutil -p $1 > $1.txt'  - {} \;
 
 # Backup the device with libimobile device
 
-To install  
+To install
 ````
 apt-get install libimobiledevice-dev libimobiledevice-doc libimobiledevice6 libplist-doc ideviceinstaller libimobiledevice-utils python-imobiledevice python-plist libplist-utils
 ````
@@ -69,3 +69,8 @@ $find .  -type f -name "*.sqlitedb"
 
 # Parsing unified logging:
 https://github.com/ydkhatri/UnifiedLogReader
+
+# Count rows in powerlogs
+db="filename"
+for i in `sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table';"`; do  a=$(sqlite3 "$db" "SELECT COUNT(*) FROM '$i'"); echo -e "$a\t$i"; done | sort -n  > powerlogs_cnt
+

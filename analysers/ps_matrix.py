@@ -31,7 +31,9 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
 
         taskinfo_json = TaskinfoParser(self.config, self.case_id).get_result()
         taskinfo_dict = {}
-        for p in taskinfo_json['tasks']:
+        for p in taskinfo_json:
+            if 'pid' not in p:
+                continue
             taskinfo_dict[int(p['pid'])] = {
                 'PID': p['pid']
             }

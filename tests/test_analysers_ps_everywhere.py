@@ -5,7 +5,6 @@ import os
 
 
 class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
-
     def test_analyse_ps_everywhere(self):
         for case_id, case in self.sd.cases().items():
             print(f"Running PsEverywhereAnalyser for {case_id}")
