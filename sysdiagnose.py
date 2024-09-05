@@ -84,7 +84,7 @@ def main():
                 case_id = args.case_id
                 sd.create_case(filename, force, case_id)
             else:
-                case_id = sd.create_case(filename, force)
+                case_id = sd.create_case(filename, force)['case_id']
         except Exception as e:
             exit(f"Error creating case: {str(e)}")
 
@@ -349,7 +349,7 @@ class Sysdiagnose:
 
         print("Sysdiagnose file has been processed")
         print(f"Case ID: {str(case['case_id'])}")
-        return case['case_id']
+        return case
 
     def parse(self, parser: str, case_id: str):
         # Load parser module
