@@ -182,6 +182,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse spindumpnosymbols",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse spindumpnosymbols",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse ps ALL",
             "type": "debugpy",
             "request": "launch",
