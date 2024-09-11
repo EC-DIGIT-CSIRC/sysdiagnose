@@ -54,3 +54,18 @@ class SysdiagnoseTestCase(unittest.TestCase):
 
         results.sort()
         return results
+
+    def get_analysers(self):
+        """
+        List all analysers in the analysers folder.
+        We can't use the self.sd.get_analysers() method as that would discard broken analysers.
+        """
+        results = []
+        modules = glob.glob(os.path.join(self.sd.config.analysers_folder, "*.py"))
+        for item in modules:
+            if item.endswith('__init__.py'):
+                continue
+            results.append(os.path.splitext(os.path.basename(item))[0])
+
+        results.sort()
+        return results
