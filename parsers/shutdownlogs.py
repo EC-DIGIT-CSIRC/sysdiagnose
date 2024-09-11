@@ -59,12 +59,17 @@ class ShutdownLogsParser(BaseParserInterface):
                         result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
                         pid = result.groups()[0]
                         binary_path = result.groups()[1]
-                        running_processes[pid] = {
-                            "pid": int(pid),
-                            "path": binary_path,
-                            "command": '/'.join(binary_path.split('/')[:-1]),
-                            "time_waiting": float(time_waiting)
-                        }
+                        if pid not in running_processes:
+                            running_processes[pid] = {
+                                "pid": int(pid),
+                                "path": binary_path,
+                                "command": '/'.join(binary_path.split('/')[:-1]),
+                                "time_waiting": float(time_waiting),
+                                "times_waiting": 1
+                            }
+                        else:
+                            running_processes[pid]["time_waiting"] += float(time_waiting)
+                            running_processes[pid]["times_waiting"] += 1
                     index += 1
                 # compute timestamp from SIGTERM line
                 result = re.search(r".*\[(\d+)\].*", log_lines[index])

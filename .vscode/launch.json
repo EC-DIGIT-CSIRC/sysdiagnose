@@ -190,6 +190,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse shutdownlogs",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "-c 1 parse shutdownlogs",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse ps ALL",
             "type": "debugpy",
             "request": "launch",
