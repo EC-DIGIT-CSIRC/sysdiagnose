@@ -286,27 +286,23 @@ class Sysdiagnose:
             }
 
         # create case folder
-        case_folder = os.path.join(self.config.data_folder, str(case['case_id']))
-        os.makedirs(case_folder, exist_ok=True)
-
-        # create parsed_data folder
-        parsed_folder = os.path.join(self.config.parsed_data_folder, str(case['case_id']))
-        os.makedirs(parsed_folder, exist_ok=True)
+        case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
+        os.makedirs(case_data_folder, exist_ok=True)
 
         # extract sysdiagnose files
         try:
-            tf.extractall(path=case_folder)
+            tf.extractall(path=case_data_folder)
         except Exception as e:
             raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
         # create case json file
         new_case_json = {
-            "sysdiagnose.log": glob.glob(os.path.join(case_folder, '*', 'sysdiagnose.log'))[0],
+            "sysdiagnose.log": glob.glob(os.path.join(case_data_folder, '*', 'sysdiagnose.log'))[0],
         }
 
         # ips files
         try:
-            new_case_json["ips_files"] = glob.glob(os.path.join(case_folder, '*', 'crashes_and_spins', '*.ips'))
+            new_case_json["ips_files"] = glob.glob(os.path.join(case_data_folder, '*', 'crashes_and_spins', '*.ips'))
         except:        # noqa: E722
             pass
 
@@ -321,11 +317,6 @@ class Sysdiagnose:
             case['ios_version'] = version
         except Exception as e:
             raise Exception(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
-
-        # Save JSON file
-        case_fname = os.path.join(self.config.data_folder, f"{case_id}.json")
-        with open(case_fname, 'w') as data_file:
-            data_file.write(json.dumps(new_case_json, indent=4))
 
         # update cases list file
         remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id).get_result()
@@ -342,7 +333,7 @@ class Sysdiagnose:
                 self._cases = json.load(f)           # load latest version
                 self._cases[case['case_id']] = case  # update own case
                 f.seek(0)                            # go back to the beginning of the file
-                json.dump(self._cases, f, indent=4)  # save the updated version
+                json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
                 f.truncate()                         # truncate the rest of the file ensuring no old data is left
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)        # release lock whatever happens

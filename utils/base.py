@@ -16,20 +16,14 @@ class SysdiagnoseConfig:
 
         # case data is in current working directory by default
         self.cases_root_folder = cases_path
-
         self.cases_file = os.path.join(self.cases_root_folder, "cases.json")
-        self.data_folder = os.path.join(self.cases_root_folder, "data")
-        self.parsed_data_folder = os.path.join(self.cases_root_folder, "parsed_data")  # stay in current folder
-
         os.makedirs(self.cases_root_folder, exist_ok=True)
-        os.makedirs(self.data_folder, exist_ok=True)
-        os.makedirs(self.parsed_data_folder, exist_ok=True)
 
     def get_case_data_folder(self, case_id: str) -> str:
-        return os.path.join(self.data_folder, case_id)
+        return os.path.join(self.cases_root_folder, case_id, 'data')
 
     def get_case_parsed_data_folder(self, case_id: str) -> str:
-        return os.path.join(self.parsed_data_folder, case_id)
+        return os.path.join(self.cases_root_folder, case_id, 'parsed_data')
 
 
 class BaseInterface(ABC):
@@ -43,8 +37,11 @@ class BaseInterface(ABC):
 
         self.module_name = os.path.basename(module_filename).split('.')[0]
         self.case_id = case_id
+
         self.case_data_folder = config.get_case_data_folder(case_id)
+        os.makedirs(self.case_data_folder, exist_ok=True)
         self.case_data_subfolder = os.path.join(self.case_data_folder, os.listdir(self.case_data_folder)[0])
+
         self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
         os.makedirs(self.case_parsed_data_folder, exist_ok=True)
 
