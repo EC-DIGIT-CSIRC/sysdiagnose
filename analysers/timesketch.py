@@ -19,7 +19,7 @@ from collections.abc import Generator
 from utils.base import BaseAnalyserInterface
 
 
-class TimelinerAnalyser(BaseAnalyserInterface):
+class TimesketchAnalyser(BaseAnalyserInterface):
     description = 'Generate a Timesketch compatible timeline'
     format = 'jsonl'
 
@@ -37,7 +37,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
             data = p.get_result()
             for event in data:
                 ts_event = {
-                    'message': 'Mobile Activation',
+                    'message': event['msg'],
                     'timestamp': event['timestamp'] * 1000000,
                     'datetime': event['datetime'],
                     'timestamp_desc': 'Mobile Activation Time'
@@ -47,7 +47,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                 except KeyError:
                     # skip other type of event
                     # FIXME what should we do? the log file (now) contains nice timestamps, do we want to extract less, but summarized, data?
-                    continue
+                    pass
                 yield ts_event
         except Exception as e:
             print(f"ERROR while extracting timestamp from mobileactivation file. Reason: {str(e)}")
@@ -56,13 +56,40 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         try:
             p = PowerLogsParser(self.config, self.case_id)
             data = p.get_result()
-            # extract tables of interest
-            for entry in TimelinerAnalyser.__powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(data):
-                yield entry
-            for entry in TimelinerAnalyser.__powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(data):
-                yield entry
-            for entry in TimelinerAnalyser.__powerlogs__PLAccountingOperator_EventNone_Nodes(data):
-                yield entry
+            for event in data:
+                if event.get('db_table') == 'PLProcessMonitorAgent_EventPoint_ProcessExit':
+                    extra_field = ''
+                    if 'IsPermanent' in event:
+                        extra_field = f"Is permanent: {event['IsPermanent']}"
+                    ts_event = {
+                        'message': event['ProcessName'],
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': f"Process Exit with reason code: {event['ReasonCode']} reason namespace {event['ReasonNamespace']}",
+                        'extra_field_1': extra_field
+                    }
+                    yield ts_event
+                elif event.get('db_table') == 'PLProcessMonitorAgent_EventBackward_ProcessExitHistogram':
+                    ts_event = {
+                        'message': event['ProcessName'],
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': f"Process Exit with reason code: {event['ReasonCode']} reason namespace {event['ReasonNamespace']}",
+                        'extra_field_1': f"Crash frequency: [0-5s]: {event['0s-5s']}, [5-10s]: {event['5s-10s']}, [10-60s]: {event['10s-60s']}, [60s+]: {event['60s+']}"
+                    }
+                    yield ts_event
+                elif event.get('db_table') == 'PLAccountingOperator_EventNone_Nodes':
+                    ts_event = {
+                        'message': event['Name'],
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': 'PLAccountingOperator Event',
+                        'extra_field_1': f"Is permanent: {event['IsPermanent']}"
+                    }
+                    yield ts_event
+                else:
+                    pass
+
         except Exception as e:
             print(f"ERROR while extracting timestamp from powerlogs. Reason: {str(e)}")
 
@@ -78,7 +105,7 @@ class TimelinerAnalyser(BaseAnalyserInterface):
                             'message': service['Service'],
                             'timestamp': timestamp.timestamp() * 1000000,
                             'datetime': timestamp.isoformat(),
-                            'timestamp_desc': 'swcutil last checkeed',
+                            'timestamp_desc': 'swcutil last checked',
                             'extra_field_1': f"application: {service['App ID']}"
                         }
                         yield ts_event
@@ -114,21 +141,19 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         try:
             p = ShutdownLogsParser(self.config, self.case_id)
             data = p.get_result()
-            for ts, processes in data.items():
+            for event in data:
                 try:
                     # create timeline entries
-                    timestamp = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S%z')
-                    for p in processes:
-                        ts_event = {
-                            'message': p['path'],
-                            'timestamp': timestamp.timestamp() * 1000000,
-                            'datetime': timestamp.isoformat(),
-                            'timestamp_desc': 'Entry in shutdown.log',
-                            'extra_field_1': f"pid: {p['pid']}"
-                        }
-                        yield ts_event
+                    ts_event = {
+                        'message': event['path'],
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': 'Entry in shutdown.log',
+                        'extra_field_1': f"pid: {event['pid']}"
+                    }
+                    yield ts_event
                 except Exception as e:
-                    print(f"WARNING: shutdownlog entry not parsed: {ts}. Reason: {str(e)}")
+                    print(f"WARNING: shutdownlog entry not parsed: {event}. Reason: {str(e)}")
         except Exception as e:
             print(f"ERROR while extracting timestamp from shutdownlog. Reason: {str(e)}")
 
@@ -136,20 +161,19 @@ class TimelinerAnalyser(BaseAnalyserInterface):
         try:
             p = LogarchiveParser(self.config, self.case_id)
             data = p.get_result()
-            for trace in data:
+            for event in data:
                 try:
                     # create timeline entry
-                    timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(trace['time'])
                     ts_event = {
-                        'message': trace['message'],
-                        'timestamp': timestamp.timestamp() * 1000000,
-                        'datetime': trace['datetime'],
-                        'timestamp_desc': f"Entry in logarchive: {trace['event_type']}",
-                        'extra_field_1': f"subsystem: {trace['subsystem']}; process_uuid: {trace['process_uuid']}; process: {trace['process']}; library: {trace['library']}; library_uuid: {trace['library_uuid']}"
+                        'message': event['message'],
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': f"Entry in logarchive: {event['event_type']}",
+                        'extra_field_1': f"subsystem: {event['subsystem']}; process_uuid: {event['process_uuid']}; process: {event['process']}; library: {event['library']}; library_uuid: {event['library_uuid']}"
                     }
                     yield ts_event
                 except KeyError as e:
-                    print(f"WARNING: trace not parsed: {trace}. Error {e}")
+                    print(f"WARNING: trace not parsed: {event}. Error {e}")
         except Exception as e:
             print(f"ERROR while extracting timestamp from logarchive. Reason: {str(e)}")
 
@@ -248,18 +272,20 @@ class TimelinerAnalyser(BaseAnalyserInterface):
             p = CrashLogsParser(self.config, self.case_id)
             data = p.get_result()
             # process summary
-            for event in data.get('summary', []):
-                if event['datetime'] == '':
-                    continue
-                timestamp = datetime.fromisoformat(event['datetime'])
-                ts_event = {
-                    'message': f"Application {event['app']} crashed.",
-                    'timestamp': timestamp.timestamp() * 1000000,
-                    'datetime': event['datetime'],
-                    'timestamp_desc': 'Application crash'
-                }
-                yield ts_event
-            # no need to also process the detailed crashes, as we already have the summary
+            for event in data:
+                try:
+                    if event['datetime'] == '':
+                        continue
+                    ts_event = {
+                        'message': f"Application {event['app_name']} crashed.",
+                        'timestamp': event['timestamp'] * 1000000,
+                        'datetime': event['datetime'],
+                        'timestamp_desc': 'Application crash'
+                    }
+                    yield ts_event
+                # no need to also process the detailed crashes, as we already have the summary
+                except KeyError as e:
+                    print(f"ERROR while extracting timestamp from crashlog for event {event}. Reason {str(e)}")
         except Exception as e:
             print(f"ERROR while extracting timestamp from crashlog. Reason {str(e)}")
 
@@ -271,46 +297,3 @@ class TimelinerAnalyser(BaseAnalyserInterface):
             if func.startswith(f"_{self.__class__.__name__}__extract_ts_"):
                 for event in getattr(self, func)():  # call the function
                     yield event
-
-    def __powerlogs__PLProcessMonitorAgent_EventPoint_ProcessExit(jdata):
-        proc_exit = jdata.get('PLProcessMonitorAgent_EventPoint_ProcessExit', [])
-        for proc in proc_exit:
-            timestamp = datetime.fromtimestamp(proc['timestamp'], tz=timezone.utc)
-
-            extra_field = ''
-            if 'IsPermanent' in proc.keys():
-                extra_field = f"Is permanent: {proc['IsPermanent']}"
-            ts_event = {
-                'message': proc['ProcessName'],
-                'timestamp': proc['timestamp'] * 1000000,
-                'datetime': timestamp.isoformat(),
-                'timestamp_desc': f"Process Exit with reason code: {proc['ReasonCode']} reason namespace {proc['ReasonNamespace']}",
-                'extra_field_1': extra_field
-            }
-            yield ts_event
-
-    def __powerlogs__PLProcessMonitorAgent_EventBackward_ProcessExitHistogram(jdata):
-        events = jdata.get('PLProcessMonitorAgent_EventBackward_ProcessExitHistogram', [])
-        for event in events:
-            timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
-            ts_event = {
-                'message': event['ProcessName'],
-                'timestamp': event['timestamp'] * 1000000,
-                'datetime': timestamp.isoformat(),
-                'timestamp_desc': f"Process Exit with reason code: {event['ReasonCode']} reason namespace {event['ReasonNamespace']}",
-                'extra_field_1': f"Crash frequency: [0-5s]: {event['0s-5s']}, [5-10s]: {event['5s-10s']}, [10-60s]: {event['10s-60s']}, [60s+]: {event['60s+']}"
-            }
-            yield ts_event
-
-    def __powerlogs__PLAccountingOperator_EventNone_Nodes(jdata):
-        eventnone = jdata.get('PLAccountingOperator_EventNone_Nodes', [])
-        for event in eventnone:
-            timestamp = datetime.fromtimestamp(event['timestamp'], tz=timezone.utc)
-            ts_event = {
-                'message': event['Name'],
-                'timestamp': event['timestamp'] * 1000000,
-                'datetime': timestamp.isoformat(),
-                'timestamp_desc': 'PLAccountingOperator Event',
-                'extra_field_1': f"Is permanent: {event['IsPermanent']}"
-            }
-            yield ts_event

@@ -212,7 +212,9 @@ class LogarchiveParser(BaseParserInterface):
         '''
         # already in the Mandiant unifiedlog format
         if 'event_type' in entry:
-            entry['datetime'] = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time']).isoformat()
+            timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
+            entry['datetime'] = timestamp.isoformat()
+            entry['timestamp'] = timestamp.timestamp()
             return entry
         '''
         jq '. |= keys' logarchive-native.json > native_keys.txt
@@ -259,7 +261,8 @@ class LogarchiveParser(BaseParserInterface):
                 new_entry[key] = value
         # convert time
         new_entry['datetime'] = new_entry['time']
-        new_entry['time'] = LogarchiveParser.convert_native_time_to_unifiedlog_format(new_entry['time'])
+        new_entry['timestamp'] = datetime.fromisoformat(new_entry['time']).timestamp()
+        new_entry['time'] = new_entry['timestamp'] * 1000000000
 
         return new_entry
 

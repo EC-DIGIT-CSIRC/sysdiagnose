@@ -1,15 +1,15 @@
-from analysers.timeliner import TimelinerAnalyser
+from analysers.timesketch import TimesketchAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
 
 
-class TestAnalysersTimeliner(SysdiagnoseTestCase):
+class TestAnalysersTimesketch(SysdiagnoseTestCase):
 
-    def test_analyse_timeliner(self):
+    def test_analyse_timsketch(self):
         for case_id, case in self.sd.cases().items():
-            print(f"Running Timeliner for {case_id}")
-            a = TimelinerAnalyser(self.sd.config, case_id=case_id)
+            print(f"Running Timesketch export for {case_id}")
+            a = TimesketchAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)
 
             self.assertTrue(os.path.isfile(a.output_file))

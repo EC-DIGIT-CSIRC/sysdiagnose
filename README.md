@@ -20,7 +20,7 @@ Create a virtual environment:
  sudo apt install graphviz
  ```
 
-On linux systems you may wish to install the unifiedlogs parser. See below for instructions how to do this.
+On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser. See below for instructions how to do this.
 
 
 # Quickstart
@@ -38,13 +38,13 @@ Case ID: 1
 Listing existing cases can be done easily:
 
 ```
-$ sysdiagnose list cases
-  Case ID  Source file                                                                                                        serial number
----------  -----------------------------------------------------------------------------------------------------------------  ---------------
-        1  tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz                           F4GT2K24HG7K
+$ sysdiagnose cases
+Case ID              acquisition date           Serial number    Unique device ID                          iOS Version    Tags
+-------------------  -------------------------  ---------------  ----------------------------------------  -------------  ------
+public               2023-05-24T13:29:15-07:00  F4GT2K24HG7K     e22f7f830e5dcc1287a1690a2622c2b12afaa33c  <unknown>
 ```
 
-The case folder is the current folder by default.
+The `cases` folder is the current folder by default.
 You can change this using the environment variable `SYSDIAGNOSE_CASES_PATH`, for example.
 ```
 $ export SYSDIAGNOSE_CASES_PATH='/path/to/folder'
@@ -59,10 +59,10 @@ Run parsers:
 
 ```
 $ sysdiagnose -c 1 parse ps
-Execution success, output saved in: ./parsed_data/1/ps.json
+Execution success, output saved in: cases/1/parsed_data/ps.json
 
 $ sysdiagnose -c 1 parse sys
-Execution success, output saved in: ./parsed_data/1/sys.json
+Execution success, output saved in: cases/1/parsed_data/sys.json
 ```
 
 To run on all cases do not specify a case number or use `-c all`.
@@ -117,7 +117,7 @@ apps                  Get list of Apps installed on the device
 demo_analyser         Do something useful (DEMO)
 ps_everywhere         List all processes we can find a bit everywhere.
 ps_matrix             Makes a matrix comparing ps, psthread, taskinfo
-timeliner             Generate a Timesketch compatible timeline
+timesketch            Generate a Timesketch compatible timeline
 wifi_geolocation      Generate GPS Exchange (GPX) of wifi geolocations
 wifi_geolocation_kml  Generate KML file for wifi geolocations
 yarascan              Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)
@@ -125,24 +125,21 @@ yarascan              Scan the case folder using YARA rules ('./yara' or SYSDIAG
 
 Run analyser (make sure you run `parse all` before)
 ```
-$ sysdiagnose -c 1 analyse timeliner
-Execution success, output saved in: ./parsed_data/1/timeliner.jsonl
+$ sysdiagnose -c 1 analyse timesketch
+Execution success, output saved in: cases/1/parsed_data/timesketch.jsonl
 ```
 
-Tested On:
-- python 3.11
-- iOS13 (to be confirmed)
-- iOS14 (to be confirmed)
-- iOS15
-- iOS16
-- iOS17
-- iOS18
+# Using the output
+Most of the parsers and analysers save their results in `jsonl` or `json` format. A few analysers use `txt` and more.
+Exported data is stored in the `<cases>/<case_id>/parsed_data` folder. You can configure your ingestion tool to automatically monitor and all that data.
 
-# Timesketch
+The JSONL files are event based and (most often) structured with a a `timestamp` (unixtime) and `datetime` (isoformat) field. These can be used to build timelines.
 
-You might want to visualise timelines which you can extract via sysdiagnose in [Timesketch](https://timesketch.org/guides/admin/install/).
+## Timesketch
+
+You might want to visualise timelines which you can extract via sysdiagnose in [Timesketch](https://timesketch.org/guides/admin/install/). Do note that timesketch expects timestamps in microseconds, that's why we made the `timesketch` analyser.
+
 Note that for a reasonable sysdiagnose log output, we recommend the following base requirements:
-
 - Ubuntu 20.04 or higher
 - 128GB of RAM
 - 4-8 virtual CPUs
@@ -170,6 +167,17 @@ sudo cp ../target/release/unifiedlog_parser_json /usr/local/bin/
 ```
 See `unifiedlog_parser_json --help` for more instructions to use the tool, or use it directly through sysdiagnose.
 
+
+# Supported iOS versions
+
+Tested On:
+- python 3.11
+- iOS13 (to be confirmed)
+- iOS14 (to be confirmed)
+- iOS15
+- iOS16
+- iOS17
+- iOS18
 
 
 # Contributors
