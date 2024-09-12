@@ -99,7 +99,8 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             'pid': 0,
             'senderProgramCounter': 6084,
             'parentActivityIdentifier': 0,
-            'datetime': '2023-05-24 13:03:28.908085-0700'
+            'datetime': '2023-05-24 13:03:28.908085-0700',
+            'timestamp': 1684958608.908085
         }
         result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
         self.assertDictEqual(result, expected_output)
