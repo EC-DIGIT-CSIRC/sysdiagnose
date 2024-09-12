@@ -14,6 +14,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: cases",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sysdiagnose.py",
+            "args": "cases",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: init ios15",
             "type": "debugpy",
             "request": "launch",

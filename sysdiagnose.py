@@ -42,9 +42,12 @@ def main():
     # list mode
     list_parser = subparsers.add_parser('list', help='List ...')
     list_parser.add_argument('what', choices=['cases', 'parsers', 'analysers'], help='List cases, parsers or analysers')
+    list_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 
     # just for convenience
-    subparsers.add_parser('cases', help='List cases')
+    cases_parser = subparsers.add_parser('cases', help='List cases')
+    cases_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+
     subparsers.add_parser('parsers', help='List parsers')
     subparsers.add_parser('analysers', help='List analysers')
 
@@ -56,14 +59,14 @@ def main():
 
     if args.mode == 'list':
         if args.what == 'cases':
-            sd.print_list_cases()
+            sd.print_list_cases(verbose=args.verbose)
         elif args.what == 'parsers':
             sd.print_parsers_list()
         elif args.what == 'analysers':
             sd.print_analysers_list()
 
     elif args.mode == 'cases':
-        sd.print_list_cases()
+        sd.print_list_cases(verbose=args.verbose)
 
     elif args.mode == 'parsers':
         sd.print_parsers_list()
@@ -277,12 +280,14 @@ class Sysdiagnose:
         if not case:
             # if sysdiagnose file is new and legit, create new case and extract files
             case = {
-                'date': "<unknown>",  # date when sysdiagnose was taken
+                'date': '<unknown>',  # date when sysdiagnose was taken
                 'case_id': case_id,
                 'source_file': sysdiagnose_file,
                 'source_sha256': readable_hash,
-                'serial_number': "<unknown>",
-                'unique_device_id': "<unknown>"
+                'serial_number': '<unknown>',
+                'unique_device_id': '<unknown>',
+                'ios_version': '<unknown>',
+                'tags': []
             }
 
         # create case folder
@@ -295,36 +300,20 @@ class Sysdiagnose:
         except Exception as e:
             raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
-        # create case json file
-        new_case_json = {
-            "sysdiagnose.log": glob.glob(os.path.join(case_data_folder, '*', 'sysdiagnose.log'))[0],
-        }
-
-        # ips files
-        try:
-            new_case_json["ips_files"] = glob.glob(os.path.join(case_data_folder, '*', 'crashes_and_spins', '*.ips'))
-        except:        # noqa: E722
-            pass
-
-        # Get iOS version
-        version = '<unknown>'
-        try:
-            with open(new_case_json['sysdiagnose.log'], 'r') as f:
-                case['date'] = f.readline().split(': ')[0]  # we don't know the timezone !!!
-                line_version = [line for line in f if 'iPhone OS' in line][0]
-                version = line_version.split()[4]
-            new_case_json['ios_version'] = version
-            case['ios_version'] = version
-        except Exception as e:
-            raise Exception(f"Could not open file {new_case_json['sysdiagnose.log']}. Reason: {str(e)}")
-
-        # update cases list file
-        remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id).get_result()
+        # update cases metadata
+        remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id)
+        remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()
         try:
             case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
             case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
+            case['version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
         except (KeyError, TypeError) as e:
             print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
+
+        try:
+            case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat()
+        except Exception:
+            pass
 
         # update case with new data
         with open(self.config.cases_file, 'r+') as f:
@@ -373,12 +362,23 @@ class Sysdiagnose:
 
         return 0
 
-    def print_list_cases(self):
+    def print_list_cases(self, verbose=False):
         print("#### case List ####")
-        headers = ['Case ID', 'Source file', 'serial number']
+        headers = ['Case ID', 'acquisition date', 'Serial number', 'Unique device ID', 'iOS Version', 'Tags']
+        if verbose:
+            headers.append('Source file')
         lines = []
         for case in self.cases().values():
-            line = [case['case_id'], case['source_file'], case.get('serial_number', '<unknown>')]
+            line = [
+                case['case_id'],
+                case.get('date', '<unknown>'),
+                case.get('serial_number', '<unknown>'),
+                case.get('unique_device_id', '<unknown>'),
+                case.get('ios_version', '<unknown>'),
+                ','.join(case.get('tags', []))
+            ]
+            if verbose:
+                line.append(case['source_file'])
             lines.append(line)
 
         print(tabulate(lines, headers=headers))
