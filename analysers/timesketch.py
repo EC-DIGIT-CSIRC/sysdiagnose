@@ -284,7 +284,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     }
                     yield ts_event
                 # no need to also process the detailed crashes, as we already have the summary
-                except KeyError as e:
+                except KeyError:
                     # skip bug_type fields
                     pass
         except Exception as e:
