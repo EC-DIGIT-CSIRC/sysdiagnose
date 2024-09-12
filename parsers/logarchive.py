@@ -113,8 +113,10 @@ class LogarchiveParser(BaseParserInterface):
 
     def __convert_using_native_logparser(input_file: str, output_file: str) -> list:
         with open(output_file, 'w') as f_out:
+            # output to stdout and not to a file as we need to convert the output to a unified format
             cmd_array = ['/usr/bin/log', 'show', input_file, '--style', 'ndjson']
-            # read each line, conver line by line and write the output directly to the new file
+            # read each line, convert line by line and write the output directly to the new file
+            # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
                 try:
                     entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
@@ -158,7 +160,7 @@ class LogarchiveParser(BaseParserInterface):
                             print(f"WARNING: error parsing JSON {fname_reading}: {str(e)}")
         # tempfolder is cleaned automatically after the block
 
-        # sort the data as it's not sorted by default
+        # sort the data as it's not sorted by default, and we need sorted data for other analysers
         entries.sort(key=lambda x: x['time'])
         # save to file as JSONL
         with open(output_file, 'w') as f_out:
@@ -186,7 +188,7 @@ class LogarchiveParser(BaseParserInterface):
         '''
         result = []
 
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
             if outputfile is None:
                 for line in iter(process.stdout.readline, ''):
                     try:

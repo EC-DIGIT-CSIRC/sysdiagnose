@@ -42,7 +42,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse all",
+            "args": "-c public analyse all",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -50,7 +50,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse timeliner",
+            "args": "-c public analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -58,7 +58,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse demo_analyser",
+            "args": "-c public analyse demo_analyser",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -66,7 +66,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse apps",
+            "args": "-c public analyse apps",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -74,7 +74,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse ps_everywhere",
+            "args": "-c public analyse ps_everywhere",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -82,7 +82,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse wifi_geolocation",
+            "args": "-c public analyse wifi_geolocation",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -90,7 +90,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse wifi_geolocation_kml",
+            "args": "-c public analyse wifi_geolocation_kml",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -98,7 +98,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse timeliner",
+            "args": "-c public analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -106,7 +106,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 analyse yarascan",
+            "args": "-c public analyse yarascan",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -122,7 +122,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse demo_parser",
+            "args": "-c public parse demo_parser",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -130,7 +130,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse logarchive",
+            "args": "-c public parse logarchive",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -138,7 +138,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse security_sysdiagnose",
+            "args": "-c public parse security_sysdiagnose",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -146,7 +146,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse powerlogs",
+            "args": "-c public parse powerlogs",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -154,7 +154,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse mobileactivation",
+            "args": "-c public parse mobileactivation",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -170,7 +170,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse psthread",
+            "args": "-c public parse psthread",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -178,7 +178,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse ps",
+            "args": "-c public parse ps",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -186,7 +186,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse spindumpnosymbols",
+            "args": "-c public parse spindumpnosymbols",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -194,7 +194,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse shutdownlogs",
+            "args": "-c public parse shutdownlogs",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -210,7 +210,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse crashlogs",
+            "args": "-c public parse crashlogs",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -218,7 +218,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse plists",
+            "args": "-c public parse plists",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -226,7 +226,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/sysdiagnose.py",
-            "args": "-c 1 parse wifinetworks",
+            "args": "-c public parse wifinetworks",
             "cwd": "${workspaceFolder}/"
         }
     ]
