@@ -260,8 +260,9 @@ class LogarchiveParser(BaseParserInterface):
                 # keep the non-matching entries
                 new_entry[key] = value
         # convert time
-        new_entry['datetime'] = new_entry['time']
-        new_entry['timestamp'] = datetime.fromisoformat(new_entry['time']).timestamp()
+        timestamp = datetime.fromisoformat(new_entry['time'])
+        new_entry['datetime'] = timestamp.isoformat()
+        new_entry['timestamp'] = timestamp.timestamp()
         new_entry['time'] = new_entry['timestamp'] * 1000000000
 
         return new_entry
