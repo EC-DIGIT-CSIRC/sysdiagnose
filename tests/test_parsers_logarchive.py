@@ -42,7 +42,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
         result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat()
         self.assertEqual(result, expected_output)
 
-    def test_convert_entry_to_un(self):
+    def test_convert_entry_to_unified(self):
         input = {
             'timezoneName': '',
             'messageType': 'Default',
@@ -99,10 +99,11 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             'pid': 0,
             'senderProgramCounter': 6084,
             'parentActivityIdentifier': 0,
-            'datetime': '2023-05-24 13:03:28.908085-0700',
+            'datetime': '2023-05-24T13:03:28.908085-07:00',
             'timestamp': 1684958608.908085
         }
         result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
+        self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
 
