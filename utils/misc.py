@@ -41,12 +41,12 @@ def load_plist_file_as_json(fname: str):
     if os.path.getsize(fname) == 0:
         return {'error': 'Empty file'}
     with open(fname, 'rb') as f:
-        plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True)
+        plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True, format=dict)
         return json_serializable(plist)
 
 
 def load_plist_string_as_json(plist_string: str):
-    plist = nska_deserialize.deserialize_plist_from_string(plist_string, full_recurse_convert_nska=True)
+    plist = nska_deserialize.deserialize_plist_from_string(plist_string, full_recurse_convert_nska=True, format=dict)
     return json_serializable(plist)
 
 
