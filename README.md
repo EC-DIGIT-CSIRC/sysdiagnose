@@ -81,6 +81,7 @@ containermanager       Parsing containermanagerd logs file
 crashlogs              Parsing crashes folder
 demo_parser            Demo parsers
 itunesstore            Parsing iTunes store logs
+lockdownd              Parsing lockdownd logs file
 logarchive             Parsing system_logs.logarchive folder
 mobileactivation       Parsing mobileactivation logs file
 mobileinstallation     Parsing mobile_installation logs file
