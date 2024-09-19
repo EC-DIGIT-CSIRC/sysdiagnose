@@ -99,6 +99,10 @@ def _handle_bytes(value, skip_underscore=False):
     except Exception:
         return base64.b64encode(value).decode(errors='ignore')
 
+@json_serializable.register(datetime)
+def _handle_datetime(value, skip_underscore=False):
+    return value.isoformat()
+
 
 def find_datetime(d):
     for k, v in d.items():
