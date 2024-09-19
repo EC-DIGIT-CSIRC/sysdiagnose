@@ -17,14 +17,7 @@ class TestParsersNetworkExtension(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            # TODO below needs to be changed if https://github.com/ydkhatri/nska_deserialize/pull/3 is merged
-            # self.assertTrue('Version' in result)
-            seen = False
-            for entry in result:
-                if 'Version' in entry:
-                    seen = True
-                    break
-            self.assertTrue(seen)
+            self.assertTrue('Version' in result)
 
 
 if __name__ == '__main__':
