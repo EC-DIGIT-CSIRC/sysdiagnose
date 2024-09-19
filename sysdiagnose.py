@@ -296,7 +296,7 @@ class Sysdiagnose:
 
         # extract sysdiagnose files
         try:
-            tf.extractall(path=case_data_folder)
+            tf.extractall(path=case_data_folder, filter=None)
         except Exception as e:
             raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
