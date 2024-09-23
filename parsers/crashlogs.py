@@ -31,18 +31,19 @@ class CrashLogsParser(BaseParserInterface):
 
     def get_log_files(self) -> list:
         log_files_globs = [
-            'crashes_and_spins/*.ips',
-            'summaries/crashes_and_spins.log',
+            '**/crashes_and_spins/*.ips',
+            '**/summaries/crashes_and_spins.log',
         ]
         log_files = []
         for log_files_glob in log_files_globs:
-            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
+            log_files.extend(glob.glob(os.path.join(self.case_data_folder, log_files_glob), recursive=True))
 
         return log_files
 
     def execute(self) -> list | dict:
         files = self.get_log_files()
         result = []
+        # TODO ensure no duplicates, see issue #99
         for file in files:
             print(f"Processing file: {file}")
             if file.endswith('crashes_and_spins.log'):

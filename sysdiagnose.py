@@ -300,6 +300,11 @@ class Sysdiagnose:
         except Exception as e:
             raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
+        try:
+            tf.close()
+        except Exception as e:
+            raise Exception(f'Error closing sysdiagnose file. Reason: {str(e)}')
+
         # update cases metadata
         remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id)
         remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()

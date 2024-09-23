@@ -5,15 +5,16 @@
 # Author: david@autopsit.org
 #
 #
-import os
-import sys
+from collections.abc import Generator
+from datetime import datetime, timezone
+from utils.base import BaseParserInterface
+import glob
 import json
-import tempfile
+import os
 import platform
 import subprocess
-from datetime import datetime, timezone
-from collections.abc import Generator
-from utils.base import BaseParserInterface
+import sys
+import tempfile
 
 
 # --------------------------------------------#
@@ -49,10 +50,8 @@ class LogarchiveParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_folders = [
-            'system_logs.logarchive/'
-        ]
-        return [os.path.join(self.case_data_subfolder, log_folder) for log_folder in log_folders]
+        log_folder_glob = '**/system_logs.logarchive/'
+        return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
 
     @DeprecationWarning
     def execute(self) -> list | dict:
@@ -61,7 +60,7 @@ class LogarchiveParser(BaseParserInterface):
         try:
             with tempfile.TemporaryDirectory() as tmp_outpath:
                 tmp_output_file = os.path.join(tmp_outpath.name, 'logarchive.tmp')
-                LogarchiveParser.parse_file_to_file(self.get_log_files()[0], tmp_output_file)
+                LogarchiveParser.parse_folder_to_file(self.get_log_files()[0], tmp_output_file)
                 with open(tmp_output_file, 'r') as f:
                     return [json.loads(line) for line in f]
         except IndexError:
@@ -98,23 +97,24 @@ class LogarchiveParser(BaseParserInterface):
             super().save_result(force, indent)
         else:
             # no caching
-            LogarchiveParser.parse_file_to_file(self.get_log_files()[0], self.output_file)
+            # TODO implement support of multiple folders, see issue #100
+            LogarchiveParser.parse_folder_to_file(self.get_log_files()[0], self.output_file)
 
-    def parse_file_to_file(input_file: str, output_file: str) -> bool:
+    def parse_folder_to_file(input_folder: str, output_file: str) -> bool:
         try:
             if (platform.system() == 'Darwin'):
-                LogarchiveParser.__convert_using_native_logparser(input_file, output_file)
+                LogarchiveParser.__convert_using_native_logparser(input_folder, output_file)
             else:
-                LogarchiveParser.__convert_using_unifiedlogparser(input_file, output_file)
+                LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
             return True
         except IndexError:
             print('Error: No system_logs.logarchive/ folder found in logs/ directory')
             return False
 
-    def __convert_using_native_logparser(input_file: str, output_file: str) -> list:
+    def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
         with open(output_file, 'w') as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
-            cmd_array = ['/usr/bin/log', 'show', input_file, '--style', 'ndjson']
+            cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson']
             # read each line, convert line by line and write the output directly to the new file
             # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
@@ -128,7 +128,7 @@ class LogarchiveParser(BaseParserInterface):
                     # so just ignore it
                     pass
 
-    def __convert_using_unifiedlogparser(input_file: str, output_file: str) -> list:
+    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
         print('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
         # run the conversion tool, saving to a temp folder
         # read the created file/files, add timestamp
@@ -145,7 +145,7 @@ class LogarchiveParser(BaseParserInterface):
         # really run the tool now
         entries = []
         with tempfile.TemporaryDirectory() as tmp_outpath:
-            cmd_array = ['unifiedlog_parser_json', '--input', input_file, '--output', tmp_outpath]
+            cmd_array = ['unifiedlog_parser_json', '--input', input_folder, '--output', tmp_outpath]
             # run the command and get the result in our tmp_outpath folder
             LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
             # read each file, conver line by line and write the output directly to the new file
