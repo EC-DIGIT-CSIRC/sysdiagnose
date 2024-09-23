@@ -43,7 +43,7 @@ class CrashLogsParser(BaseParserInterface):
     def execute(self) -> list | dict:
         files = self.get_log_files()
         result = []
-        # TODO ensure no duplicates, see issue #99
+        seen = set()
         for file in files:
             print(f"Processing file: {file}")
             if file.endswith('crashes_and_spins.log'):
@@ -52,7 +52,13 @@ class CrashLogsParser(BaseParserInterface):
                 pass
             elif file.endswith('.ips'):
                 try:
-                    result.append(CrashLogsParser.parse_ips_file(file))
+                    ips = CrashLogsParser.parse_ips_file(file)
+                    ips_hash = f"{ips.get('timestamp', '')}-{ips.get('app_name', '')}"
+                    # skip duplicates
+                    if ips_hash in seen:
+                        continue
+                    seen.add(ips_hash)
+                    result.append(ips)
                 except Exception as e:
                     print(f"Skipping file due to error {file}: {e}")
         return result
