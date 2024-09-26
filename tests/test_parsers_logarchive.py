@@ -3,6 +3,7 @@ from tests import SysdiagnoseTestCase
 import os
 import unittest
 import json
+import tempfile
 
 
 class TestParsersLogarchive(SysdiagnoseTestCase):
@@ -105,6 +106,76 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
         result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
+
+    def test_merge_files(self):
+        input = []
+        input.append([
+            {'time': 1, 'data': 'a'},
+            {'time': 2, 'data': 'b'},
+            {'time': 3, 'data': 'c'},
+            {'time': 4, 'data': 'd'},
+            {'time': 5, 'data': 'e'},
+            {'time': 6, 'data': 'f'},
+            {'time': 7, 'data': 'g'},
+        ])
+        input.append([
+            {'time': 1, 'data': 'a-wrong'},
+            {'time': 2, 'data': 'b-wrong'},
+            {'time': 3, 'data': 'c-wrong'},
+            {'time': 4, 'data': 'd-wrong'},
+            {'time': 5, 'data': 'e-wrong'},
+            {'time': 6, 'data': 'f-wrong'},
+            {'time': 7, 'data': 'g-wrong'},
+        ])
+
+        input.append([   # should be ignored
+            {'time': 4, 'data': 'd-wrong'},
+            {'time': 5, 'data': 'e-wrong'},
+            {'time': 6, 'data': 'f-wrong'},
+        ])
+        input.append([  # overlaps first list, so must be taken from the end of first list
+            {'time': 7, 'data': 'g-wrong'},
+            {'time': 8, 'data': 'h'},
+            {'time': 9, 'data': 'i'},
+            {'time': 10, 'data': 'j'},
+        ])
+        input.append([  # small gap
+            {'time': 12, 'data': 'k'},
+            {'time': 13, 'data': 'l'},
+            {'time': 14, 'data': 'm'},
+        ])
+
+        expected_output = [{'time': 1, 'data': 'a'}, {'time': 2, 'data': 'b'}, {'time': 3, 'data': 'c'}, {'time': 4, 'data': 'd'}, {'time': 5, 'data': 'e'}, {'time': 6, 'data': 'f'}, {'time': 7, 'data': 'g'}, {'time': 8, 'data': 'h'}, {'time': 9, 'data': 'i'}, {'time': 10, 'data': 'j'}, {'time': 12, 'data': 'k'}, {'time': 13, 'data': 'l'}, {'time': 14, 'data': 'm'}]
+
+        temp_files = []
+        try:
+            # write the files with the test data
+            for file in input:
+                temp_file = tempfile.NamedTemporaryFile(delete_on_close=False)
+                temp_files.append({
+                    'file': temp_file,
+                })
+                for entry in file:
+                    temp_file.write(json.dumps(entry).encode())
+                    temp_file.write(b'\n')
+                temp_file.close()
+            # merge the files
+            output_file = tempfile.NamedTemporaryFile(delete_on_close=False)
+            output_file.close()
+            LogarchiveParser.merge_files(temp_files, output_file.name)
+
+            # read the output file
+            result = []
+            with open(output_file.name, 'r') as f:
+                for line in f:
+                    result.append(json.loads(line))
+
+        finally:
+            for temp_file in temp_files:
+                os.remove(temp_file['file'].name)
+            os.remove(output_file.name)
+
+        self.assertListEqual(result, expected_output)
 
 
 if __name__ == '__main__':
