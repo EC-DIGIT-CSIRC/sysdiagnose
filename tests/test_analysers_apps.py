@@ -1,4 +1,4 @@
-from analysers.apps import AppsAnalyser
+from sysdiagnose.analysers.apps import AppsAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

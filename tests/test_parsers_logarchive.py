@@ -1,4 +1,4 @@
-from parsers.logarchive import LogarchiveParser
+from sysdiagnose.parsers.logarchive import LogarchiveParser
 from tests import SysdiagnoseTestCase
 import os
 import unittest

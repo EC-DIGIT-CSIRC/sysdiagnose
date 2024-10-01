@@ -5,18 +5,14 @@
 
 # Installation
 
-Note that you will need Python 3.6 or higher.
+Note that you will need Python 3.11 or higher.
 
-Create a virtual environment:
+Create a virtual environment and install dependencies:
 
 ```bash
- virtualenv --python python3.10 venv
+ python3 -m venv venv
  source venv/bin/activate
- ```
-
- Install dependencies:
- ```bash
- pip install -r requirements.txt
+ pip install .
  sudo apt install graphviz
  ```
 

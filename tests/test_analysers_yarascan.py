@@ -1,4 +1,4 @@
-from analysers.yarascan import YaraAnalyser
+from sysdiagnose.analysers.yarascan import YaraAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

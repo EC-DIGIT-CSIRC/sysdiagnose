@@ -1,4 +1,4 @@
-from parsers.security_sysdiagnose import SecuritySysdiagnoseParser
+from sysdiagnose.parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

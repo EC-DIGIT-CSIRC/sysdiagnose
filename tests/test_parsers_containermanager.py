@@ -1,4 +1,4 @@
-from parsers.containermanager import ContainerManagerParser
+from sysdiagnose.parsers.containermanager import ContainerManagerParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
@@ -10,7 +10,8 @@ class TestParsersContainermanager(SysdiagnoseTestCase):
         for case_id, case in self.sd.cases().items():
             p = ContainerManagerParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
-            self.assertTrue(len(files) > 0)
+            if len(files) == 0:  # not all seem to have the containermanager
+                continue
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))

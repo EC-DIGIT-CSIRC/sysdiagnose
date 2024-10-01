@@ -1,7 +1,7 @@
 from tests import SysdiagnoseTestCase
 import unittest
 import importlib.util
-from utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface
 
 '''
 Test file structure of analysers
@@ -18,7 +18,7 @@ class TestAnalysers(SysdiagnoseTestCase):
         for name in self.get_analysers():
             print(f"- {name}")
 
-            module = importlib.import_module(f'analysers.{name}')
+            module = importlib.import_module(f'sysdiagnose.analysers.{name}')
 
             # figure out the class name
             obj = None

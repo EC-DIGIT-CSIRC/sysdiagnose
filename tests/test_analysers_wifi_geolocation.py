@@ -1,4 +1,4 @@
-from analysers.wifi_geolocation import WifiGeolocationAnalyser
+from sysdiagnose.analysers.wifi_geolocation import WifiGeolocationAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

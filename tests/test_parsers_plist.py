@@ -1,4 +1,4 @@
-from parsers.plists import PlistParser
+from sysdiagnose.parsers.plists import PlistParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

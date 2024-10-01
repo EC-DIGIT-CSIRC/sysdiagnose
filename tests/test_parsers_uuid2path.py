@@ -1,5 +1,5 @@
 from tests import SysdiagnoseTestCase
-from parsers.uuid2path import UUID2PathParser
+from sysdiagnose.parsers.uuid2path import UUID2PathParser
 import unittest
 import os
 

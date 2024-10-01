@@ -1,4 +1,4 @@
-from parsers.crashlogs import CrashLogsParser
+from sysdiagnose.parsers.crashlogs import CrashLogsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

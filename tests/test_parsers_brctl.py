@@ -1,4 +1,4 @@
-from parsers.brctl import BrctlParser
+from sysdiagnose.parsers.brctl import BrctlParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

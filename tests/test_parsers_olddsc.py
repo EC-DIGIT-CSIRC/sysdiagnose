@@ -1,4 +1,4 @@
-from parsers.olddsc import OldDscParser
+from sysdiagnose.parsers.olddsc import OldDscParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

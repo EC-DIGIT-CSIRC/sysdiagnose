@@ -1,5 +1,5 @@
 from tests import SysdiagnoseTestCase
-from utils import tabbasedhierarchy
+from sysdiagnose.utils import tabbasedhierarchy
 import unittest
 
 

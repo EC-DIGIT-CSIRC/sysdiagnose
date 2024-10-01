@@ -1,12 +1,12 @@
 from tests import SysdiagnoseTestCase
-import sysdiagnose
+from sysdiagnose import Sysdiagnose
 import unittest
 
 
 class TestSysdiagnose(SysdiagnoseTestCase):
 
     def test_get_case_ids(self):
-        sd = sysdiagnose.Sysdiagnose()
+        sd = Sysdiagnose()
         sd._cases = {
             '1': {
                 'case_id': 1,

@@ -1,4 +1,4 @@
-from parsers.wifiscan import WifiScanParser
+from sysdiagnose.parsers.wifiscan import WifiScanParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

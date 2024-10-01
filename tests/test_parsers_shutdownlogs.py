@@ -1,4 +1,4 @@
-from parsers.shutdownlogs import ShutdownLogsParser
+from sysdiagnose.parsers.shutdownlogs import ShutdownLogsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,4 +1,4 @@
-from parsers.taskinfo import TaskinfoParser
+from sysdiagnose.parsers.taskinfo import TaskinfoParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

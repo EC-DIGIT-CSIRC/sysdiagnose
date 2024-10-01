@@ -1,4 +1,4 @@
-from parsers.psthread import PsThreadParser
+from sysdiagnose.parsers.psthread import PsThreadParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

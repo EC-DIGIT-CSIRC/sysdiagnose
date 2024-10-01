@@ -1,5 +1,5 @@
 from tests import SysdiagnoseTestCase
-from utils import multilinelog
+from sysdiagnose.utils import multilinelog
 import unittest
 
 
