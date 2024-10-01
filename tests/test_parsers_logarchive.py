@@ -151,7 +151,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
         try:
             # write the files with the test data
             for file in input:
-                temp_file = tempfile.NamedTemporaryFile(delete_on_close=False)
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
                 temp_files.append({
                     'file': temp_file,
                 })
@@ -160,7 +160,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                     temp_file.write(b'\n')
                 temp_file.close()
             # merge the files
-            output_file = tempfile.NamedTemporaryFile(delete_on_close=False)
+            output_file = tempfile.NamedTemporaryFile(delete=False)
             output_file.close()
             LogarchiveParser.merge_files(temp_files, output_file.name)
 

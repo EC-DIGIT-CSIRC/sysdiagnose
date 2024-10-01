@@ -178,7 +178,7 @@ class LogarchiveParser(BaseParserInterface):
         temp_files = []
         try:
             for folder in folders:
-                temp_file = tempfile.NamedTemporaryFile(delete_on_close=False)
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
                 LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
                 temp_files.append({
                     'file': temp_file,
