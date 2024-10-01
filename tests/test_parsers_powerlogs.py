@@ -1,4 +1,4 @@
-from parsers.powerlogs import PowerLogsParser
+from sysdiagnose.parsers.powerlogs import PowerLogsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

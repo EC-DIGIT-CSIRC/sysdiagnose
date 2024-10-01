@@ -1,4 +1,4 @@
-from parsers.mobileinstallation import MobileInstallationParser
+from sysdiagnose.parsers.mobileinstallation import MobileInstallationParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,4 +1,4 @@
-from parsers.remotectl_dumpstate import RemotectlDumpstateParser
+from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

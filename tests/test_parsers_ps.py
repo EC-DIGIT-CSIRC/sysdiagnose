@@ -1,4 +1,4 @@
-from parsers.ps import PsParser
+from sysdiagnose.parsers.ps import PsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import tempfile

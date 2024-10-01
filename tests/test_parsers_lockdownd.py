@@ -1,4 +1,4 @@
-from parsers.lockdownd import LockdowndParser
+from sysdiagnose.parsers.lockdownd import LockdowndParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

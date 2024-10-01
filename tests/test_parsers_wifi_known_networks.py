@@ -1,4 +1,4 @@
-from parsers.wifi_known_networks import WifiKnownNetworksParser
+from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

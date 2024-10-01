@@ -1,4 +1,4 @@
-from parsers.swcutil import SwcutilParser
+from sysdiagnose.parsers.swcutil import SwcutilParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,4 +1,4 @@
-from parsers.spindumpnosymbols import SpindumpNoSymbolsParser
+from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

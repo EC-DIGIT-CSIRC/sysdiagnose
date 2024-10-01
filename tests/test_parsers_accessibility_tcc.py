@@ -1,4 +1,4 @@
-from parsers.accessibility_tcc import AccessibilityTccParser
+from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

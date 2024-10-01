@@ -1,4 +1,4 @@
-from parsers.itunesstore import iTunesStoreParser
+from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

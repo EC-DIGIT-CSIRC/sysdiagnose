@@ -1,7 +1,7 @@
 from tests import SysdiagnoseTestCase
 import unittest
 import importlib.util
-from utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface
 
 '''
 Test file structure of parsers
@@ -18,7 +18,7 @@ class TestParsers(SysdiagnoseTestCase):
         for parser_name in self.get_parsers():
             print(f"- {parser_name}")
 
-            module = importlib.import_module(f'parsers.{parser_name}')
+            module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
             # spec = importlib.util.spec_from_file_location(parser_fname[:-3], parser)
             # module = importlib.util.module_from_spec(spec)
             # spec.loader.exec_module(module)

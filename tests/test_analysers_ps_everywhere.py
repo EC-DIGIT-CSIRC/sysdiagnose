@@ -1,4 +1,4 @@
-from analysers.ps_everywhere import PsEverywhereAnalyser
+from sysdiagnose.analysers.ps_everywhere import PsEverywhereAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,5 +1,5 @@
 
-from parsers.wifinetworks import WifiNetworksParser
+from sysdiagnose.parsers.wifinetworks import WifiNetworksParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,4 +1,4 @@
-from parsers.mobileactivation import MobileActivationParser
+from sysdiagnose.parsers.mobileactivation import MobileActivationParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

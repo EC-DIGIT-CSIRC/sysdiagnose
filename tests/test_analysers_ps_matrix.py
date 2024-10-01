@@ -1,4 +1,4 @@
-from analysers.ps_matrix import PsMatrixAnalyser
+from sysdiagnose.analysers.ps_matrix import PsMatrixAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

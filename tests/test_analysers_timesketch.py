@@ -1,4 +1,4 @@
-from analysers.timesketch import TimesketchAnalyser
+from sysdiagnose.analysers.timesketch import TimesketchAnalyser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

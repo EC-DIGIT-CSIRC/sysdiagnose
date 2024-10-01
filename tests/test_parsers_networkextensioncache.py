@@ -1,4 +1,4 @@
-from parsers.networkextensioncache import NetworkExtensionCacheParser
+from sysdiagnose.parsers.networkextensioncache import NetworkExtensionCacheParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os

@@ -1,4 +1,4 @@
-from parsers.sys import SystemVersionParser
+from sysdiagnose.parsers.sys import SystemVersionParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
