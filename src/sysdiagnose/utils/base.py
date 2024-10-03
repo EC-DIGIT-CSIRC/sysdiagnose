@@ -40,7 +40,8 @@ class BaseInterface(ABC):
 
         self.case_data_folder = config.get_case_data_folder(case_id)
         os.makedirs(self.case_data_folder, exist_ok=True)
-        self.case_data_subfolder = os.path.join(self.case_data_folder, os.listdir(self.case_data_folder)[0])
+        case_data_folder_dirlist = os.listdir(self.case_data_folder)
+        self.case_data_subfolder = os.path.join(self.case_data_folder, [item for item in case_data_folder_dirlist if 'sysdiagnose_' in item][0])
 
         self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
         os.makedirs(self.case_parsed_data_folder, exist_ok=True)
