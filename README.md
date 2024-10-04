@@ -143,6 +143,10 @@ Note that for a reasonable sysdiagnose log output, we recommend the following ba
 - Minimum 64 GB of HDD space just for timesketch data (add some more GBs for the OS and OS upgrades, etc.)
 - SSDs (NVMEs) for the data.
 
+## Yarascan
+
+Using YARA rules are an easy and flexible way of spotting 'evil', the Yarascan analyser will help you out with that. It looks for YARA rules within __.yar__ files saved in the `./yara` folder or in the one designated by the environment varirable `SYSDIAGNOSE_YARA_RULES_PATH`.
+
 # UnifiedLogs
 This unifiedlogs parser tool is natively provided on a MacOS system. Fortunately some entities developed a linux compatible parser.
 
