@@ -328,8 +328,8 @@ class BrctlParser(BaseParserInterface):
         parts = data.split("=======================")
 
         # Extract the JSON strings from each part
-        json_str1 = BrctlParser.parse_apps_monitor2json(parts[1].strip())
-        json_str2 = BrctlParser.parse_apps_monitor2json(parts[2].strip())
+        json_str1 = BrctlParser.__parse_apps_monitor2json(parts[1].strip())
+        json_str2 = BrctlParser.__parse_apps_monitor2json(parts[2].strip())
 
         # Load the JSON strings into Python dictionaries
         json1 = json.loads(json_str1)
@@ -337,7 +337,7 @@ class BrctlParser(BaseParserInterface):
 
         return json1, json2
 
-    def parse_apps_monitor2json(data):
+    def __parse_apps_monitor2json(data):
         # replace = by :
         json_str = data.replace("=", ":")
         # remove literal string '\n'
