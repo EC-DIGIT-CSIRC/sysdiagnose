@@ -346,9 +346,9 @@ class BrctlParser(BaseParserInterface):
         # replace start of array string representation "{( by [
         # replace end of array string representation )}" by ]
         # remove char "
-        json_str = json_str.replace("\\", "").replace('"{(', '[').replace(')}";', '],').replace('"','')
-        # adds double quotes to all bundle IDs or App IDs
-        json_str = re.sub(r'([\w\.]+)', r'"\1"', json_str)
+        json_str = json_str.replace("\\", "").replace('"{(', '[').replace(')}";', '],').replace('"', '')
+        # adds double quotes to all bundle IDs or library IDs
+        json_str = re.sub(r'([\w\.\-]+)', r'"\1"', json_str)
 
         # ugly fixes
         last_comma_index = json_str.rfind(",")
@@ -358,7 +358,6 @@ class BrctlParser(BaseParserInterface):
         json_str = json_str_new[:first_brace_index + 1]
 
         return json_str
-
 
     def parse_folder(brctl_folder):
         container_list_file = [os.path.join(brctl_folder, 'brctl-container-list.txt')]
