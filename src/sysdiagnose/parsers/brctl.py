@@ -328,30 +328,37 @@ class BrctlParser(BaseParserInterface):
         parts = data.split("=======================")
 
         # Extract the JSON strings from each part
-        json_str1 = parts[1].strip().replace("=", ":").replace("\\", "").replace(
-            "\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
-        json_str2 = parts[2].strip().replace("=", ":").replace("\\", "").replace(
-            "\"{(n    \"", "[\"").replace("\"n)}\"", "\"]").replace(",n    ", ",").replace(";", ",")
-
-        # ugly fixes
-        last_comma_index = json_str1.rfind(",")
-        json_str1_new = json_str1[:last_comma_index] + json_str1[last_comma_index + 1:]
-
-        first_brace_index = json_str1_new.find("}")
-        json_str1 = json_str1_new[:first_brace_index + 1]
-
-        # ugly fixes
-        last_comma_index = json_str2.rfind(",")
-        json_str2_new = json_str2[:last_comma_index] + json_str2[last_comma_index + 1:]
-
-        first_brace_index = json_str2_new.find("}")
-        json_str2 = json_str2_new[:first_brace_index + 1]
+        json_str1 = BrctlParser.parse_apps_monitor2json(parts[1].strip())
+        json_str2 = BrctlParser.parse_apps_monitor2json(parts[2].strip())
 
         # Load the JSON strings into Python dictionaries
         json1 = json.loads(json_str1)
         json2 = json.loads(json_str2)
 
         return json1, json2
+
+    def parse_apps_monitor2json(data):
+        # replace = by :
+        json_str = data.replace("=", ":")
+        # remove literal string '\n'
+        json_str = re.sub(r'\\n\s*', '', json_str)
+        # remove char \
+        # replace start of array string representation "{( by [
+        # replace end of array string representation )}" by ]
+        # remove char "
+        json_str = json_str.replace("\\", "").replace('"{(', '[').replace(')}";', '],').replace('"','')
+        # adds double quotes to all bundle IDs or App IDs
+        json_str = re.sub(r'([\w\.]+)', r'"\1"', json_str)
+
+        # ugly fixes
+        last_comma_index = json_str.rfind(",")
+        json_str_new = json_str[:last_comma_index] + json_str[last_comma_index + 1:]
+
+        first_brace_index = json_str_new.find("}")
+        json_str = json_str_new[:first_brace_index + 1]
+
+        return json_str
+
 
     def parse_folder(brctl_folder):
         container_list_file = [os.path.join(brctl_folder, 'brctl-container-list.txt')]
