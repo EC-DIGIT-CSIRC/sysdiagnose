@@ -134,6 +134,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse brctl",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.main",
+            "args": "-c public parse brctl",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse logarchive",
             "type": "debugpy",
             "request": "launch",
