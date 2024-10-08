@@ -102,7 +102,7 @@ def _handle_bytes(value, skip_underscore=False):
 
 @json_serializable.register(datetime)
 def _handle_datetime(value, skip_underscore=False):
-    return value.isoformat()
+    return value.isoformat(timespec='microseconds')
 
 
 def find_datetime(d):
@@ -114,7 +114,7 @@ def find_datetime(d):
                 if isinstance(item, dict):
                     find_datetime(item)
         elif isinstance(v, datetime.datetime):
-            d[k] = v.isoformat()
+            d[k] = v.isoformat(timespec='microseconds')
     return d
 
 

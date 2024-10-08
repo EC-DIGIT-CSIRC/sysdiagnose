@@ -122,7 +122,7 @@ class CrashLogsParser(BaseParserInterface):
 
             timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
             result['timestamp_orig'] = result['timestamp']
-            result['datetime'] = timestamp.isoformat()
+            result['datetime'] = timestamp.isoformat(timespec='microseconds')
             result['timestamp'] = timestamp.timestamp()
             return result
 
@@ -139,7 +139,7 @@ class CrashLogsParser(BaseParserInterface):
                 entry = {
                     'app_name': app,
                     'name': app,
-                    'datetime': timestamp.isoformat(),
+                    'datetime': timestamp.isoformat(timespec='microseconds'),
                     'timestamp': timestamp.timestamp(),
                     'filename': os.path.basename(path),
                     'path': path,

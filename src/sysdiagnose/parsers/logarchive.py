@@ -305,7 +305,7 @@ class LogarchiveParser(BaseParserInterface):
         # already in the Mandiant unifiedlog format
         if 'event_type' in entry:
             timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
-            entry['datetime'] = timestamp.isoformat()
+            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
             entry['timestamp'] = timestamp.timestamp()
             return entry
         '''
@@ -353,7 +353,7 @@ class LogarchiveParser(BaseParserInterface):
                 new_entry[key] = value
         # convert time
         timestamp = datetime.fromisoformat(new_entry['time'])
-        new_entry['datetime'] = timestamp.isoformat()
+        new_entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         new_entry['timestamp'] = timestamp.timestamp()
         new_entry['time'] = new_entry['timestamp'] * 1000000000
 

@@ -78,7 +78,7 @@ class ShutdownLogsParser(BaseParserInterface):
                 # add entries
                 for item in running_processes.values():
                     item['timestamp'] = timestamp.timestamp()
-                    item['datetime'] = timestamp.isoformat()
+                    item['datetime'] = timestamp.isoformat(timespec='microseconds')
                     item['event'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
                     events.append(item)
             index += 1

@@ -42,7 +42,7 @@ class TaskinfoParser(BaseParserInterface):
                     numb_tasks = int(result.group(2))
                     events.append({
                         'timestamp': self.sysdiagnose_creation_datetime.timestamp(),
-                        'datetime': self.sysdiagnose_creation_datetime.isoformat(),
+                        'datetime': self.sysdiagnose_creation_datetime.isoformat(timespec='microseconds'),
                         'tasks': numb_tasks,
                         'datetime_description': f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
                     })
@@ -78,7 +78,7 @@ class TaskinfoParser(BaseParserInterface):
                         seconds = int(process['run time'].split()[0])
                         timestamp = self.sysdiagnose_creation_datetime - timedelta(seconds=seconds)
                         process['timestamp'] = timestamp.timestamp()
-                        process['datetime'] = timestamp.isoformat()
+                        process['datetime'] = timestamp.isoformat(timespec='microseconds')
                         process['datetime_description'] = "Process launched at the timestamp, calculated from sysdiagnose creation time minus process run time"
                         events.append(process)
                         extracted_block = []

@@ -77,7 +77,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         if 'Date/Time' in output:
             timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S.%f %z")
             output['timestamp'] = timestamp.timestamp()
-            output['datetime'] = timestamp.isoformat()
+            output['datetime'] = timestamp.isoformat(timespec='microseconds')
 
         return output
 
@@ -96,7 +96,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                     except KeyError:  # some don't have a time since fork, like zombie processes
                         timestamp = start_time
                     process['timestamp'] = timestamp.timestamp()
-                    process['datetime'] = timestamp.isoformat()
+                    process['datetime'] = timestamp.isoformat(timespec='microseconds')
                     processes.append(process)
                     process_buffer = [line.strip()]
                 else:
@@ -108,7 +108,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         process = SpindumpNoSymbolsParser.parse_process(process_buffer)
         timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
         process['timestamp'] = timestamp.timestamp()
-        process['datetime'] = timestamp.isoformat()
+        process['datetime'] = timestamp.isoformat(timespec='microseconds')
         processes.append(process)
         return processes
 

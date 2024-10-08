@@ -150,7 +150,7 @@ class Sysdiagnose:
             print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
 
         try:
-            case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat()
+            case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat(timespec='microseconds')
         except Exception:
             pass
 

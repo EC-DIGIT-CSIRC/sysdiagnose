@@ -104,7 +104,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                         ts_event = {
                             'message': service['Service'],
                             'timestamp': timestamp.timestamp() * 1000000,
-                            'datetime': timestamp.isoformat(),
+                            'datetime': timestamp.isoformat(timespec='microseconds'),
                             'timestamp_desc': 'swcutil last checked',
                             'extra_field_1': f"application: {service['App ID']}"
                         }
@@ -129,7 +129,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 ts_event = {
                     'message': item['service'],
                     'timestamp': timestamp.timestamp() * 1000000,
-                    'datetime': timestamp.isoformat(),
+                    'datetime': timestamp.isoformat(timespec='microseconds'),
                     'timestamp_desc': 'Accessibility TC Last Modified',
                     'extra_field_1': f"client: {item['client']}"
                 }
@@ -190,7 +190,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 ts_event = {
                     'message': wifi['acct'],
                     'timestamp': ctimestamp.timestamp() * 1000000,
-                    'datetime': ctimestamp.isoformat(),
+                    'datetime': ctimestamp.isoformat(timespec='microseconds'),
                     'timestamp_desc': 'SSID added to known secured WIFI list',
                     'extra_field_1': wifi['accc']
                 }
@@ -200,7 +200,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 ts_event = {
                     'message': wifi['acct'],
                     'timestamp': mtimestamp.timestamp() * 1000000,
-                    'datetime': mtimestamp.isoformat(),
+                    'datetime': mtimestamp.isoformat(timespec='microseconds'),
                     'timestamp_desc': 'SSID modified into the secured WIFI list',
                     'extra_field_1': wifi['accc']
                 }
@@ -221,7 +221,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     ts_event = {
                         'message': f"WIFI {ssid} added",
                         'timestamp': added.timestamp() * 1000000,
-                        'datetime': added.isoformat(),
+                        'datetime': added.isoformat(timespec='microseconds'),
                         'timestamp_desc': 'added in known networks plist',
                         'extra_field_1': f"Add reason: {item['AddReason']}"
                     }
@@ -238,7 +238,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     ts_event = {
                         'message': f"WIFI {ssid} updated",
                         'timestamp': updated.timestamp() * 1000000,
-                        'datetime': updated.isoformat(),
+                        'datetime': updated.isoformat(timespec='microseconds'),
                         'timestamp_desc': 'updated in known networks plist',
                         'extra_field_1': f"Add reason: {item['AddReason']}"
                     }
@@ -255,7 +255,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     ts_event = {
                         'message': f"Password for WIFI {ssid} modified",
                         'timestamp': modified_password.timestamp() * 1000000,
-                        'datetime': modified_password.isoformat(),
+                        'datetime': modified_password.isoformat(timespec='microseconds'),
                         'timestamp_desc': 'password modified in known networks plist',
                         'extra_field_1': f"AP mode: {item['__OSSpecific__']['AP_MODE']}"
                     }

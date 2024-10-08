@@ -78,7 +78,7 @@ def build_from_logentry(line):
         timestamp = datetime.strptime(timestamp_str, "%a %b %d %H:%M:%S %Y")
         timestamp = timestamp.replace(tzinfo=timezone.utc)
         entry['timestamp'] = timestamp.timestamp()
-        entry['datetime'] = timestamp.isoformat()
+        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)

@@ -56,7 +56,7 @@ class LockdowndParser(BaseParserInterface):
             # LATER parse the json blob that can sometimes be in the message
             item = {
                 'timestamp': timestamp.timestamp(),
-                'datetime': timestamp.isoformat(),
+                'datetime': timestamp.isoformat(timespec='microseconds'),
                 'pid': int(match.group(2)),
                 'event_type': match.group(3),
                 'msg': match.group(4).strip()

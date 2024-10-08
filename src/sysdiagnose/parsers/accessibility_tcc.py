@@ -44,9 +44,10 @@ class AccessibilityTccParser(BaseParserInterface):
                         continue
 
                     try:
+                        timestamp = datetime.fromtimestamp(value['last_modified'], tz=timezone.utc)
                         value['db_table'] = key
-                        value['datetime'] = datetime.fromtimestamp(value['last_modified'], tz=timezone.utc).isoformat()
-                        value['timestamp'] = value['last_modified']
+                        value['datetime'] = timestamp.isoformat(timespec='microseconds')
+                        value['timestamp'] = timestamp.timestamp()
                         result.append(value)
                     except TypeError:
                         # skip "None" values and such

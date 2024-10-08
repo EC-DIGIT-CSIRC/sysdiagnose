@@ -40,7 +40,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
     def test_convert_unifiedlog_time_to_datetime(self):
         input = 1684958608908085200
         expected_output = '2023-05-24T20:03:28.908085+00:00'
-        result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat()
+        result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat(timespec='microseconds')
         self.assertEqual(result, expected_output)
 
     def test_convert_entry_to_unified(self):
