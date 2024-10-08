@@ -36,34 +36,38 @@ class YaraAnalyser(BaseAnalyserInterface):
         results = {'errors': [], 'matches': []}
 
         if not os.path.isdir(self.yara_rules_path):
-            raise FileNotFoundError(f"Could not find the YARA rules folder: {self.yara_rules_path}")
+            raise FileNotFoundError(f"Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
 
         rule_files, errors = self.get_valid_yara_rule_files()
         if errors:
             results['errors'] = errors
         if len(rule_files) == 0:
-            results['errors'].append(f"No valid YARA rules were present in the YARA rules folder: {self.yara_rules_path}")
+            results['errors'].append(f"No valid YARA rules (.yar) were present in the YARA rules folder: {self.yara_rules_path}")
         rule_filepaths = {}  # we need to convert the list of rule files to a dictionary for yara.compile
         for rule_file in rule_files:
             namespace = rule_file[len(self.yara_rules_path):].strip(os.path.sep)
             rule_filepaths[namespace] = rule_file
 
-        matches, errors = YaraAnalyser.scan_directory(
-            [
-                self.case_parsed_data_folder,
-                self.case_data_folder
-            ],
-            rule_filepaths,
-            ignore_files=[
-                self.output_file,         # don't match on ourselves
-            ],
-            ignore_folders=[
-                glob.glob(os.path.join(self.case_data_subfolder, 'system_logs.logarchive')).pop(),  # irrelevant for YARA rules
-            ]
-        )
-        if errors:
-            results['errors'].extend(errors)
-        results['matches'] = matches
+        if len(rule_files) > 0:
+            matches, errors = YaraAnalyser.scan_directory(
+                [
+                    self.case_parsed_data_folder,
+                    self.case_data_folder
+                ],
+                rule_filepaths,
+                ignore_files=[
+                    self.output_file,         # don't match on ourselves
+                ],
+                ignore_folders=[
+                    glob.glob(os.path.join(self.case_data_subfolder, 'system_logs.logarchive')).pop(),  # irrelevant for YARA rules
+                ]
+            )
+            if errors:
+                results['errors'].extend(errors)
+            results['matches'] = matches
+
+        if len(results['errors']) > 0:
+            print("Scan finished with errors. Review the results")
 
         return results
 
