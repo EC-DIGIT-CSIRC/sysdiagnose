@@ -217,8 +217,9 @@ class LogarchiveParser(BaseParserInterface):
                     print(f"WARNING: error parsing JSON {line}: {str(e)}")
                 except KeyError:
                     # last line of log does not contain 'time' field, nor the rest of the data.
-                    # so just ignore it
-                    pass
+                    # so just ignore it and all the rest.
+                    # last line looks like {'count':xyz, 'finished':1}
+                    break
 
     def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
         print('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
