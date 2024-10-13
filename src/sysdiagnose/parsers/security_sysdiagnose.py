@@ -1,6 +1,9 @@
 import os
 import re
 from sysdiagnose.utils.base import BaseParserInterface
+import logging
+
+logger = logging.getLogger(__name__)
 
 # TODO make a security sysdiagnose analyser exporting in time based jsonl for timeline.
 # - client_trust: date
@@ -86,7 +89,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         if function_name in dir(SecuritySysdiagnoseParser):
             getattr(SecuritySysdiagnoseParser, function_name)(buffer, json_result)
         else:
-            print(f"ERROR: Function {function_name} not found in the SecuritySysdiagnoseParser class.")
+            logger.error(f"ERROR: Function {function_name} not found in the SecuritySysdiagnoseParser class.")
             json_result['errors'].append(f"Cannot parse section {function_name} as it is unknown. Parser needs to be extended.")
 
     def process_buffer_circle(buffer: list, json_result: dict):

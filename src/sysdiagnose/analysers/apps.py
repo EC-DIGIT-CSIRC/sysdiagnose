@@ -4,11 +4,14 @@
 # Author: Emiliern Le Jamtel
 
 import re
+import logging
 from sysdiagnose.utils.base import BaseAnalyserInterface
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
+
+logger = logging.getLogger(__name__)
 
 
 class AppsAnalyser(BaseAnalyserInterface):
@@ -88,9 +91,9 @@ class AppsAnalyser(BaseAnalyserInterface):
                         if matches:
                             new_term = matches[0]
                         else:
-                            # print(f"Skipping entry: {entry['subsystem']}")
+                            logger.debug(f"Skipping entry: {entry['subsystem']}")
                             continue
-                # print(f"New entry: {new_term} - was: {entry['subsystem']}")
+                logger.debug(f"New entry: {new_term} - was: {entry['subsystem']}")
                 entry['subsystem'] = new_term
             # add it to the list
             try:

@@ -9,6 +9,9 @@ import glob
 import os
 from sysdiagnose.utils.base import BaseParserInterface
 from datetime import datetime, timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PowerLogsParser(BaseParserInterface):
@@ -56,8 +59,8 @@ class PowerLogsParser(BaseParserInterface):
                         # skip "None" values and such
                         pass
 
-        print("Skipped the following tables as there are not timestamps:")
-        [print(f"  {table}") for table in skipped]
+        logger.warning("Skipped the following tables as there are not timestamps:")
+        [logger.warning(f"  {table}") for table in skipped]
         return result
 
     def parse_file_to_json(path: str) -> dict:

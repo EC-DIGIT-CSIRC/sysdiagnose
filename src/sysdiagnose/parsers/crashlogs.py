@@ -4,7 +4,10 @@ from sysdiagnose.utils.base import BaseParserInterface
 import re
 import json
 from datetime import datetime, timezone
+import logging
 # from pycrashreport.crash_report import get_crash_report_from_file
+
+logger = logging.getLogger(__name__)
 
 
 class CrashLogsParser(BaseParserInterface):
@@ -45,7 +48,7 @@ class CrashLogsParser(BaseParserInterface):
         result = []
         seen = set()
         for file in files:
-            print(f"Processing file: {file}")
+            logger.info(f"Processing file: {file}")
             if file.endswith('crashes_and_spins.log'):
                 result.extend(CrashLogsParser.parse_summary_file(file))
             elif os.path.basename(file).startswith('.'):
@@ -60,7 +63,7 @@ class CrashLogsParser(BaseParserInterface):
                     seen.add(ips_hash)
                     result.append(ips)
                 except Exception as e:
-                    print(f"Skipping file due to error {file}: {e}")
+                    logger.warning(f"Skipping file due to error {file}: {e}")
         return result
 
     def parse_ips_file(path: str) -> list | dict:
@@ -127,7 +130,7 @@ class CrashLogsParser(BaseParserInterface):
             return result
 
     def parse_summary_file(path: str) -> list | dict:
-        print(f"Parsing summary file: {path}")
+        logger.info(f"Parsing summary file: {path}")
         result = []
         with open(path, 'r') as f:
             for line in f:

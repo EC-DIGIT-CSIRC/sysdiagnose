@@ -6,6 +6,9 @@ from pathlib import Path
 from datetime import datetime
 import re
 from functools import cached_property
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SysdiagnoseConfig:
@@ -47,7 +50,7 @@ class BaseInterface(ABC):
         os.makedirs(self.case_parsed_data_folder, exist_ok=True)
 
         if not os.path.isdir(self.case_data_folder):
-            print(f"Case {case_id} does not exist", file=sys.stderr)
+            logger.error(f"Case {case_id} does not exist")
             raise FileNotFoundError(f"Case {case_id} does not exist")
 
         self.output_file = os.path.join(self.case_parsed_data_folder, self.module_name + '.' + self.format)

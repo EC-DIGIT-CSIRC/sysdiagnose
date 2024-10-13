@@ -6,6 +6,9 @@
 
 import os
 from sysdiagnose.utils.base import BaseParserInterface
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WifiSecurityParser(BaseParserInterface):
@@ -51,15 +54,15 @@ class WifiSecurityParser(BaseParserInterface):
                 for line in f:
                     if ' : ' in line:
                         key, value = line.split(" : ")
-                        # print(f"key: {key.strip()}, value: {value.strip()}")
+                        logger.debug(f"key: {key.strip()}, value: {value.strip()}")
                         element[key.strip()] = value.strip()
                     elif element:
                         entries.append(element)
-                        # print(f"appending {element}")
+                        logger.debug(f"appending {element}")
                         element = {}
         except IndexError:
             return {'error': 'No WiFi/security.txt file present'}
         except Exception as e:
-            print(f"Could not parse: {path}. Reason: {str(e)}")
+            logger.error(f"Could not parse: {path}. Reason: {str(e)}")
             return {'error': f'Could not parse: {path}. Reason: {str(e)}'}
         return entries
