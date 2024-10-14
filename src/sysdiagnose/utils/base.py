@@ -112,6 +112,7 @@ class BaseInterface(ABC):
 
         if self._result is None:
             if self.output_exists():
+                logger.info("Using cached results")
                 # load existing output
                 with open(self.output_file, 'r') as f:
                     if self.format == 'json':

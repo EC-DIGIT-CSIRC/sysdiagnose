@@ -3,6 +3,9 @@
 import os
 import json
 from sysdiagnose.utils.base import BaseParserInterface
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DemoParser(BaseParserInterface):
@@ -25,6 +28,7 @@ class DemoParser(BaseParserInterface):
         json_object = {}
         log_files = self.get_log_files()
         for log_file in log_files:
+            logger.info(f"Processing file {log_file}")
             pass
         return json_object
 
@@ -44,5 +48,5 @@ class DemoParser(BaseParserInterface):
                 json.dump(json_object, f)
             return True
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error: {e}")
             return False
