@@ -107,6 +107,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         print(f"{len(self.all_ps)} entries after remotectl_dumpstate")
 
+        # TODO powerlogs - bundleID, ProcessName
+
         self.all_ps = list(self.all_ps)
         self.all_ps.sort()
         return self.all_ps

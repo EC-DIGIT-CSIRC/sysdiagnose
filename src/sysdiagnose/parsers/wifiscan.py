@@ -8,6 +8,7 @@ from sysdiagnose.utils.base import BaseParserInterface
 
 class WifiScanParser(BaseParserInterface):
     description = "Parsing wifi_scan files"
+    format = "jsonl"
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -25,10 +26,10 @@ class WifiScanParser(BaseParserInterface):
     def execute(self) -> list | dict:
         output = []
         for logfile in self.get_log_files():
-            output.extend(WifiScanParser.parse_file(logfile))
+            output.extend(self.parse_file(logfile))
         return output
 
-    def parse_file(path: str) -> list | dict:
+    def parse_file(self, path: str) -> list | dict:
         output = []
         with open(path, 'r') as f:
             for line in f:
@@ -81,5 +82,9 @@ class WifiScanParser(BaseParserInterface):
                             value = line[index_equals + 1:index_close].strip()
                         index_now = index_close + 2
                         parsed_data[key] = value
+
+                timestamp = self.sysdiagnose_creation_datetime
+                parsed_data['datetime'] = timestamp.isoformat(timespec='microseconds')
+                parsed_data['timestamp'] = timestamp.timestamp()
                 output.append(parsed_data)
         return output
