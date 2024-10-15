@@ -48,7 +48,7 @@ def get_json_logger(filename: str) -> logging.FileHandler:
     #         'message': '%(message)s'}))
     fmt_json = SysdiagnoseJsonFormatter(
         fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
-        rename_fields={'asctime':'timestamp'})
+        rename_fields={'asctime': 'timestamp'})
     # File handler
     fh = logging.FileHandler(filename)
     fh.setLevel(logging.INFO)
@@ -187,7 +187,7 @@ def main():
                 except NotImplementedError:
                     logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
 
-        if not logger2file is None:
+        if logger2file is not None:
             logger2file.close()
 
     elif args.mode == 'analyse':
@@ -242,7 +242,7 @@ def main():
                 except NotImplementedError:
                     logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
 
-        if not logger2file is None:
+        if logger2file is not None:
             logger2file.close()
 
     else:
