@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import time
+from sysdiagnose.utils.jsonlogger import SysdiagnoseJsonFormatter
 
 logger = logging.getLogger('sysdiagnose')
 logger.setLevel(logging.INFO)
@@ -39,12 +40,15 @@ def get_console_logger(level: str) -> logging.StreamHandler:
 
 def get_json_logger(filename: str) -> logging.FileHandler:
     # https://stackoverflow.com/questions/50144628/python-logging-into-file-as-a-dictionary-or-json
-    fmt_json = logging.Formatter(
-        json.dumps({
-            'timestamp':'%(asctime)s',
-            'level': '%(levelname)s',
-            'module': '%(module)s',
-            'message': '%(message)s'}))
+    # fmt_json = logging.Formatter(
+    #     json.dumps({
+    #         'timestamp':'%(asctime)s',
+    #         'level': '%(levelname)s',
+    #         'module': '%(module)s',
+    #         'message': '%(message)s'}))
+    fmt_json = SysdiagnoseJsonFormatter(
+        fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
+        rename_fields={'asctime':'timestamp'})
     # File handler
     fh = logging.FileHandler(filename)
     fh.setLevel(logging.INFO)
@@ -175,13 +179,13 @@ def main():
             print(f"Case ID: {case_id}")
             for parser in parsers_list:
                 print(f"Parser '{parser}' for case ID '{case_id}'")
-                logger.info(f"Parser '{parser}' started")
+                logger.info(f"Parser '{parser}' started", extra={'parser': parser})
                 try:
                     result = sd.parse(parser, case_id)
                     result_str = "successfully" if result == 0 else "with errors"
-                    logger.info(f"Parser '{parser}' finished {result_str}")
+                    logger.info(f"Parser '{parser}' finished {result_str}", extra={'parser': parser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping")
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
 
         if not logger2file is None:
             logger2file.close()
@@ -230,13 +234,13 @@ def main():
             print(f"Case ID: {case_id}")
             for analyser in analysers_list:
                 print(f"  Analyser '{analyser}' for case ID '{case_id}'")
-                logger.info(f"Analyser '{analyser}' started")
+                logger.info(f"Analyser '{analyser}' started", extra={'analyser': analyser})
                 try:
                     result = sd.analyse(analyser, case_id)
                     result_str = "successfully" if result == 0 else "with errors"
-                    logger.info(f"Analyser '{analyser}' finished {result_str}")
+                    logger.info(f"Analyser '{analyser}' finished {result_str}", extra={'analyser': analyser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping")
+                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
 
         if not logger2file is None:
             logger2file.close()

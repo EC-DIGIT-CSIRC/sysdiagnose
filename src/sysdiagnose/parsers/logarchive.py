@@ -202,7 +202,7 @@ class LogarchiveParser(BaseParserInterface):
                 LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
             return True
         except IndexError:
-            logger.error('Error: No system_logs.logarchive/ folder found in logs/ directory')
+            logger.exception('Error: No system_logs.logarchive/ folder found in logs/ directory')
             return False
 
     def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
@@ -216,7 +216,7 @@ class LogarchiveParser(BaseParserInterface):
                     entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
                     f_out.write(json.dumps(entry_json) + '\n')
                 except json.JSONDecodeError as e:
-                    logger.warning(f"WARNING: error parsing JSON {line}: {str(e)}")
+                    logger.warning(f"WARNING: error parsing JSON {line}", exc_info=True)
                 except KeyError:
                     # last line of log does not contain 'time' field, nor the rest of the data.
                     # so just ignore it and all the rest.
@@ -235,7 +235,7 @@ class LogarchiveParser(BaseParserInterface):
         try:
             subprocess.check_output(cmd_parsing_linux_test, universal_newlines=True)
         except FileNotFoundError:
-            logger.error('ERROR: UnifiedLogReader not found, please install it. See README.md for more information.')
+            logger.exception('ERROR: UnifiedLogReader not found, please install it. See README.md for more information.')
             return
 
         # really run the tool now
@@ -253,7 +253,7 @@ class LogarchiveParser(BaseParserInterface):
                             entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
                             entries.append(entry_json)
                         except json.JSONDecodeError as e:
-                            logger.warning(f"WARNING: error parsing JSON {fname_reading}: {str(e)}")
+                            logger.warning(f"WARNING: error parsing JSON {fname_reading}", exc_info=True)
         # tempfolder is cleaned automatically after the block
 
         # sort the data as it's not sorted by default, and we need sorted data for other analysers

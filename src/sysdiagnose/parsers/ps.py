@@ -67,7 +67,7 @@ class PsParser(BaseParserInterface):
                     result.append(row)
                 return result
         except Exception as e:
-            logger.error(f"Could not parse ps.txt: {str(e)}")
+            logger.exception("Could not parse ps.txt")
             return []
 
     def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
@@ -102,7 +102,7 @@ def export_to_json(processes, filename="./ps.json"):
         with open(filename, "w") as fd:
             fd.write(json_ps)
     except Exception as e:
-        logger.error(f"Impossible to dump the processes to {filename}. Reason: {str(e)}\n")
+        logger.exception(f"Impossible to dump the processes to {filename}")
 
 
 """

@@ -24,7 +24,7 @@ class DemoAnalyser(BaseAnalyserInterface):
         By doing so you will get the parser output even if it never ran before.
         """
         print("DO SOMETHING HERE")
-        logger.info("log something here")
+        logger.info("log something here", extra={'analyser': __name__})
 
         # json_data = p_fooparser.get_result()
 

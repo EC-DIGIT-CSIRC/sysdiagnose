@@ -63,6 +63,6 @@ class WifiSecurityParser(BaseParserInterface):
         except IndexError:
             return {'error': 'No WiFi/security.txt file present'}
         except Exception as e:
-            logger.error(f"Could not parse: {path}. Reason: {str(e)}")
+            logger.exception(f"Could not parse: {path}")
             return {'error': f'Could not parse: {path}. Reason: {str(e)}'}
         return entries

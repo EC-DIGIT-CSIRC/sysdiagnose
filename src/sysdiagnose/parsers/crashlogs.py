@@ -63,7 +63,7 @@ class CrashLogsParser(BaseParserInterface):
                     seen.add(ips_hash)
                     result.append(ips)
                 except Exception as e:
-                    logger.warning(f"Skipping file due to error {file}: {e}")
+                    logger.warning(f"Skipping file due to error {file}", exc_info=True)
         return result
 
     def parse_ips_file(path: str) -> list | dict:

@@ -87,11 +87,11 @@ class YaraAnalyser(BaseAnalyserInterface):
                 # if we reach this point, the rule is valid
                 rule_files_validated.append(rule_file)
             except yara.SyntaxError as e:
-                logger.error(f"Error compiling rule {rule_file}: {str(e)}")
+                logger.exception(f"Error compiling rule {rule_file}")
                 errors.append(f"Error compiling rule {rule_file}: {str(e)}")
                 continue
             except yara.Error as e:
-                logger.error(f"Error compiling rule {rule_file}: {str(e)}")
+                logger.exception(f"Error compiling rule {rule_file}")
                 errors.append(f"Error loading rule {rule_file}: {str(e)}")
                 continue
 
