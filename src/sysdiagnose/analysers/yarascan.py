@@ -36,7 +36,9 @@ class YaraAnalyser(BaseAnalyserInterface):
         results = {'errors': [], 'matches': []}
 
         if not os.path.isdir(self.yara_rules_path):
-            raise FileNotFoundError(f"Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
+            print(f"ERROR: Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
+            results['errors'].append(f"Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
+            return results
 
         rule_files, errors = self.get_valid_yara_rule_files()
         if errors:
