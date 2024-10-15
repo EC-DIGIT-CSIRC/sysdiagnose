@@ -5,7 +5,7 @@ import json
 from sysdiagnose.utils.base import BaseParserInterface
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class DemoParser(BaseParserInterface):

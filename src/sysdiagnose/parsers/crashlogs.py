@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import logging
 # from pycrashreport.crash_report import get_crash_report_from_file
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class CrashLogsParser(BaseParserInterface):

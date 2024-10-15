@@ -18,7 +18,7 @@ import tempfile
 import shutil
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 # --------------------------------------------#
 
 # On 2023-04-13: using ndjson instead of json to avoid parsing issues.

@@ -11,7 +11,7 @@ from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class AppsAnalyser(BaseAnalyserInterface):

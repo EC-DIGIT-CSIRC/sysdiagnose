@@ -11,7 +11,7 @@ from sysdiagnose.utils.base import BaseParserInterface
 from datetime import datetime, timezone
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class PowerLogsParser(BaseParserInterface):

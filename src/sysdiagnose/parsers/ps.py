@@ -18,7 +18,7 @@ import re
 import sys
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class PsParser(BaseParserInterface):

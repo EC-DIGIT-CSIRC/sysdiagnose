@@ -6,7 +6,7 @@ import queue
 import logging
 from sysdiagnose.utils.base import BaseAnalyserInterface
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 # These are the commonly used external variables that can be used in the YARA rules

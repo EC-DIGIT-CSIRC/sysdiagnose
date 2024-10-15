@@ -6,7 +6,7 @@
 import logging
 from sysdiagnose.utils.base import BaseAnalyserInterface
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class DemoAnalyser(BaseAnalyserInterface):

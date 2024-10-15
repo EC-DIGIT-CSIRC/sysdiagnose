@@ -8,7 +8,7 @@ import re
 from functools import cached_property
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sysdiagnose')
 
 
 class SysdiagnoseConfig:

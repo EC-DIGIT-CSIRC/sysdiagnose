@@ -3,7 +3,12 @@ import argparse
 import sys
 from sysdiagnose import Sysdiagnose
 import os
+import json
+import logging
+import time
 
+logger = logging.getLogger('sysdiagnose')
+logger.setLevel(logging.INFO)
 
 def parse_parser_error(message):
     sd = Sysdiagnose()
@@ -22,6 +27,30 @@ def analyse_parser_error(message):
     sd.print_analysers_list()
     sys.exit(2)
 
+def get_console_logger(level: str) -> logging.StreamHandler:
+    # Format
+    fmt_console = logging.Formatter('[%(levelname)s] [%(module)s] %(message)s')
+    # Console handler
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    ch.setFormatter(fmt_console)
+
+    return ch
+
+def get_json_logger(filename: str) -> logging.FileHandler:
+    # https://stackoverflow.com/questions/50144628/python-logging-into-file-as-a-dictionary-or-json
+    fmt_json = logging.Formatter(
+        json.dumps({
+            'timestamp':'%(asctime)s',
+            'level': '%(levelname)s',
+            'module': '%(module)s',
+            'message': '%(message)s'}))
+    # File handler
+    fh = logging.FileHandler(filename)
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(fmt_json)
+
+    return fh
 
 def main():
     parser = argparse.ArgumentParser(
@@ -41,11 +70,13 @@ def main():
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
     parse_parser.add_argument('parser', help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
+    parse_parser.add_argument('--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parse_parser.error = parse_parser_error
 
     # analyse mode
     analyse_parser = subparsers.add_parser('analyse', help='Analyse a case')
     analyse_parser.add_argument('analyser', help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers')
+    analyse_parser.add_argument('--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     analyse_parser.error = analyse_parser_error
 
     # list mode
@@ -123,14 +154,37 @@ def main():
         else:
             case_ids = [args.case_id]
 
+        # Handle console logging
+        log_level = args.log.upper()
+        logger.addHandler(get_console_logger(log_level))
+
+        logger2file = None
         for case_id in case_ids:
+            # Handle file logging
+            time_str = time.strftime("%Y%m%dT%H%M%S")
+            filename = f"{time_str}-parse-{case_id}.jsonl"
+            folder = sd.config.get_case_parsed_data_folder(case_id)
+            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+            if logger2file is None:
+                logger2file = get_json_logger(os.path.join(folder, filename))
+                logger.addHandler(logger2file)
+            else:
+                logger2file.close()
+                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+
             print(f"Case ID: {case_id}")
             for parser in parsers_list:
                 print(f"Parser '{parser}' for case ID '{case_id}'")
+                logger.info(f"Parser '{parser}' started")
                 try:
-                    sd.parse(parser, case_id)
+                    result = sd.parse(parser, case_id)
+                    result_str = "successfully" if result == 0 else "with errors"
+                    logger.info(f"Parser '{parser}' finished {result_str}")
                 except NotImplementedError:
-                    print(f"Parser '{parser}' is not implemented yet, skipping")
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping")
+
+        if not logger2file is None:
+            logger2file.close()
 
     elif args.mode == 'analyse':
         # Handle analyse mode
@@ -155,14 +209,38 @@ def main():
         else:
             case_ids = [args.case_id]
 
+        # Handle console logging
+        log_level = args.log.upper()
+        logger.addHandler(get_console_logger(log_level))
+
+        logger2file = None
         for case_id in case_ids:
+            # Handle file logging
+            time_str = time.strftime("%Y%m%dT%H%M%S")
+            filename = f"{time_str}-analyse-{case_id}.jsonl"
+            folder = sd.config.get_case_parsed_data_folder(case_id)
+            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+            if logger2file is None:
+                logger2file = get_json_logger(os.path.join(folder, filename))
+                logger.addHandler(logger2file)
+            else:
+                logger2file.close()
+                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+
             print(f"Case ID: {case_id}")
             for analyser in analysers_list:
                 print(f"  Analyser '{analyser}' for case ID '{case_id}'")
+                logger.info(f"Analyser '{analyser}' started")
                 try:
-                    sd.analyse(analyser, case_id)
+                    result = sd.analyse(analyser, case_id)
+                    result_str = "successfully" if result == 0 else "with errors"
+                    logger.info(f"Analyser '{analyser}' finished {result_str}")
                 except NotImplementedError:
-                    print(f"Analyser '{analyser}' is not implemented yet, skipping")
+                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping")
+
+        if not logger2file is None:
+            logger2file.close()
+
     else:
         parser.print_help()
 
