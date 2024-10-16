@@ -39,7 +39,7 @@ def get_json_handler(filename: str, level: int = logging.INFO) -> logging.FileHa
     '''
     fmt_json = SysdiagnoseJsonFormatter(
         fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
-        rename_fields={'asctime': 'datetime', 'created' : 'timestamp'})
+        rename_fields={'asctime': 'datetime', 'created': 'timestamp'})
     # File handler
     fh = logging.FileHandler(filename)
     fh.setLevel(level)
