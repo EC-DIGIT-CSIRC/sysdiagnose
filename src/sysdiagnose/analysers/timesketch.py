@@ -16,10 +16,7 @@ from sysdiagnose.parsers.wifisecurity import WifiSecurityParser
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 from sysdiagnose.parsers.crashlogs import CrashLogsParser
 from collections.abc import Generator
-from sysdiagnose.utils.base import BaseAnalyserInterface
-import logging
-
-logger = logging.getLogger('sysdiagnose')
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
 
 class TimesketchAnalyser(BaseAnalyserInterface):
