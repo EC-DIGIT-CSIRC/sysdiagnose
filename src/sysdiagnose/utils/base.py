@@ -6,9 +6,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 from functools import cached_property
-import logging
-
-logger = logging.getLogger('sysdiagnose')
+from sysdiagnose.utils.logger import logger
 
 
 class SysdiagnoseConfig:

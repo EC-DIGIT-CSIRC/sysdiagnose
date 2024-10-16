@@ -7,11 +7,8 @@
 from sysdiagnose.utils import sqlite2json
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timezone
-import logging
-
-logger = logging.getLogger('sysdiagnose')
 
 
 class PowerLogsParser(BaseParserInterface):

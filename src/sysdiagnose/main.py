@@ -3,13 +3,9 @@ import argparse
 import sys
 from sysdiagnose import Sysdiagnose
 import os
-import json
-import logging
 import time
-from sysdiagnose.utils.jsonlogger import SysdiagnoseJsonFormatter
+from sysdiagnose.utils.logger import logger, get_console_handler, get_json_handler
 
-logger = logging.getLogger('sysdiagnose')
-logger.setLevel(logging.INFO)
 
 def parse_parser_error(message):
     sd = Sysdiagnose()
@@ -28,33 +24,6 @@ def analyse_parser_error(message):
     sd.print_analysers_list()
     sys.exit(2)
 
-def get_console_logger(level: str) -> logging.StreamHandler:
-    # Format
-    fmt_console = logging.Formatter('[%(levelname)s] [%(module)s] %(message)s')
-    # Console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(fmt_console)
-
-    return ch
-
-def get_json_logger(filename: str) -> logging.FileHandler:
-    # https://stackoverflow.com/questions/50144628/python-logging-into-file-as-a-dictionary-or-json
-    # fmt_json = logging.Formatter(
-    #     json.dumps({
-    #         'timestamp':'%(asctime)s',
-    #         'level': '%(levelname)s',
-    #         'module': '%(module)s',
-    #         'message': '%(message)s'}))
-    fmt_json = SysdiagnoseJsonFormatter(
-        fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
-        rename_fields={'asctime': 'timestamp'})
-    # File handler
-    fh = logging.FileHandler(filename)
-    fh.setLevel(logging.INFO)
-    fh.setFormatter(fmt_json)
-
-    return fh
 
 def main():
     parser = argparse.ArgumentParser(
@@ -160,7 +129,7 @@ def main():
 
         # Handle console logging
         log_level = args.log.upper()
-        logger.addHandler(get_console_logger(log_level))
+        logger.addHandler(get_console_handler(log_level))
 
         logger2file = None
         for case_id in case_ids:
@@ -170,7 +139,7 @@ def main():
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
-                logger2file = get_json_logger(os.path.join(folder, filename))
+                logger2file = get_json_handler(os.path.join(folder, filename))
                 logger.addHandler(logger2file)
             else:
                 logger2file.close()
