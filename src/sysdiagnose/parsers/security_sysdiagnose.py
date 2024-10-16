@@ -1,9 +1,6 @@
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface
-import logging
-
-logger = logging.getLogger('sysdiagnose')
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 # TODO make a security sysdiagnose analyser exporting in time based jsonl for timeline.
 # - client_trust: date

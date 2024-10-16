@@ -7,7 +7,7 @@
 #
 from collections.abc import Generator
 from datetime import datetime, timezone
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 import glob
 import json
 import os
@@ -16,9 +16,7 @@ import subprocess
 import sys
 import tempfile
 import shutil
-import logging
 
-logger = logging.getLogger('sysdiagnose')
 # --------------------------------------------#
 
 # On 2023-04-13: using ndjson instead of json to avoid parsing issues.

@@ -3,10 +3,7 @@
 # For Python3
 # DEMO - Skeleton
 
-import logging
-from sysdiagnose.utils.base import BaseAnalyserInterface
-
-logger = logging.getLogger('sysdiagnose')
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
 
 class DemoAnalyser(BaseAnalyserInterface):

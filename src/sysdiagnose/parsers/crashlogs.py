@@ -1,13 +1,10 @@
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 import re
 import json
 from datetime import datetime, timezone
-import logging
 # from pycrashreport.crash_report import get_crash_report_from_file
-
-logger = logging.getLogger('sysdiagnose')
 
 
 class CrashLogsParser(BaseParserInterface):

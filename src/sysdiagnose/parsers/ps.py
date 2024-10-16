@@ -9,16 +9,13 @@
 # - tree structure
 # - simplified
 #
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 import argparse
 import glob
 import json
 import os
 import re
 import sys
-import logging
-
-logger = logging.getLogger('sysdiagnose')
 
 
 class PsParser(BaseParserInterface):
