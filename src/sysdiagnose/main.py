@@ -184,7 +184,7 @@ def main():
 
         # Handle console logging
         log_level = args.log.upper()
-        logger.addHandler(get_console_logger(log_level))
+        logger.addHandler(get_console_handler(log_level))
 
         logger2file = None
         for case_id in case_ids:
@@ -194,7 +194,7 @@ def main():
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
-                logger2file = get_json_logger(os.path.join(folder, filename))
+                logger2file = get_json_handler(os.path.join(folder, filename))
                 logger.addHandler(logger2file)
             else:
                 logger2file.close()
