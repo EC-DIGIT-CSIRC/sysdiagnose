@@ -18,7 +18,6 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
             result = p.get_result()
             for item in result:
                 self.assertTrue('timestamp' in item)
-                print(item)
 
 
 if __name__ == '__main__':
