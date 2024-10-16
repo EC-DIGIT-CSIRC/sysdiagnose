@@ -38,8 +38,8 @@ def get_json_handler(filename: str, level: int = logging.INFO) -> logging.FileHa
         level: Logging level. By default to INFO. https://docs.python.org/3/library/logging.html#logging-levels
     '''
     fmt_json = SysdiagnoseJsonFormatter(
-        fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
-        rename_fields={'asctime': 'timestamp'})
+        fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
+        rename_fields={'asctime': 'datetime', 'created' : 'timestamp'})
     # File handler
     fh = logging.FileHandler(filename)
     fh.setLevel(level)
