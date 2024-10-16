@@ -3,10 +3,7 @@ import os
 import glob
 import threading
 import queue
-import logging
-from sysdiagnose.utils.base import BaseAnalyserInterface
-
-logger = logging.getLogger('sysdiagnose')
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
 
 # These are the commonly used external variables that can be used in the YARA rules
@@ -39,7 +36,7 @@ class YaraAnalyser(BaseAnalyserInterface):
         results = {'errors': [], 'matches': []}
 
         if not os.path.isdir(self.yara_rules_path):
-            print(f"ERROR: Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
+            logger.error(f"ERROR: Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
             results['errors'].append(f"Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
             return results
 
