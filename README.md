@@ -25,7 +25,7 @@ On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser.
 
 Creating a new case, with the optional `-c` parameter if you want to specify the case number yourself. (such as an uuid)
 ```
-$ sysdiagnose init test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
+$ sysdiag init test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 
 Sysdiagnose file has been processed
 Case ID: 1
@@ -34,7 +34,7 @@ Case ID: 1
 Listing existing cases can be done easily:
 
 ```
-$ sysdiagnose cases
+$ sysdiag cases
 Case ID              acquisition date           Serial number    Unique device ID                          iOS Version    Tags
 -------------------  -------------------------  ---------------  ----------------------------------------  -------------  ------
 public               2023-05-24T13:29:15-07:00  F4GT2K24HG7K     e22f7f830e5dcc1287a1690a2622c2b12afaa33c  <unknown>
@@ -44,7 +44,7 @@ The `cases` folder is the current folder by default.
 You can change this using the environment variable `SYSDIAGNOSE_CASES_PATH`, for example.
 ```
 $ export SYSDIAGNOSE_CASES_PATH='/path/to/folder'
-$ sysdiagnose list cases
+$ sysdiag list cases
 ```
 
 
@@ -54,10 +54,10 @@ Data of sysdiagnose is not always usable directly, use parsers to convert them t
 Run parsers:
 
 ```
-$ sysdiagnose -c 1 parse ps
+$ sysdiag -c 1 parse ps
 Execution success, output saved in: cases/1/parsed_data/ps.json
 
-$ sysdiagnose -c 1 parse sys
+$ sysdiag -c 1 parse sys
 Execution success, output saved in: cases/1/parsed_data/sys.json
 ```
 
@@ -66,7 +66,7 @@ To run on all cases do not specify a case number or use `-c all`.
 List available parsers :
 
 ```
-$ sysdiagnose list parsers
+$ sysdiag list parsers
 Parser Name            Parser Description
 ---------------------  ---------------------------------------------------------------------
 all                    Run all parsers
@@ -106,7 +106,7 @@ wifisecurity           Parsing WiFi Security logs
 List analysers:
 
 ```
-$ sysdiagnose list analysers
+$ sysdiag list analysers
 Analyser Name         Analyser Description
 --------------------  -------------------------------------------------------------------------------
 all                   Run all analysers
@@ -122,7 +122,7 @@ yarascan              Scan the case folder using YARA rules ('./yara' or SYSDIAG
 
 Run analyser (make sure you run `parse all` before)
 ```
-$ sysdiagnose -c 1 analyse timesketch
+$ sysdiag -c 1 analyse timesketch
 Execution success, output saved in: cases/1/parsed_data/timesketch.jsonl
 ```
 

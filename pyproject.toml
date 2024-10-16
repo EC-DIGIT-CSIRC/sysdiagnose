@@ -33,4 +33,4 @@ dependencies = [
 ]
 
 [project.scripts]
-sysdiagnose = "sysdiagnose.main:main"
+sysdiag = "sysdiagnose.main:main"
