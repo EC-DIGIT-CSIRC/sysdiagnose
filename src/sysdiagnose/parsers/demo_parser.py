@@ -33,4 +33,4 @@ class DemoParser(BaseParserInterface):
             result.append(entry)
             logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file, 'entry': entry})
 
-         return result
+        return result
