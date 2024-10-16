@@ -7,7 +7,7 @@ from sysdiagnose.utils.base import BaseParserInterface, logger
 
 class DemoParser(BaseParserInterface):
     description = "Demo parsers"
-    # format = "json"  # by default json
+    format = "jsonl"  # by default json, use jsonl for event-based data
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -22,28 +22,15 @@ class DemoParser(BaseParserInterface):
         '''
         this is the function that will be called
         '''
-        json_object = {}
+        result = []
         log_files = self.get_log_files()
         for log_file in log_files:
-            logger.info(f"Processing file {log_file}", extra={'parser': __name__, 'log_file': log_file})
-            pass
-        return json_object
+            entry = {}
 
-    def parse_path_to_folder(self, path: str, output_folder: str) -> bool:
-        '''
-        this is the function that will be called
-        '''
-        try:
-            json_object = {}
-            log_files = self.get_log_files(path)
-            for log_file in log_files:
-                pass
-            # ideally stream to the file directly
-            output_folder = os.path.join(output_folder, __name__.split('.')[-1])
-            os.makedirs(output_folder, exist_ok=True)
-            with open(os.path.join(output_folder, "demo_output.json"), "w") as f:
-                json.dump(json_object, f)
-            return True
-        except Exception as e:
-            logger.exception("Error")
-            return False
+            # timestamp = datetime.strptime(item['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
+            # entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+            # entry['timestamp'] = timestamp.timestamp()
+            result.append(entry)
+            logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file, 'entry': entry})
+
+         return result
