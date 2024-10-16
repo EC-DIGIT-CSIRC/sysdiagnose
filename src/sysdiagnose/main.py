@@ -67,6 +67,10 @@ def main():
 
     args = parser.parse_args()
 
+    # Handle console logging
+    log_level = args.log.upper()
+    logger.addHandler(get_console_handler(log_level))
+
     sd = Sysdiagnose()
 
     if args.mode == 'list':
@@ -126,10 +130,6 @@ def main():
         else:
             case_ids = [args.case_id]
 
-        # Handle console logging
-        log_level = args.log.upper()
-        logger.addHandler(get_console_handler(log_level))
-
         logger2file = None
         for case_id in case_ids:
             # Handle file logging
@@ -180,10 +180,6 @@ def main():
             exit(f"Case ID '{args.case_id}' does not exist, possible options are listed above.")
         else:
             case_ids = [args.case_id]
-
-        # Handle console logging
-        log_level = args.log.upper()
-        logger.addHandler(get_console_handler(log_level))
 
         logger2file = None
         for case_id in case_ids:
