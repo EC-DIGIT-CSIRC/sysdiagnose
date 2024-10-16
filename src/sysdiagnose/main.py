@@ -32,6 +32,7 @@ def main():
     )
     # available for all
     parser.add_argument('-c', '--case_id', required=False, default='all', help='ID of the case, or "all" for all cases (default)')
+    parser.add_argument('-l', '--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 
     subparsers = parser.add_subparsers(dest='mode')
 
@@ -43,13 +44,11 @@ def main():
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
     parse_parser.add_argument('parser', help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
-    parse_parser.add_argument('--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     parse_parser.error = parse_parser_error
 
     # analyse mode
     analyse_parser = subparsers.add_parser('analyse', help='Analyse a case')
     analyse_parser.add_argument('analyser', help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers')
-    analyse_parser.add_argument('--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     analyse_parser.error = analyse_parser_error
 
     # list mode
@@ -135,7 +134,7 @@ def main():
         for case_id in case_ids:
             # Handle file logging
             time_str = time.strftime("%Y%m%dT%H%M%S")
-            filename = f"{time_str}-parse-{case_id}.jsonl"
+            filename = f"{time_str}-log-parse.jsonl"
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
@@ -190,7 +189,7 @@ def main():
         for case_id in case_ids:
             # Handle file logging
             time_str = time.strftime("%Y%m%dT%H%M%S")
-            filename = f"{time_str}-analyse-{case_id}.jsonl"
+            filename = f"{time_str}-log-analyse.jsonl"
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
