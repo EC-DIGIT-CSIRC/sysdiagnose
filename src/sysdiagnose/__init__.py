@@ -7,7 +7,7 @@ import os
 import re
 import tarfile
 import fcntl
-from sysdiagnose.utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig, logger
 
 
 class Sysdiagnose:
@@ -147,7 +147,7 @@ class Sysdiagnose:
             case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
             case['version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
         except (KeyError, TypeError) as e:
-            print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
+            logger.warning(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
 
         try:
             case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat(timespec='microseconds')

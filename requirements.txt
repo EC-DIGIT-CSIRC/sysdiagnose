@@ -8,3 +8,4 @@ numpy==2.0.0
 nska-deserialize==1.5.1
 yara-python==4.5.1
 # pycrashreport==1.2.4
+python-json-logger==2.0.7

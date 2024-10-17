@@ -16,7 +16,7 @@ from sysdiagnose.parsers.wifisecurity import WifiSecurityParser
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 from sysdiagnose.parsers.crashlogs import CrashLogsParser
 from collections.abc import Generator
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
 
 class TimesketchAnalyser(BaseAnalyserInterface):
@@ -50,7 +50,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     pass
                 yield ts_event
         except Exception as e:
-            print(f"ERROR while extracting timestamp from mobileactivation file. Reason: {str(e)}")
+            logger.exception("ERROR while extracting timestamp from mobileactivation file.")
 
     def __extract_ts_powerlogs(self) -> Generator[dict, None, None]:
         try:
@@ -91,7 +91,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     pass
 
         except Exception as e:
-            print(f"ERROR while extracting timestamp from powerlogs. Reason: {str(e)}")
+            logger.exception("ERROR while extracting timestamp from powerlogs.")
 
     def __extract_ts_swcutil(self) -> Generator[dict, None, None]:
         try:
@@ -111,10 +111,10 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                         yield ts_event
                     except KeyError:
                         # some entries do not have a Last Checked or timestamp field
-                        # print(f"WARNING {filename} while extracting timestamp from {(service['Service'])} - {(service['App ID'])}. Record not inserted.")
+                        logger.warning(f"Error while extracting timestamp from {(service['Service'])} - {(service['App ID'])}. Record not inserted.")
                         pass
         except Exception as e:
-            print(f"ERROR while extracting timestamp from swcutil. Reason {str(e)}")
+            logger.exception("ERROR while extracting timestamp from swcutil.")
 
     def __extract_ts_accessibility_tcc(self) -> Generator[dict, None, None]:
         try:
@@ -135,7 +135,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 }
                 yield ts_event
         except Exception as e:
-            print(f"ERROR while extracting timestamp from accessibility_tcc. Reason {str(e)}")
+            logger.exception("ERROR while extracting timestamp from accessibility_tcc.")
 
     def __extract_ts_shutdownlogs(self) -> Generator[dict, None, None]:
         try:
@@ -153,9 +153,9 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     }
                     yield ts_event
                 except Exception as e:
-                    print(f"WARNING: shutdownlog entry not parsed: {event}. Reason: {str(e)}")
+                    logger.warning(f"WARNING: shutdownlog entry not parsed: {event}", exc_info=True)
         except Exception as e:
-            print(f"ERROR while extracting timestamp from shutdownlog. Reason: {str(e)}")
+            logger.exception("ERROR while extracting timestamp from shutdownlog.")
 
     def __extract_ts_logarchive(self) -> Generator[dict, None, None]:
         try:
@@ -173,9 +173,9 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     }
                     yield ts_event
                 except KeyError as e:
-                    print(f"WARNING: trace not parsed: {event}. Error {e}")
+                    logger.warning(f"WARNING: trace not parsed: {event}.", exc_info=True)
         except Exception as e:
-            print(f"ERROR while extracting timestamp from logarchive. Reason: {str(e)}")
+            logger.exception(f"ERROR while extracting timestamp from logarchive.")
 
     def __extract_ts_wifisecurity(self) -> Generator[dict, None, None]:
         try:
@@ -206,7 +206,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 }
                 yield ts_event
         except Exception as e:
-            print(f"ERROR while extracting timestamp from wifisecurity. Reason {str(e)}")
+            logger.exception("ERROR while extracting timestamp from wifisecurity.")
 
     def __extract_ts_wifi_known_networks(self) -> Generator[dict, None, None]:
         try:
@@ -228,7 +228,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     yield ts_event
                 except KeyError:
                     # some wifi networks do not have an AddedAt field
-                    # print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
+                    logger.warning(f"Error while extracting timestamp from {ssid}. Record not inserted.", exc_info=True)
                     pass
 
                 # WIFI modified
@@ -245,7 +245,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     yield ts_event
                 except KeyError:
                     # some wifi networks do not have an UpdatedAt field
-                    # print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
+                    logger.warning(f"Error while extracting timestamp from {ssid}.Record not inserted.", exc_info=True)
                     pass
 
                 # Password for wifi modified
@@ -262,10 +262,10 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     yield ts_event
                 except KeyError:
                     # some wifi networks do not have a password modification date
-                    # print(f"ERROR {filename} while extracting timestamp from {ssid}. Reason: {str(e)}. Record not inserted.")
+                    logger.warning(f"Error while extracting timestamp from {ssid}. Record not inserted.", exc_info=True)
                     pass
         except Exception as e:
-            print(f"ERROR while extracting timestamp from wifi_known_networks. Reason {str(e)}")
+            logger.exception("ERROR while extracting timestamp from wifi_known_networks.")
 
     def __extract_ts_crashlogs(self) -> Generator[dict, None, None]:
         try:
@@ -288,7 +288,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                     # skip bug_type fields
                     pass
         except Exception as e:
-            print(f"ERROR while extracting timestamp from crashlog. Reason {str(e)}")
+            logger.exception("ERROR while extracting timestamp from crashlog.")
 
     def execute(self):
         # Get all the functions that start with '__extract_ts_'

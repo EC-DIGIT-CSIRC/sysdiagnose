@@ -29,7 +29,8 @@ dependencies = [
     "pandas==2.2.2",
     "numpy==2.0.0",
     "nska-deserialize==1.5.1",
-    "yara-python==4.5.1"
+    "yara-python==4.5.1",
+    "python-json-logger==2.0.7"
 ]
 
 [project.scripts]

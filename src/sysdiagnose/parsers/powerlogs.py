@@ -7,7 +7,7 @@
 from sysdiagnose.utils import sqlite2json
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timezone
 
 
@@ -56,8 +56,8 @@ class PowerLogsParser(BaseParserInterface):
                         # skip "None" values and such
                         pass
 
-        print("Skipped the following tables as there are not timestamps:")
-        [print(f"  {table}") for table in skipped]
+        logger.warning("Skipped the following tables as there are not timestamps:")
+        [logger.warning(f"  {table}") for table in skipped]
         return result
 
     def parse_file_to_json(path: str) -> dict:
