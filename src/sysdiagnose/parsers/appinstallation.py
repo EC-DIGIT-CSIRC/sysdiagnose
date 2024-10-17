@@ -12,7 +12,7 @@ from sysdiagnose.utils import sqlite2json
 import glob
 import os
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timezone
 
 
@@ -57,4 +57,5 @@ class AppInstallationParser(BaseParserInterface):
                         pass
             return result
         except IndexError:
+            logger.exception("Index error, returning empty list")
             return []
