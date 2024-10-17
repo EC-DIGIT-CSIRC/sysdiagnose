@@ -1,16 +1,12 @@
 import os
 import re
 from sysdiagnose.utils.base import BaseParserInterface, logger
-
-# TODO make a security sysdiagnose analyser exporting in time based jsonl for timeline.
-# - client_trust: date
-# - client_transparency: date
-# - client_pcs: date
-# - client_local: date
+from datetime import datetime
 
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
     description = "Parsing security-sysdiagnose.txt file containing keychain information"
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -24,19 +20,17 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         ]
         return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
 
-    def execute(self) -> list | dict:
+    def execute(self) -> list:
         log_files = self.get_log_files()
         if not log_files:
             return {'errors': ['No security-sysdiagnose.txt file present']}
 
-        return SecuritySysdiagnoseParser.parse_file(log_files[0])
-
-    def parse_file(path: str) -> dict:
-        json_result = {'errors': []}
-        with open(path, "r") as f:
+        json_result = {'errors': [], 'events': [], 'meta': {}}
+        with open(log_files[0], "r") as f:
             buffer = []
             buffer_section = None
 
+            # TODO cleanup way of passing results, as this was just a small refactor from an old way of working
             for line in f:
                 line = line.rstrip()
                 if line == '':
@@ -74,7 +68,19 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
 
             # call the last buffer
             SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
-        return json_result
+
+            # transform the 'meta' into one jsonl entry
+            timestamp = self.sysdiagnose_creation_datetime
+            item = {
+                'timestamp': timestamp.timestamp(),
+                'datetime': timestamp.isoformat(timespec='microseconds'),
+                'timestamp_desc': 'sysdiagnose_creation_datetime',
+                'section': 'metadata'
+            }
+            item.update(json_result['meta'])
+            json_result['events'].append(item)
+
+        return json_result['events']
 
     def process_buffer(buffer: list, section: str, json_result: dict):
         """
@@ -98,7 +104,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         we keep it and just add the lines as list to the result.
         TODO consider to parse the circle section in more detail
         """
-        json_result['circle'] = buffer
+        json_result['meta']['circle'] = buffer
 
     def process_buffer_engine_state(buffer: list, json_result: dict):
         """
@@ -106,7 +112,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         """
         line_format_local = r'^(\w+) \{([^\}]+)\} \[([0-9]+)\] (\w+)'  # noqa F841
         # LATER consider splitting up the line format
-        json_result['engine'] = buffer
+        json_result['meta']['engine'] = buffer
         pass
 
     def process_buffer_keychain_state(buffer: list, json_result: dict):
@@ -114,7 +120,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         process the buffer for the homekit section
         """
         section = buffer.pop(0).split(' ').pop(0).lower()
-        json_result[section] = []
+        json_result['meta'][section] = []
         for line in buffer:
             # parse the csv line with key=value structure
             # unfortunately value can be { foo,bar }, so splitting on comma is not an option.
@@ -146,7 +152,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 i += 1
             # process the last key value pair
             row[key] = line[start:]
-            json_result[section].append(row)
+            json_result['meta'][section].append(row)
 
     def process_buffer_analytics(buffer: list, json_result: dict):
         """
@@ -160,22 +166,24 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         process the buffer for the client section
         """
         section = f"client_{buffer.pop(0).split(':').pop(1).lower().strip()}"
-        json_result[section] = []
         if buffer[0].startswith('No data'):
             return
 
         i = 0
         while i < len(buffer):
             line = buffer[i]
-            row = {}
-            row['date'] = line[:25]   # 25 chars = 'YYYY-mm-dd HH:MM:SS +0000'
-            end = line.find(': ', 26)
-            row['result'] = line[26:end]
-            start = end + 2
-            end = line.find(' - ', end + 2)
-            row['type'] = line[start:end]
-            row['attributes'] = {}
-            attribute_string = line[end + 16:]  # 16 chars = ' - Attributes: {'
+            match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)', line)
+            timestamp = datetime.fromisoformat(match.group(1))
+            row = {
+                'timestamp': timestamp.timestamp(),
+                'datetime': timestamp.isoformat(timespec='microseconds'),
+                'section': section,
+                'result': match.group(2),
+                'event': match.group(3),
+                'attributes': {}
+            }
+            attribute_string = match.group(4)
+
             # while next rows do not start with a date, they are part of the attributes
             try:
                 while not re.search(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', buffer[i + 1]):
@@ -189,7 +197,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             for key, value in attribute_pairs:
                 row['attributes'][key.strip()] = value.strip()
 
-            json_result[section].append(row)
+            json_result['events'].append(row)
             i += 1
 
     def process_buffer_keys_and_values(buffer: list, json_result: dict):
@@ -197,7 +205,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         process the buffer for the values section
         """
         section = buffer.pop(0)
-        json_result[section] = {}
+        json_result['meta'][section] = {}
 
         i = 0
         while i < len(buffer):
@@ -209,5 +217,5 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             except IndexError:
                 pass
             key, value = line.split(': ', 1)
-            json_result[section][key.strip()] = value.strip()
+            json_result['meta'][section][key.strip()] = value.strip()
             i += 1

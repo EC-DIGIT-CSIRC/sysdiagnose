@@ -206,7 +206,7 @@ class LogarchiveParser(BaseParserInterface):
     def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
         with open(output_file, 'w') as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
-            cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson']
+            cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson', '--info', '--debug', '--signpost']
             # read each line, convert line by line and write the output directly to the new file
             # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
