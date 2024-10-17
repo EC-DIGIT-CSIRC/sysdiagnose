@@ -68,8 +68,7 @@ def main():
     args = parser.parse_args()
 
     # Handle console logging
-    log_level = args.log.upper()
-    logger.addHandler(get_console_handler(log_level))
+    logger.addHandler(get_console_handler(args.log.upper()))
 
     sd = Sysdiagnose()
 
