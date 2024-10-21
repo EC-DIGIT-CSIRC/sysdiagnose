@@ -13,6 +13,7 @@ import sys
 import json
 import sqlite3
 import argparse
+from sysdiagnose.utils.logger import logger
 
 version_string = "sqlite2json.py v2020-02-18 Version 1.0"
 
@@ -32,7 +33,7 @@ def sqlite2struct(dbpath) -> dict:
             dbstruct[table] = content
         return dbstruct
     except Exception as e:
-        print(f"Could not parse {dbpath}. Reason: {str(e)}", file=sys.stderr)
+        logger.exception(f"Could not parse {dbpath}.")
     return None
 
 
@@ -74,7 +75,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
         with open(jsonpath, "w") as fd:
             fd.write(jsontxt)
     except Exception as e:
-        print(f"Impossible to dump the UUID to Path to {jsonpath}. Reason: {str(e)}\n", file=sys.stderr)
+        logger.exception(f"Impossible to dump the UUID to Path to {jsonpath}.")
     return jsontxt
 
 # --------------------------------------------------------------------------- #

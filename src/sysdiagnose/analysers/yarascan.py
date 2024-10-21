@@ -3,7 +3,7 @@ import os
 import glob
 import threading
 import queue
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
 
 # These are the commonly used external variables that can be used in the YARA rules
@@ -36,7 +36,7 @@ class YaraAnalyser(BaseAnalyserInterface):
         results = {'errors': [], 'matches': []}
 
         if not os.path.isdir(self.yara_rules_path):
-            print(f"ERROR: Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
+            logger.error(f"ERROR: Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
             results['errors'].append(f"Could not find the YARA rules (.yar) folder: {self.yara_rules_path}")
             return results
 
@@ -69,7 +69,7 @@ class YaraAnalyser(BaseAnalyserInterface):
             results['matches'] = matches
 
         if len(results['errors']) > 0:
-            print("Scan finished with errors. Review the results")
+            logger.error("Scan finished with errors. Review the results")
 
         return results
 
@@ -80,17 +80,17 @@ class YaraAnalyser(BaseAnalyserInterface):
         for rule_file in rule_files_to_test:
             if not os.path.isfile(rule_file):
                 continue
-            print(f"Loading YARA rule: {rule_file}")
+            logger.info(f"Loading YARA rule: {rule_file}")
             try:
                 yara.compile(filepath=rule_file, externals=externals)
                 # if we reach this point, the rule is valid
                 rule_files_validated.append(rule_file)
             except yara.SyntaxError as e:
-                print(f"Error compiling rule {rule_file}: {str(e)}")
+                logger.exception(f"Error compiling rule {rule_file}")
                 errors.append(f"Error compiling rule {rule_file}: {str(e)}")
                 continue
             except yara.Error as e:
-                print(f"Error compiling rule {rule_file}: {str(e)}")
+                logger.exception(f"Error compiling rule {rule_file}")
                 errors.append(f"Error loading rule {rule_file}: {str(e)}")
                 continue
 
@@ -111,7 +111,7 @@ class YaraAnalyser(BaseAnalyserInterface):
                 for ignore_folder in ignore_folders:
                     if root.startswith(ignore_folder):
                         stop = True
-                        print(f"Skipping folder: {root}")
+                        logger.info(f"Skipping folder: {root}")
                         continue
                 if stop:
                     continue
@@ -121,7 +121,7 @@ class YaraAnalyser(BaseAnalyserInterface):
                     for ignore_file in ignore_files:
                         if file_full_path.startswith(ignore_file):
                             stop = True
-                            print(f"Skipping file: {file_full_path}")
+                            logger.info(f"Skipping file: {file_full_path}")
                             continue
                     if stop:
                         continue
@@ -133,13 +133,13 @@ class YaraAnalyser(BaseAnalyserInterface):
             rules = yara.compile(filepaths=rule_filepaths, externals=externals)
 
             while True:
-                print(f"Consumer thread seeing {file_queue.qsize()} files in queue, and taking one")
+                logger.info(f"Consumer thread seeing {file_queue.qsize()} files in queue, and taking one")
                 file_path = file_queue.get()
                 if file_path is None:
-                    print("Consumer thread exiting")
+                    logger.info("Consumer thread exiting")
                     break
 
-                print(f"Scanning file: {file_path}")
+                logger.info(f"Scanning file: {file_path}")
                 # set the externals for this file - massive slowdown
                 # externals_local = externals.copy()
                 # externals_local['filename'] = file

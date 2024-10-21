@@ -6,7 +6,7 @@
 import dateutil.parser
 import gpxpy
 import gpxpy.gpx
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 
 
@@ -45,7 +45,7 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
             try:
                 timestamp = dateutil.parser.parse(timestamp_str)
             except Exception as e:
-                print(f"Error converting timestamp. Reason: {str(e)}. Timestamp was: {str(timestamp_str)}. Assuming Jan 1st 1970.")
+                logger.exception(f"Error converting timestamp. Timestamp was: {str(timestamp_str)}. Assuming Jan 1st 1970.")
                 timestamp = dateutil.parser.parse('1970-01-01')     # begin of epoch
 
             bssid = network_data.get('__OSSpecific__', {}).get('BSSID', '')

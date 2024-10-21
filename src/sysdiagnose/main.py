@@ -3,6 +3,8 @@ import argparse
 import sys
 from sysdiagnose import Sysdiagnose
 import os
+import time
+from sysdiagnose.utils.logger import logger, get_console_handler, get_json_handler
 
 
 def parse_parser_error(message):
@@ -30,6 +32,7 @@ def main():
     )
     # available for all
     parser.add_argument('-c', '--case_id', required=False, default='all', help='ID of the case, or "all" for all cases (default)')
+    parser.add_argument('-l', '--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 
     subparsers = parser.add_subparsers(dest='mode')
 
@@ -63,6 +66,9 @@ def main():
     parser.parse_args()
 
     args = parser.parse_args()
+
+    # Handle console logging
+    logger.addHandler(get_console_handler(args.log.upper()))
 
     sd = Sysdiagnose()
 
@@ -123,14 +129,33 @@ def main():
         else:
             case_ids = [args.case_id]
 
+        logger2file = None
         for case_id in case_ids:
+            # Handle file logging
+            time_str = time.strftime("%Y%m%dT%H%M%S")
+            filename = f"{time_str}-log-parse.jsonl"
+            folder = sd.config.get_case_parsed_data_folder(case_id)
+            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+            if logger2file is None:
+                logger2file = get_json_handler(os.path.join(folder, filename))
+                logger.addHandler(logger2file)
+            else:
+                logger2file.close()
+                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+
             print(f"Case ID: {case_id}")
             for parser in parsers_list:
                 print(f"Parser '{parser}' for case ID '{case_id}'")
+                logger.info(f"Parser '{parser}' started", extra={'parser': parser})
                 try:
-                    sd.parse(parser, case_id)
+                    result = sd.parse(parser, case_id)
+                    result_str = "successfully" if result == 0 else "with errors"
+                    logger.info(f"Parser '{parser}' finished {result_str}", extra={'parser': parser, 'result': result})
                 except NotImplementedError:
-                    print(f"Parser '{parser}' is not implemented yet, skipping")
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
+
+        if logger2file is not None:
+            logger2file.close()
 
     elif args.mode == 'analyse':
         # Handle analyse mode
@@ -155,14 +180,34 @@ def main():
         else:
             case_ids = [args.case_id]
 
+        logger2file = None
         for case_id in case_ids:
+            # Handle file logging
+            time_str = time.strftime("%Y%m%dT%H%M%S")
+            filename = f"{time_str}-log-analyse.jsonl"
+            folder = sd.config.get_case_parsed_data_folder(case_id)
+            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+            if logger2file is None:
+                logger2file = get_json_handler(os.path.join(folder, filename))
+                logger.addHandler(logger2file)
+            else:
+                logger2file.close()
+                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+
             print(f"Case ID: {case_id}")
             for analyser in analysers_list:
                 print(f"  Analyser '{analyser}' for case ID '{case_id}'")
+                logger.info(f"Analyser '{analyser}' started", extra={'analyser': analyser})
                 try:
-                    sd.analyse(analyser, case_id)
+                    result = sd.analyse(analyser, case_id)
+                    result_str = "successfully" if result == 0 else "with errors"
+                    logger.info(f"Analyser '{analyser}' finished {result_str}", extra={'analyser': analyser, 'result': result})
                 except NotImplementedError:
-                    print(f"Analyser '{analyser}' is not implemented yet, skipping")
+                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
+
+        if logger2file is not None:
+            logger2file.close()
+
     else:
         parser.print_help()
 

@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+import json
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class DemoParser(BaseParserInterface):
@@ -25,10 +26,16 @@ class DemoParser(BaseParserInterface):
         log_files = self.get_log_files()
         for log_file in log_files:
             entry = {}
-
-            # timestamp = datetime.strptime(item['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
-            # entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-            # entry['timestamp'] = timestamp.timestamp()
-            result.append(entry)
-            pass
+            try:
+                # timestamp = datetime.strptime(item['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
+                # entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+                # entry['timestamp'] = timestamp.timestamp()
+                result.append(entry)
+                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file, 'entry': entry})
+                if not entry:
+                    logger.warning("Empty entry.")
+                    # logger.error("Empty entry.")
+            except Exception as e:
+                logger.exception("This will log an error with the exception information")
+                # logger.warning("This will log a warning with the exception information", exc_info=True)
         return result
