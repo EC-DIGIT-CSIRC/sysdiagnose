@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------
-#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC, 
+#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC,
 #       @iamevltwin, mac4n6.com). All rights reserved.
 
 #       This software is provided "as is," without warranty of any kind,
@@ -22,19 +22,19 @@
 #       2. Redistributions in binary form must reproduce the above copyright
 #          notice, disclaimer, and this list of conditions in the documenta-
 #          tion and/or other materials provided with the distribution.
-#       3. All advertising, training, and documentation materials mentioning 
-#          features or use of this software must display the following 
-#          acknowledgment. Character-limited social media may abbreviate this 
-#          acknowledgment to include author and APOLLO name ie: "This new 
-#          feature brought to you by @iamevltwin's APOLLO". Please make an 
+#       3. All advertising, training, and documentation materials mentioning
+#          features or use of this software must display the following
+#          acknowledgment. Character-limited social media may abbreviate this
+#          acknowledgment to include author and APOLLO name ie: "This new
+#          feature brought to you by @iamevltwin's APOLLO". Please make an
 #          effort credit the appropriate authors on specific APOLLO modules.
-#          The spirit of this clause is to give public acknowledgment to 
+#          The spirit of this clause is to give public acknowledgment to
 #          researchers where credit is due.
 
-#             This product includes software developed by Sarah Edwards 
-#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other 
-#             contributors as part of APOLLO (Apple Pattern of Life Lazy 
-#             Output'er). 
+#             This product includes software developed by Sarah Edwards
+#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other
+#             contributors as part of APOLLO (Apple Pattern of Life Lazy
+#             Output'er).
 
 
 #       LICENSE 2 (GNU GPL v3 or later):
@@ -63,7 +63,7 @@ MODULE_NOTES=Wallet Transactions
 [Database Metadata]
 DATABASE=passes23.sqlite
 PLATFORM=IOS
-VERSIONS=10,11,12,13
+VERSIONS=10,11,12,13,15
 
 [Query Metadata]
 QUERY_NAME=passes23_wallet_transactions
@@ -96,6 +96,36 @@ QUERY=
 	FROM PASS
 	LEFT JOIN PASS_TYPE ON PASS.PASS_TYPE_PID == PASS_TYPE.PID
 	LEFT JOIN PAYMENT_TRANSACTION ON PASS.PID == PAYMENT_TRANSACTION.PASS_PID
+	LEFT JOIN LOCATION_SOURCE ON LOCATION_SOURCE.URL LIKE '%'||PASS.UNIQUE_ID||'%'
+	LEFT JOIN LOCATION ON LOCATION.LOCATION_SOURCE_PID == LOCATION_SOURCE.PID
+	WHERE "AMOUNT" NOT NULL
+
+[SQL Query 15]
+QUERY=
+	SELECT
+		DATETIME(PASS.INGESTED_DATE+978307200,'UNIXEPOCH') AS "INGESTED DATE",
+		DATETIME(PASS.MODIFIED_DATE+978307200,'UNIXEPOCH') AS "MODIFIED DATE",
+		DATETIME(PAYMENT_TRANSACTION.TRANSACTION_DATE+978307200,'UNIXEPOCH') AS "TRANSACTION DATE",
+		PASS.ORGANIZATION_NAME AS "ORGANIZATION NAME",
+		PASS_TYPE.IDENTIFIER AS "IDENTIFIER",
+		PAYMENT_TRANSACTION.AMOUNT/100.00 AS "AMOUNT",
+		PAYMENT_TRANSACTION.CURRENCY_CODE AS "CURRENCY CODE",
+		PAYMENT_TRANSACTION.MERCHANT_INDUSTRY_CATEGORY AS "MERCHANT INDUSTRY CATEGORY",
+		PAYMENT_TRANSACTION.MERCHANT_NAME AS "MERCHANT NAME",
+		PAYMENT_TRANSACTION.MERCHANT_INDUSTRY_CATEGORY AS "MERCHANT CATEGORY",
+		PAYMENT_TRANSACTION.PEER_PAYMENT_COUNTERPART_HANDLE AS "PEER PAYMENT HANDLE",
+		PAYMENT_TRANSACTION.PEER_PAYMENT_MEMO AS "PEER PAYMENT MEMO",
+		DATETIME(PAYMENT_TRANSACTION.LOCATION_DATE+978307200,'UNIXEPOCH') AS "LOCATION DATE",
+		PAYMENT_TRANSACTION.LOCATION_LATITUDE AS "LATITUDE",
+		PAYMENT_TRANSACTION.LOCATION_LONGITUDE AS "LONGITUDE",
+		PAYMENT_TRANSACTION.LOCATION_ALTITUDE AS "ALTITUDE",
+		PAYMENT_TRANSACTION.LOCATION_HORIZONTAL_ACCURACY AS "HORIZONTAL ACCURACY",
+		PAYMENT_TRANSACTION.LOCATION_VERTICAL_ACCURACY AS "VERTICAL ACCURACY",
+		SERIAL_NUMBER AS "SERIAL NUMBER",
+		PASS.UNIQUE_ID AS "PASS ID"
+	FROM PASS
+	LEFT JOIN PASS_TYPE ON PASS.PASS_TYPE_PID == PASS_TYPE.PID
+	LEFT JOIN PAYMENT_TRANSACTION ON PASS.PID == PAYMENT_TRANSACTION.PID
 	LEFT JOIN LOCATION_SOURCE ON LOCATION_SOURCE.URL LIKE '%'||PASS.UNIQUE_ID||'%'
 	LEFT JOIN LOCATION ON LOCATION.LOCATION_SOURCE_PID == LOCATION_SOURCE.PID
 	WHERE "AMOUNT" NOT NULL
