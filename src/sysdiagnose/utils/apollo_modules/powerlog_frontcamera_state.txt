@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------
-#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC, 
+#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC,
 #       @iamevltwin, mac4n6.com). All rights reserved.
 
 #       This software is provided "as is," without warranty of any kind,
@@ -22,19 +22,19 @@
 #       2. Redistributions in binary form must reproduce the above copyright
 #          notice, disclaimer, and this list of conditions in the documenta-
 #          tion and/or other materials provided with the distribution.
-#       3. All advertising, training, and documentation materials mentioning 
-#          features or use of this software must display the following 
-#          acknowledgment. Character-limited social media may abbreviate this 
-#          acknowledgment to include author and APOLLO name ie: "This new 
-#          feature brought to you by @iamevltwin's APOLLO". Please make an 
+#       3. All advertising, training, and documentation materials mentioning
+#          features or use of this software must display the following
+#          acknowledgment. Character-limited social media may abbreviate this
+#          acknowledgment to include author and APOLLO name ie: "This new
+#          feature brought to you by @iamevltwin's APOLLO". Please make an
 #          effort credit the appropriate authors on specific APOLLO modules.
-#          The spirit of this clause is to give public acknowledgment to 
+#          The spirit of this clause is to give public acknowledgment to
 #          researchers where credit is due.
 
-#             This product includes software developed by Sarah Edwards 
-#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other 
-#             contributors as part of APOLLO (Apple Pattern of Life Lazy 
-#             Output'er). 
+#             This product includes software developed by Sarah Edwards
+#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other
+#             contributors as part of APOLLO (Apple Pattern of Life Lazy
+#             Output'er).
 
 
 #       LICENSE 2 (GNU GPL v3 or later):
@@ -63,12 +63,56 @@ MODULE_NOTES=Records when front camera is in use.
 [Database Metadata]
 DATABASE=CurrentPowerlog.PLSQL
 PLATFORM=IOS
-VERSIONS=9
+VERSIONS=9,15
 
 [Query Metadata]
 QUERY_NAME=powerlog_frontcamera_state
 ACTIVITY=Front Camera Status
 KEY_TIMESTAMP=ADJUSTED_TIMESTAMP
+
+[SQL Query 15]
+QUERY=
+   SELECT
+      DATETIME(CAMERA_TIMESTAMP + SYSTEM, 'UNIXEPOCH') AS ADJUSTED_TIMESTAMP,
+      BUNDLEID AS BUNDLE_ID,
+      CASE STATE
+         WHEN "0" THEN "OFF"
+         WHEN "1" THEN "ON"
+      END AS STATE,
+      DATETIME(CAMERA_TIMESTAMP, 'UNIXEPOCH') AS ORIGINAL_CAMERA_TIMESTAMP,
+      DATETIME(TIME_OFFSET_TIMESTAMP, 'UNIXEPOCH') AS OFFSET_TIMESTAMP,
+      SYSTEM AS TIME_OFFSET,
+      CAMERA_ID AS "PLCAMERAAGENT_EVENTFORWARD_FRONTCAMERA TABLE ID"
+   FROM
+      (
+      SELECT
+         BUNDLEID,
+         CAMERA_ID,
+         CAMERA_TIMESTAMP,
+         TIME_OFFSET_TIMESTAMP,
+         MAX(TIME_OFFSET_ID) AS MAX_ID,
+         SYSTEM,
+         STATE
+      FROM
+         (
+         SELECT
+            PLCameraAgent_EventForward_Camera.TIMESTAMP AS CAMERA_TIMESTAMP,
+            PLCameraAgent_EventForward_Camera.BUNDLEID,
+            PLCameraAgent_EventForward_Camera.STATE,
+            PLCameraAgent_EventForward_Camera.ID AS "CAMERA_ID",
+            PLStorageOperator_EventForward_TimeOffset.TIMESTAMP AS TIME_OFFSET_TIMESTAMP,
+            PLStorageOperator_EventForward_TimeOffset.ID AS TIME_OFFSET_ID,
+            PLStorageOperator_EventForward_TimeOffset.SYSTEM,
+            BUNDLEID
+         FROM
+            PLCameraAgent_EventForward_Camera
+         LEFT JOIN
+            PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET
+            )
+            AS CAMERASTATE
+         GROUP BY
+            CAMERA_ID
+      )
 
 [SQL Query 9]
 QUERY=
@@ -103,13 +147,13 @@ QUERY=
             PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.TIMESTAMP AS TIME_OFFSET_TIMESTAMP,
             PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.ID AS TIME_OFFSET_ID,
             PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.SYSTEM,
-            BUNDLEID 
+            BUNDLEID
          FROM
-            PLCAMERAAGENT_EVENTFORWARD_FRONTCAMERA 
+            PLCAMERAAGENT_EVENTFORWARD_FRONTCAMERA
          LEFT JOIN
-            PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET  
+            PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET
             )
-            AS CAMERASTATE 
+            AS CAMERASTATE
          GROUP BY
-            CAMERA_ID 
+            CAMERA_ID
       )

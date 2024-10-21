@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------
-#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC, 
+#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC,
 #       @iamevltwin, mac4n6.com). All rights reserved.
 
 #       This software is provided "as is," without warranty of any kind,
@@ -22,19 +22,19 @@
 #       2. Redistributions in binary form must reproduce the above copyright
 #          notice, disclaimer, and this list of conditions in the documenta-
 #          tion and/or other materials provided with the distribution.
-#       3. All advertising, training, and documentation materials mentioning 
-#          features or use of this software must display the following 
-#          acknowledgment. Character-limited social media may abbreviate this 
-#          acknowledgment to include author and APOLLO name ie: "This new 
-#          feature brought to you by @iamevltwin's APOLLO". Please make an 
+#       3. All advertising, training, and documentation materials mentioning
+#          features or use of this software must display the following
+#          acknowledgment. Character-limited social media may abbreviate this
+#          acknowledgment to include author and APOLLO name ie: "This new
+#          feature brought to you by @iamevltwin's APOLLO". Please make an
 #          effort credit the appropriate authors on specific APOLLO modules.
-#          The spirit of this clause is to give public acknowledgment to 
+#          The spirit of this clause is to give public acknowledgment to
 #          researchers where credit is due.
 
-#             This product includes software developed by Sarah Edwards 
-#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other 
-#             contributors as part of APOLLO (Apple Pattern of Life Lazy 
-#             Output'er). 
+#             This product includes software developed by Sarah Edwards
+#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other
+#             contributors as part of APOLLO (Apple Pattern of Life Lazy
+#             Output'er).
 
 
 #       LICENSE 2 (GNU GPL v3 or later):
@@ -63,7 +63,7 @@ MODULE_NOTES=SMS and Chat Messages
 [Database Metadata]
 DATABASE=sms.db,chat.db
 PLATFORM=IOS,MACOS
-VERSIONS=8,9,10,11,12,13,10.14,10.15,10.16,14
+VERSIONS=8,9,10,11,12,13,10.14,10.15,10.16,14,15,16
 
 [Query Metadata]
 QUERY_NAME=sms_chat
@@ -77,17 +77,27 @@ QUERY=
 			WHEN LENGTH(MESSAGE.DATE)=18 THEN DATETIME(MESSAGE.DATE/1000000000+978307200,'UNIXEPOCH')
 			WHEN LENGTH(MESSAGE.DATE)=9 THEN DATETIME(MESSAGE.DATE + 978307200,'UNIXEPOCH')
 			ELSE "N/A"
-    		END "MESSAGE DATE",			
-		CASE 
+    		END "MESSAGE DATE",
+		CASE
 			WHEN LENGTH(MESSAGE.DATE_DELIVERED)=18 THEN DATETIME(MESSAGE.DATE_DELIVERED/1000000000+978307200,"UNIXEPOCH")
 			WHEN LENGTH(MESSAGE.DATE_DELIVERED)=9 THEN DATETIME(MESSAGE.DATE_DELIVERED+978307200,"UNIXEPOCH")
 			ELSE "N/A"
 		END "DATE DELIVERED",
-		CASE 
+		CASE
 			WHEN LENGTH(MESSAGE.DATE_READ)=18 THEN DATETIME(MESSAGE.DATE_READ/1000000000+978307200,"UNIXEPOCH")
 			WHEN LENGTH(MESSAGE.DATE_READ)=9 THEN DATETIME(MESSAGE.DATE_READ+978307200,"UNIXEPOCH")
 			ELSE "N/A"
 		END "DATE READ",
+		CASE
+			WHEN LENGTH(MESSAGE.date_retracted)=18 THEN DATETIME(MESSAGE.date_retracted/1000000000+978307200,"UNIXEPOCH")
+			WHEN LENGTH(MESSAGE.date_retracted)=9 THEN DATETIME(MESSAGE.date_retracted+978307200,"UNIXEPOCH")
+			ELSE "N/A"
+		END "DATE MESSAGE RETRACTED",
+		CASE
+			WHEN LENGTH(MESSAGE.date_edited)=18 THEN DATETIME(MESSAGE.date_edited/1000000000+978307200,"UNIXEPOCH")
+			WHEN LENGTH(MESSAGE.date_edited)=9 THEN DATETIME(MESSAGE.date_edited+978307200,"UNIXEPOCH")
+			ELSE "N/A"
+		END "DATE MESSAGE EDITED",
 		MESSAGE.TEXT AS "MESSAGE",
 		HANDLE.ID AS "CONTACT ID",
 		MESSAGE.SERVICE AS "SERVICE",
