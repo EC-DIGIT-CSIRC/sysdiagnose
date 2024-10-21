@@ -1,10 +1,5 @@
 # generated data
 cases/*
-data/*
-cases.json
-parsed_data/*
-*.gpx
-db.json
 yara/*
 
 # private test data
@@ -12,8 +7,6 @@ yara/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-parsers/__pycache__/*
-utils/__pycache__/*
 *.pyc
 *.pyo
 *.pyd
