@@ -4,11 +4,10 @@
 # Script to print from powerlogs (last 3 days of logs)
 # Author: david@autopsit.org
 
-from sysdiagnose.utils import sqlite2json
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
-from datetime import datetime, timezone
+from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.apollo import Apollo
 
 
 class PowerLogsParser(BaseParserInterface):
@@ -35,30 +34,8 @@ class PowerLogsParser(BaseParserInterface):
 
     def execute(self) -> list:
         result = []
-        skipped = set()
+        apollo = Apollo(os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
         for logfile in self.get_log_files():
-            db_json = PowerLogsParser.parse_file_to_json(logfile)
-            for key, values in db_json.items():
-                if 'sqlite_sequence' in key:
-                    continue
-                for value in values:
-                    if 'timestamp' not in value:
-                        skipped.add(key)
-                        continue
+            result.extend(apollo.parse_db(db_fname=logfile, db_type='CurrentPowerlog.PLSQL'))
 
-                    try:
-                        timestamp = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc)
-                        value['db_table'] = key
-                        value['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        value['timestamp'] = timestamp.timestamp()
-                        result.append(value)
-                    except TypeError:
-                        # skip "None" values and such
-                        pass
-
-        logger.warning("Skipped the following tables as there are not timestamps:")
-        [logger.warning(f"  {table}") for table in skipped]
         return result
-
-    def parse_file_to_json(path: str) -> dict:
-        return sqlite2json.sqlite2struct(path)

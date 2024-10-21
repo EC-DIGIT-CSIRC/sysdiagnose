@@ -4,12 +4,10 @@
 # Script to print from Accessibility TCC logs
 # Author: david@autopsit.org
 
-from sysdiagnose.utils import sqlite2json
 import glob
 import os
-import sysdiagnose.utils.misc as misc
 from sysdiagnose.utils.base import BaseParserInterface
-from datetime import datetime, timezone
+from sysdiagnose.utils.apollo import Apollo
 
 
 class AccessibilityTccParser(BaseParserInterface):
@@ -33,26 +31,9 @@ class AccessibilityTccParser(BaseParserInterface):
         # only one file to parse
         try:
             result = []
-            skipped = set()
-            json_db = misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
-            for key, values in json_db.items():
-                if 'sqlite_sequence' in key:
-                    continue
-                for value in values:
-                    if 'last_modified' not in value:
-                        skipped.add(key)
-                        continue
-
-                    try:
-                        timestamp = datetime.fromtimestamp(value['last_modified'], tz=timezone.utc)
-                        value['db_table'] = key
-                        value['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        value['timestamp'] = timestamp.timestamp()
-                        result.append(value)
-                    except TypeError:
-                        # skip "None" values and such
-                        pass
-
+            apollo = Apollo(os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
+            for logfile in self.get_log_files():
+                result.extend(apollo.parse_db(db_fname=logfile, db_type='TCC.db'))
             return result
 
         except IndexError:

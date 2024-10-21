@@ -1,0 +1,125 @@
+# --------------------------------------------------------------------------------
+#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC, 
+#       @iamevltwin, mac4n6.com). All rights reserved.
+
+#       This software is provided "as is," without warranty of any kind,
+#       express or implied.  In no event shall the author or contributors
+#       be held liable for any damages arising in any way from the use of
+#       this software.
+
+#       The contents of this file are DUAL-LICENSED.  You may modify and/or
+#       redistribute this software according to the terms of one of the
+#       following two licenses (at your option):
+
+#       LICENSE 1 ("BSD-like with acknowledgment clause"):
+
+#       Permission is granted to anyone to use this software for any purpose,
+#       including commercial applications, and to alter it and redistribute
+#       it freely, subject to the following restrictions:
+
+#       1. Redistributions of source code must retain the above copyright
+#          notice, disclaimer, and this list of conditions.
+#       2. Redistributions in binary form must reproduce the above copyright
+#          notice, disclaimer, and this list of conditions in the documenta-
+#          tion and/or other materials provided with the distribution.
+#       3. All advertising, training, and documentation materials mentioning 
+#          features or use of this software must display the following 
+#          acknowledgment. Character-limited social media may abbreviate this 
+#          acknowledgment to include author and APOLLO name ie: "This new 
+#          feature brought to you by @iamevltwin's APOLLO". Please make an 
+#          effort credit the appropriate authors on specific APOLLO modules.
+#          The spirit of this clause is to give public acknowledgment to 
+#          researchers where credit is due.
+
+#             This product includes software developed by Sarah Edwards 
+#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other 
+#             contributors as part of APOLLO (Apple Pattern of Life Lazy 
+#             Output'er). 
+
+
+#       LICENSE 2 (GNU GPL v3 or later):
+
+#       This file is part of APOLLO (Apple Pattern of Life Lazy Output'er).
+
+#       APOLLO is free software: you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation, either version 3 of the License, or
+#       (at your option) any later version.
+
+#       APOLLO is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+
+#       You should have received a copy of the GNU General Public License
+#       along with APOLLO.  If not, see <https://www.gnu.org/licenses/>.
+# --------------------------------------------------------------------------------
+
+
+[Module Metadata]
+AUTHOR=Sarah Edwards/mac4n6.com/@iamevltwin
+MODULE_NOTES=Display Brightness
+
+[Database Metadata]
+DATABASE=CurrentPowerlog.PLSQL
+PLATFORM=MACOS
+VERSIONS=10.15,10.16
+
+[Query Metadata]
+QUERY_NAME=powerlog_linear_brightness
+ACTIVITY=Linear Brightness
+KEY_TIMESTAMP=ADJUSTED_TIMESTAMP
+
+[SQL Query 10.15,10.16]
+QUERY=
+	SELECT
+		DATETIME(TIMESTAMP + SYSTEM, 'UNIXEPOCH') AS ADJUSTED_TIMESTAMP,
+		USERBRIGHTNESS AS 'USER BRIGHTNESS',
+		AUTOBRIGHTNESSENABLED AS 'AUTOBRIGHTNESS ENABLED',
+		CHANGEREASON AS 'CHANGE REASON',
+		DYNAMICSLIDERFACTOR AS 'DYNAMIC SLIDER FACTOR',
+		LINEARBRIGHTNESS AS 'LINEAR BRIGHTNESS',
+		LINEARBRIGHTNESSDYNAMICSLIDER AS 'LINEAR BRIGHTNESS DYNAMIC SLIDER',
+		MAGSAFEREDUCTIONFACTOR AS 'MAGSAFE REDUCTION FACTOR',
+		DATETIME(TIMESTAMP, 'UNIXEPOCH') AS ORIGINAL_TIMESTAMP,
+		DATETIME(TIME_OFFSET_TIMESTAMP, 'UNIXEPOCH') AS OFFSET_TIMESTAMP,
+		SYSTEM AS TIME_OFFSET,
+		TABLE_ID AS "PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS TABLE ID"
+	FROM
+	(
+	SELECT
+		TABLE_ID,
+		TIMESTAMP,
+		TIME_OFFSET_TIMESTAMP,
+		MAX(TIME_OFFSET_ID) AS MAX_ID,
+		USERBRIGHTNESS,
+		AUTOBRIGHTNESSENABLED,
+		CHANGEREASON,
+		DYNAMICSLIDERFACTOR,
+		LINEARBRIGHTNESS,
+		LINEARBRIGHTNESSDYNAMICSLIDER,
+		MAGSAFEREDUCTIONFACTOR,
+		SYSTEM
+	FROM
+	(
+	SELECT
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.TIMESTAMP,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.USERBRIGHTNESS,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.AUTOBRIGHTNESSENABLED,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.CHANGEREASON,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.DYNAMICSLIDERFACTOR,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.LINEARBRIGHTNESS,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.LINEARBRIGHTNESSDYNAMICSLIDER,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.MAGSAFEREDUCTIONFACTOR,
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS.ID AS "TABLE_ID",
+		PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.TIMESTAMP AS TIME_OFFSET_TIMESTAMP,
+		PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.ID AS TIME_OFFSET_ID,
+		PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET.SYSTEM
+	FROM
+		PLDISPLAYAGENT_EVENTFORWARD_LINEARBRIGHTNESS 
+	LEFT JOIN
+		PLSTORAGEOPERATOR_EVENTFORWARD_TIMEOFFSET 
+	)
+	GROUP BY
+	TABLE_ID 
+         )

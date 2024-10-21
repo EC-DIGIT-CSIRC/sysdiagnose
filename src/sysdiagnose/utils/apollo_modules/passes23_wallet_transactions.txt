@@ -1,0 +1,101 @@
+# --------------------------------------------------------------------------------
+#       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC, 
+#       @iamevltwin, mac4n6.com). All rights reserved.
+
+#       This software is provided "as is," without warranty of any kind,
+#       express or implied.  In no event shall the author or contributors
+#       be held liable for any damages arising in any way from the use of
+#       this software.
+
+#       The contents of this file are DUAL-LICENSED.  You may modify and/or
+#       redistribute this software according to the terms of one of the
+#       following two licenses (at your option):
+
+#       LICENSE 1 ("BSD-like with acknowledgment clause"):
+
+#       Permission is granted to anyone to use this software for any purpose,
+#       including commercial applications, and to alter it and redistribute
+#       it freely, subject to the following restrictions:
+
+#       1. Redistributions of source code must retain the above copyright
+#          notice, disclaimer, and this list of conditions.
+#       2. Redistributions in binary form must reproduce the above copyright
+#          notice, disclaimer, and this list of conditions in the documenta-
+#          tion and/or other materials provided with the distribution.
+#       3. All advertising, training, and documentation materials mentioning 
+#          features or use of this software must display the following 
+#          acknowledgment. Character-limited social media may abbreviate this 
+#          acknowledgment to include author and APOLLO name ie: "This new 
+#          feature brought to you by @iamevltwin's APOLLO". Please make an 
+#          effort credit the appropriate authors on specific APOLLO modules.
+#          The spirit of this clause is to give public acknowledgment to 
+#          researchers where credit is due.
+
+#             This product includes software developed by Sarah Edwards 
+#             (Station X Labs, LLC, @iamevltwin, mac4n6.com) and other 
+#             contributors as part of APOLLO (Apple Pattern of Life Lazy 
+#             Output'er). 
+
+
+#       LICENSE 2 (GNU GPL v3 or later):
+
+#       This file is part of APOLLO (Apple Pattern of Life Lazy Output'er).
+
+#       APOLLO is free software: you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation, either version 3 of the License, or
+#       (at your option) any later version.
+
+#       APOLLO is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+
+#       You should have received a copy of the GNU General Public License
+#       along with APOLLO.  If not, see <https://www.gnu.org/licenses/>.
+# --------------------------------------------------------------------------------
+
+
+[Module Metadata]
+AUTHOR=Sarah Edwards/mac4n6.com/@iamevltwin
+MODULE_NOTES=Wallet Transactions
+
+[Database Metadata]
+DATABASE=passes23.sqlite
+PLATFORM=IOS
+VERSIONS=10,11,12,13
+
+[Query Metadata]
+QUERY_NAME=passes23_wallet_transactions
+ACTIVITY=Wallet Transaction
+KEY_TIMESTAMP=TRANSACTION DATE
+
+[SQL Query 10,11,12,13]
+QUERY=
+	SELECT
+		DATETIME(PASS.INGESTED_DATE+978307200,'UNIXEPOCH') AS "INGESTED DATE",
+		DATETIME(PASS.MODIFIED_DATE+978307200,'UNIXEPOCH') AS "MODIFIED DATE",
+		DATETIME(PAYMENT_TRANSACTION.TRANSACTION_DATE+978307200,'UNIXEPOCH') AS "TRANSACTION DATE",
+		PASS.ORGANIZATION_NAME AS "ORGANIZATION NAME",
+		PASS_TYPE.IDENTIFIER AS "IDENTIFIER",
+		PAYMENT_TRANSACTION.AMOUNT/100.00 AS "AMOUNT",
+		PAYMENT_TRANSACTION.CURRENCY_CODE AS "CURRENCY CODE",
+		PAYMENT_TRANSACTION.MERCHANT_INDUSTRY_CATEGORY AS "MERCHANT INDUSTRY CATEGORY",
+		PAYMENT_TRANSACTION.MERCHANT_NAME AS "MERCHANT NAME",
+		PAYMENT_TRANSACTION.MERCHANT_INDUSTRY_CATEGORY AS "MERCHANT CATEGORY",
+		PAYMENT_TRANSACTION.PEER_PAYMENT_COUNTERPART_HANDLE AS "PEER PAYMENT HANDLE",
+		PAYMENT_TRANSACTION.PEER_PAYMENT_MEMO AS "PEER PAYMENT MEMO",
+		DATETIME(PAYMENT_TRANSACTION.LOCATION_DATE+978307200,'UNIXEPOCH') AS "LOCATION DATE",
+		PAYMENT_TRANSACTION.LOCATION_LATITUDE AS "LATITUDE",
+		PAYMENT_TRANSACTION.LOCATION_LONGITUDE AS "LONGITUDE",
+		PAYMENT_TRANSACTION.LOCATION_ALTITUDE AS "ALTITUDE",
+		PAYMENT_TRANSACTION.LOCATION_HORIZONTAL_ACCURACY AS "HORIZONTAL ACCURACY",
+		PAYMENT_TRANSACTION.LOCATION_VERTICAL_ACCURACY AS "VERTICAL ACCURACY",
+		SERIAL_NUMBER AS "SERIAL NUMBER",
+		PASS.UNIQUE_ID AS "PASS ID"
+	FROM PASS
+	LEFT JOIN PASS_TYPE ON PASS.PASS_TYPE_PID == PASS_TYPE.PID
+	LEFT JOIN PAYMENT_TRANSACTION ON PASS.PID == PAYMENT_TRANSACTION.PASS_PID
+	LEFT JOIN LOCATION_SOURCE ON LOCATION_SOURCE.URL LIKE '%'||PASS.UNIQUE_ID||'%'
+	LEFT JOIN LOCATION ON LOCATION.LOCATION_SOURCE_PID == LOCATION_SOURCE.PID
+	WHERE "AMOUNT" NOT NULL
