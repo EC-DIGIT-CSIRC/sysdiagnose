@@ -140,7 +140,7 @@ class Apollo():
                 cur.execute(module_query['sql'])
                 rows = cur.fetchall()
             except Exception:
-                print(f"ERROR: Cannot fetch query contents for {module_query['name']}.")
+                print(f"WARNING: Cannot fetch query contents for query with name: {module_query['name']}.")
                 continue
 
             if not rows:
