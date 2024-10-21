@@ -36,25 +36,26 @@ class AppInstallationParser(BaseParserInterface):
     def execute(self) -> list | dict:
         try:
             result = []
-            db_json = misc.json_serializable(sqlite2json.sqlite2struct(self.get_log_files()[0]))
-            skipped = set()
-            for key, values in db_json.items():
-                if 'sqlite_sequence' in key:
-                    continue
-                for value in values:
-                    if 'timestamp' not in value:
-                        skipped.add(key)
+            for filename in self.get_log_files()[0]:
+                db_json = misc.json_serializable(sqlite2json.sqlite2struct(filename))
+                skipped = set()
+                for key, values in db_json.items():
+                    if 'sqlite_sequence' in key:
                         continue
+                    for value in values:
+                        if 'timestamp' not in value:
+                            skipped.add(key)
+                            continue
 
-                    try:
-                        timestamp = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc)
-                        value['db_table'] = key
-                        value['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        value['timestamp'] = timestamp.timestamp()
-                        result.append(value)
-                    except TypeError:
-                        # skip "None" values and such
-                        pass
+                        try:
+                            timestamp = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc)
+                            value['db_table'] = key
+                            value['datetime'] = timestamp.isoformat(timespec='microseconds')
+                            value['timestamp'] = timestamp.timestamp()
+                            result.append(value)
+                        except TypeError:
+                            # skip "None" values and such
+                            pass
             return result
         except IndexError:
             logger.exception("Index error, returning empty list")
