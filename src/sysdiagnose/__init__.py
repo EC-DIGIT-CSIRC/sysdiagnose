@@ -145,7 +145,7 @@ class Sysdiagnose:
         try:
             case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
             case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
-            case['version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
+            case['ios_version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
         except (KeyError, TypeError) as e:
             print(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers. Error {e}")
 
