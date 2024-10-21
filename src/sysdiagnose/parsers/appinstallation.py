@@ -36,7 +36,7 @@ class AppInstallationParser(BaseParserInterface):
     def execute(self) -> list | dict:
         try:
             result = []
-            for filename in self.get_log_files()[0]:
+            for filename in self.get_log_files():
                 db_json = misc.json_serializable(sqlite2json.sqlite2struct(filename))
                 skipped = set()
                 for key, values in db_json.items():
