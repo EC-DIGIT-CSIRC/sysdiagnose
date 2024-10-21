@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import os
 import json
-import sys
 from pathlib import Path
 from datetime import datetime
 import re
@@ -21,10 +20,14 @@ class SysdiagnoseConfig:
         os.makedirs(self.cases_root_folder, exist_ok=True)
 
     def get_case_data_folder(self, case_id: str) -> str:
-        return os.path.join(self.cases_root_folder, case_id, 'data')
+        case_data_folder = os.path.join(self.cases_root_folder, case_id, 'data')
+        os.makedirs(case_data_folder, exist_ok=True)
+        return case_data_folder
 
     def get_case_parsed_data_folder(self, case_id: str) -> str:
-        return os.path.join(self.cases_root_folder, case_id, 'parsed_data')
+        parsed_data_folder = os.path.join(self.cases_root_folder, case_id, 'parsed_data')
+        os.makedirs(parsed_data_folder, exist_ok=True)
+        return parsed_data_folder
 
 
 class BaseInterface(ABC):

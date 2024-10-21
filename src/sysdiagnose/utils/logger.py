@@ -6,6 +6,7 @@ logger = logging.getLogger('sysdiagnose')
 # By default, we want to have the possibility to log almost everything.
 logger.setLevel(logging.INFO)
 
+
 class SysdiagnoseJsonFormatter(jsonlogger.JsonFormatter):
     '''Custom JSON logger formatter '''
     # https://stackoverflow.com/questions/50873446/python-logger-output-dates-in-is8601-format
@@ -28,6 +29,7 @@ def get_console_handler(level: str) -> logging.StreamHandler:
     ch.setFormatter(fmt_console)
 
     return ch
+
 
 def get_json_handler(filename: str, level: int = logging.INFO) -> logging.FileHandler:
     '''
