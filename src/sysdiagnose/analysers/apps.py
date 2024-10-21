@@ -4,14 +4,11 @@
 # Author: Emiliern Le Jamtel
 
 import re
-import logging
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
-
-logger = logging.getLogger('sysdiagnose')
 
 
 class AppsAnalyser(BaseAnalyserInterface):
@@ -29,15 +26,7 @@ class AppsAnalyser(BaseAnalyserInterface):
         apps = {}
         json_data = AccessibilityTccParser(self.config, self.case_id).get_result()
         for entry in json_data:
-            if entry['db_table'] != 'access':
-                continue
-            try:
-                try:
-                    apps[entry['client']]['services'].append(entry['service'])
-                except KeyError:
-                    apps[entry['client']]['services'] = [entry['service']]
-            except (KeyError, TypeError):
-                apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
+            apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
 
         json_data = BrctlParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
