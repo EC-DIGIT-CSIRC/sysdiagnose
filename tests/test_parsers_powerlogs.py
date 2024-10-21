@@ -17,10 +17,10 @@ class TestParsersPowerlogs(SysdiagnoseTestCase):
 
             result = p.get_result()
             if result:  # some files are empty
-                for log in result:
-                    self.assertTrue('db_table' in log)
-                    self.assertTrue('datetime' in log)
-                    self.assertTrue('timestamp' in log)
+                for item in result:
+                    self.assertTrue('module_name' in item)
+                    self.assertTrue('datetime' in item)
+                    self.assertTrue('timestamp' in item)
 
 
 if __name__ == '__main__':

@@ -17,8 +17,9 @@ class TestParsersAccessibilityTcc(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('db_table' in item)
+                self.assertTrue('module_name' in item)
                 self.assertTrue('datetime' in item)
+                self.assertTrue('timestamp' in item)
 
 
 if __name__ == '__main__':
