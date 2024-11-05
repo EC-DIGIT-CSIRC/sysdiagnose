@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# FIXME - see issue 122 - redo completely
 
 # For Python3
 # Script to extract timestamp and generate a timesketch output
