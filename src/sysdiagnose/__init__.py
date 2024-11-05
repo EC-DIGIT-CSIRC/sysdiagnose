@@ -131,6 +131,12 @@ class Sysdiagnose:
         # extract sysdiagnose files
         try:
             tf.extractall(path=case_data_folder, filter=None)
+        except TypeError:
+            # python 3.11 compatibility
+            try:
+                tf.extractall(path=case_data_folder)
+            except Exception as e:
+                raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
         except Exception as e:
             raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
 
@@ -146,8 +152,8 @@ class Sysdiagnose:
             case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
             case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
             case['ios_version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
-        except (KeyError, TypeError) as e:
-            logger.warning(f"WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
+        except (KeyError, TypeError):
+            logger.warning("WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
 
         try:
             case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat(timespec='microseconds')
