@@ -124,6 +124,8 @@ class Sysdiagnose:
                 'tags': []
             }
 
+        print(f"Case ID: {str(case['case_id'])}")
+
         # create case folder
         case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
         os.makedirs(case_data_folder, exist_ok=True)
@@ -149,12 +151,15 @@ class Sysdiagnose:
         remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id)
         remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()
         if 'error' not in remotectl_dumpstate_json:
-            try:
-                case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
-                case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
-                case['ios_version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
-            except (KeyError, TypeError):
-                logger.warning("WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
+            if 'Local device' in remotectl_dumpstate_json:
+                try:
+                    case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
+                    case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
+                    case['ios_version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
+                except (KeyError, TypeError):
+                    logger.warning("WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
+            else:
+                logger.info("WARNING: remotectl_dumpstate does not contain a Local device section.")
 
         try:
             case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat(timespec='microseconds')
@@ -173,7 +178,6 @@ class Sysdiagnose:
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)        # release lock whatever happens
 
-        print(f"Case ID: {str(case['case_id'])}")
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
 

@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 from sysdiagnose.utils.base import BaseParserInterface, logger
@@ -6,21 +7,23 @@ from datetime import datetime
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
     description = "Parsing security-sysdiagnose.txt file containing keychain information"
-    format = 'jsonl'
+    format = 'json'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        """
-        Get the list of log files to be parsed
-        """
-        log_files = [
+        log_files_globs = [
             "security-sysdiagnose.txt"
         ]
-        return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
+                if os.path.getsize(item) > 0:
+                    log_files.append(item)
+        return log_files
 
-    def execute(self) -> list:
+    def execute(self) -> dict:
         log_files = self.get_log_files()
         if not log_files:
             return {'errors': ['No security-sysdiagnose.txt file present']}
@@ -173,7 +176,14 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         while i < len(buffer):
             line = buffer[i]
             match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)', line)
-            timestamp = datetime.fromisoformat(match.group(1))
+            if match:
+                timestamp = datetime.fromisoformat(match.group(1))
+            else:
+                match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2} [AP]M [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)', line)
+                if match:
+                    timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %I:%M:%S %p %z")
+                else:
+                    raise ValueError(f"Cannot parse line: {line}")
             row = {
                 'timestamp': timestamp.timestamp(),
                 'datetime': timestamp.isoformat(timespec='microseconds'),
@@ -186,7 +196,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
 
             # while next rows do not start with a date, they are part of the attributes
             try:
-                while not re.search(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', buffer[i + 1]):
+                while not re.search(r'^\d{4}-\d{2}-\d{2} ', buffer[i + 1]):
                     i += 1
                     attribute_string += buffer[i]
             except IndexError:

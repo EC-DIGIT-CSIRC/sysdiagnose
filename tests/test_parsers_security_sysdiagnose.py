@@ -42,12 +42,14 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
             '2023-05-24 19:55:51 +0000 EventSoftFailure: OTAPKIEvent - Attributes: {product : iPhone OS, build : 19H349, errorDomain : NSOSStatusErrorDomain, modelid : iPhone9,3, errorCode : -67694 }',
             '2023-05-24 19:57:58 +0000 EventSoftFailure: MitmDetectionEvent - Attributes: {product : iPhone OS, build : 19H349, overallScore : 0, timeSinceLastReset : 127, rootUsages : (',
             ' foo, bar ',
-            '), errorDomain : MITMErrorDomain, modelid : iPhone9,3, errorCode : 0 }'
+            '), errorDomain : MITMErrorDomain, modelid : iPhone9,3, errorCode : 0 }',
+            '2024-09-06 9:45:15 AM +0000 EventHardFailure: CloudServicesSetConfirmedManifest - Attributes: {product : macOS, build : 22H121, errorDomain : NSOSStatusErrorDomain, modelid : MacBookPro14,3, errorCode : -25308 }',
         ]
         expected_output = {
             'events': [
                 {'datetime': '2023-05-24T19:55:51.000000+00:00', 'timestamp': 1684958151.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'event': 'OTAPKIEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '-67694'}},
-                {'datetime': '2023-05-24T19:57:58.000000+00:00', 'timestamp': 1684958278.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'event': 'MitmDetectionEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'overallScore': '0', 'timeSinceLastReset': '127', 'rootUsages': '( foo, bar )', 'errorDomain': 'MITMErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '0'}}
+                {'datetime': '2023-05-24T19:57:58.000000+00:00', 'timestamp': 1684958278.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'event': 'MitmDetectionEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'overallScore': '0', 'timeSinceLastReset': '127', 'rootUsages': '( foo, bar )', 'errorDomain': 'MITMErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '0'}},
+                {'datetime': '2024-09-06T09:45:15.000000+00:00', 'timestamp': 1725615915.0, 'section': 'client_trust', 'result': 'EventHardFailure', 'event': 'CloudServicesSetConfirmedManifest', 'attributes': {'product': 'macOS', 'build': '22H121', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'MacBookPro14,3', 'errorCode': '-25308'}}
             ]
         }
         result = {'events': []}
