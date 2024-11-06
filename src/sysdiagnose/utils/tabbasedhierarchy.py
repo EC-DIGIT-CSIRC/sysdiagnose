@@ -14,7 +14,7 @@ def parse_block(lines: list) -> list | dict:
     n = 0
     while n < len(lines):
         line = lines[n]
-        if line.strip() == '}' or line.strip() == '':
+        if line.strip() == '}' or line.strip() == '' or line.strip() == ']':
             n = n + 1
             continue
         # subsection if next line is more indented  (more tabs at start of line)
@@ -26,7 +26,10 @@ def parse_block(lines: list) -> list | dict:
         if next_depth > current_depth:
             # subsection
             # extract key
-            key = line.replace(':', '').replace('{', '').strip()
+            if '=>' in line:
+                key = line.split('=>')[0].strip()
+            else:
+                key = line.replace(':', '').replace('{', '').strip()
             # identify end of subsection and call recursive parsing function with that block
             extracted_block = []
             while next_depth > current_depth:

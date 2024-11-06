@@ -29,6 +29,10 @@ class TestTabbasedhierarchy(SysdiagnoseTestCase):
             '	Properties: {',
             '		AppleInternal => false',
             '		CPUArchitecture => x86_64h',
+            '		EncryptedRemoteXPCPopulatedOIDs => [<capacity = 2>',
+            '			0: 1.2.840.113635.100.6.83',
+            '			1: 1.2.840.113635.100.6.84',
+            '		]',
             '	}',
             '	Services:',
             '		com.apple.osanalytics.logRelay',
@@ -68,7 +72,11 @@ class TestTabbasedhierarchy(SysdiagnoseTestCase):
                 ],
                 "Properties": {
                     "AppleInternal": "false",
-                    "CPUArchitecture": "x86_64h"
+                    "CPUArchitecture": "x86_64h",
+                    "EncryptedRemoteXPCPopulatedOIDs": {
+                        "0": "1.2.840.113635.100.6.83",
+                        "1": "1.2.840.113635.100.6.84"
+                    }
                 },
                 "Services": {
                     "com.apple.osanalytics.logRelay": {
