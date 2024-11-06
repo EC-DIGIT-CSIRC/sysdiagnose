@@ -38,6 +38,12 @@ class PlistParser(BaseParserInterface):
     # LATER output_exists() now always returns False. This is because the output is saved in multiple files.
     # we may want to change this behavior in the future, but that requires overwriting output_exists() and get_result() here
 
+    def parse_file(self, file_path: str) -> dict:
+        try:
+            return misc.load_plist_file_as_json(file_path)
+        except Exception as e:
+            return {"error": str(e)}
+
     def save_result(self, force: bool = False, indent=None):
         """
         Saves the result of the parsing operation to many files in the parser output folder
