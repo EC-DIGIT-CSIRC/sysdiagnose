@@ -44,11 +44,13 @@ def main():
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
     parse_parser.add_argument('parser', help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
+    parse_parser.add_argument('-x', '--exclude', help='Exclude specific parsers (comma separated) (in case using "all")', required=False)
     parse_parser.error = parse_parser_error
 
     # analyse mode
     analyse_parser = subparsers.add_parser('analyse', help='Analyse a case')
     analyse_parser.add_argument('analyser', help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers')
+    analyse_parser.add_argument('-x', '--exclude', help='Exclude specific analysers (comma separated) (in case using "all")', required=False)
     analyse_parser.error = analyse_parser_error
 
     # list mode
@@ -113,6 +115,9 @@ def main():
             exit("")
         elif args.parser == 'all':
             parsers_list = list(sd.get_parsers().keys())
+            if args.exclude:
+                exclude_list = args.exclude.split(',')
+                parsers_list = [parser for parser in parsers_list if parser not in exclude_list]
         elif not sd.is_valid_parser_name(args.parser):
             sd.print_parsers_list()
             print("")
@@ -164,6 +169,9 @@ def main():
             exit("")
         elif args.analyser == 'all':
             analysers_list = list(sd.get_analysers().keys())
+            if args.exclude:
+                exclude_list = args.exclude.split(',')
+                analysers_list = [analyser for analyser in analysers_list if analyser not in exclude_list]
         elif not sd.is_valid_analyser_name(args.analyser):
             sd.print_analysers_list()
             print("")
