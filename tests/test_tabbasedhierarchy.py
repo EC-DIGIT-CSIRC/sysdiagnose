@@ -39,6 +39,7 @@ class TestTabbasedhierarchy(SysdiagnoseTestCase):
             '			Properties: {',
             '				UsesRemoteXPC => true',
             '			}',
+            '		foobar',
             '		ssh',
             '			Properties: {',
             '				Legacy => true',
@@ -84,6 +85,7 @@ class TestTabbasedhierarchy(SysdiagnoseTestCase):
                             "UsesRemoteXPC": "true"
                         }
                     },
+                    "foobar": "",
                     "ssh": {
                         "Properties": {
                             "Legacy": "true"

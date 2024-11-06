@@ -10,7 +10,7 @@ def parse_tab_based_hierarchal_file(path: str) -> list | dict:
 
 
 def parse_block(lines: list) -> list | dict:
-    result = {}
+    result = None
     n = 0
     while n < len(lines):
         line = lines[n]
@@ -64,6 +64,8 @@ def parse_block(lines: list) -> list | dict:
                 if not result:
                     result = {}
                 result[key.strip()] = clean_value(value)
+            elif not key and isinstance(result, dict):
+                result[line.strip()] = ""
             else:
                 if not result:
                     result = []
