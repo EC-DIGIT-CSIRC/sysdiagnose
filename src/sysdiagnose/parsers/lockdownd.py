@@ -24,9 +24,11 @@ class LockdowndParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        with open(self.get_log_files()[0], 'r') as f:
-            result = LockdowndParser.extract_from_list(f.readlines())
-            return result
+        for log_file in self.get_log_files():
+            with open(log_file, 'r') as f:
+                result = LockdowndParser.extract_from_list(f.readlines())
+                return result
+        return []
 
     def extract_from_list(lines: list) -> list:
         result = []

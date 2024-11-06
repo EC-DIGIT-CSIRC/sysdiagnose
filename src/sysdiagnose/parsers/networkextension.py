@@ -28,7 +28,9 @@ class NetworkExtensionParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        return NetworkExtensionParser.parse_file(self.get_log_files()[0])
+        for log_file in self.get_log_files():
+            return NetworkExtensionParser.parse_file(log_file)
+        return {'error': ['No com.apple.networkextension.plist file present']}
 
     def parse_file(path: str) -> list | dict:
         try:

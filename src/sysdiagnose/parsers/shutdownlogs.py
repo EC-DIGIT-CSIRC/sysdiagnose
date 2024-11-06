@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
@@ -33,16 +33,17 @@ class ShutdownLogsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        return ShutdownLogsParser.parse_file(self.get_log_files()[0])
+        try:
+            return ShutdownLogsParser.parse_file(self.get_log_files()[0])
+        except IndexError:
+            logger.info('No shutdown.log file present in system_logs.logarchive/Extra/ directory')
+            return []
 
     def parse_file(path: str) -> list:
         # read log file content
         log_lines = ""
-        try:
-            with open(path, "r") as f:
-                log_lines = f.readlines()
-        except IndexError:
-            return {'error': 'No shutdown.log file present in system_logs.logarchive/Extra/ directory'}
+        with open(path, "r") as f:
+            log_lines = f.readlines()
 
         events = []
         index = 0

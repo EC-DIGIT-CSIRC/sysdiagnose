@@ -7,7 +7,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timedelta, timezone
 
 
@@ -29,7 +29,11 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        return SpindumpNoSymbolsParser.parse_file(self.get_log_files()[0])
+        try:
+            return SpindumpNoSymbolsParser.parse_file(self.get_log_files()[0])
+        except IndexError:
+            logger.info('No spindump-nosymbols.txt file present.')
+            return []
 
     def parse_file(path: str) -> list:
         try:

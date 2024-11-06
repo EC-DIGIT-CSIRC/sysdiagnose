@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import glob
 import os
 from sysdiagnose.utils.base import BaseParserInterface
 import sysdiagnose.utils.misc as misc
@@ -14,10 +15,15 @@ class McSettingsEventsParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files = [
+        log_files_globs = [
             "logs/MCState/Shared/MCSettingsEvents.plist"
         ]
-        return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
+                if os.path.getsize(item) > 0:
+                    log_files.append(item)
+        return log_files
 
     def execute(self) -> list | dict:
         '''
