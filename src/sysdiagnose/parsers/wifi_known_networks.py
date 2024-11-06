@@ -9,7 +9,7 @@
 import os
 import glob
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class WifiKnownNetworksParser(BaseParserInterface):
@@ -29,6 +29,10 @@ class WifiKnownNetworksParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
+        files = self.get_log_files()
+        if not files:
+            logger.warning("No known wifi networks plist file found.")
+            return {}
         return WifiKnownNetworksParser.parse_file(self.get_log_files()[0])
 
     def parse_file(path: str) -> list | dict:
