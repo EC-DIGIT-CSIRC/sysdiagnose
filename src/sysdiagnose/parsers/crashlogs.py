@@ -59,7 +59,7 @@ class CrashLogsParser(BaseParserInterface):
                         continue
                     seen.add(ips_hash)
                     result.append(ips)
-                except Exception as e:
+                except Exception:
                     logger.warning(f"Skipping file due to error {file}", exc_info=True)
         return result
 
@@ -67,64 +67,118 @@ class CrashLogsParser(BaseParserInterface):
         # identify the type of file
         with open(path, 'r') as f:
             result = json.loads(f.readline())  # first line
-            result['report'] = {}
             lines = f.readlines()
 
-            # next section is json structure
-            if lines[0].startswith('{') and lines[len(lines) - 1].strip().endswith('}'):
-                result['report'] = json.loads('\n'.join(lines))
-
-            else:
-                # next section is structured text
-                # either key: value
-                # or key:
-                #      multiple lines
-                #    key:
-                #      multiple lines
-                n = 0
-                while n < len(lines):
-                    line = lines[n].strip()
-
-                    if not line:
-                        n += 1
-                        continue
-
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        if value.strip():
-                            result['report'][key] = value.strip()
-                        else:
-                            result['report'][key] = []
-                            n += 1
-                            while n < len(lines):
-                                line = lines[n].strip()
-                                if not line:    # end of section
-                                    break
-
-                                if 'Thread' in key and 'crashed with ARM Thread State' in key:
-                                    if result['report'][key] == []:
-                                        result['report'][key] = {}
-                                    result['report'][key].update(CrashLogsParser.split_thread_crashes_with_arm_thread_state(line))
-                                elif 'Binary Images' in key:
-                                    result['report'][key].append(CrashLogsParser.split_binary_images(line))
-                                elif 'Thread' in key:
-                                    result['report'][key].append(CrashLogsParser.split_thread(line))
-                                else:
-                                    result['report'][key].append(line)
-                                n += 1
-                    elif line == 'EOF':
-                        break
-                    else:
-                        raise Exception(f"Parser bug: Unexpected line in crashlogs at line {n}. Line: {line}")
-
-                    n += 1
+            result['report'] = CrashLogsParser.process_ips_lines(lines)
 
             timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
             result['timestamp_orig'] = result['timestamp']
             result['datetime'] = timestamp.isoformat(timespec='microseconds')
             result['timestamp'] = timestamp.timestamp()
             return result
+
+    def process_ips_lines(lines: list) -> dict:
+        '''
+        There are 2 main models of crashlogs:
+        - one big entry nicely structured in json.
+        - pseudo-structured text. with multiple powerstats entries
+        '''
+        result = {}
+        # next section is json structure
+        if lines[0].startswith('{') and lines[len(lines) - 1].strip().endswith('}'):
+            result = json.loads('\n'.join(lines))
+            return result
+
+        # next section is structured text
+        # either key: value
+        # or key:
+        #      multiple lines
+        #    key:
+        #      multiple lines
+        # two empty lines = end of section and prepare for next powerstats entry
+        # LATER this is not the cleanest way to parse this. But it works for now
+        n = 0
+        powerstats_key = None
+        while n < len(lines):
+            line = lines[n].strip()
+
+            if not line:
+                n += 1
+                continue
+
+            if ':' in line:
+                key, value = line.split(':', 1)
+                key = key.strip()
+
+                if 'Powerstats' in key:
+                    powerstats_key = value.split()[0]
+                    if 'Powerstats' not in result:
+                        result['Powerstats'] = {}
+                    if powerstats_key not in result['Powerstats']:
+                        result['Powerstats'][powerstats_key] = {}
+
+                # key, value entry
+                if value.strip():
+                    if powerstats_key:
+                        result['Powerstats'][powerstats_key][key] = value.strip()
+                    else:
+                        result[key] = value.strip()
+                # only a key, so the next lines are values
+                else:
+                    if powerstats_key:
+                        result['Powerstats'][powerstats_key][key] = []
+                    else:
+                        result[key] = []
+                    n += 1
+                    while n < len(lines):
+                        line = lines[n].strip()
+                        if not line:    # end of section
+                            break
+
+                        if 'Thread' in key and 'crashed with ARM Thread State' in key:
+                            if powerstats_key and result['Powerstats'][powerstats_key][key] == []:
+                                result['Powerstats'][powerstats_key][key] = {}
+                            else:
+                                result[key] = {}
+
+                            if powerstats_key:
+                                result['Powerstats'][powerstats_key][key].update(CrashLogsParser.split_thread_crashes_with_arm_thread_state(line))
+                            else:
+                                result[key].update(CrashLogsParser.split_thread_crashes_with_arm_thread_state(line))
+
+                        elif 'Binary Images' in key:
+                            if powerstats_key:
+                                result['Powerstats'][powerstats_key][key].append(CrashLogsParser.split_binary_images(line))
+                            else:
+                                result[key].append(CrashLogsParser.split_binary_images(line))
+
+                        elif 'Thread' in key:
+                            if powerstats_key:
+                                result['Powerstats'][powerstats_key][key].append(CrashLogsParser.split_thread(line))
+                            else:
+                                result[key].append(CrashLogsParser.split_thread(line))
+                        else:
+                            if powerstats_key:
+                                result['Powerstats'][powerstats_key][key].append(line)
+                            else:
+                                result[key].append(line)
+                        n += 1
+            elif powerstats_key:
+                if 'extra_data' not in result['Powerstats'][powerstats_key]:
+                    result['Powerstats'][powerstats_key]['extra_data'] = []
+                result['Powerstats'][powerstats_key]['extra_data'].append(lines[n].rstrip())  # not with strip()
+
+            elif line == 'EOF':
+                break
+            # elif re.match(r'[0-9]+\s+\?\?\?\s+\(', line):
+            #         current_entry['unknown'] = line
+
+            else:
+                raise Exception(f"Parser bug: Unexpected line in crashlogs at line {n}. Line: {line}")
+
+            n += 1
+
+        return result
 
     def parse_summary_file(path: str) -> list | dict:
         logger.info(f"Parsing summary file: {path}")
@@ -154,6 +208,7 @@ class CrashLogsParser(BaseParserInterface):
         result = {}
         for i in range(0, len(elements), 2):
             if not elements[i].endswith(':'):
+                result['error'] = ' '.join(elements[i:len(elements)])
                 break   # last entry is not a valid key:value
             result[elements[i][:-1]] = elements[i + 1]
         return result
@@ -170,14 +225,17 @@ class CrashLogsParser(BaseParserInterface):
         return result
 
     def split_binary_images(line) -> dict:
-        elements = line.split()
+        # need to be regexp based
+        # option 1: image_offset_start image_offset_end image_name uuid path
+        m = re.search(r'\s*(\w+) -\s+([^\s]+)\s+([^<]+)<([^>]+)>\s+(.+)', line)
+
+        elements = m.groups()
         result = {
-            'image_offset_start': elements[0],
-            'image_offset_end': elements[2],
-            'image_name': elements[3],
-            'arch': elements[4],
-            'uuid': elements[5][1:-1],
-            'path': elements[6],
+            'image_offset_start': elements[0].strip(),
+            'image_offset_end': elements[1].strip(),
+            'image_name': elements[2].strip(),
+            'uuid': elements[3].strip(),
+            'path': elements[4].strip(),
         }
         return result
 
