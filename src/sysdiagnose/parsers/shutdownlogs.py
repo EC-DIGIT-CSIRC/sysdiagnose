@@ -47,40 +47,45 @@ class ShutdownLogsParser(BaseParserInterface):
         events = []
         index = 0
         # go through log file
-        while index < len(log_lines):
-            # look for begining of shutdown sequence
-            if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-                running_processes = {}
-                time_waiting = 0
-                while not (SIGTERM_LINE in log_lines[index]):
-                    if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-                        time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
-                    if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
-                        result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
-                        pid = result.groups()[0]
-                        binary_path = result.groups()[1]
-                        if pid not in running_processes:
-                            running_processes[pid] = {
-                                "pid": int(pid),
-                                "path": binary_path,
-                                "command": '/'.join(binary_path.split('/')[:-1]),
-                                "time_waiting": float(time_waiting),
-                                "times_waiting": 1
-                            }
-                        else:
-                            running_processes[pid]["time_waiting"] += float(time_waiting)
-                            running_processes[pid]["times_waiting"] += 1
-                    index += 1
-                # compute timestamp from SIGTERM line
-                result = re.search(r".*\[(\d+)\].*", log_lines[index])
-                timestamp = datetime.fromtimestamp(int(result.groups()[0]), tz=timezone.utc)
+        try:
+            while index < len(log_lines):
+                # look for begining of shutdown sequence
+                if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
+                    running_processes = {}
+                    time_waiting = 0
+                    while not (SIGTERM_LINE in log_lines[index]):
+                        if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
+                            time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
+                        if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
+                            result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
+                            pid = result.groups()[0]
+                            binary_path = result.groups()[1]
+                            if pid not in running_processes:
+                                running_processes[pid] = {
+                                    "pid": int(pid),
+                                    "path": binary_path,
+                                    "command": '/'.join(binary_path.split('/')[:-1]),
+                                    "time_waiting": float(time_waiting),
+                                    "times_waiting": 1
+                                }
+                            else:
+                                running_processes[pid]["time_waiting"] = float(time_waiting)
+                                running_processes[pid]["times_waiting"] += 1
+                        index += 1
+                    # compute timestamp from SIGTERM line
+                    result = re.search(r".*\[(\d+)\].*", log_lines[index])
+                    timestamp = datetime.fromtimestamp(int(result.groups()[0]), tz=timezone.utc)
 
-                # add entries
-                for item in running_processes.values():
-                    item['timestamp'] = timestamp.timestamp()
-                    item['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    item['event'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
-                    events.append(item)
-            index += 1
-
+                    # add entries
+                    for item in running_processes.values():
+                        item['timestamp'] = timestamp.timestamp()
+                        item['datetime'] = timestamp.isoformat(timespec='microseconds')
+                        item['event'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
+                        events.append(item)
+                index += 1
+        except IndexError:
+            # some shutdown log files don't contain a last SIGTERM entry
+            # unfortunately we need this to compute the timestamp
+            # so we safely ignore this error and return the events we have
+            pass
         return events
