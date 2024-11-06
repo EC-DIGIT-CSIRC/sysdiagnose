@@ -46,7 +46,8 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
         lines = [
             '           0x123456000 -                ???  com.apple.foo (1) <5BFC3EC3-2045-4F95-880A-DEC88832F639>  /System/Library/bar',
             '           0x123456000 -        0x123456fff  libhello                  <5BFC3EC3-2045-4F95-880A-DEC88832F639>  /usr/lib/hello',
-            '0x123456000 - 0x123456fff FooBar arm64  <5BFC3EC320454F95880ADEC88832F639> /System/Library/bar'
+            '0x123456000 - 0x123456fff FooBar arm64  <5BFC3EC320454F95880ADEC88832F639> /System/Library/bar',
+            '0x123456000 -                ???  ???                                     <5BFC3EC3-2045-4F95-880A-DEC88832F639>',
         ]
         expected_results = [
             {'image_offset_start': '0x123456000', 'image_offset_end': '???',
@@ -59,7 +60,10 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
             {'image_offset_start': '0x123456000', 'image_offset_end': '0x123456fff',
              'image_name': 'FooBar arm64',
              'uuid': '5BFC3EC320454F95880ADEC88832F639',
-             'path': '/System/Library/bar'}
+             'path': '/System/Library/bar'},
+            {'image_offset_start': '0x123456000', 'image_offset_end': '???',
+             'image_name': '???',
+             'uuid': '5BFC3EC3-2045-4F95-880A-DEC88832F639', 'path': ''}
         ]
         for line, expected_result in zip(lines, expected_results, strict=True):
             result = CrashLogsParser.split_binary_images(line)
@@ -81,6 +85,37 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
         for line, expected_result in zip(lines, expected_results, strict=True):
             result = CrashLogsParser.split_thread_crashes_with_arm_thread_state(line)
             self.assertEqual(result, expected_result)
+
+    def test_process_ips_lines_json(self):
+        lines = [
+            '{"foo": "bar"}'
+        ]
+        expected_results = {"foo": "bar"}
+        result = CrashLogsParser.process_ips_lines(lines)
+        self.assertEqual(result, expected_results)
+
+    def test_process_ips_lines_plist(self):
+        lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+            '<plist version="1.0">',
+            '<dict>',
+            '	<key>foo</key>',
+            '	<string>bar</string>',
+            '</dict>',
+            '</plist>'
+        ]
+        expected_results = {"foo": "bar"}
+        result = CrashLogsParser.process_ips_lines(lines)
+        self.assertEqual(result, expected_results)
+
+    def test_process_ips_lines_text(self):
+        lines = [
+            'foo: bar'
+        ]
+        expected_results = {"foo": "bar"}
+        result = CrashLogsParser.process_ips_lines(lines)
+        self.assertEqual(result, expected_results)
 
 
 if __name__ == '__main__':

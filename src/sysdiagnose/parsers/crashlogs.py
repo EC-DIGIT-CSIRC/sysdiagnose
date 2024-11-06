@@ -4,6 +4,7 @@ from sysdiagnose.utils.base import BaseParserInterface, logger
 import re
 import json
 from datetime import datetime, timezone
+from sysdiagnose.utils.misc import load_plist_string_as_json
 # from pycrashreport.crash_report import get_crash_report_from_file
 
 
@@ -37,6 +38,11 @@ class CrashLogsParser(BaseParserInterface):
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_folder, log_files_glob), recursive=True))
+
+        # exclude some files
+        exclusion_strings = ['WiFiLQMMetrics', 'OTAUpdate']
+        for exclusion_string in exclusion_strings:
+            log_files = [x for x in log_files if exclusion_string not in x]
 
         return log_files
 
@@ -79,14 +85,20 @@ class CrashLogsParser(BaseParserInterface):
 
     def process_ips_lines(lines: list) -> dict:
         '''
-        There are 2 main models of crashlogs:
+        There are multiple main models of crashlogs:
         - one big entry nicely structured in json.
+        - one big entry nicely structured as plist
         - pseudo-structured text. with multiple powerstats entries
         '''
         result = {}
         # next section is json structure
         if lines[0].startswith('{') and lines[len(lines) - 1].strip().endswith('}'):
             result = json.loads('\n'.join(lines))
+            return result
+
+        # next section is plist structure
+        if lines[0].startswith('<?xml') and lines[len(lines) - 1].strip().endswith('</plist>'):
+            result = load_plist_string_as_json('\n'.join(lines))
             return result
 
         # next section is structured text
@@ -227,8 +239,7 @@ class CrashLogsParser(BaseParserInterface):
     def split_binary_images(line) -> dict:
         # need to be regexp based
         # option 1: image_offset_start image_offset_end image_name uuid path
-        m = re.search(r'\s*(\w+) -\s+([^\s]+)\s+([^<]+)<([^>]+)>\s+(.+)', line)
-
+        m = re.search(r'\s*(\w+) -\s+([^\s]+)\s+([^<]+)<([^>]+)>\s*(.*)', line)
         elements = m.groups()
         result = {
             'image_offset_start': elements[0].strip(),

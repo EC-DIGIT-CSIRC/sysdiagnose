@@ -104,7 +104,7 @@ def build_from_logentry(line):
             plist_start = line.index('<?xml version')
             entry['msg'] = line[:plist_start].strip()
             plist_data = line[plist_start:]
-            entry['plist'] = misc.load_plist_string_as_json(plist_data.encode())
+            entry['plist'] = misc.load_plist_string_as_json(plist_data)
             # LATER parse the plist content
             # - extract the recursive plist
             # - decode the certificates into nice JSON
