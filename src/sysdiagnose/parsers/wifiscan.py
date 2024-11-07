@@ -3,7 +3,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class WifiScanParser(BaseParserInterface):
@@ -40,51 +40,68 @@ class WifiScanParser(BaseParserInterface):
                 parsed_data = {}
                 # process header
                 if line.startswith('total='):
-                    items = line.split(',')
-                    for item in items:
-                        key, value = item.split('=')
-                        parsed_data[key.strip()] = value.strip()
+                    parsed_data.update(WifiScanParser.parse_summary(line))
                 else:
                     # extract key-value by string
-
-                    # first ssid and ssid_hex, but need to detect the type first
-                    regexes = [
-                        # iOS 16 and later: FIRSTCONWIFI - ssid=4649525354434f4e57494649
-                        r"(?P<ssid>.+?) - ssid=(?P<ssid_hex>[^,]+)",
-                        # iOS 15: 'FIRSTCONWIFI' (4649525354434f4e57494649)
-                        r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)",
-                        # hidden:  <HIDDEN>
-                        r"(?P<ssid><HIDDEN>)(?P<ssid_hex>)",
-                    ]
-                    for regex in regexes:
-                        m = re.match(regex, line)
-                        if m:
-                            parsed_data['ssid'] = m.group('ssid')
-                            parsed_data['ssid_hex'] = m.group('ssid_hex')
-                            break
-                    # key = first place with =
-                    #  check what is after =, if normal char then value is until next ,
-                    #                         if [ then value is until ]
-                    #                         if { then value is until }
-                    index_now = line.index(',') + 1
-                    # now the rest of the line
-                    while index_now < len(line):
-                        index_equals = line.index('=', index_now)
-                        key = line[index_now:index_equals].strip()
-                        if line[index_equals + 1] in ['[']:
-                            index_close = line.index(']', index_now)
-                            value = line[index_equals + 1:index_close].strip()
-                        else:
-                            try:
-                                index_close = line.index(',', index_now)
-                            except ValueError:  # catch end of line
-                                index_close = len(line)
-                            value = line[index_equals + 1:index_close].strip()
-                        index_now = index_close + 2
-                        parsed_data[key] = value
+                    parsed_data.update(WifiScanParser.parse_line(line))
 
                 timestamp = self.sysdiagnose_creation_datetime
                 parsed_data['datetime'] = timestamp.isoformat(timespec='microseconds')
                 parsed_data['timestamp'] = timestamp.timestamp()
                 output.append(parsed_data)
         return output
+
+    def parse_summary(line: str) -> dict:
+        parsed = {}
+        items = line.split(',')
+        for item in items:
+            key, value = item.split('=')
+            parsed[key.strip()] = value.strip()
+        return parsed
+
+    def parse_line(line: str) -> dict:
+        parsed = {}
+        # first ssid and ssid_hex, but need to detect the type first
+        regexes = [
+            # iOS 16 and later: FIRSTCONWIFI - ssid=4649525354434f4e57494649
+            r"(?P<ssid>.+?) - ssid=(?P<ssid_hex>[^,]+)",
+            # iOS 15: 'FIRSTCONWIFI' (4649525354434f4e57494649)
+            r"'(?P<ssid>[^\']+)' \((?P<ssid_hex>[^\)]+)\)",
+            # iOS ??: 'FIRSTCONWIFI' <46495253 54434f4e 57494649>
+            r"'(?P<ssid>[^\']+)' \<(?P<ssid_hex>[^>]+)\>",
+            # hidden:  <HIDDEN>
+            r"(?P<ssid><HIDDEN>)(?P<ssid_hex>)",
+        ]
+        for regex in regexes:
+            m = re.match(regex, line)
+            if m:
+                parsed['ssid'] = m.group('ssid')
+                parsed['ssid_hex'] = m.group('ssid_hex').replace(' ', '')
+                break
+        if 'ssid' not in parsed:
+            logger.warning(f"Failed to parse ssid from line: {line}")
+        # key = first place with =
+        #  check what is after =, if normal char then value is until next ,
+        #                         if [ then value is until ]
+        #                         if { then value is until }
+        index_now = line.index(',') + 1
+        # now the rest of the line
+        while index_now < len(line):
+            index_equals = line.index('=', index_now)
+            key = line[index_now:index_equals].strip()
+            if line[index_equals + 1] in ['[']:
+                try:
+                    index_close = line.index(']', index_now)
+                except Exception:
+                    index_close = len(line)  # no ending found
+                value = line[index_equals + 2:index_close].strip()
+            else:
+                try:
+                    index_close = line.index(',', index_now)
+                except ValueError:  # catch end of line
+                    index_close = len(line)
+                value = line[index_equals + 1:index_close].strip()
+            index_now = index_close + 2
+            parsed[key] = value
+
+        return parsed

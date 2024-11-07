@@ -27,7 +27,28 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             'Architecture:     arm64',
             'Report Version:   35.1',
         ]
-        expected_result = {'timestamp': 1684960155.759, 'datetime': '2023-05-24T13:29:15.759000-07:00', 'Date/Time': '2023-05-24 13:29:15.759 -0700', 'End time': '2023-05-24 13:29:17.757 -0700', 'OS Version': 'iPhone OS 15.7.6 (Build 19H349)', 'Architecture': 'arm64', 'Report Version': '35.1'}
+        expected_result = {
+            'timestamp': 1684960155.759,
+            'datetime': '2023-05-24T13:29:15.759000-07:00',
+            'Date/Time': '2023-05-24 13:29:15.759 -0700',
+            'End time': '2023-05-24 13:29:17.757 -0700',
+            'OS Version': 'iPhone OS 15.7.6 (Build 19H349)',
+            'Architecture': 'arm64',
+            'Report Version': '35.1'
+        }
+        result = SpindumpNoSymbolsParser.parse_basic(lines)
+        self.maxDiff = None
+        self.assertDictEqual(expected_result, result)
+
+    def test_parse_basic_nomili(self):
+        lines = [
+            'Date/Time:        2023-05-24 13:29:15 -0700',
+        ]
+        expected_result = {
+            'timestamp': 1684960155.000,
+            'datetime': '2023-05-24T13:29:15.000000-07:00',
+            'Date/Time': '2023-05-24 13:29:15 -0700'
+        }
         result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
         self.assertDictEqual(expected_result, result)
@@ -95,6 +116,65 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
         }
         result = SpindumpNoSymbolsParser.parse_process(lines)
         self.maxDiff = None
+        self.assertDictEqual(expected_result, result)
+
+    def test_parse_thread(self):
+        self.maxDiff = None
+
+        lines = [
+            'Thread 0x8b6    DispatchQueue "com.apple.main-thread"(1)    8 samples (1-8)    priority 31 (base 31)',
+            '  8  ??? (dyld + 99536) [0x102c504d0]',
+            '    8  ??? (accessoryd + 554572) [0x10287b64c]',
+            '      8  ??? (Foundation + 99872) [0x1821c1620]',
+            '        8  ??? (Foundation + 97964) [0x1821c0eac]',
+            '          8  ??? (CoreFoundation + 123252) [0x180ab3174]',
+            '            8  ??? (CoreFoundation + 44944) [0x180a9ff90]',
+            '              8  ??? (CoreFoundation + 27784) [0x180a9bc88]',
+            '                8  ??? (libsystem_kernel.dylib + 2732) [0x1bb3f9aac]',
+            '                 *8  ??? [0xfffffff0071a86d4]'
+        ]
+        expected_result = {
+            'thread': '0x8b', 'DispatchQueue': 'com.apple.main-thread', 'priority': '31',
+            'loaded': [
+                {'library': 'dyld', 'int': '99536', 'hex': '0x102c504d0'},
+                {'library': 'accessoryd', 'int': '554572', 'hex': '0x10287b64c'},
+                {'library': 'Foundation', 'int': '99872', 'hex': '0x1821c1620'},
+                {'library': 'Foundation', 'int': '97964', 'hex': '0x1821c0eac'},
+                {'library': 'CoreFoundation', 'int': '123252', 'hex': '0x180ab3174'},
+                {'library': 'CoreFoundation', 'int': '44944', 'hex': '0x180a9ff90'},
+                {'library': 'CoreFoundation', 'int': '27784', 'hex': '0x180a9bc88'},
+                {'library': 'libsystem_kernel.dylib', 'int': '2732', 'hex': '0x1bb3f9aac'},
+                {'hex': '0xfffffff0071a86d4'}
+            ]}
+        result = SpindumpNoSymbolsParser.parse_thread(lines)
+        self.assertDictEqual(expected_result, result)
+
+        lines = [
+            'Thread 0x62d    DispatchQueue "com.apple.main-thread"(1)    8 samples (1-8)    priority 31 (base 31)    cpu time 0.005s (4.2M cycles, 1986.9K instructions, 2.14c/i)',
+            '  8  ??? (dyld + 99536) [0x10236c4d0]',
+            '    8  ??? (apsd + 281160) [0x10205ca48]'
+        ]
+        expected_result = {
+            'thread': '0x62', 'DispatchQueue': 'com.apple.main-thread', 'priority': '31', 'cputime': '0.005s (4.2M cycles, 1986.9K instructions, 2.14c/i)',
+            'loaded': [
+                {'library': 'dyld', 'int': '99536', 'hex': '0x10236c4d0'},
+                {'library': 'apsd', 'int': '281160', 'hex': '0x10205ca48'}
+            ]
+        }
+        result = SpindumpNoSymbolsParser.parse_thread(lines)
+        self.assertDictEqual(expected_result, result)
+
+        lines = [
+            'Thread 0x8477d    Thread name "IOConfigThread_\'foobar\'"    1 sample (295)    priority 80 (base 80)    cpu time <0.001s',
+            '*1  ??? (kernel + 850132) [0xffffff80002df8d4] (running)'
+        ]
+        expected_result = {
+            'thread': '0x84', 'ThreadName': "IOConfigThread_'foobar'", 'priority': '80', 'cputime': '<0.001s',
+            'loaded': [
+                {'library': 'kernel', 'int': '850132', 'hex': '0xffffff80002df8d4', 'status': 'running'}
+            ]
+        }
+        result = SpindumpNoSymbolsParser.parse_thread(lines)
         self.assertDictEqual(expected_result, result)
 
 

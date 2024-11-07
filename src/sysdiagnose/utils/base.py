@@ -67,9 +67,13 @@ class BaseInterface(ABC):
             datetime: The creation date and time of the sysdiagnose.
         """
         with open(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'), 'r') as f:
+            timestamp_regex = None
             for line in f:
                 if 'IN_PROGRESS_sysdiagnose' in line:
                     timestamp_regex = r"IN_PROGRESS_sysdiagnose_(\d{4}\.\d{2}\.\d{2}_\d{2}-\d{2}-\d{2}[\+,-]\d{4})_"
+                elif 'spindump_sysdiagnose_' in line:
+                    timestamp_regex = r"spindump_sysdiagnose_(\d{4}\.\d{2}\.\d{2}_\d{2}-\d{2}-\d{2}[\+,-]\d{4})_"
+                if timestamp_regex:
                     match = re.search(timestamp_regex, line)
                     if match:
                         timestamp = match.group(1)

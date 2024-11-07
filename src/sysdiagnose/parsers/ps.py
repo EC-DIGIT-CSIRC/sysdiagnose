@@ -35,8 +35,10 @@ class PsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        # TODO not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
-        return PsParser.parse_file(self.get_log_files()[0])
+        # LATER not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
+        for log_file in self.get_log_files():
+            return PsParser.parse_file(log_file)
+        return {'error': ['No ps.txt file present']}
 
     def parse_file(filename):
         result = []
@@ -63,7 +65,7 @@ class PsParser(BaseParserInterface):
                                 row[col_name] = patterns[col]
                     result.append(row)
                 return result
-        except Exception as e:
+        except Exception:
             logger.exception("Could not parse ps.txt")
             return []
 
@@ -98,7 +100,7 @@ def export_to_json(processes, filename="./ps.json"):
     try:
         with open(filename, "w") as fd:
             fd.write(json_ps)
-    except Exception as e:
+    except Exception:
         logger.exception(f"Impossible to dump the processes to {filename}")
 
 

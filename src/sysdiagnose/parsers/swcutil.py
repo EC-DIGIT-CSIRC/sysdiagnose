@@ -6,7 +6,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class SwcutilParser(BaseParserInterface):
@@ -27,7 +27,11 @@ class SwcutilParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        return SwcutilParser.parse_file(self.get_log_files()[0])
+        try:
+            return SwcutilParser.parse_file(self.get_log_files()[0])
+        except IndexError:
+            logger.info('No swcutil_show.txt file present.')
+            return {'error': ['No swcutil_show.txt file present.']}
 
     def parse_file(path: str) -> list | dict:
         try:

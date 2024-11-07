@@ -79,7 +79,10 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 output[splitted[0]] = splitted[1].strip()
 
         if 'Date/Time' in output:
-            timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S.%f %z")
+            try:
+                timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S.%f %z")
+            except ValueError:
+                timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S %z")
             output['timestamp'] = timestamp.timestamp()
             output['datetime'] = timestamp.isoformat(timespec='microseconds')
 
@@ -189,7 +192,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             priorityregex = re.search(r"priority\ [0-9]+", data[0])
             output['priority'] = priorityregex.group(0).split(" ", 1)[1]
         if "cpu time" in data[0]:
-            cputimeregex = re.search(r"cpu\ time\ (.*)\)", data[0])
+            cputimeregex = re.search(r"cpu\ time\ (.*)", data[0])
             output["cputime"] = cputimeregex.group(0).split("time ", 1)[1]
 
         output["loaded"] = []
@@ -197,9 +200,12 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         for line in data[1:]:
             loaded = {}
             if "+" in line:
-                loaded["library"] = line.split("(", 1)[1].split("+", 1)[0].strip()
-                loaded["int"] = line.split("(", 1)[1].split("+", 1)[1].split(")", 1)[0].strip()
-                loaded["hex"] = line.split("[", 1)[1][:-1].strip()
+                m = re.search(r"\((?P<library>[^+]+)\+(?P<int>[^\)]+)\) \[(?P<hex>[^\]]+)\](?P<status>.*)", line)
+                loaded['library'] = m.group('library').strip()
+                loaded['int'] = m.group('int').strip()
+                loaded['hex'] = m.group('hex').strip()
+                if m.group('status').strip() != "":
+                    loaded['status'] = m.group('status').replace('(', '').replace(')', '').strip()
             elif "truncated backtrace>" not in line:
                 loaded["hex"] = line.split("[", 1)[1][:-1].strip()
             output["loaded"].append(loaded)

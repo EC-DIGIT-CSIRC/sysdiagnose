@@ -47,6 +47,7 @@ def load_plist_file_as_json(fname: str):
     except Exception:
         return {'error': ['Invalid plist file']}
 
+
 def load_plist_string_as_json(plist_string: str):
     plist = nska_deserialize.deserialize_plist_from_string(plist_string.encode(), full_recurse_convert_nska=True, format=dict)
     return json_serializable(plist)

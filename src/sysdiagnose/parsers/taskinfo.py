@@ -31,9 +31,9 @@ class TaskinfoParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        path = self.get_log_files()[0]
         events = []
         try:
+            path = self.get_log_files()[0]
             with open(path, "r") as f:
                 lines = f.readlines()
 
@@ -88,4 +88,4 @@ class TaskinfoParser(BaseParserInterface):
                     n = n + 1
             return events
         except IndexError:
-            return []
+            return events

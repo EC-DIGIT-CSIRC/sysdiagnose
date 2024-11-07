@@ -24,7 +24,9 @@ class WifiSecurityParser(BaseParserInterface):
         return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
 
     def execute(self) -> list | dict:
-        return WifiSecurityParser.parse_file(self.get_log_files()[0])
+        for log_file in self.get_log_files():
+            return WifiSecurityParser.parse_file(log_file)
+        return {'error': ['No WiFi/security.txt file present']}
 
     def parse_file(path: str) -> list | dict:
         """
