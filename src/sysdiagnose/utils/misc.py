@@ -37,7 +37,7 @@ def get_version(filename="VERSION.txt"):
         exit(f"Could not read version info, bailing out. Something is wrong: {str(e)}")
 
 
-def load_plist_file_as_json(fname: str):
+def load_plist_file_as_json(fname: str) -> dict:
     if os.path.getsize(fname) == 0:
         return {'error': ['Empty file']}
     try:
@@ -48,8 +48,13 @@ def load_plist_file_as_json(fname: str):
         return {'error': ['Invalid plist file']}
 
 
-def load_plist_string_as_json(plist_string: str):
+def load_plist_string_as_json(plist_string: str) -> dict:
     plist = nska_deserialize.deserialize_plist_from_string(plist_string.encode(), full_recurse_convert_nska=True, format=dict)
+    return json_serializable(plist)
+
+
+def load_plist_bytes_as_json(plist_bytes: bytes):
+    plist = nska_deserialize.deserialize_plist_from_string(plist_bytes, full_recurse_convert_nska=True, format=dict)
     return json_serializable(plist)
 
 
