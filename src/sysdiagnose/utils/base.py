@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-import os
-import json
-from pathlib import Path
 from datetime import datetime
-import re
 from functools import cached_property
+from pathlib import Path
 from sysdiagnose.utils.logger import logger
+import glob
+import json
+import os
+import re
 
 
 class SysdiagnoseConfig:
@@ -44,8 +45,13 @@ class BaseInterface(ABC):
 
         self.case_data_folder = config.get_case_data_folder(case_id)
         os.makedirs(self.case_data_folder, exist_ok=True)
-        case_data_folder_dirlist = os.listdir(self.case_data_folder)
-        self.case_data_subfolder = os.path.join(self.case_data_folder, [item for item in case_data_folder_dirlist if 'sysdiagnose_' in item][0])
+
+        # Search for the 'sysdiagnose.log' file and return the parent folder
+        log_files = glob.glob(os.path.join(self.case_data_folder, '**', 'sysdiagnose.log'), recursive=True)
+        if log_files:
+            self.case_data_subfolder = os.path.dirname(log_files[0])
+        else:
+            self.case_data_subfolder = self.case_data_folder
 
         self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
         os.makedirs(self.case_parsed_data_folder, exist_ok=True)

@@ -53,7 +53,7 @@ def load_plist_string_as_json(plist_string: str) -> dict:
     return json_serializable(plist)
 
 
-def load_plist_bytes_as_json(plist_bytes: bytes):
+def load_plist_bytes_as_json(plist_bytes: bytes) -> dict:
     plist = nska_deserialize.deserialize_plist_from_string(plist_bytes, full_recurse_convert_nska=True, format=dict)
     return json_serializable(plist)
 
