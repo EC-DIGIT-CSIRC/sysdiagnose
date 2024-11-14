@@ -1,6 +1,7 @@
 # generated data
 cases/*
 yara/*
+not_yet_parsed.txt
 
 # private test data
 /tests/testdata-*
