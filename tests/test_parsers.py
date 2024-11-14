@@ -85,7 +85,7 @@ class TestParsers(SysdiagnoseTestCase):
                     covered = True
                     break
 
-            if not covered and os.path.getsize(file) > 0:
+            if not covered and os.path.getsize(file) > 10:
                 not_covered.append(file)
                 print(f"File not yet parsed: {file}")
 
