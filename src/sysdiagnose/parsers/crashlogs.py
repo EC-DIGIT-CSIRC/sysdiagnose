@@ -32,7 +32,7 @@ class CrashLogsParser(BaseParserInterface):
 
     def get_log_files(self) -> list:
         log_files_globs = [
-            '**/crashes_and_spins/*.ips',
+            '**/crashes_and_spins/**/*.ips',
             '**/summaries/crashes_and_spins.log',
         ]
         log_files = []
