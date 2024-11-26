@@ -79,6 +79,7 @@ class WifiScanParser(BaseParserInterface):
                 parsed['ssid_hex'] = m.group('ssid_hex').replace(' ', '')
                 break
         if 'ssid' not in parsed:
+            parsed['ssid'] = '<unknown>'
             logger.warning(f"Failed to parse ssid from line: {line}")
         # key = first place with =
         #  check what is after =, if normal char then value is until next ,
