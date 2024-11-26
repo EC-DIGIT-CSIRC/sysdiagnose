@@ -30,7 +30,7 @@ class LockdowndParser(BaseParserInterface):
                 return result
         return []
 
-    def extract_from_list(self, lines: list) -> list:
+    def extract_from_list(lines: list, tzinfo) -> list:
         result = []
         i = 0
         while i < len(lines):
@@ -53,7 +53,7 @@ class LockdowndParser(BaseParserInterface):
             # process rebuild current_line
             match = re.match(r'(^.{24}) pid=(\d+) ([^:]+): (.*)$', current_line, re.DOTALL)
             timestamp = datetime.strptime(match.group(1), '%m/%d/%y %H:%M:%S.%f')
-            timestamp = timestamp.replace(tzinfo=self.sysdiagnose_creation_datetime.tzinfo)
+            timestamp = timestamp.replace(tzinfo=tzinfo)
 
             # LATER parse the json blob that can sometimes be in the message
             item = {

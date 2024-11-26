@@ -76,8 +76,11 @@ class CrashLogsParser(BaseParserInterface):
             lines = f.readlines()
 
             result['report'] = CrashLogsParser.process_ips_lines(lines)
-
-            timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
+            try:
+                # captureTime is more precise than the timestamp
+                timestamp = datetime.strptime(result['report']['captureTime'], '%Y-%m-%d %H:%M:%S.%f %z')
+            except Exception:
+                timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
             result['timestamp_orig'] = result['timestamp']
             result['datetime'] = timestamp.isoformat(timespec='microseconds')
             result['timestamp'] = timestamp.timestamp()

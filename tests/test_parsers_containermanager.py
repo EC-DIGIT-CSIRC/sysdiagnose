@@ -22,7 +22,7 @@ class TestParsersContainermanager(SysdiagnoseTestCase):
                 self.assertTrue('loglevel' in item)
                 self.assertTrue('hexID' in item)
                 self.assertTrue('loglevel' in item)
-                self.assertTrue('msg' in item)
+                self.assertTrue('message' in item)
 
 
 if __name__ == '__main__':

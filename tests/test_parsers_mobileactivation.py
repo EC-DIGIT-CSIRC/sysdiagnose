@@ -24,7 +24,7 @@ class TestParsersMobileactivation(SysdiagnoseTestCase):
                     self.assertTrue('build_version' in item)
                     self.assertTrue('internal_build' in item)
                 else:
-                    self.assertTrue('msg' in item)
+                    self.assertTrue('message' in item)
                     # self.assertTrue('event_type' in item) # not all logs have event_type
 
 
