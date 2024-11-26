@@ -102,7 +102,7 @@ def build_from_logentry(line, tzinfo):
         # plist parsing
         if line.endswith('</plist>'):
             plist_start = line.index('<?xml version')
-            entry['msg'] = line[:plist_start].strip()
+            entry['message'] = line[:plist_start].strip()
             plist_data = line[plist_start:]
             entry['plist'] = misc.load_plist_string_as_json(plist_data)
             # LATER parse the plist content
@@ -110,7 +110,7 @@ def build_from_logentry(line, tzinfo):
             # - decode the certificates into nice JSON
             # - and so on with more fun for the future
         else:
-            entry['msg'] = msgregex.group(1).strip()
+            entry['message'] = msgregex.group(1).strip()
 
     return entry
 

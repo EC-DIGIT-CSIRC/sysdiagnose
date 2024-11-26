@@ -34,7 +34,7 @@ dGVzdA==
             'loglevel': 'debug',
             'hexID': '0x16bf9b000',
             'event_type': 'MobileActivationDaemon handleActivationInfoWithSession:activationSignature:completionBlock:',
-            'msg': 'Activation message:',
+            'message': 'Activation message:',
             'plist': {'AccountToken': 'test', 'AccountTokenCertificate': 'test', 'unbrick': True}}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result, result[0])
@@ -69,7 +69,7 @@ dGVzdA==
             'datetime': '2023-05-24T14:05:36.000000+01:00',
             'loglevel': 'err',
             'hexID': '0x16be43000',
-            'msg': '+[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {\n    MCMMetadataActiveDPClass = 0;\n    MCMMetadataContentClass = 2;\n    MCMMetadataIdentifier = "com.apple.VoiceMemos";\n    MCMMetadataInfo =     {\n        "com.apple.MobileInstallation.ContentProtectionClass" = 0;\n    };\n    MCMMetadataSchemaVersion = 1;\n    MCMMetadataUUID = "12036663-1F3A-45B3-A34C-402D5BB7D4FB";\n    MCMMetadataUserIdentity =     {\n        personaUniqueString = "83CB8039-725D-4462-84C2-7F79F0A6EFB3";\n        posixGID = 501;\n        posixUID = 501;\n        type = 0;\n        version = 2;\n    };\n    MCMMetadataVersion = 6;\n} (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})'}
+            'message': '+[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {\n    MCMMetadataActiveDPClass = 0;\n    MCMMetadataContentClass = 2;\n    MCMMetadataIdentifier = "com.apple.VoiceMemos";\n    MCMMetadataInfo =     {\n        "com.apple.MobileInstallation.ContentProtectionClass" = 0;\n    };\n    MCMMetadataSchemaVersion = 1;\n    MCMMetadataUUID = "12036663-1F3A-45B3-A34C-402D5BB7D4FB";\n    MCMMetadataUserIdentity =     {\n        personaUniqueString = "83CB8039-725D-4462-84C2-7F79F0A6EFB3";\n        posixGID = 501;\n        posixUID = 501;\n        type = 0;\n        version = 2;\n    };\n    MCMMetadataVersion = 6;\n} (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result, result[0])
 
@@ -81,7 +81,7 @@ dGVzdA==
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
-            'msg': 'Rolling system container directory UUIDs on disk'}
+            'message': 'Rolling system container directory UUIDs on disk'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result, result[0])
 
@@ -92,7 +92,7 @@ dGVzdA==
             'datetime': '2023-05-24T14:05:30.000000+01:00',
             'loglevel': 'notice',
             'hexID': '0x16be43000',
-            'msg': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
+            'message': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result, result[0])
 
@@ -104,14 +104,14 @@ Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _rege
             'datetime': '2023-05-24T14:05:30.000000+01:00',
             'loglevel': 'notice',
             'hexID': '0x16be43000',
-            'msg': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
+            'message': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
         expected_result_1 = {
             'timestamp': 1684932937.0,
             'datetime': '2023-05-24T13:55:37.000000+01:00',
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
-            'msg': 'Rolling system container directory UUIDs on disk'}
+            'message': 'Rolling system container directory UUIDs on disk'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result_0, result[0])
         self.assertDictEqual(expected_result_1, result[1])
@@ -146,13 +146,13 @@ Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: _________________
             'loglevel': 'notice',
             'hexID': '0x16afb3000',
             'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths',
-            'msg': 'Rolling system container directory UUIDs on disk'}
+            'message': 'Rolling system container directory UUIDs on disk'}
         expected_result_1 = {
             'timestamp': 1684933693.0,
             'datetime': '2023-05-24T14:08:13.000000+01:00',
             'loglevel': 'debug',
             'hexID': '0x16f1db000',
-            'msg': 'MA: main: ____________________ Mobile Activation Startup _____________________',
+            'message': 'MA: main: ____________________ Mobile Activation Startup _____________________',
             'build_version': '19H349',
             'internal_build': 'false',
             'uid': '501',
@@ -180,13 +180,13 @@ Sat Feb 18 10:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: A
             'datetime': '2023-02-18T10:48:38.000000+01:00',
             'loglevel': 'debug',
             'hexID': '0x16dc37000',
-            'msg': 'MA: main: ____________________________________________________________________'}
+            'message': 'MA: main: ____________________________________________________________________'}
         expected_result_1 = {
             'timestamp': 1676713719.0,
             'datetime': '2023-02-18T10:48:39.000000+01:00',
             'loglevel': 'debug',
             'hexID': '0x16dc37000',
-            'msg': 'MA: dealwith_activation: Activation State: Activated'}
+            'message': 'MA: dealwith_activation: Activation State: Activated'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result_0, result[0])
         self.assertDictEqual(expected_result_1, result[1])
@@ -198,7 +198,7 @@ Sat Feb 18 10:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: A
             'datetime': '2022-12-02T12:32:19.000000+01:00',
             'loglevel': 'debug',
             'hexID': '0x16afff000',
-            'msg': 'MA: main: ____________________ Mobile Activation Startup _____________________'}
+            'message': 'MA: main: ____________________ Mobile Activation Startup _____________________'}
         result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo)
         self.assertDictEqual(expected_result, result[0])
 
