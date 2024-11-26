@@ -195,6 +195,7 @@ class CrashLogsParser(BaseParserInterface):
     def parse_summary_file(self, path: str) -> list | dict:
         logger.info(f"Parsing summary file: {path}")
         result = []
+        seen = set()  # to ensure unique entries
         with open(path, 'r') as f:
             for line in f:
                 if not line.startswith('/'):
@@ -211,7 +212,11 @@ class CrashLogsParser(BaseParserInterface):
                     'path': path,
                     'warning': 'Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time'
                 }
+                if entry['path'] in seen:
+                    continue
+                seen.add(entry['path'])
                 result.append(entry)
+
         return result
 
     def split_thread_crashes_with_arm_thread_state(line) -> dict:
