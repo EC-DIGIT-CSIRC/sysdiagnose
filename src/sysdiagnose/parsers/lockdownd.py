@@ -26,11 +26,11 @@ class LockdowndParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             with open(log_file, 'r') as f:
-                result = LockdowndParser.extract_from_list(f.readlines())
+                result = self.extract_from_list(f.readlines())
                 return result
         return []
 
-    def extract_from_list(lines: list) -> list:
+    def extract_from_list(self, lines: list) -> list:
         result = []
         i = 0
         while i < len(lines):
@@ -53,7 +53,7 @@ class LockdowndParser(BaseParserInterface):
             # process rebuild current_line
             match = re.match(r'(^.{24}) pid=(\d+) ([^:]+): (.*)$', current_line, re.DOTALL)
             timestamp = datetime.strptime(match.group(1), '%m/%d/%y %H:%M:%S.%f')
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
+            timestamp = timestamp.replace(tzinfo=self.sysdiagnose_creation_datetime.tzinfo)
 
             # LATER parse the json blob that can sometimes be in the message
             item = {
@@ -61,7 +61,7 @@ class LockdowndParser(BaseParserInterface):
                 'datetime': timestamp.isoformat(timespec='microseconds'),
                 'pid': int(match.group(2)),
                 'event_type': match.group(3),
-                'msg': match.group(4).strip()
+                'message': match.group(4).strip()
             }
             result.append(item)
 
