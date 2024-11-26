@@ -53,7 +53,7 @@ class CrashLogsParser(BaseParserInterface):
         for file in files:
             logger.info(f"Processing file: {file}")
             if file.endswith('crashes_and_spins.log'):
-                result.extend(CrashLogsParser.parse_summary_file(file))
+                result.extend(self.parse_summary_file(file))
             elif os.path.basename(file).startswith('.'):
                 pass
             elif file.endswith('.ips'):
@@ -192,7 +192,7 @@ class CrashLogsParser(BaseParserInterface):
 
         return result
 
-    def parse_summary_file(path: str) -> list | dict:
+    def parse_summary_file(self, path: str) -> list | dict:
         logger.info(f"Parsing summary file: {path}")
         result = []
         with open(path, 'r') as f:
@@ -200,7 +200,7 @@ class CrashLogsParser(BaseParserInterface):
                 if not line.startswith('/'):
                     continue
 
-                app, timestamp = CrashLogsParser.metadata_from_filename(line)
+                app, timestamp = self.metadata_from_filename(line)
                 path = line.split(',')[0]
                 entry = {
                     'app_name': app,
@@ -209,8 +209,7 @@ class CrashLogsParser(BaseParserInterface):
                     'timestamp': timestamp.timestamp(),
                     'filename': os.path.basename(path),
                     'path': path,
-                    'warning': 'Timezone not considered, parsed local time as UTC'
-                    # FIXME timezone is from local phone time at file creation. Not UTC
+                    'warning': 'Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time'
                 }
                 result.append(entry)
         return result
@@ -250,7 +249,7 @@ class CrashLogsParser(BaseParserInterface):
         }
         return result
 
-    def metadata_from_filename(filename: str) -> tuple[str, datetime]:
+    def metadata_from_filename(self, filename: str) -> tuple[str, datetime]:
         while True:
             # option 1: YYYY-MM-DD-HHMMSS
             m = re.search(r'/([^/]+)-(\d{4}-\d{2}-\d{2}-\d{6})', filename)
@@ -267,6 +266,6 @@ class CrashLogsParser(BaseParserInterface):
             return app, datetime.fromtimestamp(0, tz=timezone.utc)
 
         app = m.group(1)
-        # FIXME timezone is from local phone time at file creation. Not UTC
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
+        # FIXME timezone is from local phone time at file creation. Not the TZ while creating the sysdiagnose image
+        timestamp = timestamp.replace(tzinfo=self.sysdiagnose_creation_datetime.tzinfo)
         return app, timestamp
