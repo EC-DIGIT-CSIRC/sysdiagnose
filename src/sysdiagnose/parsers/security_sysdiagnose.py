@@ -7,7 +7,7 @@ from datetime import datetime
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
     description = "Parsing security-sysdiagnose.txt file containing keychain information"
-    format = 'json'
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
