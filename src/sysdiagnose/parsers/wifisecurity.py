@@ -6,10 +6,12 @@
 
 import os
 from sysdiagnose.utils.base import BaseParserInterface, logger
+from datetime import datetime
 
 
 class WifiSecurityParser(BaseParserInterface):
     description = "Parsing WiFi Security logs"
+    format = "jsonl"
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -56,6 +58,9 @@ class WifiSecurityParser(BaseParserInterface):
                         logger.debug(f"key: {key.strip()}, value: {value.strip()}")
                         element[key.strip()] = value.strip()
                     elif element:
+                        timestamp = datetime.strptime(element['mdat'], "%Y-%m-%d %H:%M:%S %z")
+                        element['datetime'] = timestamp.isoformat(timespec='microseconds')
+                        element['timestamp'] = timestamp.timestamp()
                         entries.append(element)
                         logger.debug(f"appending {element}")
                         element = {}
