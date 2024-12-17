@@ -162,11 +162,11 @@ sudo apt install cargo
 Now you can download and compile the code:
 ```bash
 git clone https://github.com/mandiant/macos-UnifiedLogs
-cd macos-UnifiedLogs/examples/unifiedlog_parser_json/
+cd macos-UnifiedLogs/examples/unifiedlog_iterator/
 cargo build --release
-sudo cp ../target/release/unifiedlog_parser_json /usr/local/bin/
+sudo cp ../target/release/unifiedlog_iterator /usr/local/bin/
 ```
-See `unifiedlog_parser_json --help` for more instructions to use the tool, or use it directly through sysdiagnose.
+See `unifiedlog_iterator --help` for more instructions to use the tool, or use it directly through sysdiagnose.
 
 
 # Supported iOS versions
