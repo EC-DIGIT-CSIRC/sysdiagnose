@@ -9,6 +9,7 @@ import os
 import re
 from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timedelta, timezone
+from sysdiagnose.utils.misc import snake_case
 
 
 class SpindumpNoSymbolsParser(BaseParserInterface):
@@ -76,13 +77,13 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         for line in data:
             splitted = line.split(":", 1)
             if len(splitted) > 1:
-                output[splitted[0]] = splitted[1].strip()
+                output[snake_case(splitted[0])] = splitted[1].strip()
 
-        if 'Date/Time' in output:
+        if 'date_time' in output:
             try:
-                timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S.%f %z")
+                timestamp = datetime.strptime(output['date_time'], "%Y-%m-%d %H:%M:%S.%f %z")
             except ValueError:
-                timestamp = datetime.strptime(output['Date/Time'], "%Y-%m-%d %H:%M:%S %z")
+                timestamp = datetime.strptime(output['date_time'], "%Y-%m-%d %H:%M:%S %z")
             output['timestamp'] = timestamp.timestamp()
             output['datetime'] = timestamp.isoformat(timespec='microseconds')
 
@@ -99,7 +100,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 if not init:
                     process = SpindumpNoSymbolsParser.parse_process(process_buffer)
                     try:
-                        timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+                        timestamp = start_time - timedelta(seconds=int(process['time_since_fork'].rstrip('s')))
                     except KeyError:  # some don't have a time since fork, like zombie processes
                         timestamp = start_time
                     process['timestamp'] = timestamp.timestamp()
@@ -113,7 +114,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 process_buffer.append(line.strip())
 
         process = SpindumpNoSymbolsParser.parse_process(process_buffer)
-        timestamp = start_time - timedelta(seconds=int(process['Time Since Fork'].rstrip('s')))
+        timestamp = start_time - timedelta(seconds=int(process['time_since_fork'].rstrip('s')))
         process['timestamp'] = timestamp.timestamp()
         process['datetime'] = timestamp.isoformat(timespec='microseconds')
         processes.append(process)
@@ -146,14 +147,14 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         process['threads'] = SpindumpNoSymbolsParser.parse_threads(threads)
         process['images'] = SpindumpNoSymbolsParser.parse_images(images)
         # parse special substrings
-        process['PID'] = int(re.search(r'\[(\d+)\]', process['Process']).group(1))
-        process['Process'] = process['Process'].split("[", 1)[0].strip()
+        process['pid'] = int(re.search(r'\[(\d+)\]', process['process']).group(1))
+        process['process'] = process['process'].split("[", 1)[0].strip()
         try:
-            process['PPID'] = int(re.search(r'\[(\d+)\]', process['Parent']).group(1))
-            process['Parent'] = process['Parent'].split("[", 1)[0].strip()
+            process['ppid'] = int(re.search(r'\[(\d+)\]', process['parent']).group(1))
+            process['parent'] = process['parent'].split("[", 1)[0].strip()
         except KeyError:  # some don't have a parent
             pass
-        process['UID'] = 501
+        process['uid'] = 501
         return process
 
     def parse_threads(data):
@@ -183,10 +184,10 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         # Thread Name / DispatchQueue
         if "DispatchQueue \"" in data[0]:
             dispacthregex = re.search(r"DispatchQueue(.*)\"\(", data[0])
-            output['DispatchQueue'] = dispacthregex.group(0).split("\"")[1]
+            output['dispatch_queue'] = dispacthregex.group(0).split("\"")[1]
         if "Thread name \"" in data[0]:
             dispacthregex = re.search(r"Thread name\ \"(.*)\"", data[0])
-            output['ThreadName'] = dispacthregex.group(0).split("\"")[1]
+            output['thread_name'] = dispacthregex.group(0).split("\"")[1]
         # priority
         if "priority" in data[0]:
             priorityregex = re.search(r"priority\ [0-9]+", data[0])
@@ -220,7 +221,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 image['start'] = clean[0]
                 image['end'] = clean[2]
                 image['image'] = clean[3]
-                image['UUID'] = clean[4][1:-1]
+                image['uuid'] = clean[4][1:-1]
                 try:
                     image['path'] = clean[5]
                 except:     # noqa E722

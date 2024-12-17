@@ -8,7 +8,7 @@ import binascii
 import json
 import nska_deserialize
 import os
-import heapq
+import re
 
 
 def merge_dicts(a: dict, b: dict) -> dict:
@@ -142,43 +142,6 @@ def find_bytes(d):
     return d
 
 
-def sort_large_file(input_file, output_file, chunk_size=100000):
-    temp_files = []
-
-    try:
-        # Step 1: Split into sorted chunks
-        with open(input_file, "r") as infile:
-            chunk = []
-            for line in infile:
-                record = json.loads(line.strip())
-                chunk.append(record)
-
-                # When chunk size is reached, sort and write to a temporary file
-                if len(chunk) >= chunk_size:
-                    temp_file = f"temp_chunk_{len(temp_files)}.jsonl"
-                    with open(temp_file, "w") as tmp:
-                        for record in sorted(chunk, key=lambda x: x["timestamp"]):
-                            tmp.write(json.dumps(record) + "\n")
-                    temp_files.append(temp_file)
-                    chunk = []
-
-            # Sort and write any remaining records
-            if chunk:
-                temp_file = f"temp_chunk_{len(temp_files)}.jsonl"
-                with open(temp_file, "w") as tmp:
-                    for record in sorted(chunk, key=lambda x: x["timestamp"]):
-                        tmp.write(json.dumps(record) + "\n")
-                temp_files.append(temp_file)
-
-        # Step 2: Merge sorted chunks
-        with open(output_file, "w") as outfile:
-            open_files = [open(temp_file, "r") for temp_file in temp_files]
-            iterators = (map(json.loads, f) for f in open_files)
-            for record in heapq.merge(*iterators, key=lambda x: x["timestamp"]):
-                outfile.write(json.dumps(record) + "\n")
-    finally:
-        # Close all temporary files
-        for f in open_files:
-            f.close()
-        for f in temp_files:
-            os.remove(f)
+def snake_case(s):
+    # lowercase and replace non a-z characters as _
+    return re.sub(r'[^a-zA-Z0-9]', '_', s.lower())

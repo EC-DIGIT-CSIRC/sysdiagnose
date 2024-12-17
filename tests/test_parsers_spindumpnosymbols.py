@@ -17,7 +17,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 1)
-            self.assertTrue('OS Version' in result[0])
+            self.assertTrue('os_version' in result[0])
 
     def test_parse_basic(self):
         lines = [
@@ -30,11 +30,11 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
         expected_result = {
             'timestamp': 1684960155.759,
             'datetime': '2023-05-24T13:29:15.759000-07:00',
-            'Date/Time': '2023-05-24 13:29:15.759 -0700',
-            'End time': '2023-05-24 13:29:17.757 -0700',
-            'OS Version': 'iPhone OS 15.7.6 (Build 19H349)',
-            'Architecture': 'arm64',
-            'Report Version': '35.1'
+            'date_time': '2023-05-24 13:29:15.759 -0700',
+            'end_time': '2023-05-24 13:29:17.757 -0700',
+            'os_version': 'iPhone OS 15.7.6 (Build 19H349)',
+            'architecture': 'arm64',
+            'report_version': '35.1'
         }
         result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
@@ -47,7 +47,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
         expected_result = {
             'timestamp': 1684960155.000,
             'datetime': '2023-05-24T13:29:15.000000-07:00',
-            'Date/Time': '2023-05-24 13:29:15 -0700'
+            'date_time': '2023-05-24 13:29:15 -0700'
         }
         result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
@@ -86,32 +86,32 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
         ]
         expected_result = {
-            'Process': 'accessoryd',
-            'PID': 176,
-            'PPID': 1,
-            'UUID': 'BDBDD550-2B15-382C-BB61-1798AFD60460',
-            'Path': '/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd',
-            'Shared Cache': '6D5223AF-7B75-3593-9CC4-5DBD74C56497 slid base address 0x180734000, slide 0x734000',
-            'Architecture': 'arm64',
-            'Parent': 'launchd',
-            'UID': 501,
-            'Sudden Term': 'Tracked (allows idle exit)',
-            'Footprint': '3792 KB',
-            'Time Since Fork': '201s',
-            'Num samples': '8 (1-8)',
-            'Note': '1 idle work queue thread omitted',
+            'process': 'accessoryd',
+            'pid': 176,
+            'ppid': 1,
+            'uuid': 'BDBDD550-2B15-382C-BB61-1798AFD60460',
+            'path': '/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd',
+            'shared_cache': '6D5223AF-7B75-3593-9CC4-5DBD74C56497 slid base address 0x180734000, slide 0x734000',
+            'architecture': 'arm64',
+            'parent': 'launchd',
+            'uid': 501,
+            'sudden_term': 'Tracked (allows idle exit)',
+            'footprint': '3792 KB',
+            'time_since_fork': '201s',
+            'num_samples': '8 (1-8)',
+            'note': '1 idle work queue thread omitted',
             'threads': [
                 {
-                    'thread': '0x8b', 'DispatchQueue': 'com.apple.main-thread', 'priority': '31',
+                    'thread': '0x8b', 'dispatch_queue': 'com.apple.main-thread', 'priority': '31',
                     'loaded':
                         [{'library': 'dyld', 'int': '99536', 'hex': '0x102c504d0'}, {'library': 'accessoryd', 'int': '554572', 'hex': '0x10287b64c'}, {'library': 'Foundation', 'int': '99872', 'hex': '0x1821c1620'}, {'library': 'Foundation', 'int': '97964', 'hex': '0x1821c0eac'}, {'library': 'CoreFoundation', 'int': '123252', 'hex': '0x180ab3174'}, {'library': 'CoreFoundation', 'int': '44944', 'hex': '0x180a9ff90'}, {'library': 'CoreFoundation', 'int': '27784', 'hex': '0x180a9bc88'}, {'library': 'libsystem_kernel.dylib', 'int': '2732', 'hex': '0x1bb3f9aac'}, {'hex': '0xfffffff0071a86d4'}]
                 }],
             'images': [
-                {'start': '0x1027f4000', 'end': '???', 'image': 'accessoryd', 'UUID': 'BDBDD550-2B15-382C-BB61-1798AFD60460', 'path': '/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd'},
-                {'start': '0x102c38000', 'end': '0x102ca3fff', 'image': 'dyld', 'UUID': '58AB16CE-D7E0-32D3-946D-4F68FB1A4A17', 'path': '/cores/dyld'},
-                {'start': '0x180a95000', 'end': '0x180ed2fff', 'image': 'CoreFoundation', 'UUID': '717D70C9-3B8E-3ABC-AE16-050588FC3EE8', 'path': '/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation'},
-                {'start': '0x1821a9000', 'end': '0x18248dfff', 'image': 'Foundation', 'UUID': 'C3A840E1-0D11-32A3-937F-7F668FFB13F0', 'path': '/System/Library/Frameworks/Foundation.framework/Foundation'},
-                {'start': '0x1bb3f9000', 'end': '0x1bb42cfff', 'image': 'libsystem_kernel.dylib', 'UUID': 'D3BAC787-09EE-3319-BE24-4115817391E2', 'path': '/usr/lib/system/libsystem_kernel.dylib'}
+                {'start': '0x1027f4000', 'end': '???', 'image': 'accessoryd', 'uuid': 'BDBDD550-2B15-382C-BB61-1798AFD60460', 'path': '/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd'},
+                {'start': '0x102c38000', 'end': '0x102ca3fff', 'image': 'dyld', 'uuid': '58AB16CE-D7E0-32D3-946D-4F68FB1A4A17', 'path': '/cores/dyld'},
+                {'start': '0x180a95000', 'end': '0x180ed2fff', 'image': 'CoreFoundation', 'uuid': '717D70C9-3B8E-3ABC-AE16-050588FC3EE8', 'path': '/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation'},
+                {'start': '0x1821a9000', 'end': '0x18248dfff', 'image': 'Foundation', 'uuid': 'C3A840E1-0D11-32A3-937F-7F668FFB13F0', 'path': '/System/Library/Frameworks/Foundation.framework/Foundation'},
+                {'start': '0x1bb3f9000', 'end': '0x1bb42cfff', 'image': 'libsystem_kernel.dylib', 'uuid': 'D3BAC787-09EE-3319-BE24-4115817391E2', 'path': '/usr/lib/system/libsystem_kernel.dylib'}
             ]
         }
         result = SpindumpNoSymbolsParser.parse_process(lines)
@@ -134,7 +134,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             '                 *8  ??? [0xfffffff0071a86d4]'
         ]
         expected_result = {
-            'thread': '0x8b', 'DispatchQueue': 'com.apple.main-thread', 'priority': '31',
+            'thread': '0x8b', 'dispatch_queue': 'com.apple.main-thread', 'priority': '31',
             'loaded': [
                 {'library': 'dyld', 'int': '99536', 'hex': '0x102c504d0'},
                 {'library': 'accessoryd', 'int': '554572', 'hex': '0x10287b64c'},
@@ -155,7 +155,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             '    8  ??? (apsd + 281160) [0x10205ca48]'
         ]
         expected_result = {
-            'thread': '0x62', 'DispatchQueue': 'com.apple.main-thread', 'priority': '31', 'cputime': '0.005s (4.2M cycles, 1986.9K instructions, 2.14c/i)',
+            'thread': '0x62', 'dispatch_queue': 'com.apple.main-thread', 'priority': '31', 'cputime': '0.005s (4.2M cycles, 1986.9K instructions, 2.14c/i)',
             'loaded': [
                 {'library': 'dyld', 'int': '99536', 'hex': '0x10236c4d0'},
                 {'library': 'apsd', 'int': '281160', 'hex': '0x10205ca48'}
@@ -169,7 +169,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             '*1  ??? (kernel + 850132) [0xffffff80002df8d4] (running)'
         ]
         expected_result = {
-            'thread': '0x84', 'ThreadName': "IOConfigThread_'foobar'", 'priority': '80', 'cputime': '<0.001s',
+            'thread': '0x84', 'thread_name': "IOConfigThread_'foobar'", 'priority': '80', 'cputime': '<0.001s',
             'loaded': [
                 {'library': 'kernel', 'int': '850132', 'hex': '0xffffff80002df8d4', 'status': 'running'}
             ]
