@@ -3,6 +3,7 @@ from tests import SysdiagnoseTestCase
 import unittest
 import tempfile
 import os
+from datetime import datetime, timezone
 
 
 class TestParsersPs(SysdiagnoseTestCase):
@@ -30,12 +31,19 @@ class TestParsersPs(SysdiagnoseTestCase):
             'root               0     1     0   0.0  0.4  37  0  4226848   8912 -        ??  Ss   14Jan19   7:27.40 /sbin/launchd with space'
         ]
         expected_result = [
-            {'USER': 'root', 'UID': 0, 'PID': 1, 'PPID': 0, '%CPU': 0.0, '%MEM': 0.4, 'PRI': 37, 'NI': 0, 'VSZ': 4226848, 'RSS': 8912, 'WCHAN': '-', 'TT': '??', 'STAT': 'Ss', 'STARTED': '14Jan19', 'TIME': '7:27.40', 'COMMAND': '/sbin/launchd with space'}
+            {
+                'USER': 'root', 'UID': 0, 'PID': 1, 'PPID': 0, '%CPU': 0.0, '%MEM': 0.4, 'PRI': 37, 'NI': 0, 'VSZ': 4226848, 'RSS': 8912, 'WCHAN': '-', 'TT': '??', 'STAT': 'Ss', 'STARTED': '14Jan19', 'TIME': '7:27.40', 'COMMAND': '/sbin/launchd with space',
+                'timestamp_desc': 'sysdiagnose creation',
+                'timestamp': 1.0,
+                'datetime': '1970-01-01T00:00:01.000000+00:00'
+            }
         ]
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = PsParser.parse_file(tmp_inputfile.name)
+        p = PsParser(self.sd.config, case_id='test')
+        p.sysdiagnose_creation_datetime = datetime.fromtimestamp(1, tz=timezone.utc)
+        result = p.parse_file(tmp_inputfile.name)
         tmp_inputfile.close()
         self.assertEqual(result, expected_result)
 
@@ -45,12 +53,19 @@ class TestParsersPs(SysdiagnoseTestCase):
             'root  0     -     1     0     4004   0.0  0.0   0  0        0      0 -        ??  ?s   Tue09PM   0:00.00 /sbin/launchd'
         ]
         expected_result = [
-            {'USER': 'root', 'UID': 0, 'PRSNA': '-', 'PID': 1, 'PPID': 0, 'F': 4004, '%CPU': 0.0, '%MEM': 0.0, 'PRI': 0, 'NI': 0, 'VSZ': 0, 'RSS': 0, 'WCHAN': '-', 'TT': '??', 'STAT': '?s', 'STARTED': 'Tue09PM', 'TIME': '0:00.00', 'COMMAND': '/sbin/launchd'}
+            {
+                'USER': 'root', 'UID': 0, 'PRSNA': '-', 'PID': 1, 'PPID': 0, 'F': 4004, '%CPU': 0.0, '%MEM': 0.0, 'PRI': 0, 'NI': 0, 'VSZ': 0, 'RSS': 0, 'WCHAN': '-', 'TT': '??', 'STAT': '?s', 'STARTED': 'Tue09PM', 'TIME': '0:00.00', 'COMMAND': '/sbin/launchd',
+                'timestamp_desc': 'sysdiagnose creation',
+                'timestamp': 1.0,
+                'datetime': '1970-01-01T00:00:01.000000+00:00'
+            }
         ]
         tmp_inputfile = tempfile.NamedTemporaryFile()
         with open(tmp_inputfile.name, 'w') as f:
             f.write('\n'.join(input))
-        result = PsParser.parse_file(tmp_inputfile.name)
+        p = PsParser(self.sd.config, case_id='test')
+        p.sysdiagnose_creation_datetime = datetime.fromtimestamp(1, tz=timezone.utc)
+        result = p.parse_file(tmp_inputfile.name)
         tmp_inputfile.close()
         self.assertEqual(result, expected_result)
 
