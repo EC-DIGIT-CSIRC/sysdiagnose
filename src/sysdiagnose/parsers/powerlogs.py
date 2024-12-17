@@ -6,7 +6,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from sysdiagnose.utils.apollo import Apollo
 
 
@@ -34,7 +34,7 @@ class PowerLogsParser(BaseParserInterface):
 
     def execute(self) -> list:
         result = []
-        apollo = Apollo(os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
+        apollo = Apollo(logger=logger, os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
         for logfile in self.get_log_files():
             result.extend(apollo.parse_db(db_fname=logfile, db_type='CurrentPowerlog.PLSQL'))
 

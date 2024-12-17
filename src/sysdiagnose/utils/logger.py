@@ -3,8 +3,8 @@ from pythonjsonlogger import jsonlogger
 from datetime import datetime
 
 logger = logging.getLogger('sysdiagnose')
-# By default, we want to have the possibility to log almost everything.
-logger.setLevel(logging.INFO)
+# By default, we want to have the possibility to log everything.
+logger.setLevel(logging.DEBUG)
 
 
 class SysdiagnoseJsonFormatter(jsonlogger.JsonFormatter):
@@ -31,13 +31,13 @@ def get_console_handler(level: str) -> logging.StreamHandler:
     return ch
 
 
-def get_json_handler(filename: str, level: int = logging.INFO) -> logging.FileHandler:
+def get_json_handler(filename: str, level: int = logging.DEBUG) -> logging.FileHandler:
     '''
     Creates a logging JSON format file handler.
 
     Args:
         filename: Filename where to log.
-        level: Logging level. By default to INFO. https://docs.python.org/3/library/logging.html#logging-levels
+        level: Logging level. By default to DEBUG. https://docs.python.org/3/library/logging.html#logging-levels
     '''
     fmt_json = SysdiagnoseJsonFormatter(
         fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
