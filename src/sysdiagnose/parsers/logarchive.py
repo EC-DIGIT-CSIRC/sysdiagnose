@@ -35,8 +35,7 @@ import shutil
 #       https://github.com/mandiant/macos-UnifiedLogs
 # Follow instruction in the README.md in order to install it.
 # TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
-# cmd_parsing_linux = 'unifiedlog_parser_json --input %s --output %s'
-cmd_parsing_linux_test = ['unifiedlog_parser_json', '--help']
+cmd_parsing_linux_test = ['unifiedlog_iterator', '--help']
 # --------------------------------------------------------------------------- #
 
 # LATER consider refactoring using yield to lower memory consumption
@@ -214,7 +213,7 @@ class LogarchiveParser(BaseParserInterface):
                     entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
                     f_out.write(json.dumps(entry_json) + '\n')
                 except json.JSONDecodeError as e:
-                    logger.warning(f"WARNING: error parsing JSON {line}", exc_info=True)
+                    logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
                 except KeyError:
                     # last line of log does not contain 'time' field, nor the rest of the data.
                     # so just ignore it and all the rest.
@@ -223,44 +222,35 @@ class LogarchiveParser(BaseParserInterface):
                     break
 
     def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
+        with open(output_file, 'w') as f:
+            for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
+                json.dump(entry, f)
+                f.write('\n')
+
+    @DeprecationWarning
+    def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
         logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
-        # run the conversion tool, saving to a temp folder
-        # read the created file/files, add timestamp
-        # sort based on time
-        # save to one single file in output folder
+        # output to stdout and not to a file as we need to convert the output to a unified format
+        cmd_array = ['unifiedlog_iterator', '--input', input_folder, '--output', output_file, '--format', 'jsonl']
+        # read each line, convert line by line and write the output directly to the new file
+        # this approach limits memory consumption
+        result = LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
+        return result
 
-        # first check if binary exists in PATH, if not, return an error
-        try:
-            subprocess.check_output(cmd_parsing_linux_test, universal_newlines=True)
-        except FileNotFoundError:
-            logger.exception('ERROR: UnifiedLogReader not found, please install it. See README.md for more information.')
-            return
-
-        # really run the tool now
-        entries = []
-        with tempfile.TemporaryDirectory() as tmp_outpath:
-            cmd_array = ['unifiedlog_parser_json', '--input', input_folder, '--output', tmp_outpath]
-            # run the command and get the result in our tmp_outpath folder
-            LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
-            # read each file, conver line by line and write the output directly to the new file
-            # LATER run this in multiprocessing, one per file to speed up the process
-            for fname_reading in os.listdir(tmp_outpath):
-                with open(os.path.join(tmp_outpath, fname_reading), 'r') as f:
-                    for line in f:  # jsonl format - one json object per line
-                        try:
-                            entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
-                            entries.append(entry_json)
-                        except json.JSONDecodeError as e:
-                            logger.warning(f"WARNING: error parsing JSON {fname_reading}", exc_info=True)
-        # tempfolder is cleaned automatically after the block
-
-        # sort the data as it's not sorted by default, and we need sorted data for other analysers
-        entries.sort(key=lambda x: x['time'])
-        # save to file as JSONL
-        with open(output_file, 'w') as f_out:
-            for entry in entries:
-                f_out.write(json.dumps(entry))
-                f_out.write('\n')
+    def __convert_using_unifiedlogparser_generator(input_folder: str):
+        logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+        # output to stdout and not to a file as we need to convert the output to a unified format
+        cmd_array = ['unifiedlog_iterator', '--input', input_folder, '--format', 'jsonl']
+        # read each line, convert line by line and write the output directly to the new file
+        # this approach limits memory consumption
+        for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
+            try:
+                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
+                yield entry_json
+            except json.JSONDecodeError:
+                pass
+            except KeyError:
+                pass
 
     def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[dict, None, None]:
         '''
