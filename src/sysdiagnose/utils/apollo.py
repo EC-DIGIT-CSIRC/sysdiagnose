@@ -64,12 +64,13 @@ import configparser
 import re
 from datetime import datetime, timezone
 import glob
+import logging
 
 default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apollo_modules')
 
 
 class Apollo():
-    def __init__(self, mod_dir: str = default_mod_dir, os_version: str = 'yolo'):
+    def __init__(self, logger: logging.Logger, mod_dir: str = default_mod_dir, os_version: str = 'yolo'):
         """
         Initialize the Apollo class for parsing databases
 
@@ -77,6 +78,7 @@ class Apollo():
             mod_dir (str): The directory where the module definitions are stored
             os_version (str): The version of the OS for which to parse the modules. 'yolo' means all versions.
         """
+        self.logger = logger
         self.os_version = os_version
         self.mod_dir = mod_dir
 
@@ -125,7 +127,7 @@ class Apollo():
         try:
             module_queries = self.modules[db_type]
         except KeyError:
-            print(f"No modules with queries for {db_type}.")
+            self.logger.exception(f"No modules with queries for {db_type}.")
             return results
 
         # establish db connection
@@ -140,11 +142,14 @@ class Apollo():
                 cur.execute(module_query['sql'])
                 rows = cur.fetchall()
             except Exception:
-                print(f"WARNING: Cannot fetch query contents for query with name: {module_query['name']}.")
+                self.logger.warning(
+                    f"WARNING: Cannot fetch query contents for query with name: {module_query['name']}.",
+                    extra={"apollo_module": module_query['name']}, exc_info=True)
                 continue
 
             if not rows:
-                print(f"No Records Found for {module_query['name']}.")
+                self.logger.info(f"No Records Found for {module_query['name']}.",
+                                 extra={"apollo_module": module_query['name']})
                 continue
 
             headers = []
@@ -164,7 +169,9 @@ class Apollo():
                     results.append(item)
                 except TypeError:
                     # problem with timestamp parsing
-                    print(f"WARNING: Problem with timestamp parsing for table {db_fname}, row {list(row)}")
+                    self.logger.warning(f"WARNING: Problem with timestamp parsing for table {db_fname}, row {list(row)}",
+                                        extra={"apollo_module": module_query['name'], "table": db_fname, "row": list(row)},
+                                        exc_info=True)
 
-        print("Executing module on: " + db_fname)
+        self.logger.info("Executing module on: " + db_fname, extra={"apollo_module": module_query['name'], "table": db_fname})
         return results
