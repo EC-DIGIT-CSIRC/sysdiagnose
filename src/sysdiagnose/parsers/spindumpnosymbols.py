@@ -46,7 +46,11 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
                 # stripping
                 for line in f_in:
-                    if line.strip() == "" or line.strip() == "Heavy format: stacks are sorted by count" or line.strip() == "Use -i and -timeline to re-report with chronological sorting":
+                    if line.strip() == "No samples":
+                        status = 'empty'
+                        # Since the rest is just 'binary format', we ignore the rest of the file.
+                        break
+                    elif line.strip() == "" or line.strip() == "Heavy format: stacks are sorted by count" or line.strip() == "Use -i and -timeline to re-report with chronological sorting":
                         continue
                     elif line.strip() == "------------------------------------------------------------":
                         status = 'processes_raw'
@@ -63,9 +67,12 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
                 # call parsing function per section
                 events = []
-                basic = SpindumpNoSymbolsParser.parse_basic(headers)
-                events.append(basic)
-                events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['timestamp']))
+                if status != 'empty':
+                    basic = SpindumpNoSymbolsParser.parse_basic(headers)
+                    events.append(basic)
+                    events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['timestamp']))
+                # Logging
+                logger.debug(f"{len(events)} events retrieved", extra={'num_events': len(events)})
 
                 return events
 
