@@ -2,7 +2,7 @@
 import glob
 import os
 from sysdiagnose.utils.base import BaseParserInterface
-from datetime import datetime, timezone
+from datetime import datetime
 import re
 
 

@@ -12,11 +12,13 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.misc import snake_case
 
 
 class PsThreadParser(BaseParserInterface):
     description = "Parsing ps_thread.txt file"
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -31,8 +33,15 @@ class PsThreadParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> list | dict:
-        # TODO not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
+    def execute(self) -> list:
+        # not really easy to conver to true timebased jsonl, as the timestamp is complex to compute.
+        # so we just fall back to the sysdiagnose creation timestamp
+        timestamp_dict = {}
+        timestamp = self.sysdiagnose_creation_datetime
+        timestamp_dict['timestamp'] = timestamp.timestamp()
+        timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
+        timestamp_dict['timestamp_desc'] = 'sysdiagnose creation'
+        timestamp_dict['THREADS'] = 1
 
         result = []
         try:
@@ -47,11 +56,11 @@ class PsThreadParser(BaseParserInterface):
                             result.append(row)
 
                         patterns = line.strip().split(None, header_length - 1)
-                        row = {'THREADS': 1}
+                        row = timestamp_dict.copy()
                         # merge last entries together, as last entry may contain spaces
                         for col in range(header_length):
                             # try to cast as int, float and fallback to string
-                            col_name = header[col]
+                            col_name = snake_case(header[col])
                             try:
                                 row[col_name] = int(patterns[col])
                                 continue
@@ -67,4 +76,5 @@ class PsThreadParser(BaseParserInterface):
                     result.append(row)
                 return result
         except IndexError:
-            return {'error': 'No ps_thread.txt file present'}
+            logger.warning('No ps_thread.txt file present')
+            return []

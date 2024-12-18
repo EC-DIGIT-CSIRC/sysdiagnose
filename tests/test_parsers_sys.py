@@ -18,10 +18,10 @@ class TestParsersSys(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 0)
-
-            self.assertTrue(result.keys() | self.productinfo_keys == result.keys())  # check if the result contains at least the following keys
-            self.assertTrue('iPhone OS' in result['ProductName'])
-            self.assertTrue(result['BuildID'])
+            for item in result:
+                self.assertTrue(item.keys() | self.productinfo_keys == item.keys())  # check if the result contains at least the following keys
+                self.assertTrue('iPhone OS' in item['ProductName'])
+                self.assertTrue(item['BuildID'])
 
 
 if __name__ == '__main__':
