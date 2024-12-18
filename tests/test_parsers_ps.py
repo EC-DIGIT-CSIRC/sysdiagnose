@@ -21,9 +21,9 @@ class TestParsersPs(SysdiagnoseTestCase):
 
             if p.get_result():  # not all logs contain data
                 for item in p.get_result():
-                    self.assertTrue('COMMAND' in item)
-                    self.assertTrue('PID' in item)
-                    self.assertTrue('USER' in item)
+                    self.assertTrue('command' in item)
+                    self.assertTrue('pid' in item)
+                    self.assertTrue('user' in item)
 
     def test_parse_ps_lower_than_v16(self):
         input = [
@@ -32,7 +32,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         ]
         expected_result = [
             {
-                'USER': 'root', 'UID': 0, 'PID': 1, 'PPID': 0, '%CPU': 0.0, '%MEM': 0.4, 'PRI': 37, 'NI': 0, 'VSZ': 4226848, 'RSS': 8912, 'WCHAN': '-', 'TT': '??', 'STAT': 'Ss', 'STARTED': '14Jan19', 'TIME': '7:27.40', 'COMMAND': '/sbin/launchd with space',
+                'user': 'root', 'uid': 0, 'pid': 1, 'ppid': 0, '%cpu': 0.0, '%mem': 0.4, 'pri': 37, 'ni': 0, 'vsz': 4226848, 'rss': 8912, 'wchan': '-', 'tt': '??', 'stat': 'Ss', 'started': '14Jan19', 'time': '7:27.40', 'command': '/sbin/launchd with space',
                 'timestamp_desc': 'sysdiagnose creation',
                 'timestamp': 1.0,
                 'datetime': '1970-01-01T00:00:01.000000+00:00'
@@ -54,7 +54,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         ]
         expected_result = [
             {
-                'USER': 'root', 'UID': 0, 'PRSNA': '-', 'PID': 1, 'PPID': 0, 'F': 4004, '%CPU': 0.0, '%MEM': 0.0, 'PRI': 0, 'NI': 0, 'VSZ': 0, 'RSS': 0, 'WCHAN': '-', 'TT': '??', 'STAT': '?s', 'STARTED': 'Tue09PM', 'TIME': '0:00.00', 'COMMAND': '/sbin/launchd',
+                'user': 'root', 'uid': 0, 'prsna': '-', 'pid': 1, 'ppid': 0, 'f': 4004, '%cpu': 0.0, '%mem': 0.0, 'pri': 0, 'ni': 0, 'vsz': 0, 'rss': 0, 'wchan': '-', 'tt': '??', 'stat': '?s', 'started': 'Tue09PM', 'time': '0:00.00', 'command': '/sbin/launchd',
                 'timestamp_desc': 'sysdiagnose creation',
                 'timestamp': 1.0,
                 'datetime': '1970-01-01T00:00:01.000000+00:00'
@@ -71,16 +71,16 @@ class TestParsersPs(SysdiagnoseTestCase):
 
     def test_ps_exclude_known_goods(self):
         processes = [
-            {'COMMAND': 'good', 'PID': 1},
-            {'COMMAND': 'bad', 'PID': 2},
-            {'COMMAND': 'unknown', 'PID': 3}
+            {'command': 'good', 'pid': 1},
+            {'command': 'bad', 'pid': 2},
+            {'command': 'unknown', 'pid': 3}
         ]
         known_good = [
-            {'COMMAND': 'good', 'PID': 1}
+            {'command': 'good', 'pid': 1}
         ]
         expected_result = [
-            {'COMMAND': 'bad', 'PID': 2},
-            {'COMMAND': 'unknown', 'PID': 3}
+            {'command': 'bad', 'pid': 2},
+            {'command': 'unknown', 'pid': 3}
         ]
         result = PsParser.exclude_known_goods(processes, known_good)
         self.assertEqual(result, expected_result)

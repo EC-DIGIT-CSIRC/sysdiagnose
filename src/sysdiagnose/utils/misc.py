@@ -144,4 +144,4 @@ def find_bytes(d):
 
 def snake_case(s):
     # lowercase and replace non a-z characters as _
-    return re.sub(r'[^a-zA-Z0-9]', '_', s.lower())
+    return re.sub(r'[^a-zA-Z0-9%]', '_', s.lower())

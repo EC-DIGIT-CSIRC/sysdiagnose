@@ -22,11 +22,11 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
         all_pids = set()
 
         ps_json = PsParser(self.config, self.case_id).get_result()
-        ps_dict = {int(p['PID']): p for p in ps_json}
+        ps_dict = {int(p['pid']): p for p in ps_json}
         all_pids.update(ps_dict.keys())
 
         psthread_json = PsThreadParser(self.config, self.case_id).get_result()
-        psthread_dict = {int(p['PID']): p for p in psthread_json}
+        psthread_dict = {int(p['pid']): p for p in psthread_json}
         all_pids.update(psthread_dict.keys())
 
         taskinfo_json = TaskinfoParser(self.config, self.case_id).get_result()
@@ -35,7 +35,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
             if 'pid' not in p:
                 continue
             taskinfo_dict[int(p['pid'])] = {
-                'PID': p['pid']
+                'pid': p['pid']
             }
         all_pids.update(taskinfo_dict.keys())
 
@@ -44,12 +44,12 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
         spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
         spindumpnosymbols_dict = {}
         for p in spindumpnosymbols_json:
-            if 'Process' not in p:
+            if 'process' not in p:
                 continue
-            spindumpnosymbols_dict[int(p['PID'])] = {
-                'PID': p['PID'],
-                'PPID': p.get('PPID', ''),
-                'COMMAND': p.get('Path', ''),
+            spindumpnosymbols_dict[int(p['pid'])] = {
+                'pid': p['pid'],
+                'ppid': p.get('ppid', ''),
+                'command': p.get('path', ''),
             }
 
         matrix = {}
@@ -57,13 +57,13 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
         all_pids.sort()
         for pid in all_pids:
             matrix[pid] = {
-                'cmd': ps_dict.get(pid, {}).get('COMMAND'),
+                'cmd': ps_dict.get(pid, {}).get('command'),
             }
 
             # '%CPU', '%MEM', 'F', 'NI',
             # 'PRI', 'RSS',
             # 'STARTED', 'STAT', 'TIME', 'TT', 'USER', 'VSZ'
-            for col in ['PID']:
+            for col in ['pid']:
                 ps_val = str(ps_dict.get(pid, {}).get(col))
                 psthread_val = str(psthread_dict.get(pid, {}).get(col))
                 taskinfo_val = str(taskinfo_dict.get(pid, {}).get(col))
@@ -75,7 +75,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
                 else:  # different
                     matrix[pid][col] = f"{ps_val} != {psthread_val} != {taskinfo_val} != {spindump_val}"
 
-            for col in ['PPID']:
+            for col in ['ppid']:
                 ps_val = str(ps_dict.get(pid, {}).get(col))
                 psthread_val = str(psthread_dict.get(pid, {}).get(col))
                 spindump_val = str(spindumpnosymbols_dict.get(pid, {}).get(col))
