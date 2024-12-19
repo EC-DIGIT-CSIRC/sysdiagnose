@@ -137,8 +137,7 @@ def main():
         logger2file = None
         for case_id in case_ids:
             # Handle file logging
-            time_str = time.strftime("%Y%m%dT%H%M%S")
-            filename = f"{time_str}-log-parse.jsonl"
+            filename = f"log-parse.jsonl"
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
@@ -191,8 +190,7 @@ def main():
         logger2file = None
         for case_id in case_ids:
             # Handle file logging
-            time_str = time.strftime("%Y%m%dT%H%M%S")
-            filename = f"{time_str}-log-analyse.jsonl"
+            filename = f"log-analyse.jsonl"
             folder = sd.config.get_case_parsed_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:

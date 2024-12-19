@@ -1,6 +1,11 @@
 import logging
+import logging.handlers
 from pythonjsonlogger import jsonlogger
 from datetime import datetime
+
+# 3MB max
+MAX_BYTES = 3*1024*1024
+MAX_LOGFILES = 1
 
 logger = logging.getLogger('sysdiagnose')
 # By default, we want to have the possibility to log everything.
@@ -43,7 +48,7 @@ def get_json_handler(filename: str, level: int = logging.DEBUG) -> logging.FileH
         fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
         rename_fields={'asctime': 'datetime', 'created': 'timestamp'})
     # File handler
-    fh = logging.FileHandler(filename)
+    fh = logging.handlers.RotatingFileHandler(filename=filename, maxBytes=MAX_BYTES, backupCount=MAX_LOGFILES)
     fh.setLevel(level)
     fh.setFormatter(fmt_json)
 
