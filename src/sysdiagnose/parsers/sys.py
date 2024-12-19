@@ -9,11 +9,12 @@
 import os
 import glob
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class SystemVersionParser(BaseParserInterface):
     description = "Parsing SystemVersion plist file"
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -30,9 +31,15 @@ class SystemVersionParser(BaseParserInterface):
 
     def execute(self) -> list | dict:
         try:
-            return SystemVersionParser.parse_file(self.get_log_files()[0])
+            entry = SystemVersionParser.parse_file(self.get_log_files()[0])
+            timestamp = self.sysdiagnose_creation_datetime
+            entry['timestamp_desc'] = 'sysdiagnose creation'
+            entry['timestamp'] = timestamp.timestamp()
+            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+            return [entry]
         except IndexError:
-            return {'error': 'No SystemVersion.plist file present'}
+            logger.warning('No SystemVersion.plist file present')
+            return []
 
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)

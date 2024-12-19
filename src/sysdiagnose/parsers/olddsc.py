@@ -8,11 +8,13 @@
 import glob
 import os
 from sysdiagnose.utils.misc import load_plist_file_as_json
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class OldDscParser(BaseParserInterface):
     description = "Parsing olddsc files"
+    format = 'jsonl'
+
     json_pretty = False
 
     def __init__(self, config: dict, case_id: str):
@@ -28,10 +30,25 @@ class OldDscParser(BaseParserInterface):
 
         return log_files
 
-    def execute(self) -> list | dict:
+    def execute(self) -> list:
+        timestamp_dict = {}
+        timestamp = self.sysdiagnose_creation_datetime
+        timestamp_dict['timestamp'] = timestamp.timestamp()
+        timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
+        timestamp_dict['timestamp_desc'] = 'sysdiagnose creation'
+
+        entries = []
+        # we're not doing anything with
+        # - Unslid_Base_Address
+        # - Cache_UUID_String
+        # only acting on Binaries list
         for log_file in self.get_log_files():
-            return OldDscParser.parse_file(log_file)
-        return {'error': ['No olddsc files present']}
+            for entry in OldDscParser.parse_file(log_file).get('Binaries', []):
+                entry.update(timestamp_dict)
+                entries.append(entry)
+        if not entries:
+            logger.warning('No olddsc files present')
+        return entries
 
     def parse_file(path: str) -> list | dict:
         try:

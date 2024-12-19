@@ -4,6 +4,7 @@ import os
 from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
+# FIXME convert to timeline
 class TransparencyParser(BaseParserInterface):
 
     description = "Parsing transparency.log json file"

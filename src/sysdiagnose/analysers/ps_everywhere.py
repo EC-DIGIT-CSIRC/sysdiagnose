@@ -27,31 +27,31 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         # processes with full path and parameters, no threads
         ps_json = PsParser(self.config, self.case_id).get_result()
-        self.all_ps.update([p['COMMAND'] for p in ps_json])
+        self.all_ps.update([p['command'] for p in ps_json])
         print(f"{len(self.all_ps)} entries after ps")
 
         # processes with full path and parameters
 
         psthread_json = PsThreadParser(self.config, self.case_id).get_result()
-        self.all_ps.update([p['COMMAND'] for p in psthread_json])
+        self.all_ps.update([p['command'] for p in psthread_json])
         print(f"{len(self.all_ps)} entries after psthread")
 
         # processes with full path, no parameters, with threads
         spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
         for p in spindumpnosymbols_json:
-            if 'Process' not in p:
+            if 'process' not in p:
                 continue
             try:
-                self.add_if_full_command_is_not_in_set(p['Path'])
-                # all_ps.add(f"{p['Path']}::#{len(p['threads'])}") # count is different than in taskinfo
+                self.add_if_full_command_is_not_in_set(p['path'])
+                # all_ps.add(f"{p['path']}::#{len(p['threads'])}") # count is different than in taskinfo
             except KeyError:
-                if p['Process'] == 'kernel_task [0]':
+                if p['process'] == 'kernel_task [0]':
                     self.all_ps.add('/kernel')  # is similar to the other formats
                 else:
-                    self.add_if_full_command_is_not_in_set(p['Process'])  # backup uption to keep trace of this anomaly
+                    self.add_if_full_command_is_not_in_set(p['process'])  # backup uption to keep trace of this anomaly
             for t in p['threads']:
                 try:
-                    self.add_if_full_command_is_not_in_set(f"{p['Path']}::{t['ThreadName']}")
+                    self.add_if_full_command_is_not_in_set(f"{p['path']}::{t['thread_name']}")
                 except KeyError:
                     pass
         print(f"{len(self.all_ps)} entries after spindumpnosymbols")
