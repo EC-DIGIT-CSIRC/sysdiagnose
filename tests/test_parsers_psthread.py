@@ -18,9 +18,9 @@ class TestParsersPsthread(SysdiagnoseTestCase):
             result = p.get_result()
             if result:  # not all logs contain data
                 for item in result:
-                    self.assertTrue('COMMAND' in item)
-                    self.assertTrue('PID' in item)
-                    self.assertTrue('USER' in item)
+                    self.assertTrue('command' in item)
+                    self.assertTrue('pid' in item)
+                    self.assertTrue('user' in item)
 
 
 if __name__ == '__main__':

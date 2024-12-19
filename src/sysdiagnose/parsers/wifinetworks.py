@@ -11,6 +11,7 @@ import os
 from sysdiagnose.utils.base import BaseParserInterface
 
 
+# FIXME convert to timeline
 class WifiNetworksParser(BaseParserInterface):
 
     description = "Parsing com.apple.wifi plist files"

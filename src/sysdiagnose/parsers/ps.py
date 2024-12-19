@@ -6,6 +6,7 @@
 #
 
 from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.misc import snake_case
 import glob
 import os
 import re
@@ -49,7 +50,7 @@ class PsParser(BaseParserInterface):
                     # merge last entries together, as last entry may contain spaces
                     for col in range(header_length):
                         # try to cast as int, float and fallback to string
-                        col_name = header[col]
+                        col_name = snake_case(header[col])
                         try:
                             entry[col_name] = int(patterns[col])
                             continue
@@ -81,10 +82,10 @@ class PsParser(BaseParserInterface):
             dict: The updated list of processes with known good processes excluded.
         """
 
-        known_good_cmd = [x['COMMAND'] for x in known_good]
+        known_good_cmd = [x['command'] for x in known_good]
 
         for proc in processes:
-            if proc['COMMAND'] in known_good_cmd:
+            if proc['command'] in known_good_cmd:
                 processes.remove(proc)
 
         return processes

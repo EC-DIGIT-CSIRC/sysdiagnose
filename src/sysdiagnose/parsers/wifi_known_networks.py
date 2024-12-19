@@ -12,6 +12,7 @@ import sysdiagnose.utils.misc as misc
 from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
+# FIXME convert to timeline - warning: format changes from one iOS version to another
 class WifiKnownNetworksParser(BaseParserInterface):
     description = "Parsing Known Wifi Networks plist file"
 
