@@ -4,7 +4,7 @@ from pythonjsonlogger import jsonlogger
 from datetime import datetime
 
 # 3MB max
-MAX_BYTES = 3*1024*1024
+MAX_BYTES = 3 * 1024 * 1024
 MAX_LOGFILES = 1
 
 logger = logging.getLogger('sysdiagnose')
