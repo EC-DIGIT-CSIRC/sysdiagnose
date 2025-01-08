@@ -138,7 +138,7 @@ def main():
         for case_id in case_ids:
             # Handle file logging
             filename = f"log-parse.jsonl"
-            folder = sd.config.get_case_parsed_data_folder(case_id)
+            folder = sd.config.get_case_log_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
                 logger2file = get_json_handler(os.path.join(folder, filename))
@@ -191,7 +191,7 @@ def main():
         for case_id in case_ids:
             # Handle file logging
             filename = f"log-analyse.jsonl"
-            folder = sd.config.get_case_parsed_data_folder(case_id)
+            folder = sd.config.get_case_log_data_folder(case_id)
             # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
             if logger2file is None:
                 logger2file = get_json_handler(os.path.join(folder, filename))
