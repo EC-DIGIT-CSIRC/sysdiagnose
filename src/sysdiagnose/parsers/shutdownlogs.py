@@ -66,6 +66,7 @@ class ShutdownLogsParser(BaseParserInterface):
                                     "pid": int(pid),
                                     "path": binary_path,
                                     "command": '/'.join(binary_path.split('/')[:-1]),
+                                    'uuid': binary_path.split('/')[-1],
                                     "time_waiting": float(time_waiting),
                                     "times_waiting": 1
                                 }

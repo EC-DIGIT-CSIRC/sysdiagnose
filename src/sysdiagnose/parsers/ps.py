@@ -12,7 +12,6 @@ import os
 import re
 
 
-# FIXME convert to timeline = at sysdiag creation
 class PsParser(BaseParserInterface):
     description = "Parsing ps.txt file"
     format = "jsonl"
