@@ -43,7 +43,7 @@ def get_json_handler(filename: str, level: int = logging.DEBUG) -> logging.FileH
         fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
         rename_fields={'asctime': 'datetime', 'created': 'timestamp'})
     # File handler
-    fh = logging.FileHandler(filename)
+    fh = logging.FileHandler(filename=filename, mode='w')
     fh.setLevel(level)
     fh.setFormatter(fmt_json)
 

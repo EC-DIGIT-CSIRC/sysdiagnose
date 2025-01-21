@@ -30,6 +30,11 @@ class SysdiagnoseConfig:
         os.makedirs(parsed_data_folder, exist_ok=True)
         return parsed_data_folder
 
+    def get_case_log_data_folder(self, case_id: str) -> str:
+        logs_data_folder = os.path.join(self.cases_root_folder, case_id, 'logs')
+        os.makedirs(logs_data_folder, exist_ok=True)
+        return logs_data_folder
+
 
 class BaseInterface(ABC):
 
