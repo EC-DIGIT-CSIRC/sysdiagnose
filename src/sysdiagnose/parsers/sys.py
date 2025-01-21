@@ -43,14 +43,3 @@ class SystemVersionParser(BaseParserInterface):
 
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)
-
-    '''
-    old code to print the values
-        if options.inputfile:
-            pl = getProductInfo(options.inputfile)
-            print(f"ProductName = {pl['ProductName']}")       # XXX #9 TODO: should that return the structure instead of print() ing it?
-            print(f"ProductVersion = {pl['ProductVersion']}")
-            print(f"ProductBuildVersion = {pl['ProductBuildVersion']}")
-        else:
-            print("WARNING -i option is mandatory!", file=sys.stderr)
-    '''

@@ -1,4 +1,5 @@
 from sysdiagnose.parsers.transparency import TransparencyParser
+from sysdiagnose.parsers.transparency_json import TransparencyJsonParser
 from tests import SysdiagnoseTestCase
 import unittest
 import os
@@ -9,6 +10,19 @@ class TestParsersTransparency(SysdiagnoseTestCase):
     def test_transparency(self):
         for case_id, case in self.sd.cases().items():
             p = TransparencyParser(self.sd.config, case_id=case_id)
+            files = p.get_log_files()
+
+            if not files:
+                continue
+
+            p.save_result(force=True)
+            self.assertTrue(os.path.isfile(p.output_file))
+
+            p.get_result()
+
+    def test_transparency_json(self):
+        for case_id, case in self.sd.cases().items():
+            p = TransparencyJsonParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
 
             if not files:

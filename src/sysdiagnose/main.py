@@ -31,7 +31,7 @@ def main():
         description='sysdiagnose parsing and analysis'
     )
     # available for all
-    parser.add_argument('-c', '--case_id', required=False, default='all', help='ID of the case, or "all" for all cases (default)')
+    parser.add_argument('-c', '--case_id', required=False, default='all', help='ID of the case, comma-separated list of IDs, or "all" for all cases (default)')
     parser.add_argument('-l', '--log', default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Enables logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 
     subparsers = parser.add_subparsers(dest='mode')
@@ -104,6 +104,7 @@ def main():
                 case_id = args.case_id
                 sd.create_case(filename, force, case_id)
             else:
+                # ignore the given case_id and let the function generate one
                 case_id = sd.create_case(filename, force)['case_id']
         except Exception as e:
             exit(f"Error creating case: {str(e)}")
@@ -125,14 +126,8 @@ def main():
         else:
             parsers_list = [args.parser]
 
-        if args.case_id == 'all':
-            case_ids = sd.get_case_ids()
-        elif not sd.is_valid_case_id(args.case_id):
-            sd.print_list_cases()
-            print("")
-            exit(f"Case ID '{args.case_id}' does not exist, possible options are listed above.")
-        else:
-            case_ids = [args.case_id]
+        # get the case IDs
+        case_ids = case_csv_to_case_ids(args.case_id, sd)
 
         logger2file = None
         for case_id in case_ids:
@@ -178,14 +173,8 @@ def main():
         else:
             analysers_list = [args.analyser]
 
-        if args.case_id == 'all':
-            case_ids = sd.get_case_ids()
-        elif not sd.is_valid_case_id(args.case_id):
-            sd.print_list_cases()
-            print("")
-            exit(f"Case ID '{args.case_id}' does not exist, possible options are listed above.")
-        else:
-            case_ids = [args.case_id]
+        # get the case IDs
+        case_ids = case_csv_to_case_ids(args.case_id, sd)
 
         logger2file = None
         for case_id in case_ids:
@@ -216,6 +205,22 @@ def main():
 
     else:
         parser.print_help()
+
+
+def case_csv_to_case_ids(case_csv: str, sd: Sysdiagnose) -> list:
+    case_ids_set = set()
+    for case_id in case_csv.split(','):
+        if case_id == 'all':
+            case_ids_set.update(sd.get_case_ids())
+        elif sd.is_valid_case_id(case_id):
+            case_ids_set.add(case_id)
+        else:
+            logger.error(f"Case ID '{case_id}' does not exist. Skipping...")
+    if len(case_ids_set) == 0:
+        sd.print_list_cases()
+        print("")
+        exit("No valid case IDs given, possible options are listed above.")
+    return list(case_ids_set)
 
 
 if __name__ == '__main__':

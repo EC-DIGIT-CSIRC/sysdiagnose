@@ -4,11 +4,7 @@
 # Script to parse ps.txt to ease parsing
 # Author: david@autopsit.org
 #
-# TODO define output
-# - json
-# - tree structure
-# - simplified
-#
+
 import glob
 import os
 import re
