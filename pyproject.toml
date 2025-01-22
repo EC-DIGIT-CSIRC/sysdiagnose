@@ -35,3 +35,5 @@ dependencies = [
 
 [project.scripts]
 sysdiag = "sysdiagnose.main:main"
+saf = "sysdiagnose.main:main"
+
