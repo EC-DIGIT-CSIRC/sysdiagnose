@@ -151,7 +151,10 @@ def main():
                     result_str = "successfully" if result == 0 else "with errors"
                     logger.info(f"Parser '{parser}' finished {result_str}", extra={'parser': parser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping",
+                                   extra={'parser': parser, 'result': 'skipped'})
+                except Exception:
+                    logger.exception(f"Parser '{parser}' finished unexpectedly", extra={'parser': parser, 'result': 'error'})
 
         if logger2file is not None:
             logger2file.close()
@@ -198,7 +201,11 @@ def main():
                     result_str = "successfully" if result == 0 else "with errors"
                     logger.info(f"Analyser '{analyser}' finished {result_str}", extra={'analyser': analyser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
+                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping",
+                                   extra={'analyser': analyser, 'result': 'skipped'})
+                except Exception:
+                    logger.exception(f"Analyser '{analyser}' finished unexpectedley",
+                                     extra={'analyser': analyser, 'result': 'error'})
 
         if logger2file is not None:
             logger2file.close()

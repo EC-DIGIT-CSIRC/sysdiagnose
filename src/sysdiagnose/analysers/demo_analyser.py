@@ -22,7 +22,8 @@ class DemoAnalyser(BaseAnalyserInterface):
         """
         try:
             print("DO SOMETHING HERE")
-            logger.info("log something here", extra={'analyser': __name__})
+            logger.info("log something here", extra={'field1': 'field1_info_details'})
+            logger.debug("log something for debugging purposes", extra={'field1': 'field1_debug_details'})
             if True:
                 logger.warning("This will log a warning")
                 # logger.error("This will log an error")
