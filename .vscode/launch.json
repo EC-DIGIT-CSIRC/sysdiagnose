@@ -252,6 +252,14 @@
             "module": "sysdiagnose.main",
             "args": "-c public parse wifinetworks",
             "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse swcutil",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.main",
+            "args": "-c public parse swcutil",
+            "cwd": "${workspaceFolder}/"
         }
     ]
 }

@@ -130,11 +130,19 @@ class SwcutilParser(BaseParserInterface):
         entry = self.parse_basic(buffer)
         entry['section'] = 'db'
         try:
-            timestamp = datetime.strptime(entry['last_checked'], '%Y-%m-%d %H:%M:%S %z')
+            # iOS 18.2 changed the datetime format
+            rex = re.compile(r'(\d{4}-\d{2}-\d{2}\s+)(\d):')
+            normalised_ts = rex.sub(r'\g<1>0\2:', entry['last_checked'])
+            timestamp = datetime.strptime(normalised_ts, '%Y-%m-%d %H:%M:%S %z')
             entry['timestamp_desc'] = 'last checked'
         except KeyError:
             timestamp = self.sysdiagnose_creation_datetime
             entry['timestamp_desc'] = 'Sysdiagnose creation'
+        except ValueError as ex:
+            logger.warning(f"{str(ex)} attempting to parse new format", extra={'entry': str(entry)})
+            timestamp = datetime.strptime(normalised_ts, '%Y-%m-%d %I:%M:%S %p %z')
+            entry['timestamp_desc'] = 'last checked'
+
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         entry['timestamp'] = timestamp.timestamp()
         return entry
