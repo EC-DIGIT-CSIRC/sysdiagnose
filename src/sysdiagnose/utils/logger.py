@@ -14,9 +14,9 @@ class SysdiagnoseJsonFormatter(jsonlogger.JsonFormatter):
         return datetime.fromtimestamp(record.created).astimezone().isoformat(timespec='microseconds')
 
 
-def get_console_handler(level: str) -> logging.StreamHandler:
+def set_console_logging(level: str) -> None:
     '''
-    Creates a logging stream handler.
+    Sets a logging stream handler.
 
     Args:
         level: Logging level. https://docs.python.org/3/library/logging.html#logging-levels
@@ -28,23 +28,32 @@ def get_console_handler(level: str) -> logging.StreamHandler:
     ch.setLevel(level)
     ch.setFormatter(fmt_console)
 
-    return ch
+    logger.addHandler(ch)
 
 
-def get_json_handler(filename: str, level: int = logging.DEBUG) -> logging.FileHandler:
+def set_json_logging(filename: str, level: int = logging.DEBUG) -> None:
     '''
-    Creates a logging JSON format file handler.
+    Creates or updates a logging JSON format file handler.
 
     Args:
         filename: Filename where to log.
         level: Logging level. By default to DEBUG. https://docs.python.org/3/library/logging.html#logging-levels
     '''
-    fmt_json = SysdiagnoseJsonFormatter(
-        fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
-        rename_fields={'asctime': 'datetime', 'created': 'timestamp'})
-    # File handler
-    fh = logging.FileHandler(filename=filename, mode='w')
-    fh.setLevel(level)
-    fh.setFormatter(fmt_json)
+    updated = False
+    for h in logger.handlers:
+        # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+        if isinstance(h, logging.FileHandler):
+            h.close()
+            h.setStream(open(filename, 'w'))
+            updated = True
 
-    return fh
+    if not updated:
+        fmt_json = SysdiagnoseJsonFormatter(
+            fmt='%(created)f %(asctime)s %(levelname)s %(module)s %(message)s',
+            rename_fields={'asctime': 'datetime', 'created': 'timestamp'})
+        # File handler
+        fh = logging.FileHandler(filename=filename, mode='w')
+        fh.setLevel(level)
+        fh.setFormatter(fmt_json)
+
+        logger.addHandler(fh)

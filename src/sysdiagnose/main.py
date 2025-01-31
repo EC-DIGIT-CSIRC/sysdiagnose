@@ -4,7 +4,7 @@ import sys
 from sysdiagnose import Sysdiagnose
 import os
 import time
-from sysdiagnose.utils.logger import logger, get_console_handler, get_json_handler
+from sysdiagnose.utils.logger import logger, set_console_logging
 
 
 def parse_parser_error(message):
@@ -70,7 +70,7 @@ def main():
     args = parser.parse_args()
 
     # Handle console logging
-    logger.addHandler(get_console_handler(args.log.upper()))
+    set_console_logging(args.log.upper())
 
     sd = Sysdiagnose()
 
@@ -129,18 +129,9 @@ def main():
         # get the case IDs
         case_ids = case_csv_to_case_ids(args.case_id, sd)
 
-        logger2file = None
         for case_id in case_ids:
-            # Handle file logging
-            filename = f"log-parse.jsonl"
-            folder = sd.config.get_case_log_data_folder(case_id)
-            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
-            if logger2file is None:
-                logger2file = get_json_handler(os.path.join(folder, filename))
-                logger.addHandler(logger2file)
-            else:
-                logger2file.close()
-                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+            # file logging
+            sd.init_case_logging(args.mode, case_id)
 
             print(f"Case ID: {case_id}")
             for parser in parsers_list:
@@ -152,9 +143,6 @@ def main():
                     logger.info(f"Parser '{parser}' finished {result_str}", extra={'parser': parser, 'result': result})
                 except NotImplementedError:
                     logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
-
-        if logger2file is not None:
-            logger2file.close()
 
     elif args.mode == 'analyse':
         # Handle analyse mode
@@ -176,18 +164,9 @@ def main():
         # get the case IDs
         case_ids = case_csv_to_case_ids(args.case_id, sd)
 
-        logger2file = None
         for case_id in case_ids:
-            # Handle file logging
-            filename = f"log-analyse.jsonl"
-            folder = sd.config.get_case_log_data_folder(case_id)
-            # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
-            if logger2file is None:
-                logger2file = get_json_handler(os.path.join(folder, filename))
-                logger.addHandler(logger2file)
-            else:
-                logger2file.close()
-                logger2file.setStream(open(os.path.join(folder, filename), 'a'))
+            # file logging
+            sd.init_case_logging(args.mode, case_id)
 
             print(f"Case ID: {case_id}")
             for analyser in analysers_list:
@@ -199,9 +178,6 @@ def main():
                     logger.info(f"Analyser '{analyser}' finished {result_str}", extra={'analyser': analyser, 'result': result})
                 except NotImplementedError:
                     logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
-
-        if logger2file is not None:
-            logger2file.close()
 
     else:
         parser.print_help()
