@@ -63,5 +63,6 @@ class TestSysdiagnose(SysdiagnoseTestCase):
             # Ensure the temporary directory is cleaned up after the test
             shutil.rmtree(temp_dir)
 
+
 if __name__ == '__main__':
     unittest.main()
