@@ -7,7 +7,8 @@ import os
 import re
 import tarfile
 import fcntl
-from sysdiagnose.utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig, logger
+from sysdiagnose.utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.logger import set_json_logging, logger
 
 
 class Sysdiagnose:
@@ -180,6 +181,12 @@ class Sysdiagnose:
 
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
+
+    def init_case_logging(self, mode: str, case_id: str) -> None:
+        ''' Initialises the file handler '''
+        folder = self.config.get_case_log_data_folder(case_id=case_id)
+        file_path = os.path.join(folder, f'log-{mode}.jsonl')
+        set_json_logging(filename=file_path)
 
     def parse(self, parser: str, case_id: str):
         # Load parser module

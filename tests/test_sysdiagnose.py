@@ -4,6 +4,7 @@ import unittest
 import tempfile
 import shutil
 import glob
+import os
 
 
 class TestSysdiagnose(SysdiagnoseTestCase):
@@ -48,6 +49,16 @@ class TestSysdiagnose(SysdiagnoseTestCase):
                 sd.create_case(archive_file)
                 break
 
+        finally:
+            # Ensure the temporary directory is cleaned up after the test
+            shutil.rmtree(temp_dir)
+
+    def test_init_case_logging(self):
+        try:
+            temp_dir = tempfile.mkdtemp()
+            sd = Sysdiagnose(cases_path=temp_dir)
+            sd.init_case_logging(mode='parse', case_id='1')
+            self.assertTrue(os.path.exists(os.path.join(sd.config.get_case_log_data_folder('1'), 'log-parse.jsonl')))
         finally:
             # Ensure the temporary directory is cleaned up after the test
             shutil.rmtree(temp_dir)
