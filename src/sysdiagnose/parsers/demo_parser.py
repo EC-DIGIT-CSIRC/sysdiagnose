@@ -31,11 +31,12 @@ class DemoParser(BaseParserInterface):
                 # entry['datetime'] = timestamp.isoformat(timespec='microseconds')
                 # entry['timestamp'] = timestamp.timestamp()
                 result.append(entry)
-                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file, 'entry': entry})
+                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
+                logger.debug(f"Entry details {str(entry)}", extra={'entry': str(entry)})
                 if not entry:
                     logger.warning("Empty entry.")
                     # logger.error("Empty entry.")
-            except Exception as e:
+            except Exception:
                 logger.exception("This will log an error with the exception information")
                 # logger.warning("This will log a warning with the exception information", exc_info=True)
         return result

@@ -142,7 +142,11 @@ def main():
                     result_str = "successfully" if result == 0 else "with errors"
                     logger.info(f"Parser '{parser}' finished {result_str}", extra={'parser': parser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={'parser': parser})
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping",
+                                   extra={'parser': parser, 'result': 'skipped'})
+                except Exception:
+                    logger.exception(f"Parser '{parser}' finished unexpectedly. Might be a sign of evil or a bug!",
+                                     extra={'parser': parser, 'result': 'error'})
 
     elif args.mode == 'analyse':
         # Handle analyse mode
@@ -177,7 +181,11 @@ def main():
                     result_str = "successfully" if result == 0 else "with errors"
                     logger.info(f"Analyser '{analyser}' finished {result_str}", extra={'analyser': analyser, 'result': result})
                 except NotImplementedError:
-                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping", extra={'analyser': analyser})
+                    logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping",
+                                   extra={'analyser': analyser, 'result': 'skipped'})
+                except Exception:
+                    logger.exception(f"Analyser '{analyser}' finished unexpectedley. Might be a sign of evil or a bug!",
+                                     extra={'analyser': analyser, 'result': 'error'})
 
     else:
         parser.print_help()
