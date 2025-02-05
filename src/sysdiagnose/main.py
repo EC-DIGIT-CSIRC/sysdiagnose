@@ -145,7 +145,8 @@ def main():
                     logger.warning(f"Parser '{parser}' is not implemented yet, skipping",
                                    extra={'parser': parser, 'result': 'skipped'})
                 except Exception:
-                    logger.exception(f"Parser '{parser}' finished unexpectedly", extra={'parser': parser, 'result': 'error'})
+                    logger.exception(f"Parser '{parser}' finished unexpectedly. Might be a sign of evil or a bug!",
+                                     extra={'parser': parser, 'result': 'error'})
 
     elif args.mode == 'analyse':
         # Handle analyse mode
@@ -183,7 +184,7 @@ def main():
                     logger.warning(f"Analyser '{analyser}' is not implemented yet, skipping",
                                    extra={'analyser': analyser, 'result': 'skipped'})
                 except Exception:
-                    logger.exception(f"Analyser '{analyser}' finished unexpectedley",
+                    logger.exception(f"Analyser '{analyser}' finished unexpectedley. Might be a sign of evil or a bug!",
                                      extra={'analyser': analyser, 'result': 'error'})
 
     else:
