@@ -2,7 +2,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime, timezone
 import csv
 
@@ -36,6 +36,7 @@ class BatteryBDCParser(BaseParserInterface):
         result = []
         log_files = self.get_log_files()
         for log_file in log_files:
+            logger.debug(f"Processing {os.path.basename(log_file)}", extra={'log_file': log_file})
             # load csv using csvdictreader and convert to json dict using the header
             # the field 'TimeStamp' is in the format '2021-09-01 00:00:00'
             # add a field that refers to the first part of the filename (before the timestamp)
@@ -53,6 +54,7 @@ class BatteryBDCParser(BaseParserInterface):
                     elif 'set_system_time' in row:
                         timestamp = datetime.strptime(row['set_system_time'], '%Y-%m-%d %H:%M:%S %z')
                     else:
+                        logger.error(f"No known timestamp field found in CSV file", extra={'header': str(row)})
                         raise ValueError('No known timestamp field found in CSV file')
                     row['datetime'] = timestamp.isoformat(timespec='microseconds')
                     row['timestamp'] = timestamp.timestamp()
