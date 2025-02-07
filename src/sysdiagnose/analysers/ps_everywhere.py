@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
+from typing import Generator
 
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
@@ -12,122 +13,243 @@ from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 
 
 class PsEverywhereAnalyser(BaseAnalyserInterface):
+    """
+    Analyser that gathers process information from multiple sources
+    to build a comprehensive list of running processes across different system logs.
+    """
+
     description = "List all processes we can find a bit everywhere."
-    format = "json"
+    format = "jsonl"
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
         self.all_ps = set()
 
-    def execute(self):
-        # the order of below is important: we want to have the most detailed information first
-        # - first processes with full path and parameters
-        # - then processes with full path and no parameters
-        # - then processes no full path and no parameters
+    def execute(self) -> Generator[dict, None, None]:
+        """
+        Executes all extraction methods dynamically, ensuring that each extracted process is unique.
 
-        # processes with full path and parameters, no threads
-        ps_json = PsParser(self.config, self.case_id).get_result()
-        self.all_ps.update([p['command'] for p in ps_json])
-        print(f"{len(self.all_ps)} entries after ps")
+        :yield: A dictionary containing process details from various sources.
+        """
+        for func in dir(self):
+            if func.startswith(f"_{self.__class__.__name__}__extract_ps_"):
+                yield from getattr(self, func)()  # Dynamically call extract methods
 
-        # processes with full path and parameters
+    def __extract_ps_base_file(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from ps.txt.
 
-        psthread_json = PsThreadParser(self.config, self.case_id).get_result()
-        self.all_ps.update([p['command'] for p in psthread_json])
-        print(f"{len(self.all_ps)} entries after psthread")
+        :return: A generator yielding dictionaries containing process details from ps.txt.
+        """
+        entity_type = 'ps.txt'
+        try:
+            for p in PsParser(self.config, self.case_id).get_result():
+                ps_event = {
+                    'process': p['command'],
+                    'timestamp': p['timestamp'],
+                    'datetime': p['datetime'],
+                    'source': entity_type
+                }
+                if self.add_if_full_command_is_not_in_set(ps_event['process']):
+                    yield ps_event
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
 
-        # processes with full path, no parameters, with threads
-        spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
-        for p in spindumpnosymbols_json:
-            if 'process' not in p:
-                continue
-            try:
-                self.add_if_full_command_is_not_in_set(p['path'])
-                # all_ps.add(f"{p['path']}::#{len(p['threads'])}") # count is different than in taskinfo
-            except KeyError:
-                if p['process'] == 'kernel_task [0]':
-                    self.all_ps.add('/kernel')  # is similar to the other formats
-                else:
-                    self.add_if_full_command_is_not_in_set(p['process'])  # backup uption to keep trace of this anomaly
-            for t in p['threads']:
-                try:
-                    self.add_if_full_command_is_not_in_set(f"{p['path']}::{t['thread_name']}")
-                except KeyError:
-                    pass
-        print(f"{len(self.all_ps)} entries after spindumpnosymbols")
+    def __extract_ps_thread_file(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from psthread.txt.
 
-        # processes with full path, no parameters, no threads
-        shutdownlogs_json = ShutdownLogsParser(self.config, self.case_id).get_result()
-        for p in shutdownlogs_json:
-            # not using 'path' but 'command', as the path being appended by the UUID will be counter productive to normalisation
-            self.add_if_full_command_is_not_in_set(p['command'])
-        print(f"{len(self.all_ps)} entries after shutdownlogs")
+        :return: A generator yielding dictionaries containing process details from psthread.txt.
+        """
+        entity_type = 'psthread.txt'
+        try:
+            for p in PsThreadParser(self.config, self.case_id).get_result():
+                ps_event = {
+                    'process': p['command'],
+                    'timestamp': p['timestamp'],
+                    'datetime': p['datetime'],
+                    'source': entity_type
+                }
+                if self.add_if_full_command_is_not_in_set(ps_event['process']):
+                    yield ps_event
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
 
-        # processes with full path, no parameters, no threads
-        logarchive_procs = set()
-        for event in LogarchiveParser(self.config, self.case_id).get_result():
-            try:
-                logarchive_procs.add(event['process'])
-            except KeyError:
-                pass
+    def __extract_ps_spindump_nosymbols_file(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from spindump-nosymbols.txt.
 
-        for entry in logarchive_procs:
-            self.add_if_full_command_is_not_in_set(entry)
-        print(f"{len(self.all_ps)} entries after logarchive")
+        :return: A generator yielding dictionaries containing process and thread details from spindump-nosymbols.txt.
+        """
+        entity_type = 'spindump-nosymbols.txt'
+        try:
+            for p in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+                if 'process' not in p:
+                    continue
+                process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
 
-        # processes with full path, no parameters, no threads
-        uuid2path_json = UUID2PathParser(self.config, self.case_id).get_result()
-        for item in uuid2path_json.values():
-            self.add_if_full_command_is_not_in_set(item)
-        print(f"{len(self.all_ps)} entries after uuid2path")
+                if self.add_if_full_command_is_not_in_set(process_name):
+                    yield {
+                        'process': process_name,
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
 
-        # processes no full path, no parameters, with threads
-        taskinfo_json = TaskinfoParser(self.config, self.case_id).get_result()
-        # p['name'] is the short version of COMMAND, so incompatible with the other formats.
-        # on the other hand it may contain valuable stuff, so we use it in 2 formats
-        # - name::#num_of_threads
-        # - name::thread name
-        for p in taskinfo_json:
-            if 'name' not in p:
-                continue
-            self.add_if_full_path_is_not_in_set(p['name'])
-            # add_if_full_path_is_not_in_set(f"{p['name']}::#{len(p['threads'])}") # count is different than in spindumpnosymbols
-            for t in p['threads']:
-                try:
-                    self.add_if_full_path_is_not_in_set(f"{p['name']}::{t['thread name']}")
-                except KeyError:
-                    pass
-        print(f"{len(self.all_ps)} entries after taskinfo")
+                for t in p['threads']:
+                    try:
+                        thread_name = f"{process_name}::{t['thread_name']}"
+                        if self.add_if_full_command_is_not_in_set(thread_name):
+                            yield {
+                                'process': thread_name,
+                                'timestamp': p['timestamp'],
+                                'datetime': p['datetime'],
+                                'source': entity_type
+                            }
+                    except KeyError:
+                        pass
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
 
-        # processes no full path, no parameters, no threads
-        remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
-        if remotectl_dumpstate_json:
-            for p in remotectl_dumpstate_json['Local device']['Services']:
-                self.add_if_full_path_is_not_in_set(p)
+    def __extract_ps_shutdownlogs(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from shutdown logs.
 
-        print(f"{len(self.all_ps)} entries after remotectl_dumpstate")
+        :return: A generator yielding dictionaries containing process details from shutdown logs.
+        """
+        entity_type = 'shutdown.logs'
+        try:
+            for p in ShutdownLogsParser(self.config, self.case_id).get_result():
+                if self.add_if_full_command_is_not_in_set(p['command']):
+                    yield {
+                        'process': p['command'],
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
-        # TODO powerlogs - bundleID, ProcessName
+    def __extract_ps_logarchive(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from logarchive.
 
-        self.all_ps = list(self.all_ps)
-        self.all_ps.sort()
-        return self.all_ps
+        :return: A generator yielding dictionaries containing process details from logarchive.
+        """
+        entity_type = 'log archive'
+        try:
+            for p in LogarchiveParser(self.config, self.case_id).get_result():
+                if self.add_if_full_command_is_not_in_set(p['process']):
+                    yield {
+                        'process': p['process'],
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
-    def add_if_full_path_is_not_in_set(self, name: str):
+    def __extract_ps_uuid2path(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from UUID2PathParser.
+
+        :return: A generator yielding process data from uuid2path.
+        """
+        entity_type = 'uuid2path'
+        try:
+            for p in UUID2PathParser(self.config, self.case_id).get_result().values():
+                if self.add_if_full_command_is_not_in_set(p):
+                    yield {
+                        'process': p,
+                        'timestamp': None,
+                        'datetime': None,
+                        'source': entity_type
+                    }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def __extract_ps_taskinfo(self) -> Generator[dict, None, None]:
+        """
+        Extracts process and thread information from TaskinfoParser.
+
+        :return: A generator yielding process and thread information from taskinfo.
+        """
+        entity_type = 'taskinfo.txt'
+        try:
+            for p in TaskinfoParser(self.config, self.case_id).get_result():
+                if 'name' not in p:
+                    continue
+
+                if self.add_if_full_path_is_not_in_set(p['name']):
+                    yield {
+                        'process': p['name'],
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
+
+                for t in p['threads']:
+                    try:
+                        thread_name = f"{p['name']}::{t['thread name']}"
+                        if self.add_if_full_path_is_not_in_set(thread_name):
+                            yield {
+                                'process': thread_name,
+                                'timestamp': p['timestamp'],
+                                'datetime': p['datetime'],
+                                'source': entity_type
+                            }
+                    except KeyError:
+                        pass
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def __extract_ps_remotectl_dumpstate(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from RemotectlDumpstateParser.
+
+        :return: A generator yielding process data from remotectl_dumpstate.txt.
+        """
+        entity_type = 'remotectl_dumpstate.txt'
+        try:
+            remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
+            if remotectl_dumpstate_json:
+                for p in remotectl_dumpstate_json['Local device']['Services']:
+                    if self.add_if_full_path_is_not_in_set(p):
+                        yield {
+                            'process': p,
+                            'timestamp': None,
+                            'datetime': None,
+                            'source': entity_type
+                        }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def add_if_full_path_is_not_in_set(self, name: str) -> bool:
+        """
+        Ensures that a process path is unique before adding it to the shared set.
+
+        :param name: Process path name
+        :return: True if the process was not in the set and was added, False otherwise.
+        """
         for item in self.all_ps:
-            # no need to add it in the following cases
             if item.endswith(name):
-                return
-            if item.split('::').pop(0).endswith(name):
-                return
-            if '::' not in item and item.split(' ').pop(0).endswith(name):
-                # this will but with commands that have a space, but looking at data this should not happend often
-                return
+                return False
+            if item.split('::')[0].endswith(name):
+                return False
+            if '::' not in item and item.split(' ')[0].endswith(name):
+                return False  # This covers cases with space-separated commands
         self.all_ps.add(name)
+        return True
 
-    def add_if_full_command_is_not_in_set(self, name: str):
+    def add_if_full_command_is_not_in_set(self, name: str) -> bool:
+        """
+        Ensures that a process command is unique before adding it to the shared set.
+
+        :param name: Process command name
+        :return: True if the process was not in the set and was added, False otherwise.
+        """
         for item in self.all_ps:
             if item.startswith(name):
-                # no need to add it
-                return
+                return False
         self.all_ps.add(name)
+        return True
