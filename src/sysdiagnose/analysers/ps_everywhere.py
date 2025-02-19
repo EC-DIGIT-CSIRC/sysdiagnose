@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
-from typing import Generator
 
+from typing import Generator
 from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
@@ -25,6 +25,17 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         super().__init__(__file__, config, case_id)
         self.all_ps = set()
 
+    @staticmethod
+    def _strip_flags(process: str) -> str:
+        """
+        Extracts the base command by removing everything after the first space.
+
+        :param process: Full process command string.
+        :return: Command string without flags.
+        """
+        process, *_ = process.partition(' ')
+        return process
+
     def execute(self) -> Generator[dict, None, None]:
         """
         Executes all extraction methods dynamically, ensuring that each extracted process is unique.
@@ -45,7 +56,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsParser(self.config, self.case_id).get_result():
                 ps_event = {
-                    'process': p['command'],
+                    'process': self._strip_flags(p['command']),
                     'timestamp': p['timestamp'],
                     'datetime': p['datetime'],
                     'source': entity_type
@@ -65,7 +76,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsThreadParser(self.config, self.case_id).get_result():
                 ps_event = {
-                    'process': p['command'],
+                    'process': self._strip_flags(p['command']),
                     'timestamp': p['timestamp'],
                     'datetime': p['datetime'],
                     'source': entity_type
@@ -88,9 +99,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     continue
                 process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
 
-                if self.add_if_full_command_is_not_in_set(process_name):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name)):
                     yield {
-                        'process': process_name,
+                        'process': self._strip_flags(process_name),
                         'timestamp': p['timestamp'],
                         'datetime': p['datetime'],
                         'source': entity_type
@@ -98,7 +109,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
                 for t in p['threads']:
                     try:
-                        thread_name = f"{process_name}::{t['thread_name']}"
+                        thread_name = f"{self._strip_flags(process_name)}::{t['thread_name']}"
                         if self.add_if_full_command_is_not_in_set(thread_name):
                             yield {
                                 'process': thread_name,
@@ -120,9 +131,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'shutdown.logs'
         try:
             for p in ShutdownLogsParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(p['command']):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['command'])):
                     yield {
-                        'process': p['command'],
+                        'process': self._strip_flags(p['command']),
                         'timestamp': p['timestamp'],
                         'datetime': p['datetime'],
                         'source': entity_type
@@ -139,9 +150,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'log archive'
         try:
             for p in LogarchiveParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(p['process']):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
                     yield {
-                        'process': p['process'],
+                        'process': self._strip_flags(p['process']),
                         'timestamp': p['timestamp'],
                         'datetime': p['datetime'],
                         'source': entity_type
@@ -158,9 +169,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'uuid2path'
         try:
             for p in UUID2PathParser(self.config, self.case_id).get_result().values():
-                if self.add_if_full_command_is_not_in_set(p):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p)):
                     yield {
-                        'process': p,
+                        'process': self._strip_flags(p),
                         'timestamp': None,
                         'datetime': None,
                         'source': entity_type
@@ -180,9 +191,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 if 'name' not in p:
                     continue
 
-                if self.add_if_full_path_is_not_in_set(p['name']):
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['name'])):
                     yield {
-                        'process': p['name'],
+                        'process': self._strip_flags(p['name']),
                         'timestamp': p['timestamp'],
                         'datetime': p['datetime'],
                         'source': entity_type
@@ -190,7 +201,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
                 for t in p['threads']:
                     try:
-                        thread_name = f"{p['name']}::{t['thread name']}"
+                        thread_name = f"{self._strip_flags(p['name'])}::{t['thread name']}"
                         if self.add_if_full_path_is_not_in_set(thread_name):
                             yield {
                                 'process': thread_name,
@@ -214,9 +225,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json['Local device']['Services']:
-                    if self.add_if_full_path_is_not_in_set(p):
+                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p)):
                         yield {
-                            'process': p,
+                            'process': self._strip_flags(p),
                             'timestamp': None,
                             'datetime': None,
                             'source': entity_type
