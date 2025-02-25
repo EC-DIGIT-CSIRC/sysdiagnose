@@ -16,6 +16,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     """
     Analyser that gathers process information from multiple sources
     to build a comprehensive list of running processes across different system logs.
+
+    The timestamp is 'a' time the process was seen in the log, without being specifically the first or last seen.
     """
 
     description = "List all processes we can find a bit everywhere."

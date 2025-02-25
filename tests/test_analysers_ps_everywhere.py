@@ -15,6 +15,13 @@ class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)
 
+            result = a.get_result()
+            for item in result:
+                self.assertTrue('process' in item)
+                self.assertTrue('timestamp' in item)
+                self.assertTrue('datetime' in item)
+                self.assertTrue('source' in item)
+
 
 if __name__ == '__main__':
     unittest.main()
