@@ -7,6 +7,8 @@ from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from sysdiagnose.parsers.shutdownlogs import ShutdownLogsParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
+from sysdiagnose.parsers.logdata_statistics import LogDataStatisticsParser
+from sysdiagnose.parsers.logdata_statistics_txt import LogDataStatisticsTxtParser
 from sysdiagnose.parsers.uuid2path import UUID2PathParser
 from sysdiagnose.parsers.taskinfo import TaskinfoParser
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
@@ -232,6 +234,45 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             'datetime': None,
                             'source': entity_type
                         }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def __extract_ps_logdata_statistics(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from logdata_statistics.jsonl.
+
+        :return: A generator yielding process data from logdata_statistics.jsonl.
+        """
+        entity_type = 'logdata.statistics.jsonl'
+        try:
+            for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
+                    yield {
+                        'process': self._strip_flags(p['process']),
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def __extract_ps_logdata_statistics_txt(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from logdata.statistics.txt.
+
+        :return: A generator yielding process data from logdata.statistics.txt.
+        """
+        entity_type = "logdata.statistics.txt"
+
+        try:
+            for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['process'])):
+                    yield {
+                        'process': self._strip_flags(p['process']),
+                        'timestamp': p['timestamp'],
+                        'datetime': p['datetime'],
+                        'source': entity_type
+                    }
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
