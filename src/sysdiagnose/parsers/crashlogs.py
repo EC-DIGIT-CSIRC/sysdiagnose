@@ -80,7 +80,10 @@ class CrashLogsParser(BaseParserInterface):
             if 'captureTime' in result['report']:  # captureTime is more precise than the timestamp
                 timestamp = datetime.strptime(result['report']['captureTime'], '%Y-%m-%d %H:%M:%S.%f %z')
             elif 'date' in result['report']:
-                timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%S.%f %z')
+                try:
+                    timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%S.%f %z')
+                except ValueError:
+                    timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%SZ')
 
             if not timestamp:
                 timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
