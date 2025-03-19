@@ -121,7 +121,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 process_buffer.append(line.strip())
 
         process = SpindumpNoSymbolsParser.parse_process(process_buffer)
-        timestamp = start_time - timedelta(seconds=int(process['time_since_fork'].rstrip('s')))
+        timestamp = start_time - timedelta(seconds=int(process.get('time_since_fork', '0').rstrip('s')))
         process['timestamp'] = timestamp.timestamp()
         process['datetime'] = timestamp.isoformat(timespec='microseconds')
         processes.append(process)
