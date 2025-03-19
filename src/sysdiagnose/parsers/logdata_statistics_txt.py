@@ -64,6 +64,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
         try:
             with open(path, 'r') as f:
                 inside_statistics_record = False
+                record = {}
                 timestamp = None
 
                 for line in f:
@@ -71,6 +72,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
 
                     if line.startswith('--- !logd statistics record'):
                         inside_statistics_record = True
+                        record = {}
                         timestamp = None  # Reset timestamp for each record
                         continue
 
@@ -84,6 +86,12 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                         if line.startswith('time  :'):
                             time_str = line.split(':', 1)[1].strip()
                             timestamp = self.parse_timestamp(time_str)
+                            record['timestamp'] = timestamp.timestamp(),
+                            record['datetime'] = timestamp.isoformat(timespec='microseconds')
+                            continue
+
+                        if line.startswith('type  :'):
+                            record['type'] = line.split(':', 1)[1].strip()
                             continue
 
                         # Extract process data from 'procs' section
@@ -93,13 +101,8 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                                 process = match.group(3)  # Process path
 
                                 if timestamp:
-                                    output.append(
-                                        {
-                                            'process': process,
-                                            'timestamp': timestamp.timestamp(),
-                                            'datetime': timestamp.isoformat(timespec='microseconds'),
-                                        }
-                                    )
+                                    record['process'] = process.strip()
+                                    output.append(record)
         except Exception as err:
             logger.error(f'Error parsing file {path}: {err}')
 
