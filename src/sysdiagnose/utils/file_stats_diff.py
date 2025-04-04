@@ -495,6 +495,7 @@ def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
     else:
         print("Unsupported format.")
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
