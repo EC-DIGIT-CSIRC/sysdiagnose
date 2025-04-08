@@ -72,6 +72,23 @@ specific_keys = {
     #    ["uuid", "timestamp_desc"],
     #    ["event", "extra_field_1"],
     #],
+    "swcutil": [
+        ["section", "message"],
+        ["process", "timestamp_desc"],
+        ["usage", "extra_field_1"],
+    ],
+    "sys": [
+        ["BuildID", "message"],
+        ["SystemImageID", "timestamp_desc"],
+    ],
+    "taskinfo": [
+        ["datetime_description", "message"],
+        ["tasks", "timestamp_desc"],
+    ],
+    "transparency": [
+        ["message", "message"],
+        ["message", "timestamp_desc"],
+    ],
     "mobileactivation": [
         ["message", "message"],
         ["event_type", "timestamp_desc"],
