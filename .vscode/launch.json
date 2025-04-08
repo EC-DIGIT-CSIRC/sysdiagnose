@@ -122,7 +122,15 @@
             "type": "debugpy",
             "request": "launch",
             "module": "sysdiagnose.main",
-            "args": "-c 1 analyse timesketch",
+            "args": "-c public analyse timesketch",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: analyse coverage",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.main",
+            "args": "-c public analyse coverage",
             "cwd": "${workspaceFolder}/"
         },
         {
