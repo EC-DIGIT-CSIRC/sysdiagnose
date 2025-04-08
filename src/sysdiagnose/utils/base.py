@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import cached_property
+import importlib
 from pathlib import Path
 from sysdiagnose.utils.logger import logger
 import glob
@@ -35,6 +36,47 @@ class SysdiagnoseConfig:
         os.makedirs(logs_data_folder, exist_ok=True)
         return logs_data_folder
 
+    def get_parsers(self) -> dict:
+        modules = glob.glob(os.path.join(self.parsers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
+                continue
+            try:
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'sysdiagnose.parsers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+                        results[name] = obj.description
+                        break
+            except AttributeError:
+                continue
+
+        results = dict(sorted(results.items()))
+        return results
+
+    def get_analysers(self) -> dict:
+        modules = glob.glob(os.path.join(self.analysers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
+                continue
+            try:
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'sysdiagnose.analysers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
+                        results[name] = obj.description
+                        break
+            except AttributeError:
+                continue
+
+        results = dict(sorted(results.items()))
+        return results
 
 class BaseInterface(ABC):
 
@@ -184,12 +226,12 @@ class BaseInterface(ABC):
         pass
 
 
-    def containsTimesteamp(self):
+    def contains_timestamp(self):
         """
             Returns true if the parser contains a timestamp
         """
-        return True if self.format == "jsonl" else False
-   
+        return self.format == "jsonl"
+
 
 class BaseParserInterface(BaseInterface):
 

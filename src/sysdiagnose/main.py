@@ -115,7 +115,7 @@ def main():
             sd.print_parsers_list()
             exit("")
         elif args.parser == 'all':
-            parsers_list = list(sd.get_parsers().keys())
+            parsers_list = list(sd.config.get_parsers().keys())
             if args.exclude:
                 exclude_list = args.exclude.split(',')
                 parsers_list = [parser for parser in parsers_list if parser not in exclude_list]
@@ -154,7 +154,7 @@ def main():
             sd.print_analysers_list()
             exit("")
         elif args.analyser == 'all':
-            analysers_list = list(sd.get_analysers().keys())
+            analysers_list = list(sd.config.get_analysers().keys())
             if args.exclude:
                 exclude_list = args.exclude.split(',')
                 analysers_list = [analyser for analyser in analysers_list if analyser not in exclude_list]

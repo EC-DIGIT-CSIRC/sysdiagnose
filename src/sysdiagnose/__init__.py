@@ -1,5 +1,4 @@
 from tabulate import tabulate
-import glob
 import hashlib
 import importlib.util
 import json
@@ -276,51 +275,9 @@ class Sysdiagnose:
                 return False
         return False
 
-    def get_parsers(self) -> dict:
-        modules = glob.glob(os.path.join(self.config.parsers_folder, '*.py'))
-        results = {}
-        for item in modules:
-            if item.endswith('__init__.py'):
-                continue
-            try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f'sysdiagnose.parsers.{name}')
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                        results[name] = obj.description
-                        break
-            except AttributeError:
-                continue
-
-        results = dict(sorted(results.items()))
-        return results
-
-    def get_analysers(self) -> dict:
-        modules = glob.glob(os.path.join(self.config.analysers_folder, '*.py'))
-        results = {}
-        for item in modules:
-            if item.endswith('__init__.py'):
-                continue
-            try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f'sysdiagnose.analysers.{name}')
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
-                        results[name] = obj.description
-                        break
-            except AttributeError:
-                continue
-
-        results = dict(sorted(results.items()))
-        return results
-
     def print_parsers_list(self) -> None:
         lines = [['all', 'Run all parsers']]
-        for parser, description in self.get_parsers().items():
+        for parser, description in self.config.get_parsers().items():
             lines.append([parser, description])
 
         headers = ['Parser Name', 'Parser Description']
@@ -328,7 +285,7 @@ class Sysdiagnose:
 
     def print_analysers_list(self):
         lines = [['all', 'Run all analysers']]
-        for analyser, description in self.get_analysers().items():
+        for analyser, description in self.config.get_analysers().items():
             lines.append([analyser, description])
 
         headers = ['Analyser Name', 'Analyser Description']
