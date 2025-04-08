@@ -33,6 +33,8 @@ dependencies = [
     "python-json-logger==3.2.1",
     "python-magic==0.4.27",
     "jinja2==3.1.6",
+    "pandas==2.2.2",
+    "matplotlib==3.10.1",
 ]
 
 [project.scripts]
