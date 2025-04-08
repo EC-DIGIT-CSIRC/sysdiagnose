@@ -2,13 +2,7 @@
 
 import importlib
 import os
-import pandas as pd
-
-from jinja2 import Template
 import magic
-import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, logger
 
 
@@ -76,6 +70,12 @@ class CoverageAnalyser(BaseAnalyserInterface):
         1. Statistics (includes Coverage Overview and Parser Overview subsections).
         2. Details (a collapsible section with a table of coverage data).
         """
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import base64
+        from io import BytesIO
+        from jinja2 import Template
+
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')
 
