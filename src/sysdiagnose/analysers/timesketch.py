@@ -2,7 +2,7 @@
 #
 # For Python3
 # Script to extract timestamp and generate a timesketch output
-# 
+#
 # Version: 2025-04-08 -- hackathlon.lu
 # Fixing issue 122
 #
@@ -10,7 +10,7 @@
 #  Timesketch format:
 # https://timesketch.org/guides/user/import-from-json-csv/
 # Mandatory: timestamps must be in microseconds !!!
-#   
+#
 # Example message:
 #   {"message": "A message",
 #    "timestamp": 123456789,
@@ -35,8 +35,6 @@ class TimesketchAnalyser(BaseAnalyserInterface):
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
 
-
-
     def get_timesketch_timeline(self):
         # will contain the timesketch timeline
         timesketch_timeline = []
@@ -51,7 +49,7 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 obj = getattr(module, attr)
                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
                     parser: BaseParserInterface = obj(config=self.config, case_id=self.case_id)
-                    if parser.contains_timestamp():            
+                    if parser.contains_timestamp():
                         result = parser.get_result()
                         # adapt parser result to timesketch format
                         for line in result:
@@ -59,16 +57,15 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                                 if not isinstance(line, dict):
                                     continue
                                 if all(item in line.keys() for item in default_keys):
-                                    timesketch_entry =  {k: v for k, v in line.items() if k in default_keys}
+                                    timesketch_entry = {k: v for k, v in line.items() if k in default_keys}
                                     message = {k: v for k, v in line.items() if k not in ["timestamp", "datetime"]}
                                     timesketch_entry["timestamp_desc"] = parser_name
                                     timesketch_entry["message"] = message
                                     timesketch_timeline.append(timesketch_entry)
                             except Exception as e:
                                 logger.exception("[%s] - Failed to handle line: %s" % (parser_name, line))
-                                continue                            
-        return timesketch_timeline   
-
+                                continue
+        return timesketch_timeline
 
     def execute(self):
         """

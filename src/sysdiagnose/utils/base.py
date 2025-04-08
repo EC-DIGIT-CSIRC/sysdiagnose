@@ -225,7 +225,6 @@ class BaseInterface(ABC):
         # and then process those files using the magic you have implemented.
         pass
 
-
     def contains_timestamp(self):
         """
             Returns true if the parser contains a timestamp
