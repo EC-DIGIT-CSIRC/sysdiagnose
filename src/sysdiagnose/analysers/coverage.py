@@ -101,6 +101,17 @@ class CoverageAnalyser(BaseAnalyserInterface):
         buffer.close()
         plt.close()
 
+        # Generate data for the tables
+        folder_counts = coverage_df[coverage_df['parser'].isna()]['folder_name'].value_counts()
+
+        # Data for the least parsed folders (folders with the fewest files having parser=None)
+        least_parsed_folders = folder_counts.nsmallest(10).reset_index()
+        least_parsed_folders.columns = ['Folder', 'Count']
+
+        # Data for the top folders with the most files having parser=None
+        top_folders_with_no_parser = folder_counts.nlargest(10).reset_index()
+        top_folders_with_no_parser.columns = ['Folder', 'Count']
+
         # Calculate statistics for parser coverage ratio
         parser_counts = coverage_df['parser'].value_counts()
         parser_counts['Not Parsed'] = not_parsed_count  # Add non-parsed files as a separate category
@@ -116,7 +127,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
         plt.ylabel('File Count (Log Scale)')
         plt.yscale('log')  # Set y-axis to logarithmic scale
         plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()  # Adjust layout to prevent cutting off labels
+        plt.tight_layout()
 
         # Save the histogram to a base64-encoded string
         buffer = BytesIO()
@@ -226,7 +237,38 @@ class CoverageAnalyser(BaseAnalyserInterface):
                         <img src="data:image/png;base64,{{ histogram_base64 }}" alt="Parser Coverage Ratio">
                     </div>
                 </div>
-
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h4>Folders with Least Parsed Files</h4>
+                        <table>
+                            <tr>
+                                <th>Folder</th>
+                                <th>Count</th>
+                            </tr>
+                            {% for row in least_parsed_folders %}
+                            <tr>
+                                <td>{{ row.Folder }}</td>
+                                <td>{{ row.Count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Top Folders with Files Having No Parser</h4>
+                        <table>
+                            <tr>
+                                <th>Folder</th>
+                                <th>Count</th>
+                            </tr>
+                            {% for row in top_folders_with_no_parser %}
+                            <tr>
+                                <td>{{ row.Folder }}</td>
+                                <td>{{ row.Count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
                 <!-- Parser Overview -->
                 <h3>Parser Overview</h3>
                 <div class="charts-row">
@@ -278,6 +320,8 @@ class CoverageAnalyser(BaseAnalyserInterface):
         rendered_html = template.render(
             parsed_chart_base64=parsed_chart_base64,
             histogram_base64=histogram_base64,
+            least_parsed_folders=least_parsed_folders.to_dict(orient='records'),
+            top_folders_with_no_parser=top_folders_with_no_parser.to_dict(orient='records'),
             parser_format_chart_base64=parser_format_chart_base64,
             total_parsers=total_parsers,
             parsers_info=parsers_info,
