@@ -30,15 +30,52 @@ default_keys = ["timestamp", "datetime"]
 
 
 # Map specific keys from parser to expected Timesketch key
-# For each parser: parser key -> timesketch key (message and timestamp_desc)
+# For each parser: parser key -> timesketch key 
+# MANDATORY: message and timestamp_desc
+# OPTIONAL: extra_field_1
 specific_keys = {
     "accessibility_tcc": [ # need to be extended
         ["service", "message"],
-        ["client", "timestamp_desc"]
+        ["client", "timestamp_desc"],
     ],
+    "mobileinstallation": [
+        ["message", "message"],
+        ["event_type", "timestamp_desc"],
+    ],
+    "olddsc": [
+        ["Path", "message"],
+        ["UUID_String", "timestamp_desc"],
+        ["Segments", "extra_field_1"],
+    ],
+    #"powerlogs": [ # need to be extended, fields are dynamic
+    #    ["interface", "message"],
+    #    ["module_name", "timestamp_desc"],
+    #    #["down bytes", "extra_field_1"],
+    #    #["up bytes", "extra_field_2"],
+    #],
+    "ps": [
+        ["command", "message"],
+        ["user", "timestamp_desc"],
+    ],
+    "security_sysdiagnose": [ # need to be extended
+        ["result", "message"],
+        ["event", "timestamp_desc"],
+        ["attributes", "extra_field_1"],
+    ],
+    "shutdownlogs": [ # need to be extended
+        ["path", "message"],
+        ["uuid", "timestamp_desc"],
+        ["event", "extra_field_1"],
+    ],
+    #"spindumpnosymbols": [ # requires a dedicated function/parser
+    #    ["path", "message"],
+    #    ["uuid", "timestamp_desc"],
+    #    ["event", "extra_field_1"],
+    #],
     "mobileactivation": [
         ["message", "message"],
-        ["event_type", "timestamp_desc"]],
+        ["event_type", "timestamp_desc"],
+    ],
 }
 
 class TimesketchAnalyser(BaseAnalyserInterface):
