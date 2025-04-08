@@ -28,24 +28,6 @@ import importlib
 # Keys that are always present in parser outputs
 default_keys = ["timestamp", "datetime"]
 
-
-# Keep the following keys for each parser
-# specific_keys = {
-#     "accessibility_tcc": ["service", "client", "allowed", "auth"], # need to be extended
-#     "mobileinstallation": ["message", "event_type"],
-#     "olddsc": ["Path", "UUID_String", "Segments"],
-#     "powerlogs": ["interface", "module_name", "down bytes", "up bytes"],     # need to be extended, fields are dynamic
-#     "ps": ["command", "user"],
-#     "security_sysdiagnose": ["result", "event", "attributes"], # need to be extended
-#     "shutdownlogs": ["path", "uuid", "event"], # need to be extended
-#     "spindumpnosymbols": ["path", "uuid", "event"], # need to be extended
-#     "swcutil": [ "section", "process", "usage"],
-#     "sys": ["BuildID", "SystemImageID"],
-#     "taskinfo": ["datetime_description", "tasks"],
-#     "transparency": ["message"],
-#     "mobileactivation": ["message", "event_type"],
-# }
-
 class TimesketchAnalyser(BaseAnalyserInterface):
     description = 'Generate a Timesketch compatible timeline'
     format = 'jsonl'
@@ -69,39 +51,22 @@ class TimesketchAnalyser(BaseAnalyserInterface):
                 obj = getattr(module, attr)
                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
                     parser: BaseParserInterface = obj(config=self.config, case_id=self.case_id)
-                    if parser.contains_timestamp():
-                        # check if there is a configuration for the parser
-                        #if parser_name not in specific_keys.keys():
-                        #    logger.error("%s not supported for timesketch analyser" % parser_name)
-                        #    continue
-                        
+                    if parser.contains_timestamp():            
                         result = parser.get_result()
                         # adapt parser result to timesketch format
                         for line in result:
                             try:
                                 if not isinstance(line, dict):
                                     continue
-                                if all(item in line.keys() for item in ['timestamp', 'datetime']):
-                                    timesketch_entry =  {k: v for k, v in line.items() if k in ['timestamp', 'datetime']}
+                                if all(item in line.keys() for item in default_keys):
+                                    timesketch_entry =  {k: v for k, v in line.items() if k in default_keys}
                                     message = {k: v for k, v in line.items() if k not in ["timestamp", "datetime"]}
                                     timesketch_entry["timestamp_desc"] = parser_name
                                     timesketch_entry["message"] = message
                                     timesketch_timeline.append(timesketch_entry)
                             except Exception as e:
                                 logger.exception("[%s] - Failed to handle line: %s" % (parser_name, line))
-                                continue
-
-                            # Generate the message
-                            #message = {}
-                            #for key in specific_keys[parser_name]:
-                            #    if key in line.keys():
-                            #        message[key] = line[key]
-                            #    else:
-                            #        logger.debug("Parser: %s - available keys: %s" % (parser_name, line.keys()))
-                            
-                            
-                            # Add the message to the timesketch entry
-                            
+                                continue                            
         return timesketch_timeline   
 
 
