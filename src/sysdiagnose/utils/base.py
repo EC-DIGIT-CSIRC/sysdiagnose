@@ -184,6 +184,13 @@ class BaseInterface(ABC):
         pass
 
 
+    def containsTimesteamp(self):
+        """
+            Returns true if the parser contains a timestamp
+        """
+        return True if self.format == "jsonl" else False
+   
+
 class BaseParserInterface(BaseInterface):
 
     def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
