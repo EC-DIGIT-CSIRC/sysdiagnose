@@ -85,27 +85,49 @@ class SummaryAnalyser(BaseAnalyserInterface):
 
         
         # Extract trusted certificates and configuration profiles
+        # TODO fix the following piece of code
+        #  - should return subjet which includes user account
+        #  - should be cleaned a bit and made more meaningful
         mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
         mcstate_result = mcstatesharedprofile.get_result()
-        try:
-            result.append("\n## Trusted certificates") 
-            payloadcontent = mcstate_result[0]["PayloadContent"]
-            for entry in payloadcontent:
-                if("PayloadIdentifier" in entry.keys()):
-                    result.append("Identifier: %s" % entry["PayloadIdentifier"])
-                if("PayloadDescription" in entry.keys()):
-                    result.append("Description: %s" % entry["PayloadDescription"])
-                if("PayloadDisplayName" in entry.keys()):
-                    result.append("Display name: %s" % entry["PayloadDisplayName"])
-                if("PayloadType" in entry.keys()):
-                    result.append("Type: %s" % entry["PayloadType"])
-                if("ServerURL" in entry.keys()):
-                    result.append("URL: %s" % entry["ServerURL"])
-                result.append("----------------------")
-        except KeyError:
-            result.append("Issue extracting trusted certificates")
-            pass
+        # try:
+        #     result.append("\n## Trusted certificates") 
+        #     for payloadcontent in mcstate_result:
+        #         payloadcontent_entry = mcstate_result[0]["PayloadContent"]
+        #         for entry in payloadcontent_entry:
+        #             if("PayloadIdentifier" in entry.keys()):
+        #                 result.append("Identifier: %s" % entry["PayloadIdentifier"])
+        #             if("PayloadDescription" in entry.keys()):
+        #                 result.append("Description: %s" % entry["PayloadDescription"])
+        #             if("PayloadDisplayName" in entry.keys()):
+        #                 result.append("Display name: %s" % entry["PayloadDisplayName"])
+        #             if("InstallDate" in entry.keys()):
+        #                 result.append("Install date %s" % entry["InstallDate"])
+        #             if("CertSubject" in entry.keys()):
+        #                 result.append("Subject: %s" % entry["CertSubject"]) 
+        #             if("PayloadType" in entry.keys()):
+        #                 result.append("Type: %s" % entry["PayloadType"])
+        #             if("ServerURL" in entry.keys()):
+        #                 result.append("URL: %s" % entry["ServerURL"])
+        #             if("OTAProfileStub" in entry.keys()):
+        #                 url  = entry["OTAProfileStub"]["PayloadContent"]["URL"]
+        #                 identifier = entry["OTAProfileStub"]["PayloadIdentifier"]
+        #                 description = entry["OTAProfileStub"]["PayloadDescription"]  
+        #                 type = entry["OTAProfileStub"]["PayloadType"]
+        #                 uuid = entry["OTAProfileStub"]["PayloadUUID"]
+        #                 org = entry["OTAProfileStub"]["PayloadOrganization"]
+        #                 result.append("\tOrganisation: %s" % org)
+        #                 result.append("\tIdentifier: %s" % identifier)
+        #                 result.append("\tDescription: %s" % description)
+        #                 result.append("\tType: %s" % type)
+        #                 result.append("\tURL: %s" % url)
+        #                 result.append("\tUUID: %s" % uuid)
+        #             result.append("----------------------")
+        # except KeyError:
+        #     result.append("Issue extracting trusted certificates")
+        #     pass
 
+        # TODO ensure the following piece of code is complete and exhaustive
         result.append("\n## Configuration Profiles") 
         try:
             if("PayloadIdentifier" in mcstate_result[0].keys()):
