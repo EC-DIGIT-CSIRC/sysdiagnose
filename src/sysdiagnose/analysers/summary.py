@@ -40,6 +40,16 @@ class SummaryAnalyser(BaseAnalyserInterface):
             # result.append("Issue extracting stateMachine selfVerification account info")
             pass
 
+        try:
+            uris = trans_result["stateMachine"]["lastValidateSelf"]["diagnostics"]["KTSelfVerificationInfo"]["uris"]
+            for uri in uris:
+                if uri.startswith("im://mailto:"):
+                    result.append(f"Owner's email: {uri[12:]}")
+                if uri.startswith("im://tel:"):
+                    result.append(f"Owner's phone: {uri[9:]}") 
+        except KeyError:
+            pass
+
         plist_parser = PlistParser(self.config, self.case_id)
         mobilecal_result = plist_parser.parse_file(os.path.join(plist_parser.case_data_subfolder, 'logs/CalendarPreferences/com.apple.mobilecal.plist'))
         try:
@@ -56,6 +66,8 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 result.append(f"Name: {device['name']}")
                 result.append(f"Model: {device['model']}")
                 result.append(f"OS: {device['osVersion']}")
+                result.append(f"Serial: {device['serial']}")
+                result.append("----------------")
         except KeyError:
             result.append("Issue extracting known devices")
             pass
@@ -71,11 +83,8 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     result.append("\n## Circle")
                     result.extend(item['circle'])
 
-        logger.warning(
-            "This is a work in progress. The output may not be complete or accurate."
-        )
         
-        # TODO list configuration profiles
+        # Extract trusted certificates and configuration profiles
         mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
         mcstate_result = mcstatesharedprofile.get_result()
         try:
@@ -112,18 +121,21 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
                 uuid = mcstate_result[0]["OTAProfileStub"]["PayloadUUID"]
                 org = mcstate_result[0]["OTAProfileStub"]["PayloadOrganization"]
-                result.append("\Organisation: %s" % org)
+                result.append("\tOrganisation: %s" % org)
                 result.append("\tIdentifier: %s" % identifier)
                 result.append("\tDescription: %s" % description)
                 result.append("\tType: %s" % type)
                 result.append("\tURL: %s" % url)
                 result.append("\tUUID: %s" % uuid)
                 result.append("----------------------")
-
         except KeyError:
             result.append("Issue extracting configuration profiles")
             pass   
 
+
+        logger.warning(
+            "This is a work in progress. The output may not be complete or accurate."
+        )
 
         # TODO extract even more, ideally from plist/json and not jsonl
         # TODO also write the unit test
