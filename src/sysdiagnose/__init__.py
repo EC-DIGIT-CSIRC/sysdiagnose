@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 from tabulate import tabulate
 import hashlib
 import importlib.util
@@ -59,21 +61,10 @@ class Sysdiagnose:
         Returns:
             int: The case ID of the new case.
         '''
-        from sysdiagnose.parsers import remotectl_dumpstate
+        metadata = self.get_case_metadata(sysdiagnose_file)
 
-        # test sysdiagnose file
-        try:
-            tf = tarfile.open(sysdiagnose_file)
-        except Exception as e:
-            raise FileNotFoundError(f'Error opening sysdiagnose file. Reason: {str(e)}')
-
-        # calculate sha256 of sysdiagnose file and compare with past cases
-        try:
-            with open(sysdiagnose_file, 'rb') as f:
-                bytes = f.read()  # read entire file as bytes
-                readable_hash = hashlib.sha256(bytes).hexdigest()
-        except Exception as e:
-            raise Exception(f'Error calculating sha256. Reason: {str(e)}')
+        if not metadata:
+            raise ValueError(f"Invalid sysdiagnose file: {sysdiagnose_file}. Case could not be created!")
 
         # only allow specific chars for case_id
         if case_id:
@@ -83,7 +74,8 @@ class Sysdiagnose:
         # check if sysdiagnise file is already in a case
         case = None
         for c in self.cases().values():
-            if c['source_sha256'] == readable_hash:
+            # TODO: this breaks backward compatibility of sha256 calculation from old cases
+            if c['source_sha256'] == metadata['source_sha256']:
                 if force:
                     if case_id and c['case_id'] != case_id:
                         raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}")
@@ -96,31 +88,37 @@ class Sysdiagnose:
 
         # incoherent caseID and file
         if case_id and case_id in self.cases():
-            if self.cases()[case_id]['source_sha256'] != readable_hash:
+            # TODO: again, the sha256 calculation is not the same as the one in the old cases
+            if self.cases()[case_id]['source_sha256'] != metadata['source_sha256']:
                 raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
 
         # find next incremental case_id, if needed
         if not case_id:
-            case_id = 0
-            for k in self.cases().keys():
-                try:
-                    case_id = max(case_id, int(k))
-                except ValueError:
-                    pass
-            # add one to the new found case_id
-            case_id += 1
-            case_id = str(case_id)
+            # Default suggestion for case_id is the serial number + date
+            case_id = metadata['case_id']
+            if case_id in self.cases():
+                # if the case_id already exists, we need to find a new one
+                # find the highest case_id in the cases
+                case_id = 0
+                for k in self.cases().keys():
+                    try:
+                        case_id = max(case_id, int(k))
+                    except ValueError:
+                        pass
+                # add one to the new found case_id
+                case_id += 1
+                case_id = str(case_id)
 
         if not case:
             # if sysdiagnose file is new and legit, create new case and extract files
             case = {
-                'date': '<unknown>',  # date when sysdiagnose was taken
+                'date': metadata['date'],
                 'case_id': case_id,
                 'source_file': sysdiagnose_file,
-                'source_sha256': readable_hash,
-                'serial_number': '<unknown>',
-                'unique_device_id': '<unknown>',
-                'ios_version': '<unknown>',
+                'source_sha256': metadata['source_sha256'],
+                'serial_number': metadata['serial_number'],
+                'unique_device_id': metadata['unique_device_id'],
+                'ios_version': metadata['ios_version'],
                 'tags': []
             }
 
@@ -131,40 +129,7 @@ class Sysdiagnose:
         os.makedirs(case_data_folder, exist_ok=True)
 
         # extract sysdiagnose files
-        try:
-            tf.extractall(path=case_data_folder, filter=None)
-        except TypeError:
-            # python 3.11 compatibility
-            try:
-                tf.extractall(path=case_data_folder)
-            except Exception as e:
-                raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
-        except Exception as e:
-            raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
-
-        try:
-            tf.close()
-        except Exception as e:
-            raise Exception(f'Error closing sysdiagnose file. Reason: {str(e)}')
-
-        # update cases metadata
-        remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(self.config, case_id)
-        remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()
-        if 'error' not in remotectl_dumpstate_json:
-            if 'Local device' in remotectl_dumpstate_json:
-                try:
-                    case['serial_number'] = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
-                    case['unique_device_id'] = remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID']
-                    case['ios_version'] = remotectl_dumpstate_json['Local device']['Properties']['OSVersion']
-                except (KeyError, TypeError):
-                    logger.warning("WARNING: Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
-            else:
-                logger.info("WARNING: remotectl_dumpstate does not contain a Local device section.")
-
-        try:
-            case['date'] = remotectl_dumpstate_parser.sysdiagnose_creation_datetime.isoformat(timespec='microseconds')
-        except Exception:
-            pass
+        self.extract_sysdiagnose_files(sysdiagnose_file, case_data_folder)
 
         # update case with new data
         with open(self.config.cases_file, 'r+') as f:
@@ -180,6 +145,119 @@ class Sysdiagnose:
 
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
+
+    def get_case_metadata(self, source_file: str) -> str:
+        """
+        Returns the sha256 hash of the sysdiagnose source file/folder.
+        The hash is calculated by concatenating the contents of the case metadata: udid, serial, ios version and date.
+
+        :param source_file: Path to the sysdiagnose file/folder
+        :return: sha256 hash of the file/folder
+        """
+        from sysdiagnose.parsers import remotectl_dumpstate
+
+        # Let's hack the initialisation of the parser so that it finds the information it needs
+        required_files = ['remotectl_dumpstate.txt', 'sysdiagnose.log']
+        logger.info(f"Extracting required metadata files to init the case: {required_files}")
+        # create a temporary directory to extract the sysdiagnose files
+        with tempfile.TemporaryDirectory() as tmpdir:
+            extracted_path = os.path.join(tmpdir, 'data')
+            # test sysdiagnose file and extract the minimum needed artefacts
+            try:
+                with tarfile.open(source_file) as tf:
+                    for member in tf.getmembers():
+                        if any(member.name.endswith(file) for file in required_files):
+                            tf.extract(member, extracted_path)
+            except Exception as e:
+                logger.warning(f"Error extracting sysdiagnose file. Reason: {str(e)}", exc_info=True)
+                if os.path.isdir(source_file):
+                    logger.info(f"{source_file} is a directory, supposedly from a sysdiagnose archive file")
+                    os.makedirs(extracted_path, exist_ok=True)
+                    for file in required_files:
+                        src_file = os.path.join(source_file, file)
+                        dst_file = os.path.join(extracted_path, file)
+                        if os.path.isfile(src_file):
+                            shutil.copy2(src_file, dst_file)
+
+            # Let's check if we have the required files
+            files_ready = sum(len(files) for _, _, files in os.walk(extracted_path)) == len(required_files)
+            if not files_ready:
+                logger.error(f"Missing required files in sysdiagnose archive: {required_files} to create the case")
+                return None
+
+            # Time to obtain the metadata
+            remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(SysdiagnoseConfig(tmpdir), '')
+            remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()
+            if 'error' not in remotectl_dumpstate_json:
+                if 'Local device' in remotectl_dumpstate_json:
+                    try:
+                        sysdiagnose_date = remotectl_dumpstate_parser.sysdiagnose_creation_datetime
+                        serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
+                        metadata = {
+                            'serial_number': serial_number,
+                            'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
+                            'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
+                            'date': sysdiagnose_date.isoformat(timespec='microseconds'),
+                            'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d%H%M%S')}",
+                            'source_file': source_file,
+                            'source_sha256': ''
+                        }
+                        metadata['source_sha256'] = self.calculate_metadata_signature(metadata)
+
+                        return metadata
+                    except:
+                        logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.",
+                                       exc_info=True)
+                else:
+                    logger.error("remotectl_dumpstate does not contain a Local device section.")
+
+        return None
+
+    # TODO: Shall we move it to the utils package??
+    def calculate_metadata_signature(self, metadata: dict) -> str:
+        """
+        Calculates the signature of the metadata by concatenating all fields except 'case_id', 'source_file' and
+        'source_sha256'.
+
+        :param metadata: Dictionary containing metadata fields.
+        :return: SHA256 hash of the concatenated metadata fields.
+        """
+        # Exclude 'case_id' and 'source_sha256' from the metadata
+        excluded_keys = {'case_id', 'source_file', 'source_sha256'}
+        concatenated_values = ''.join(
+            str(value) for key, value in metadata.items() if key not in excluded_keys
+        )
+
+        # Calculate the SHA256 hash of the concatenated string
+        signature = hashlib.sha256(concatenated_values.encode('utf-8')).hexdigest()
+        return signature
+
+    def extract_sysdiagnose_files(self, sysdiagnose_file: str, destination_folder: str) -> None:
+        """
+        Extracts the sysdiagnose files from the given sysdiagnose file to the specified destination folder.
+
+        :param sysdiagnose_file: Path to the sysdiagnose file.
+        :param destination_folder: Path to the destination folder where files will be extracted.
+        """
+        if os.path.isfile(sysdiagnose_file):
+            try:
+                with tarfile.open(sysdiagnose_file) as tf:
+                    # Extract the sysdiagnose files to the destination folder
+                    tf.extractall(path=destination_folder, filter=None)
+            except TypeError:
+                # python 3.11 compatibility
+                try:
+                    tf.extractall(path=destination_folder)
+                except Exception as e:
+                    raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
+            except Exception as e:
+                raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
+
+        elif os.path.isdir(sysdiagnose_file):
+            try:
+                shutil.copytree(sysdiagnose_file, destination_folder, dirs_exist_ok=True)
+            except Exception as e:
+                raise Exception(f'Error while copying sysdiagnose folder. Reason: {str(e)}')
 
     def init_case_logging(self, mode: str, case_id: str) -> None:
         ''' Initialises the file handler '''
@@ -283,7 +361,7 @@ class Sysdiagnose:
         headers = ['Parser Name', 'Parser Description']
         print(tabulate(lines, headers=headers))
 
-    def print_analysers_list(self):
+    def print_analysers_list(self) -> None:
         lines = [['all', 'Run all analysers']]
         for analyser, description in self.config.get_analysers().items():
             lines.append([analyser, description])
