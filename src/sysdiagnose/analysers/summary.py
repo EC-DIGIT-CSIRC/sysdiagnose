@@ -2,6 +2,7 @@ from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from sysdiagnose.parsers.transparency_json import TransparencyJsonParser
+from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 from sysdiagnose.parsers.plists import PlistParser
 import os
 
@@ -73,7 +74,57 @@ class SummaryAnalyser(BaseAnalyserInterface):
         logger.warning(
             "This is a work in progress. The output may not be complete or accurate."
         )
+        
         # TODO list configuration profiles
+        mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
+        mcstate_result = mcstatesharedprofile.get_result()
+        try:
+            result.append("\n## Trusted certificates") 
+            payloadcontent = mcstate_result[0]["PayloadContent"]
+            for entry in payloadcontent:
+                if("PayloadIdentifier" in entry.keys()):
+                    result.append("Identifier: %s" % entry["PayloadIdentifier"])
+                if("PayloadDescription" in entry.keys()):
+                    result.append("Description: %s" % entry["PayloadDescription"])
+                if("PayloadDisplayName" in entry.keys()):
+                    result.append("Display name: %s" % entry["PayloadDisplayName"])
+                if("PayloadType" in entry.keys()):
+                    result.append("Type: %s" % entry["PayloadType"])
+                if("ServerURL" in entry.keys()):
+                    result.append("URL: %s" % entry["ServerURL"])
+                result.append("----------------------")
+        except KeyError:
+            result.append("Issue extracting trusted certificates")
+            pass
+
+        result.append("\n## Configuration Profiles") 
+        try:
+            if("PayloadIdentifier" in mcstate_result[0].keys()):
+                result.append("Identifier %s" % mcstate_result[0]["PayloadIdentifier"])
+            if("PayloadDescription" in mcstate_result[0].keys()):
+                result.append("Desription %s" % mcstate_result[0]["PayloadDescription"])
+            if("InstallDate" in mcstate_result[0].keys()):
+                result.append("Install date %s" % mcstate_result[0]["InstallDate"])
+            if("OTAProfileStub" in mcstate_result[0].keys()):
+                url  = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
+                identifier = mcstate_result[0]["OTAProfileStub"]["PayloadIdentifier"]
+                description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]  
+                type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
+                uuid = mcstate_result[0]["OTAProfileStub"]["PayloadUUID"]
+                org = mcstate_result[0]["OTAProfileStub"]["PayloadOrganization"]
+                result.append("\Organisation: %s" % org)
+                result.append("\tIdentifier: %s" % identifier)
+                result.append("\tDescription: %s" % description)
+                result.append("\tType: %s" % type)
+                result.append("\tURL: %s" % url)
+                result.append("\tUUID: %s" % uuid)
+                result.append("----------------------")
+
+        except KeyError:
+            result.append("Issue extracting configuration profiles")
+            pass   
+
+
         # TODO extract even more, ideally from plist/json and not jsonl
         # TODO also write the unit test
 
