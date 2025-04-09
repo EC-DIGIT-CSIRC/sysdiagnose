@@ -43,5 +43,9 @@ Homepage = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose"
 Issues = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose/issues"
 
 [project.scripts]
-sysdiag = "sysdiagnose.main:main"
-saf = "sysdiagnose.main:main"
+sysdiag = "sysdiagnose.__main__:main"
+saf = "sysdiagnose.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["sysdiagnose"]
