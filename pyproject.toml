@@ -36,6 +36,8 @@ dependencies = [
 ]
 
 [project.scripts]
-sysdiag = "sysdiagnose.main:main"
-saf = "sysdiagnose.main:main"
+sysdiag = "sysdiagnose.__main__:main"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["sysdiagnose"]
