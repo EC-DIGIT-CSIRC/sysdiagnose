@@ -86,11 +86,11 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # Generate a pie chart for parsed vs. not parsed files
         labels = ['Parsed Files', 'Not Parsed Files']
         sizes = [parsed_count, not_parsed_count]
-        colors = ['#4caf50', '#f44336']
+        colours = ['#4caf50', '#f44336']
         explode = (0.1, 0)  # Slightly "explode" the first slice (Parsed Files)
 
         plt.figure(figsize=(6, 6))
-        plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, explode=explode)
+        plt.pie(sizes, labels=labels, colors=colours, autopct='%1.1f%%', startangle=140, explode=explode)
         plt.title('Coverage')
 
         # Save the pie chart to a base64-encoded string
@@ -167,11 +167,16 @@ class CoverageAnalyser(BaseAnalyserInterface):
         parsers_info = []
         for parser_name, group in coverage_df.groupby('parser'):
             if parser_name is not None:
-                missing_files = group[group['file_type'] == 'unknown'].index.tolist()
+                # Total files parsed by this parser
+                total_files_parsed = len(group)
+                # Files with a known file_type (not 'unknown')
+                known_file_type_count = len(group[group['file_type'] != 'unknown'])
+                # Calculate coverage as a percentage
+                coverage = round((known_file_type_count / total_files_parsed) * 100) if total_files_parsed > 0 else 0
                 parsers_info.append({
                     'parser_name': parser_name,
                     'format': group['parser_format'].iloc[0],
-                    'missing_files': ', '.join(missing_files) if missing_files else 'None'
+                    'coverage': f"{coverage}%"  # Format as a percentage
                 })
 
         # Convert DataFrame to HTML table for the Details section
@@ -281,29 +286,27 @@ class CoverageAnalyser(BaseAnalyserInterface):
                         <img src="data:image/png;base64,{{ parser_format_chart_base64 }}" alt="Parsers by Format">
                     </div>
                 </div>
-
-                <!-- Parsers Information -->
-                <div class="section">
-                    <h3 class="collapsible" onclick="toggleContent('parsers-info-section')">Parsers Information</h3>
-                    <div id="parsers-info-section" class="content">
-                        <table>
-                            <tr>
-                                <th>Parser Name</th>
-                                <th>Format</th>
-                                <th>Missing Files</th>
-                            </tr>
-                            {% for parser in parsers_info %}
-                            <tr class="{% if parser.missing_files != 'None' %}light-red{% endif %}">
-                                <td>{{ parser.parser_name }}</td>
-                                <td>{{ parser.format }}</td>
-                                <td>{{ parser.missing_files }}</td>
-                            </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
+            </div>
+            <!-- Parsers Information -->
+            <div class="section">
+                <h2 class="collapsible" onclick="toggleContent('parsers-info-section')">Parsers Information</h2>
+                <div id="parsers-info-section" class="content">
+                    <table>
+                        <tr>
+                            <th>Parser Name</th>
+                            <th>Format</th>
+                            <th>Coverage</th>
+                        </tr>
+                        {% for parser in parsers_info %}
+                        <tr style="background-color: {{ get_coverage_color(parser.coverage) }};">
+                            <td>{{ parser.parser_name }}</td>
+                            <td>{{ parser.format }}</td>
+                            <td>{{ parser.coverage }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
                 </div>
             </div>
-
             <!-- Details Section -->
             <div class="section">
                 <h2 class="collapsible" onclick="toggleContent('details-section')">Details</h2>
@@ -325,6 +328,35 @@ class CoverageAnalyser(BaseAnalyserInterface):
             parser_format_chart_base64=parser_format_chart_base64,
             total_parsers=total_parsers,
             parsers_info=parsers_info,
-            coverage_table_html=coverage_table_html
+            coverage_table_html=coverage_table_html,
+            get_coverage_color=get_coverage_color  # Pass the function to the template
         )
         return rendered_html
+
+
+def get_coverage_color(coverage: str) -> str:
+    """
+    Returns a colour based on the coverage percentage.
+    :param coverage: Coverage percentage as a string (e.g., "85.00%").
+    :return: A CSS colour string.
+    """
+    # Convert coverage to a float
+    coverage_value = float(coverage.strip('%'))
+
+    # Define colour ranges
+    if 80 <= coverage_value <= 100:
+        # Green to Green-Yellow
+        green = int(255 - (coverage_value - 80) * (255 - 173) / 20)  # Linear interpolation
+        return f"rgb(173, 255, {green})"
+    elif 50 < coverage_value < 80:
+        # Green-Yellow to Yellow
+        red = int(173 + (coverage_value - 50) * (255 - 173) / 30)
+        return f"rgb({red}, 255, 0)"
+    elif 30 < coverage_value <= 50:
+        # Yellow to Yellow-Orange
+        green = int(255 - (coverage_value - 30) * (255 - 165) / 20)
+        return f"rgb(255, {green}, 0)"
+    else:
+        # Yellow-Orange to Red
+        red = int(255 - (coverage_value) * (255 - 165) / 30)
+        return f"rgb({red}, 0, 0)"
