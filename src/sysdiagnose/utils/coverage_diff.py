@@ -250,6 +250,72 @@ def generate_html_report(comparison_data: list[dict], added_properties: dict, re
     with open(output_file, 'w') as file:
         file.write(rendered_html)
 
+def generate_markdown_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict,
+                             modified_properties: dict, output_file: str) -> None:
+    """
+    Generate a Markdown report for parser coverage comparison and sysdiag properties.
+
+    :param comparison_data: List of dictionaries containing parser coverage comparison data.
+    :param added_properties: Dictionary of added properties.
+    :param removed_properties: Dictionary of removed properties.
+    :param modified_properties: Dictionary of modified properties.
+    :param output_file: Output Markdown file path.
+    """
+    with open(output_file, 'w') as file:
+        # Title
+        file.write("# Parser Coverage and Sysdiag Properties Comparison\n\n")
+
+        # Sysdiag Properties Comparison
+        file.write("## Sysdiag Properties Comparison\n\n")
+
+        # Added Properties
+        file.write("### Added Properties\n")
+        if added_properties:
+            file.write("| Property | Value |\n")
+            file.write("|----------|-------|\n")
+            for key, value in added_properties.items():
+                file.write(f"| {key} | {value} |\n")
+        else:
+            file.write("No added properties.\n")
+        file.write("\n")
+
+        # Removed Properties
+        file.write("### Removed Properties\n")
+        if removed_properties:
+            file.write("| Property | Value |\n")
+            file.write("|----------|-------|\n")
+            for key, value in removed_properties.items():
+                file.write(f"| {key} | {value} |\n")
+        else:
+            file.write("No removed properties.\n")
+        file.write("\n")
+
+        # Modified Properties
+        file.write("### Modified Properties\n")
+        if modified_properties:
+            file.write("| Property | Old Value | New Value |\n")
+            file.write("|----------|-----------|-----------|\n")
+            for key, value in modified_properties.items():
+                file.write(f"| {key} | {value['old_value']} | {value['new_value']} |\n")
+        else:
+            file.write("No modified properties.\n")
+        file.write("\n")
+
+        # Parser Coverage Comparison
+        file.write("## Parser Coverage Comparison\n\n")
+        if comparison_data:
+            file.write("| Parser Name | Coverage (Old) | Coverage (New) |\n")
+            file.write("|-------------|----------------|----------------|\n")
+            for row in comparison_data:
+                coverage_old = f"{round(row['coverage_old'] * 100)}%"
+                coverage_new = f"{round(row['coverage_new'] * 100)}%"
+                file.write(f"| {row['parser']} | {coverage_old} | {coverage_new} |\n")
+        else:
+            file.write("No parser coverage data available.\n")
+        file.write("\n")
+
+    print(f"Markdown report generated: {output_file}")
+
 def compare_coverage_json_files(file1: str, file2: str,
                                 output_file: str, format: str = 'html') -> None:
     """
@@ -272,6 +338,11 @@ def compare_coverage_json_files(file1: str, file2: str,
     if format.lower() == 'html':
         # Generate HTML report
         generate_html_report(
+            comparison_data, added_properties, removed_properties, modified_properties, output_file
+        )
+    elif format.lower() == 'markdown':
+        # Generate Markdown report
+        generate_markdown_report(
             comparison_data, added_properties, removed_properties, modified_properties, output_file
         )
 
