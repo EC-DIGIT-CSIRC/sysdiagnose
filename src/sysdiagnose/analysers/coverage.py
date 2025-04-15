@@ -4,6 +4,7 @@ import importlib
 import os
 import magic
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, logger
+from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 
 
 class CoverageAnalyser(BaseAnalyserInterface):
@@ -14,9 +15,37 @@ class CoverageAnalyser(BaseAnalyserInterface):
         super().__init__(__file__, config, case_id)
 
     def execute(self):
+        result = []
+        rctl_parser = RemotectlDumpstateParser(self.config, self.case_id)
+        rctl_result = rctl_parser.get_result()
+        # device info
+        device_info = {}
+        try:
+            device_info = {
+                "os_version": rctl_result['Local device']['Properties']['OSVersion'],
+                "build": rctl_result['Local device']['Properties']['BuildVersion'],
+                "product_name": rctl_result['Local device']['Properties']['ProductName'],
+                "product_type": rctl_result['Local device']['Properties']['ProductType']
+            }
+        except KeyError:
+            logger.exception("Issue extracting device info")
+        result.append(device_info)
+
+        # Calculate parser coverage
+        result.append(self.get_parser_coverage(self.case_data_subfolder))
+
+        # return result
+        return self.generate_html_report(result[0], result[1])
+
+    def get_parser_coverage(self, path: str) -> dict:
+        """
+        Get the parser coverage for a given path.
+        :param path: The path to the file or directory.
+        :return: A dictionary containing the parser coverage information.
+        """
         # get all files and folders
         coverage = {}
-        for root, dirs, files in os.walk(self.case_data_folder):
+        for root, dirs, files in os.walk(path):
             for file in files:
                 # skip files that start with a .
                 if os.path.basename(file).startswith('.'):
@@ -24,7 +53,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
 
                 coverage[os.path.join(root, file)] = {
                     'file_type': self.get_file_type(os.path.join(root, file)),
-                    'folder_name': os.path.relpath(root, start=self.case_data_folder),
+                    'folder_name': os.path.relpath(root, start=path),
                     'parser': None,
                     'parser_format': None
                 }
@@ -40,15 +69,19 @@ class CoverageAnalyser(BaseAnalyserInterface):
                     elif not os.path.isdir(file):
                         coverage[file] = {
                             'file_type': 'unknown',
-                            'folder_name': os.path.relpath(file, start=self.case_data_folder),
+                            'folder_name': os.path.relpath(file, start=path),
                             'parser': parser_name,
                             'parser_format': parser.format
                         }
 
-        # return coverage
-        return self.generate_html_report(coverage)
+        return coverage
 
     def get_parser(self, parser_name: str) -> BaseParserInterface:
+        """
+        Get the parser instance for a given parser name.
+        :param parser_name: The name of the parser.
+        :return: An instance of the parser class.
+        """
         module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
         # figure out the class name
         obj = None
@@ -62,13 +95,20 @@ class CoverageAnalyser(BaseAnalyserInterface):
         return None
 
     def get_file_type(self, file_path: str) -> str:
+        """
+        Get the file type using the python-magic library.
+        :param file_path: The path to the file.
+        :return: The file type as a string.
+        """
         return magic.from_file(file_path, mime=True)
 
-    def generate_html_report(self, coverage: dict) -> str:
+    def generate_html_report(self, device_info: dict, coverage: dict) -> str:
         """
-        Generate an HTML report with three sections:
-        1. Statistics (includes Coverage Overview and Parser Overview subsections).
-        2. Details (a collapsible section with a table of coverage data).
+        Generate an HTML report with four sections:
+        1. Device Information (a table with device details).
+        2. Statistics (includes Coverage Overview and Parser Overview subsections).
+        3. Parsers Information (a table with parser details).
+        4. Details (a collapsible section with a table of coverage data).
         """
         import pandas as pd
         import matplotlib.pyplot as plt
@@ -226,6 +266,23 @@ class CoverageAnalyser(BaseAnalyserInterface):
         <body>
             <h1>Coverage Report</h1>
 
+            <!-- Device Information Section -->
+            <div class="section">
+                <h2>Device Information</h2>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    {% for key, value in device_info.items() %}
+                    <tr>
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
             <!-- Statistics Section -->
             <div class="section">
                 <h2>Statistics</h2>
@@ -321,6 +378,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # Render the template with Jinja2
         template = Template(html_template)
         rendered_html = template.render(
+            device_info=device_info,
             parsed_chart_base64=parsed_chart_base64,
             histogram_base64=histogram_base64,
             least_parsed_folders=least_parsed_folders.to_dict(orient='records'),
