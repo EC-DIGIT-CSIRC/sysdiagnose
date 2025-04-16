@@ -6,7 +6,7 @@ import csv
 class MCStateSharedProfile(BaseAnalyserInterface):
     description = "Test parser - 2025-04-09"
     format = "csv"  # by default json
-    
+
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
 
@@ -19,7 +19,7 @@ class MCStateSharedProfile(BaseAnalyserInterface):
 
         # Remove duplicates
         keys = list(set(keys))
-       
+
         return keys
 
     def execute(self):

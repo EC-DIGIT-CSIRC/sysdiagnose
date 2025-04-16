@@ -46,7 +46,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 if uri.startswith("im://mailto:"):
                     result.append(f"Owner's email: {uri[12:]}")
                 if uri.startswith("im://tel:"):
-                    result.append(f"Owner's phone: {uri[9:]}") 
+                    result.append(f"Owner's phone: {uri[9:]}")
         except KeyError:
             pass
 
@@ -83,7 +83,6 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     result.append("\n## Circle")
                     result.extend(item['circle'])
 
-        
         # Extract trusted certificates and configuration profiles
         # TODO fix the following piece of code
         #  - should return subjet which includes user account
@@ -91,7 +90,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
         mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
         mcstate_result = mcstatesharedprofile.get_result()
         # try:
-        #     result.append("\n## Trusted certificates") 
+        #     result.append("\n## Trusted certificates")
         #     for payloadcontent in mcstate_result:
         #         payloadcontent_entry = mcstate_result[0]["PayloadContent"]
         #         for entry in payloadcontent_entry:
@@ -104,7 +103,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
         #             if("InstallDate" in entry.keys()):
         #                 result.append("Install date %s" % entry["InstallDate"])
         #             if("CertSubject" in entry.keys()):
-        #                 result.append("Subject: %s" % entry["CertSubject"]) 
+        #                 result.append("Subject: %s" % entry["CertSubject"])
         #             if("PayloadType" in entry.keys()):
         #                 result.append("Type: %s" % entry["PayloadType"])
         #             if("ServerURL" in entry.keys()):
@@ -112,7 +111,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
         #             if("OTAProfileStub" in entry.keys()):
         #                 url  = entry["OTAProfileStub"]["PayloadContent"]["URL"]
         #                 identifier = entry["OTAProfileStub"]["PayloadIdentifier"]
-        #                 description = entry["OTAProfileStub"]["PayloadDescription"]  
+        #                 description = entry["OTAProfileStub"]["PayloadDescription"]
         #                 type = entry["OTAProfileStub"]["PayloadType"]
         #                 uuid = entry["OTAProfileStub"]["PayloadUUID"]
         #                 org = entry["OTAProfileStub"]["PayloadOrganization"]
@@ -128,18 +127,18 @@ class SummaryAnalyser(BaseAnalyserInterface):
         #     pass
 
         # TODO ensure the following piece of code is complete and exhaustive
-        result.append("\n## Configuration Profiles") 
+        result.append("\n## Configuration Profiles")
         try:
-            if("PayloadIdentifier" in mcstate_result[0].keys()):
+            if "PayloadIdentifier" in mcstate_result[0].keys():
                 result.append("Identifier %s" % mcstate_result[0]["PayloadIdentifier"])
-            if("PayloadDescription" in mcstate_result[0].keys()):
+            if "PayloadDescription" in mcstate_result[0].keys():
                 result.append("Desription %s" % mcstate_result[0]["PayloadDescription"])
-            if("InstallDate" in mcstate_result[0].keys()):
+            if "InstallDate" in mcstate_result[0].keys():
                 result.append("Install date %s" % mcstate_result[0]["InstallDate"])
-            if("OTAProfileStub" in mcstate_result[0].keys()):
+            if "OTAProfileStub" in mcstate_result[0].keys():
                 url  = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
                 identifier = mcstate_result[0]["OTAProfileStub"]["PayloadIdentifier"]
-                description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]  
+                description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]
                 type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
                 uuid = mcstate_result[0]["OTAProfileStub"]["PayloadUUID"]
                 org = mcstate_result[0]["OTAProfileStub"]["PayloadOrganization"]
@@ -152,8 +151,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 result.append("----------------------")
         except KeyError:
             result.append("Issue extracting configuration profiles")
-            pass   
-
+            pass
 
         logger.warning(
             "This is a work in progress. The output may not be complete or accurate."

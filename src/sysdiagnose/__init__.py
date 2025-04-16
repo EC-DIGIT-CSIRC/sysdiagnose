@@ -205,9 +205,9 @@ class Sysdiagnose:
                         metadata['source_sha256'] = self.calculate_metadata_signature(metadata)
 
                         return metadata
-                    except:
+                    except Exception:
                         logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.",
-                                       exc_info=True)
+                                     exc_info=True)
                 else:
                     logger.error("remotectl_dumpstate does not contain a Local device section.")
 
