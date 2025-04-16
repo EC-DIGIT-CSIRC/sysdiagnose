@@ -37,6 +37,12 @@ dependencies = [
   "matplotlib==3.10.1",
 ]
 
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.11.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose"
 Issues = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose/issues"
@@ -48,3 +54,23 @@ saf = "sysdiagnose.__main__:main"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = ["sysdiagnose"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+select = ["E", "F", "I", "W", "N", "B", "C4", "ARG", "SIM", "ERA", "PL", "RUF"]
+ignore = [
+  "PLR0913",
+  "E221","E225","E251","E501",
+]
+exclude = [
+    ".git",
+    ".ruff_cache",
+    "__pycache__",
+    ".venv",
+    "build",
+    "dist",
+]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
