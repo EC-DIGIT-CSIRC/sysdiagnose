@@ -1,0 +1,19 @@
+{
+    "name": "SysDiagnose",
+    "remoteUser": "vscode",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    "workspaceFolder": "/sysdiagnose",
+    "workspaceMount": "source=${localWorkspaceFolder}/,target=/sysdiagnose,type=bind,consistency=cached",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-python.python",
+          "ms-python.debugpy",
+          "charliermarsh.ruff",
+          "esbenp.prettier-vscode"
+        ]
+      }
+    }
+  }
