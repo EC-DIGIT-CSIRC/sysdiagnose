@@ -5,7 +5,7 @@ import tempfile
 import shutil
 import glob
 import os
-
+import tarfile
 
 class TestSysdiagnose(SysdiagnoseTestCase):
 
@@ -44,6 +44,26 @@ class TestSysdiagnose(SysdiagnoseTestCase):
             sd = Sysdiagnose(cases_path=temp_dir)
             # take the first sysdiagnose tar archive that's there and try it out
             sd_archive_files = [name for name in glob.glob('tests/testdata*/**/*.tar.gz', recursive=True)]
+            for archive_file in sd_archive_files:
+                print(f"Creating case from {archive_file}")
+                sd.create_case(archive_file)
+                break
+
+        finally:
+            # Ensure the temporary directory is cleaned up after the test
+            shutil.rmtree(temp_dir)
+
+    def test_create_case_from_folder(self):
+        # Create a temporary directory
+        try:
+            temp_dir = tempfile.mkdtemp()
+            sd = Sysdiagnose(cases_path=temp_dir)
+            sd_archive_files = []
+            for name in glob.glob('tests/testdata*/**/*.tar.gz', recursive=True):
+                with tarfile.open(name) as tf:
+                    tf.extractall(temp_dir)
+                sd_archive_files.append(os.path.join(temp_dir, os.path.basename(name).rstrip('.tar.gz')))
+
             for archive_file in sd_archive_files:
                 print(f"Creating case from {archive_file}")
                 sd.create_case(archive_file)

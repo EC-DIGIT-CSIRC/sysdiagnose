@@ -118,6 +118,22 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: analyse timesketch",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.main",
+            "args": "-c public analyse timesketch",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: analyse coverage",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.main",
+            "args": "-c public analyse coverage",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: list parsers",
             "type": "debugpy",
             "request": "launch",
