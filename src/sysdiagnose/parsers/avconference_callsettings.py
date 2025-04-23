@@ -55,6 +55,9 @@ class AvConferenceCallSettingsParser(BaseParserInterface):
         lines = file_content.decode().split('\n')
         for line in lines:
             entry = entry_tpl.copy()
-            entry['message'] = line.rstrip()
+            if re.match(r'^[0-9]{6}\.[0-9]{6} ', line):
+                entry['message'] = line[13:].strip()
+            else:
+                entry['message'] = line.strip()
             entries.append(entry)
         return entries
