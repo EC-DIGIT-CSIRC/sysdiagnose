@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "sysdiagnose"
@@ -17,7 +17,7 @@ maintainers = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: EUPL 1.2",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Operating System :: OS Independent",
 ]
 keywords = ["sysdiagnose", "analysis", "parsing", "iOS", "apple", "malware", "forensics"]
@@ -51,9 +51,16 @@ Issues = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose/issues"
 sysdiag = "sysdiagnose.__main__:main"
 saf = "sysdiagnose.__main__:main"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["sysdiagnose"]
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.sdist]
+include = ["src/**", "README.md", "LICENSE.txt"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/**", "README.md", "LICENSE.txt"]
+packages = ["src/sysdiagnose"]
+
 
 [tool.ruff]
 line-length = 120
