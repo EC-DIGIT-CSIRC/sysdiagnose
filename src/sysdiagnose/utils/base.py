@@ -78,6 +78,7 @@ class SysdiagnoseConfig:
         results = dict(sorted(results.items()))
         return results
 
+
 class BaseInterface(ABC):
 
     description = '<not documented>'  # implementation should set this

@@ -28,6 +28,7 @@ import importlib
 # Keys that are always present in parser outputs
 default_keys = ["timestamp", "datetime"]
 
+
 class TimesketchAnalyser(BaseAnalyserInterface):
     description = 'Generate a Timesketch compatible timeline'
     format = 'jsonl'

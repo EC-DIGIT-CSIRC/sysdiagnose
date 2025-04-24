@@ -1,6 +1,7 @@
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 import csv
+
 
 # Temmporary analyser - for testing
 class MCStateSharedProfile(BaseAnalyserInterface):

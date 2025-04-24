@@ -9,6 +9,7 @@ def load_json(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
 
+
 def compare_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict]:
     """
         Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
@@ -29,6 +30,7 @@ def compare_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict
     }
 
     return added, removed, modified
+
 
 def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
     """
@@ -91,6 +93,7 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
 
     # Convert the comparison DataFrame to a list of dictionaries
     return comparison.reset_index().to_dict(orient='records')
+
 
 def generate_html_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict,
                          modified_properties: dict, output_file: str) -> None:
@@ -250,6 +253,7 @@ def generate_html_report(comparison_data: list[dict], added_properties: dict, re
     with open(output_file, 'w') as file:
         file.write(rendered_html)
 
+
 def generate_markdown_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict,
                              modified_properties: dict, output_file: str) -> None:
     """
@@ -315,6 +319,7 @@ def generate_markdown_report(comparison_data: list[dict], added_properties: dict
         file.write("\n")
 
     print(f"Markdown report generated: {output_file}")
+
 
 def compare_coverage_json_files(file1: str, file2: str,
                                 output_file: str, format: str = 'html') -> None:

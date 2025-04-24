@@ -3,7 +3,6 @@ import argparse
 import sys
 from sysdiagnose import Sysdiagnose
 import os
-import time
 from sysdiagnose.utils.logger import logger, set_console_logging
 
 

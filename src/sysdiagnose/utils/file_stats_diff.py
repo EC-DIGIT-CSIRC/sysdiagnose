@@ -8,6 +8,7 @@ def load_json(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
 
+
 def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict]:
     """
         Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
@@ -28,6 +29,7 @@ def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict,
     }
 
     return added, removed, modified
+
 
 def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
                                        exclusions: list[str] = None) -> tuple[list, list, list]:
@@ -81,6 +83,7 @@ def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
             modified.append(file_diff)
 
     return added, removed, modified
+
 
 def generate_html_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
                          added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
@@ -387,6 +390,7 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
     with open(output_file, 'w') as file:
         file.write(rendered_html)
 
+
 def generate_markdown_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
                              added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
     """
@@ -489,6 +493,7 @@ def generate_markdown_report(added_properties: dict, removed_properties: dict, m
     # Write to file
     with open(output_file, 'w') as file:
         file.write("\n".join(markdown_content))
+
 
 def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
                                   output_file: str, format: str = 'html') -> None:

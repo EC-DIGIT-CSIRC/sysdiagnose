@@ -7,6 +7,7 @@ import glob
 import os
 import tarfile
 
+
 class TestSysdiagnose(SysdiagnoseTestCase):
 
     def test_get_case_ids(self):

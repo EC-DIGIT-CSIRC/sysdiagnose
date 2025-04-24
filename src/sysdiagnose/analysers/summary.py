@@ -136,7 +136,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
             if "InstallDate" in mcstate_result[0].keys():
                 result.append("Install date %s" % mcstate_result[0]["InstallDate"])
             if "OTAProfileStub" in mcstate_result[0].keys():
-                url  = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
+                url = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
                 identifier = mcstate_result[0]["OTAProfileStub"]["PayloadIdentifier"]
                 description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]
                 type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
