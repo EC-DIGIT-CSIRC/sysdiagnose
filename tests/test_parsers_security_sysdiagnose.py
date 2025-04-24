@@ -27,11 +27,14 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
         expected_output = {
             'meta': {
                 'rapport': [
-                    {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}
                 ]
-            }
+            },
+            'events': [
+                {'timestamp': 1684958174.0, 'datetime': '2023-05-24T19:56:14.000000+00:00', 'timestamp_desc': 'rapport: entry creation time', 'message': 'rapport iPhone - com.apple.rapport', 'section': 'rapport', 'attributes': {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}},
+                {'timestamp': 1684958174.0, 'datetime': '2023-05-24T19:56:14.000000+00:00', 'timestamp_desc': 'rapport: entry modification time', 'message': 'rapport iPhone - com.apple.rapport', 'section': 'rapport', 'attributes': {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}}
+            ]
         }
-        result = {'meta': {}}
+        result = {'meta': {}, 'events': []}
         SecuritySysdiagnoseParser.process_buffer_keychain_state(input, result)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
