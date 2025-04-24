@@ -170,7 +170,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             # process the last key value pair
             row[key] = line[start:]
             if 'cdat' in row or 'mdat' in row:
-                msg = f'{section} {row.get('desc', row.get('labl', ''))} - {row.get('agrp')}'
+                msg = f"{section} {row.get('desc', row.get('labl', ''))} - {row.get('agrp')}"
                 if 'cdat' in row:
                     match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', row['cdat'])
                     if match:
