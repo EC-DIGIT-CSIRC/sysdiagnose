@@ -17,7 +17,7 @@
             "name": "Python Debugger: cases",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "cases",
             "cwd": "${workspaceFolder}/"
         },
@@ -25,7 +25,7 @@
             "name": "Python Debugger: init ios15",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
             "cwd": "${workspaceFolder}/"
         },
@@ -33,7 +33,7 @@
             "name": "Python Debugger: -c 1234-345-1345 init ios15",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c 1234-345-1345 init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
             "cwd": "${workspaceFolder}/"
         },
@@ -41,7 +41,7 @@
             "name": "Python Debugger: analysers list",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "analysers",
             "cwd": "${workspaceFolder}/"
         },
@@ -49,7 +49,7 @@
             "name": "Python Debugger: analyse all",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse all",
             "cwd": "${workspaceFolder}/"
         },
@@ -57,7 +57,7 @@
             "name": "Python Debugger: analyse timeliner",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
@@ -65,7 +65,7 @@
             "name": "Python Debugger: analyse demo_analyser",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse demo_analyser",
             "cwd": "${workspaceFolder}/"
         },
@@ -73,7 +73,7 @@
             "name": "Python Debugger: analyse apps 1",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse apps",
             "cwd": "${workspaceFolder}/"
         },
@@ -81,7 +81,7 @@
             "name": "Python Debugger: analyse ps_everywhere 1",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse ps_everywhere",
             "cwd": "${workspaceFolder}/"
         },
@@ -89,7 +89,7 @@
             "name": "Python Debugger: analyse wifi_geolocation 1",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse wifi_geolocation",
             "cwd": "${workspaceFolder}/"
         },
@@ -97,7 +97,7 @@
             "name": "Python Debugger: analyse wifi_geolocation_kml 1",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse wifi_geolocation_kml",
             "cwd": "${workspaceFolder}/"
         },
@@ -105,7 +105,7 @@
             "name": "Python Debugger: analyse timeliner 1",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse timeliner",
             "cwd": "${workspaceFolder}/"
         },
@@ -113,7 +113,7 @@
             "name": "Python Debugger: analyse yarascan",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse yarascan",
             "cwd": "${workspaceFolder}/"
         },
@@ -121,7 +121,7 @@
             "name": "Python Debugger: analyse timesketch",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse timesketch",
             "cwd": "${workspaceFolder}/"
         },
@@ -129,7 +129,7 @@
             "name": "Python Debugger: analyse coverage",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public analyse coverage",
             "cwd": "${workspaceFolder}/"
         },
@@ -137,7 +137,7 @@
             "name": "Python Debugger: list parsers",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "parsers",
             "cwd": "${workspaceFolder}/"
         },
@@ -145,7 +145,7 @@
             "name": "Python Debugger: parse demo_parser",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse demo_parser",
             "cwd": "${workspaceFolder}/"
         },
@@ -153,7 +153,7 @@
             "name": "Python Debugger: parse brctl",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse brctl",
             "cwd": "${workspaceFolder}/"
         },
@@ -161,7 +161,7 @@
             "name": "Python Debugger: parse logarchive",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse logarchive",
             "cwd": "${workspaceFolder}/"
         },
@@ -169,7 +169,7 @@
             "name": "Python Debugger: parse lockdownd",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse lockdownd",
             "cwd": "${workspaceFolder}/"
         },
@@ -177,7 +177,7 @@
             "name": "Python Debugger: parse security_sysdiagnose",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse security_sysdiagnose",
             "cwd": "${workspaceFolder}/"
         },
@@ -185,7 +185,7 @@
             "name": "Python Debugger: parse powerlogs",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse powerlogs",
             "cwd": "${workspaceFolder}/"
         },
@@ -193,7 +193,7 @@
             "name": "Python Debugger: parse mobileactivation",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse mobileactivation",
             "cwd": "${workspaceFolder}/"
         },
@@ -201,7 +201,7 @@
             "name": "Python Debugger: parse networkextension",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c 2 parse networkextension",
             "cwd": "${workspaceFolder}/"
         },
@@ -209,7 +209,7 @@
             "name": "Python Debugger: parse psthread",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse psthread",
             "cwd": "${workspaceFolder}/"
         },
@@ -217,7 +217,7 @@
             "name": "Python Debugger: parse ps",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse ps",
             "cwd": "${workspaceFolder}/"
         },
@@ -225,7 +225,7 @@
             "name": "Python Debugger: parse spindumpnosymbols",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse spindumpnosymbols",
             "cwd": "${workspaceFolder}/"
         },
@@ -233,7 +233,7 @@
             "name": "Python Debugger: parse shutdownlogs",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse shutdownlogs",
             "cwd": "${workspaceFolder}/"
         },
@@ -241,7 +241,7 @@
             "name": "Python Debugger: parse ps ALL",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c all parse ps",
             "cwd": "${workspaceFolder}/"
         },
@@ -249,7 +249,7 @@
             "name": "Python Debugger: parse crashlogs",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse crashlogs",
             "cwd": "${workspaceFolder}/"
         },
@@ -257,7 +257,7 @@
             "name": "Python Debugger: parse plists",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse plists",
             "cwd": "${workspaceFolder}/"
         },
@@ -265,7 +265,7 @@
             "name": "Python Debugger: parse wifinetworks",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse wifinetworks",
             "cwd": "${workspaceFolder}/"
         },
@@ -273,7 +273,7 @@
             "name": "Python Debugger: parse swcutil",
             "type": "debugpy",
             "request": "launch",
-            "module": "sysdiagnose.main",
+            "module": "sysdiagnose.__main__",
             "args": "-c public parse swcutil",
             "cwd": "${workspaceFolder}/"
         }
