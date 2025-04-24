@@ -198,7 +198,7 @@ class Sysdiagnose:
                             'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
                             'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
                             'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                            'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d%H%M%S')}",
+                            'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
                             'source_file': source_file,
                             'source_sha256': ''
                         }
