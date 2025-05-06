@@ -8,6 +8,7 @@ import glob
 import json
 import os
 import re
+from io import TextIOWrapper
 
 
 class SysdiagnoseConfig:
@@ -120,7 +121,27 @@ class BaseInterface(ABC):
         Returns:
             datetime: The creation date and time of the sysdiagnose.
         """
-        with open(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'), 'r') as f:
+        return BaseInterface.get_sysdiagnose_creation_datetime_from_file(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'))
+
+    @staticmethod
+    def get_sysdiagnose_creation_datetime_from_file(file: str | TextIOWrapper) -> datetime:
+        """
+        Returns the creation date and time of the sysdiagnose as a datetime object.
+
+        Args:
+            file (str|TextIOWrapper): The path to the sysdiagnose log file or a file object.
+
+        Returns:
+            datetime: The creation date and time of the sysdiagnose.
+        """
+        need_to_close = False
+        if isinstance(file, str):
+            f = open(file, 'r')
+            need_to_close = True
+        else:
+            f = file
+        # now we need to find the timestamp in the sysdiagnose.log file
+        try:
             timestamp_regex = None
             for line in f:
                 if 'IN_PROGRESS_sysdiagnose' in line:
@@ -135,6 +156,9 @@ class BaseInterface(ABC):
                         return parsed_timestamp
                     else:
                         raise ValueError("Invalid timestamp format in sysdiagnose.log. Cannot figure out time of sysdiagnose creation.")
+        finally:
+            if need_to_close:
+                f.close()
 
     def output_exists(self) -> bool:
         """

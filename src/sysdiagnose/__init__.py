@@ -1,5 +1,4 @@
 import shutil
-import tempfile
 from tabulate import tabulate
 import hashlib
 import importlib.util
@@ -8,8 +7,9 @@ import os
 import re
 import tarfile
 import fcntl
-from sysdiagnose.utils.base import BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.logger import set_json_logging, logger
+from io import TextIOWrapper
 
 
 class Sysdiagnose:
@@ -61,7 +61,7 @@ class Sysdiagnose:
         Returns:
             int: The case ID of the new case.
         '''
-        metadata = self.get_case_metadata(sysdiagnose_file)
+        metadata = Sysdiagnose.get_case_metadata(sysdiagnose_file)
 
         if not metadata:
             raise ValueError(f"Invalid sysdiagnose file: {sysdiagnose_file}. Case could not be created!")
@@ -146,7 +146,8 @@ class Sysdiagnose:
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
 
-    def get_case_metadata(self, source_file: str) -> str:
+    @staticmethod
+    def get_case_metadata(source_file: str) -> str:
         """
         Returns the sha256 hash of the sysdiagnose source file/folder.
         The hash is calculated by concatenating the contents of the case metadata: udid, serial, ios version and date.
@@ -156,42 +157,28 @@ class Sysdiagnose:
         """
         from sysdiagnose.parsers import remotectl_dumpstate
 
-        # Let's hack the initialisation of the parser so that it finds the information it needs
-        required_files = ['remotectl_dumpstate.txt', 'sysdiagnose.log']
-        logger.info(f"Extracting required metadata files to init the case: {required_files}")
-        # create a temporary directory to extract the sysdiagnose files
-        with tempfile.TemporaryDirectory() as tmpdir:
-            extracted_path = os.path.join(tmpdir, 'data')
-            # test sysdiagnose file and extract the minimum needed artefacts
+        with tarfile.open(source_file) as tf:
+            remotectl_dumpstate_file = None
+            sysdiagnose_log_file = None
             try:
-                with tarfile.open(source_file) as tf:
-                    for member in tf.getmembers():
-                        if any(member.name.endswith(file) for file in required_files):
-                            tf.extract(member, extracted_path)
-            except Exception as e:
-                logger.warning(f"Error extracting sysdiagnose file. Reason: {str(e)}", exc_info=True)
-                if os.path.isdir(source_file):
-                    logger.info(f"{source_file} is a directory, supposedly from a sysdiagnose archive file")
-                    os.makedirs(extracted_path, exist_ok=True)
-                    for file in required_files:
-                        src_file = os.path.join(source_file, file)
-                        dst_file = os.path.join(extracted_path, file)
-                        if os.path.isfile(src_file):
-                            shutil.copy2(src_file, dst_file)
+                for member in tf.getmembers():
 
-            # Let's check if we have the required files
-            files_ready = sum(len(files) for _, _, files in os.walk(extracted_path)) == len(required_files)
-            if not files_ready:
-                logger.error(f"Missing required files in sysdiagnose archive: {required_files} to create the case")
-                return None
+                    if member.name.endswith('remotectl_dumpstate.txt'):
+                        remotectl_dumpstate_file = tf.extractfile(member)
+                    elif member.name.endswith('sysdiagnose.log'):
+                        sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
+            except Exception:
+                raise FileNotFoundError("File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive.")
+
+            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+
+            file_content = remotectl_dumpstate_file.read().decode()
+            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file_content(file_content)
 
             # Time to obtain the metadata
-            remotectl_dumpstate_parser = remotectl_dumpstate.RemotectlDumpstateParser(SysdiagnoseConfig(tmpdir), '')
-            remotectl_dumpstate_json = remotectl_dumpstate_parser.get_result()
             if 'error' not in remotectl_dumpstate_json:
                 if 'Local device' in remotectl_dumpstate_json:
                     try:
-                        sysdiagnose_date = remotectl_dumpstate_parser.sysdiagnose_creation_datetime
                         serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
                         metadata = {
                             'serial_number': serial_number,
@@ -202,7 +189,7 @@ class Sysdiagnose:
                             'source_file': source_file,
                             'source_sha256': ''
                         }
-                        metadata['source_sha256'] = self.calculate_metadata_signature(metadata)
+                        metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
 
                         return metadata
                     except Exception:
@@ -213,8 +200,8 @@ class Sysdiagnose:
 
         return None
 
-    # TODO: Shall we move it to the utils package??
-    def calculate_metadata_signature(self, metadata: dict) -> str:
+    @staticmethod
+    def calculate_metadata_signature(metadata: dict) -> str:
         """
         Calculates the signature of the metadata by concatenating all fields except 'case_id', 'source_file' and
         'source_sha256'.
