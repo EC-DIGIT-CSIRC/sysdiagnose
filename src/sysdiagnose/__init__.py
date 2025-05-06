@@ -157,46 +157,55 @@ class Sysdiagnose:
         """
         from sysdiagnose.parsers import remotectl_dumpstate
 
-        with tarfile.open(source_file) as tf:
-            remotectl_dumpstate_file = None
-            sysdiagnose_log_file = None
-            try:
-                for member in tf.getmembers():
+        if os.path.isfile(source_file):
+            with tarfile.open(source_file) as tf:
+                remotectl_dumpstate_file = None
+                sysdiagnose_log_file = None
+                try:
+                    for member in tf.getmembers():
 
-                    if member.name.endswith('remotectl_dumpstate.txt'):
-                        remotectl_dumpstate_file = tf.extractfile(member)
-                    elif member.name.endswith('sysdiagnose.log'):
-                        sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
-            except Exception:
-                raise FileNotFoundError("File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive.")
+                        if member.name.endswith('remotectl_dumpstate.txt'):
+                            remotectl_dumpstate_file = tf.extractfile(member)
+                            remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
+                            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
+                        elif member.name.endswith('sysdiagnose.log'):
+                            sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
+                            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
 
+                except Exception:
+                    logger.error("File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive.")
+
+        elif os.path.isdir(source_file):
+            sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
+            remotectl_dumpstate_file = os.path.join(source_file, 'remotectl_dumpstate.txt')
+            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
 
-            file_content = remotectl_dumpstate_file.read().decode()
-            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file_content(file_content)
+        else:
+            logger.error(f"File {source_file} is not a valid sysdiagnose file or folder.")
+            return None
 
-            # Time to obtain the metadata
-            if 'error' not in remotectl_dumpstate_json:
-                if 'Local device' in remotectl_dumpstate_json:
-                    try:
-                        serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
-                        metadata = {
-                            'serial_number': serial_number,
-                            'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
-                            'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
-                            'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                            'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
-                            'source_file': source_file,
-                            'source_sha256': ''
-                        }
-                        metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
+        # Time to obtain the metadata
+        if 'error' not in remotectl_dumpstate_json:
+            if 'Local device' in remotectl_dumpstate_json:
+                try:
+                    serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
+                    metadata = {
+                        'serial_number': serial_number,
+                        'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
+                        'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
+                        'date': sysdiagnose_date.isoformat(timespec='microseconds'),
+                        'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                        'source_file': source_file,
+                        'source_sha256': ''
+                    }
+                    metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
 
-                        return metadata
-                    except Exception:
-                        logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.",
-                                     exc_info=True)
-                else:
-                    logger.error("remotectl_dumpstate does not contain a Local device section.")
+                    return metadata
+                except Exception:
+                    logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
+            else:
+                logger.error("remotectl_dumpstate does not contain a Local device section.")
 
         return None
 
