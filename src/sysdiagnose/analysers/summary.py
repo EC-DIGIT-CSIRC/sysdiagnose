@@ -9,7 +9,7 @@ import os
 
 class SummaryAnalyser(BaseAnalyserInterface):
     description = "Gives some summary info from the device"
-    format = "txt"  # by default json
+    format = "md"  # by default json
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -83,75 +83,86 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     result.append("\n## Circle")
                     result.extend(item['circle'])
 
+        mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
+        mcstate_result = mcstatesharedprofile.get_result()
+        mcstate_output = []
         # Extract trusted certificates and configuration profiles
         # TODO fix the following piece of code
         #  - should return subjet which includes user account
-        #  - should be cleaned a bit and made more meaningful
-        mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
-        mcstate_result = mcstatesharedprofile.get_result()
-        # try:
-        #     result.append("\n## Trusted certificates")
-        #     for payloadcontent in mcstate_result:
-        #         payloadcontent_entry = mcstate_result[0]["PayloadContent"]
-        #         for entry in payloadcontent_entry:
-        #             if("PayloadIdentifier" in entry.keys()):
-        #                 result.append("Identifier: %s" % entry["PayloadIdentifier"])
-        #             if("PayloadDescription" in entry.keys()):
-        #                 result.append("Description: %s" % entry["PayloadDescription"])
-        #             if("PayloadDisplayName" in entry.keys()):
-        #                 result.append("Display name: %s" % entry["PayloadDisplayName"])
-        #             if("InstallDate" in entry.keys()):
-        #                 result.append("Install date %s" % entry["InstallDate"])
-        #             if("CertSubject" in entry.keys()):
-        #                 result.append("Subject: %s" % entry["CertSubject"])
-        #             if("PayloadType" in entry.keys()):
-        #                 result.append("Type: %s" % entry["PayloadType"])
-        #             if("ServerURL" in entry.keys()):
-        #                 result.append("URL: %s" % entry["ServerURL"])
-        #             if("OTAProfileStub" in entry.keys()):
-        #                 url  = entry["OTAProfileStub"]["PayloadContent"]["URL"]
-        #                 identifier = entry["OTAProfileStub"]["PayloadIdentifier"]
-        #                 description = entry["OTAProfileStub"]["PayloadDescription"]
-        #                 type = entry["OTAProfileStub"]["PayloadType"]
-        #                 uuid = entry["OTAProfileStub"]["PayloadUUID"]
-        #                 org = entry["OTAProfileStub"]["PayloadOrganization"]
-        #                 result.append("\tOrganisation: %s" % org)
-        #                 result.append("\tIdentifier: %s" % identifier)
-        #                 result.append("\tDescription: %s" % description)
-        #                 result.append("\tType: %s" % type)
-        #                 result.append("\tURL: %s" % url)
-        #                 result.append("\tUUID: %s" % uuid)
-        #             result.append("----------------------")
-        # except KeyError:
-        #     result.append("Issue extracting trusted certificates")
-        #     pass
+        #  - should be cleaned a LOT and made more meaningful
+        try:
+            # the logic below needs to be reimplemented after understanding the data structure better.
+            # store it in a temporary variable, sort it and give a better (sorted) output that makes sense
+            result.append("\n## Trusted certificates and configuration profiles")
+            for payloadcontent in mcstate_result:
+                payloadcontent_entry = payloadcontent["PayloadContent"]
+                for entry in payloadcontent_entry:
+                    if "PayloadIdentifier" in entry:
+                        result.append("Identifier: %s" % entry["PayloadIdentifier"])
+                    if "PayloadDescription" in entry:
+                        result.append("Description: %s" % entry["PayloadDescription"])
+                    if "PayloadDisplayName" in entry:
+                        result.append("Display name: %s" % entry["PayloadDisplayName"])
+                    if "InstallDate" in entry:
+                        result.append("Install date %s" % entry["InstallDate"])
+                    if 'InstallOptions' in entry:
+                        if 'installedBy' in entry['InstallOptions']:
+                            result.append("Installed by: %s" % entry["InstallOptions"]["installedBy"])
+                        if 'managingProfileIdentifier' in entry['InstallOptions']:
+                            result.append("Managing profile identifier: %s" % entry["InstallOptions"]["managingProfileIdentifier"])
+                    if "CertSubject" in entry:
+                        result.append("Subject: %s" % entry["CertSubject"])
+                    if "PayloadType" in entry:
+                        result.append("Type: %s" % entry["PayloadType"])
+                    if "ServerURL" in entry:
+                        result.append("URL: %s" % entry["ServerURL"])
+                    if "OTAProfileStub" in entry:
+                        url = entry["OTAProfileStub"]["PayloadContent"]["URL"]
+                        identifier = entry["OTAProfileStub"]["PayloadIdentifier"]
+                        description = entry["OTAProfileStub"]["PayloadDescription"]
+                        type = entry["OTAProfileStub"]["PayloadType"]
+                        uuid = entry["OTAProfileStub"]["PayloadUUID"]
+                        org = entry["OTAProfileStub"]["PayloadOrganization"]
+                        result.append("\tOrganisation: %s" % org)
+                        result.append("\tIdentifier: %s" % identifier)
+                        result.append("\tDescription: %s" % description)
+                        result.append("\tType: %s" % type)
+                        result.append("\tURL: %s" % url)
+                        result.append("\tUUID: %s" % uuid)
+                    result.append("----------------------")
+        except (KeyError, IndexError):
+            result.append("No McStateShared Profiles, or issue extracting trusted certificates and profiles.")
+            pass
+
+        mcstate_output.sort()
 
         # TODO ensure the following piece of code is complete and exhaustive
         result.append("\n## Configuration Profiles")
-        try:
-            if "PayloadIdentifier" in mcstate_result[0].keys():
-                result.append("Identifier %s" % mcstate_result[0]["PayloadIdentifier"])
-            if "PayloadDescription" in mcstate_result[0].keys():
-                result.append("Desription %s" % mcstate_result[0]["PayloadDescription"])
-            if "InstallDate" in mcstate_result[0].keys():
-                result.append("Install date %s" % mcstate_result[0]["InstallDate"])
-            if "OTAProfileStub" in mcstate_result[0].keys():
-                url = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
-                identifier = mcstate_result[0]["OTAProfileStub"]["PayloadIdentifier"]
-                description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]
-                type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
-                uuid = mcstate_result[0]["OTAProfileStub"]["PayloadUUID"]
-                org = mcstate_result[0]["OTAProfileStub"]["PayloadOrganization"]
-                result.append("\tOrganisation: %s" % org)
-                result.append("\tIdentifier: %s" % identifier)
-                result.append("\tDescription: %s" % description)
-                result.append("\tType: %s" % type)
-                result.append("\tURL: %s" % url)
-                result.append("\tUUID: %s" % uuid)
-                result.append("----------------------")
-        except KeyError:
-            result.append("Issue extracting configuration profiles")
-            pass
+
+        # try:
+        #     if "PayloadIdentifier" in mcstate_result[0].keys():
+        #         result.append("Identifier %s" % mcstate_result[0]["PayloadIdentifier"])
+        #     if "PayloadDescription" in mcstate_result[0].keys():
+        #         result.append("Desription %s" % mcstate_result[0]["PayloadDescription"])
+        #     if "InstallDate" in mcstate_result[0].keys():
+        #         result.append("Install date %s" % mcstate_result[0]["InstallDate"])
+        #     if "OTAProfileStub" in mcstate_result[0].keys():
+        #         url = mcstate_result[0]["OTAProfileStub"]["PayloadContent"]["URL"]
+        #         identifier = mcstate_result[0]["OTAProfileStub"]["PayloadIdentifier"]
+        #         description = mcstate_result[0]["OTAProfileStub"]["PayloadDescription"]
+        #         type = mcstate_result[0]["OTAProfileStub"]["PayloadType"]
+        #         uuid = mcstate_result[0]["OTAProfileStub"]["PayloadUUID"]
+        #         org = mcstate_result[0]["OTAProfileStub"]["PayloadOrganization"]
+        #         result.append("\tOrganisation: %s" % org)
+        #         result.append("\tIdentifier: %s" % identifier)
+        #         result.append("\tDescription: %s" % description)
+        #         result.append("\tType: %s" % type)
+        #         result.append("\tURL: %s" % url)
+        #         result.append("\tUUID: %s" % uuid)
+        #         result.append("----------------------")
+        # except (KeyError, IndexError):
+        #     result.append("No McStateShared Profiles, or issue extracting configuration profiles.")
+        #     pass
 
         logger.warning(
             "This is a work in progress. The output may not be complete or accurate."
