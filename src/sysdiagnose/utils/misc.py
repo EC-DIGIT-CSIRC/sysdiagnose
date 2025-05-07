@@ -9,6 +9,7 @@ import json
 import nska_deserialize
 import os
 import re
+from collections.abc import MutableMapping
 
 
 def merge_dicts(a: dict, b: dict) -> dict:
@@ -145,3 +146,17 @@ def find_bytes(d):
 def snake_case(s):
     # lowercase and replace non a-z characters as _
     return re.sub(r'[^a-zA-Z0-9%]', '_', s.lower())
+
+
+# https://www.freecodecamp.org/news/how-to-flatten-a-dictionary-in-python-in-4-different-ways/
+def _flatten_dict_gen(d, parent_key, sep):
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, MutableMapping):
+            yield from flatten_dict(v, new_key, sep=sep).items()
+        else:
+            yield new_key, v
+
+
+def flatten_dict(d: MutableMapping, parent_key: str = '', sep: str = '.'):
+    return dict(_flatten_dict_gen(d, parent_key, sep))

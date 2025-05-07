@@ -1,52 +1,52 @@
 from sysdiagnose.utils.base import BaseAnalyserInterface
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
+from sysdiagnose.utils import misc
 import csv
 
 
 # Temmporary analyser - for testing
-class MCStateSharedProfile(BaseAnalyserInterface):
-    description = "Test parser - 2025-04-09"
-    format = "csv"  # by default json
+class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
+    description = "Exports MCState Shared Profile stub files to CSV for better analysis"
+    format = "csv"
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
 
-    def possible_keys(self, mcstate_result):
-        keys = []
-        for payloadcontent in mcstate_result:
-            payloadcontent_entry = mcstate_result[0]["PayloadContent"]
-            for entry in payloadcontent_entry:
-                keys = keys + list(entry.keys())
-
-        # Remove duplicates
-        keys = list(set(keys))
-
-        return keys
-
     def execute(self):
         result = []
         mcstatesharedprofile = McStateSharedProfileParser(self.config, self.case_id)
-        mcstate_result = mcstatesharedprofile.get_result(mcstatesharedprofile)
+        mcstate_result = mcstatesharedprofile.get_result()
 
-        # get all possible keys
-        keys = self.possible_keys(mcstate_result)
+        for entry in mcstate_result:
+            for key in ['SignerCerts', 'datetime', 'timestamp']:
+                entry.pop(key, None)
 
-        try:
-            for payloadcontent in mcstate_result:
-                payloadcontent_entry = mcstate_result[0]["PayloadContent"]
-                for entry in payloadcontent_entry:
-                    row = {}
-                    for key in keys:
-                        if key in entry.keys():
-                            row[key] = entry[key]
-                    result.append(row)
-        except KeyError:
-            result.append("Issue extracting trusted certificates")
-            pass
+            payload_contents = entry.pop('PayloadContent', None)
 
-        with open('mcstate_shared_profile.csv', 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=keys)
+            entry_tpl = misc.flatten_dict(entry)
+
+            for payload_content in payload_contents:
+                item = entry_tpl.copy()
+                item.update(misc.flatten_dict({'PayloadContent': payload_content}))
+                result.append(item)
+
+        return result
+
+    def save_result(self, force: bool = False, indent=None):
+        """
+        Saves the result of the parsing operation to a file.
+
+        Args:
+            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists. Defaults to False.
+        """
+        # save to file
+
+        result = self.get_result(force)
+        result_keys = set()
+        for entry in result:
+            result_keys.update(entry.keys())
+
+        with open(self.output_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=list(result_keys))
             writer.writeheader()
             writer.writerows(result)
-
-        return str(result)
