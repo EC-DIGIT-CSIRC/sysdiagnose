@@ -40,6 +40,10 @@ def main():
     init_parser.add_argument('filename', help='Name of the sysdiagnose archive file')
     init_parser.add_argument('--force', action='store_true', help='Force case creation')
 
+    # delete mode
+    delete_parser = subparsers.add_parser('delete', help='Delete a case')
+    delete_parser.add_argument('--force', action='store_true', help='Force case deletion, do not ask for confirmation')
+
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
     parse_parser.add_argument('parser', help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
@@ -80,6 +84,25 @@ def main():
             sd.print_parsers_list()
         elif args.what == 'analysers':
             sd.print_analysers_list()
+
+    elif args.mode == 'delete':
+        force = args.force
+        if not args.case_id and args.case_id not in sd.get_case_ids():
+            exit("No valid case ID given, use --case_id to specify a case ID")
+
+        if not force:
+            # Ask for confirmation
+            confirm = input(f"Are you sure you want to delete case '{args.case_id}'? (y/n): ")
+            if confirm.lower() != 'y':
+                print("Aborting deletion.")
+                exit(0)
+        # Delete the case
+        try:
+            sd.delete_case(args.case_id)
+            print(f"Case '{args.case_id}' deleted successfully.")
+        except Exception as e:
+            print(f"Error deleting case: {str(e)}")
+            exit(1)
 
     elif args.mode == 'cases':
         sd.print_list_cases(verbose=args.verbose)

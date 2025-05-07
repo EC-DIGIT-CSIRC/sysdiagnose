@@ -49,6 +49,37 @@ class Sysdiagnose:
 
         return self._cases
 
+    def delete_case(self, case_id: str) -> None:
+        '''
+        Deletes a case from the sysdiagnose cases.
+
+        Parameters:
+            case_id (str): The case ID to delete.
+        '''
+        # check if case_id is valid
+        if case_id not in self.cases():
+            raise ValueError(f"Case ID {case_id} does not exist.")
+
+        # delete case folder
+        case_folder = os.path.join(self.config.cases_root_folder, case_id)
+        if os.path.isdir(case_folder):
+            try:
+                shutil.rmtree(case_folder)
+            except Exception as e:
+                raise Exception(f"Error while deleting case folder: {str(e)}")
+
+        # delete case from the cases
+        with open(self.config.cases_file, 'r+') as f:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX)        # enable lock
+                self._cases = json.load(f)           # load latest version
+                self._cases.pop(case_id, None)       # delete case
+                f.seek(0)                            # go back to the beginning of the file
+                json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
+                f.truncate()                         # truncate the rest of the file ensuring no old data is left
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)        # release lock whatever happens
+
     def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False) -> int:
         '''
         Extracts the sysdiagnose file and creates a new case.
@@ -163,7 +194,6 @@ class Sysdiagnose:
                 sysdiagnose_log_file = None
                 try:
                     for member in tf.getmembers():
-
                         if member.name.endswith('remotectl_dumpstate.txt'):
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
