@@ -6,7 +6,7 @@ import csv
 
 # Temmporary analyser - for testing
 class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
-    description = "Exports MCState Shared Profile stub files to CSV for better analysis"
+    description = "Exports MCState Shared Profile stub files to CSV for better analysis."
     format = "csv"
 
     def __init__(self, config: dict, case_id: str):
