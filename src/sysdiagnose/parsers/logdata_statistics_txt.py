@@ -64,7 +64,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
         try:
             with open(path, 'r') as f:
                 inside_statistics_record = False
-                record = {}
+                record_tpl = {}
                 timestamp = None
 
                 for line in f:
@@ -72,7 +72,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
 
                     if line.startswith('--- !logd statistics record'):
                         inside_statistics_record = True
-                        record = {}
+                        record_tpl = {}
                         timestamp = None  # Reset timestamp for each record
                         continue
 
@@ -86,12 +86,15 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                         if line.startswith('time  :'):
                             time_str = line.split(':', 1)[1].strip()
                             timestamp = self.parse_timestamp(time_str)
-                            record['timestamp'] = timestamp.timestamp(),
-                            record['datetime'] = timestamp.isoformat(timespec='microseconds')
+                            record_tpl['timestamp'] = timestamp.timestamp()
+                            record_tpl['datetime'] = timestamp.isoformat(timespec='microseconds')
                             continue
 
+                        if line.startswith('file  :'):
+                            record_tpl['file'] = line.split(':', 1)[1].strip()
+
                         if line.startswith('type  :'):
-                            record['type'] = line.split(':', 1)[1].strip()
+                            record_tpl['type'] = line.split(':', 1)[1].strip()
                             continue
 
                         # Extract process data from 'procs' section
@@ -101,7 +104,11 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                                 process = match.group(3)  # Process path
 
                                 if timestamp:
+                                    record = record_tpl.copy()
                                     record['process'] = process.strip()
+                                    record['saf_module'] = self.module_name
+                                    record['timestamp_desc'] = record['type']
+                                    record['message'] = f"{record['type']} while {record['process']} is running"
                                     output.append(record)
         except Exception as err:
             logger.error(f'Error parsing file {path}: {err}')
