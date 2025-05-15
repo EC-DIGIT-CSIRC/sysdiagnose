@@ -28,7 +28,7 @@ dependencies = [
   "python-dateutil==2.9.0.post0",
   "gpxpy==1.6.2",
   "pandas==2.2.3",
-  "numpy==2.2.3",
+  "numpy==2.2.5",
   "nska-deserialize==1.5.1",
   "yara-python==4.5.1",
   "python-json-logger==3.2.1",
