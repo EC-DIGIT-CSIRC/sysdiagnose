@@ -15,6 +15,7 @@ import re
 class SwcutilParser(BaseParserInterface):
     description = "Parsing swcutil_show file"
     format = 'jsonl'
+    module_name = 'swcutil'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -83,9 +84,7 @@ class SwcutilParser(BaseParserInterface):
 
                 entries.extend(self.parse_db(db))
                 entries.extend(self.parse_settings(settings))
-                if network:
-                    logger.warning('Network parsing not implemented yet. Please contact us for implementation.')
-                # FIXME entries.extend(self.parse_network(network))
+                entries.extend(self.parse_network(network))
 
             return entries
         except IndexError:
@@ -97,6 +96,7 @@ class SwcutilParser(BaseParserInterface):
             splitted = line.split(":", 1)
             if len(splitted) > 1:
                 entry[snake_case(splitted[0])] = splitted[1].strip()
+        entry['saf_module'] = SwcutilParser.module_name
         return entry
 
     def parse_headers_entry(self, data) -> dict:
@@ -105,12 +105,27 @@ class SwcutilParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'Sysdiagnose creation'
+        entry['timestamp_desc'] = 'swcutil headers at sysdiagnose creation'
+        entry['message'] = "swcutil headers"
         return entry
 
     def parse_network(self, data) -> list:
-        # FIXME implement this
-        pass
+        results = []
+        item_tpl = {}
+        timestamp = self.sysdiagnose_creation_datetime
+        item_tpl['timestamp_desc'] = 'sysdiagnose creation'
+        item_tpl['datetime'] = timestamp.isoformat(timespec='microseconds')
+        item_tpl['timestamp'] = timestamp.timestamp()
+        item_tpl['saf_module'] = SwcutilParser.module_name
+        item_tpl['section'] = 'network'
+
+        for line in data:
+            for entry in line.split(', '):
+                item = item_tpl.copy()
+                item['domain'] = entry.split(' ')[0]
+                item['message'] = f"Network: {item['domain']}"
+                results.append(item)
+        return results
 
     def parse_db(self, data) -> list:
         # init
@@ -137,14 +152,14 @@ class SwcutilParser(BaseParserInterface):
             entry['timestamp_desc'] = 'last checked'
         except KeyError:
             timestamp = self.sysdiagnose_creation_datetime
-            entry['timestamp_desc'] = 'Sysdiagnose creation'
-        except ValueError as ex:
-            logger.warning(f"{str(ex)} attempting to parse new format", extra={'entry': str(entry)})
+            entry['timestamp_desc'] = 'sysdiagnose creation'
+        except ValueError:
             timestamp = datetime.strptime(normalised_ts, '%Y-%m-%d %I:%M:%S %p %z')
             entry['timestamp_desc'] = 'last checked'
 
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         entry['timestamp'] = timestamp.timestamp()
+        entry['message'] = f"{entry['service']}: {entry['app_id']} for {entry['domain']}"
         return entry
 
     def parse_settings(self, data) -> list:
@@ -186,7 +201,9 @@ class SwcutilParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'Sysdiagnose creation'
+        entry['timestamp_desc'] = 'sysdiagnose creation'
+        entry['saf_module'] = SwcutilParser.module_name
+        entry['message'] = f"swcutil settings {entry['s']} {entry['a']}"
         return entry
 
     def parse_memory_entry(self, line):
@@ -195,18 +212,23 @@ class SwcutilParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
         entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'Sysdiagnose creation'
+        entry['timestamp_desc'] = 'sysdiagnose creation'
+        entry['saf_module'] = SwcutilParser.module_name
 
         proc, value = line.split(":", 1)
         entry['process'] = proc.strip()
         # convert human readable bytes and KB to int
         value = value.strip()
-        if 'bytes' in value:
+        if 'bytes' in value or 'octets' in value:
             entry['usage'] = int(value.split(' ')[0])
-        elif 'KB' in value:
+        elif 'KB' in value or 'ko' in value:
             entry['usage'] = int(value.split(' ')[0]) * 1024
-        elif 'MB' in value:
+        elif 'MB' in value or 'mo' in value:
             entry['usage'] = int(value.split(' ')[0]) * 1024 * 1024
-        elif 'GB' in value:
+        elif 'GB' in value or 'go' in value:
             entry['usage'] = int(value.split(' ')[0]) * 1024 * 1024 * 1024
+
+        entry['message'] = entry['process']
+        if 'usage' in entry:
+            entry['message'] += f" memory usage: {entry['usage']} bytes"
         return entry

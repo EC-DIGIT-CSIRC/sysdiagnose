@@ -83,9 +83,13 @@ class LogDataStatisticsParser(BaseParserInterface):
                     # Iterate over each process in processList and create an output record
                     for proc in record.get('processList', []):
                         entry = {
-                            'process': proc.get('process'),
+                            'process': proc['process'],
+                            'file': record['file'],
+                            'timestamp_desc': f"Logd {record['type']}",
                             'timestamp': timestamp,
-                            'datetime': dt
+                            'datetime': dt,
+                            'saf_module': self.module_name,
+                            'message': f"Logd {record['type']} while {proc['process']} is running"
                         }
                         output.append(entry)
         except Exception as err:

@@ -43,6 +43,38 @@ class TestParsers(SysdiagnoseTestCase):
             for required_variable in required_variables:
                 self.assertTrue(hasattr(obj, required_variable), f'Parser {parser_name} is missing {required_variable} variable.')
 
+    # def test_parsers_result_jsonl_structure(self):
+    #     print("Checking parsers for result structure...")
+
+    #     missing = set()
+
+    #     for parser_name in self.get_parsers():
+    #         module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
+
+    #         for case_id in self.sd.get_case_ids():
+
+    #             # figure out the class name
+    #             obj = None
+    #             obj_instance = None
+    #             for attr in dir(module):
+    #                 obj = getattr(module, attr)
+    #                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+    #                     obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id=case_id)
+    #                     break
+
+    #             if obj_instance.format == 'jsonl':
+    #                 # verify the validity of the jsonl structure:
+    #                 result = obj_instance.get_result()
+    #                 for entry in result:
+    #                     self.assertIsInstance(entry, dict, f'Parser {parser_name} result entry did not return a dict.')
+    #                     for field in self.required_fields_jsonl:
+    #                         if field not in entry:
+    #                             missing.add(f'Parser {parser_name} result entry did not contain a {field} for case {case_id}.')
+    #                     # break  # stop after first entry, for performance reasons
+
+    #     missing = sorted(missing)
+    #     self.assertTrue(not missing, f"Missing fields in parsers: \n{'\n'.join(missing)}")
+
     def test_parsers_no_parser_yet(self):
         print("Checking for files that are not yet parsed...")
 

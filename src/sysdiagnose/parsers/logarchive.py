@@ -7,7 +7,7 @@
 #
 from collections.abc import Generator
 from datetime import datetime, timezone
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 import glob
 import json
 import os
@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import shutil
+import threading
 
 # --------------------------------------------#
 
@@ -41,11 +42,19 @@ cmd_parsing_linux_test = ['unifiedlog_iterator', '--help']
 # LATER consider refactoring using yield to lower memory consumption
 
 
+def log_stderr(process, logger):
+    """
+    Reads the stderr of a subprocess and logs it line by line.
+    """
+    for line in iter(process.stderr.readline, ''):
+        logger.debug(line.strip())
+
+
 class LogarchiveParser(BaseParserInterface):
     description = 'Parsing system_logs.logarchive folder'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -257,7 +266,11 @@ class LogarchiveParser(BaseParserInterface):
             Return None if it failed or the result otherwise.
 
         '''
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as process:
+            # start a thread to log stderr
+            stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
+            stderr_thread.start()
+
             for line in iter(process.stdout.readline, ''):
                 yield line
 
@@ -294,6 +307,9 @@ class LogarchiveParser(BaseParserInterface):
         '''
             Convert the entry to unifiedlog format
         '''
+        entry['timestamp_desc'] = 'logarchive'
+        entry['saf_module'] = 'logarchive'
+
         # already in the Mandiant unifiedlog format
         if 'event_type' in entry:
             timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
@@ -306,6 +322,10 @@ class LogarchiveParser(BaseParserInterface):
         '''
 
         mapper = {
+            # our own fields
+            'timestamp_desc': 'timestamp_desc',
+            'saf_module': 'saf_module',
+            # logarchive fields
             'creatorActivityID': 'activity_id',
             'messageType': 'log_type',
             # 'source': '',   # not present in the Mandiant format

@@ -3,6 +3,7 @@ import magic
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 
+
 class FileStatisticsAnalyser(BaseAnalyserInterface):
     description = "Obatins statistics about the files of the sysdiagnose"
     format = "json"  # Output format

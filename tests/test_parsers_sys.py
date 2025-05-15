@@ -6,6 +6,7 @@ import os
 
 class TestParsersSys(SysdiagnoseTestCase):
     productinfo_keys = ['ProductName', 'ProductBuildVersion', 'ProductVersion', 'BuildID', 'SystemImageID']
+    productnames = ['iPhone OS', 'Watch OS', 'Apple TVOS']
 
     def test_getProductInfo(self):
         for case_id, case in self.sd.cases().items():
@@ -20,8 +21,9 @@ class TestParsersSys(SysdiagnoseTestCase):
             self.assertGreater(len(result), 0)
             for item in result:
                 self.assertTrue(item.keys() | self.productinfo_keys == item.keys())  # check if the result contains at least the following keys
-                self.assertTrue('iPhone OS' in item['ProductName'])
+                self.assertTrue(item['ProductName'] in self.productnames)  # check if the result contains at least the following keys
                 self.assertTrue(item['BuildID'])
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

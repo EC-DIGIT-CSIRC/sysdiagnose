@@ -30,5 +30,5 @@ class ContainerManagerParser(BaseParserInterface):
     def execute(self) -> list | dict:
         result = []
         for logfile in self.get_log_files():
-            result.extend(multilinelog.extract_from_file(logfile, self.sysdiagnose_creation_datetime.tzinfo))
+            result.extend(multilinelog.extract_from_file(logfile, self.sysdiagnose_creation_datetime.tzinfo, self.module_name))
         return result

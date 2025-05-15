@@ -8,6 +8,7 @@ def load_json(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
 
+
 def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict]:
     """
         Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
@@ -28,6 +29,7 @@ def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict,
     }
 
     return added, removed, modified
+
 
 def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
                                        exclusions: list[str] = None) -> tuple[list, list, list]:
@@ -82,8 +84,9 @@ def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
 
     return added, removed, modified
 
+
 def generate_html_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
-                         added: list, removed: list, modified: list, output_file: str) -> None:
+                         added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
     """
         Generate an HTML report using Jinja2.
         :param added_properties: Added properties.
@@ -92,6 +95,7 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
         :param added: Added folders.
         :param removed: Removed folders.
         :param modified: Modified folders.
+        :param exclusions: List of excluded folder substrings.
         :param output_file: Output HTML file path.
     """
 
@@ -106,10 +110,12 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
             .added { background-color: #d4f8d4; border: 1px solid #a3e6a3; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
             .removed { background-color: #f8d4d4; border: 1px solid #e6a3a3; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
             .modified { background-color: #f8f4d4; border: 1px solid #e6e3a3; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+            .excluded { background-color: #f0f0f0; border: 1px solid #666666; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
             .collapsible { cursor: pointer; padding: 10px; border: none; text-align: left; outline: none; font-size: 16px; font-weight: bold; }
             .collapsible.added { color: #2e7d32; } /* Dark green for added */
             .collapsible.removed { color: #c62828; } /* Dark red for removed */
             .collapsible.modified { color: #f9a825; } /* Dark yellow for modified */
+            .collapsible.excluded { color: #666666; } /* Grey for excluded */
             .content { display: none; padding: 10px; border: 1px solid #ccc; margin-top: 5px; border-radius: 8px; }
             table { border-collapse: collapse; width: 100%; margin-top: 10px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -259,6 +265,23 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
 
         <h2>Folders Differences</h2>
 
+        <!-- Exclusions Section -->
+        <div class="excluded">
+            <h2 class="collapsible excluded" onclick="toggleContent('excluded-folders')">Excluded Folders ({{ exclusions|length }})</h2>
+            <div id="excluded-folders" class="content">
+                {% if exclusions %}
+                <ul>
+                    {% for exclusion in exclusions %}
+                    <li>{{ exclusion }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No exclusions applied.</p>
+                {% endif %}
+            </div>
+        </div>
+
+
         <!-- Added Folders Section -->
         <div class="added">
             <h2 class="collapsible added" onclick="toggleContent('added-folders')">Added Folders ({{ added|length }})</h2>
@@ -361,13 +384,15 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
         added=added,
         removed=removed,
         modified=modified,
+        exclusions=exclusions
     )
 
     with open(output_file, 'w') as file:
         file.write(rendered_html)
 
+
 def generate_markdown_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
-                             added: list, removed: list, modified: list, output_file: str) -> None:
+                             added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
     """
         Generate a Markdown report.
         :param added_properties: Added properties.
@@ -376,6 +401,7 @@ def generate_markdown_report(added_properties: dict, removed_properties: dict, m
         :param added: Added folders.
         :param removed: Removed folders.
         :param modified: Modified folders.
+        :param exclusions: List of excluded folder substrings.
         :param output_file: Output Markdown file path.
     """
     markdown_content = []
@@ -415,6 +441,14 @@ def generate_markdown_report(added_properties: dict, removed_properties: dict, m
 
     # Folders Differences
     markdown_content.append("## Folders Differences\n")
+
+    # Exclusions Section
+    markdown_content.append(f"### Excluded Folders ({len(exclusions)})\n")
+    if exclusions:
+        for exclusion in exclusions:
+            markdown_content.append(f"- {exclusion}")
+    else:
+        markdown_content.append("No exclusions applied.\n")
 
     # Added Folders
     markdown_content.append(f"### Added Folders ({len(added)})\n")
@@ -460,6 +494,7 @@ def generate_markdown_report(added_properties: dict, removed_properties: dict, m
     with open(output_file, 'w') as file:
         file.write("\n".join(markdown_content))
 
+
 def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
                                   output_file: str, format: str = 'html') -> None:
     """
@@ -484,13 +519,13 @@ def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
         # Generate HTML report
         generate_html_report(
             added_properties, removed_properties, modified_properties,
-            added, removed, modified, output_file
+            added, removed, modified, exclusions, output_file
         )
     elif format.lower() == 'markdown':
         # Generate Markdown report
         generate_markdown_report(
             added_properties, removed_properties, modified_properties,
-            added, removed, modified, output_file
+            added, removed, modified, exclusions, output_file
         )
     else:
         print("Unsupported format.")

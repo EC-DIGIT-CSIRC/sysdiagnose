@@ -19,6 +19,9 @@ class TestParsersTransparency(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             p.get_result()
+            result = p.get_result()
+            for item in result:
+                self.assert_has_required_fields_jsonl(item)
 
     def test_transparency_json(self):
         for case_id, case in self.sd.cases().items():

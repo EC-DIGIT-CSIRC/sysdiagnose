@@ -17,7 +17,7 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
+                self.assert_has_required_fields_jsonl(item)
 
     def test_process_buffer_keychain_state(self):
         input = [
@@ -27,12 +27,15 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
         expected_output = {
             'meta': {
                 'rapport': [
-                    {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}
                 ]
-            }
+            },
+            'events': [
+                {'saf_module': 'TestModule', 'timestamp': 1684958174.0, 'datetime': '2023-05-24T19:56:14.000000+00:00', 'timestamp_desc': 'rapport: entry creation time', 'message': 'rapport iPhone - com.apple.rapport', 'section': 'rapport', 'attributes': {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}},
+                {'saf_module': 'TestModule', 'timestamp': 1684958174.0, 'datetime': '2023-05-24T19:56:14.000000+00:00', 'timestamp_desc': 'rapport: entry modification time', 'message': 'rapport iPhone - com.apple.rapport', 'section': 'rapport', 'attributes': {'accc': '<SecAccessControlRef: ck>', 'acct': '69AAAFE9-A7FA-4BF3-922E-A14C33F11924', 'agrp': 'com.apple.rapport', 'cdat': '2023-05-24 19:56:14 +0000', 'gena': '{length = 33, bytes = 0xe3456d6f 64656c49 6950686f 6e65392c ... 6973696f 6e494409 }', 'invi': '1', 'labl': 'iPhone', 'mdat': '2023-05-24 19:56:14 +0000', 'musr': '{length = 0, bytes = 0x}', 'pdmn': 'ck', 'sha1': '{length = 20, bytes = 0x1490ff273a003ef4089c46beb3731eb04754c7e5}', 'svce': 'RPIdentity-SameAccountDevice', 'sync': '1', 'tomb': '0', 'vwht': 'Home'}}
+            ]
         }
-        result = {'meta': {}}
-        SecuritySysdiagnoseParser.process_buffer_keychain_state(input, result)
+        result = {'meta': {}, 'events': []}
+        SecuritySysdiagnoseParser.process_buffer_keychain_state(input, result, 'TestModule')
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
@@ -47,13 +50,13 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
         ]
         expected_output = {
             'events': [
-                {'datetime': '2023-05-24T19:55:51.000000+00:00', 'timestamp': 1684958151.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'event': 'OTAPKIEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '-67694'}},
-                {'datetime': '2023-05-24T19:57:58.000000+00:00', 'timestamp': 1684958278.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'event': 'MitmDetectionEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'overallScore': '0', 'timeSinceLastReset': '127', 'rootUsages': '( foo, bar )', 'errorDomain': 'MITMErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '0'}},
-                {'datetime': '2024-09-06T09:45:15.000000+00:00', 'timestamp': 1725615915.0, 'section': 'client_trust', 'result': 'EventHardFailure', 'event': 'CloudServicesSetConfirmedManifest', 'attributes': {'product': 'macOS', 'build': '22H121', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'MacBookPro14,3', 'errorCode': '-25308'}}
+                {'saf_module': 'TestModule', 'datetime': '2023-05-24T19:55:51.000000+00:00', 'timestamp': 1684958151.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'timestamp_desc': 'OTAPKIEvent', 'event': 'OTAPKIEvent', 'message': 'client_trust EventSoftFailure OTAPKIEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '-67694'}},
+                {'saf_module': 'TestModule', 'datetime': '2023-05-24T19:57:58.000000+00:00', 'timestamp': 1684958278.0, 'section': 'client_trust', 'result': 'EventSoftFailure', 'timestamp_desc': 'MitmDetectionEvent', 'event': 'MitmDetectionEvent', 'message': 'client_trust EventSoftFailure MitmDetectionEvent', 'attributes': {'product': 'iPhone OS', 'build': '19H349', 'overallScore': '0', 'timeSinceLastReset': '127', 'rootUsages': '( foo, bar )', 'errorDomain': 'MITMErrorDomain', 'modelid': 'iPhone9,3', 'errorCode': '0'}},
+                {'saf_module': 'TestModule', 'datetime': '2024-09-06T09:45:15.000000+00:00', 'timestamp': 1725615915.0, 'section': 'client_trust', 'result': 'EventHardFailure', 'timestamp_desc': 'CloudServicesSetConfirmedManifest', 'event': 'CloudServicesSetConfirmedManifest', 'message': 'client_trust EventHardFailure CloudServicesSetConfirmedManifest', 'attributes': {'product': 'macOS', 'build': '22H121', 'errorDomain': 'NSOSStatusErrorDomain', 'modelid': 'MacBookPro14,3', 'errorCode': '-25308'}}
             ]
         }
         result = {'events': []}
-        SecuritySysdiagnoseParser.process_buffer_client(input, result)
+        SecuritySysdiagnoseParser.process_buffer_client(input, result, 'TestModule')
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 

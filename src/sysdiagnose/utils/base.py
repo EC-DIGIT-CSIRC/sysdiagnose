@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import cached_property
+import importlib
 from pathlib import Path
 from sysdiagnose.utils.logger import logger
 import glob
 import json
 import os
 import re
+from io import TextIOWrapper
 
 
 class SysdiagnoseConfig:
@@ -34,6 +36,48 @@ class SysdiagnoseConfig:
         logs_data_folder = os.path.join(self.cases_root_folder, case_id, 'logs')
         os.makedirs(logs_data_folder, exist_ok=True)
         return logs_data_folder
+
+    def get_parsers(self) -> dict:
+        modules = glob.glob(os.path.join(self.parsers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
+                continue
+            try:
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'sysdiagnose.parsers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+                        results[name] = obj.description
+                        break
+            except AttributeError:
+                continue
+
+        results = dict(sorted(results.items()))
+        return results
+
+    def get_analysers(self) -> dict:
+        modules = glob.glob(os.path.join(self.analysers_folder, '*.py'))
+        results = {}
+        for item in modules:
+            if item.endswith('__init__.py'):
+                continue
+            try:
+                name = os.path.splitext(os.path.basename(item))[0]
+                module = importlib.import_module(f'sysdiagnose.analysers.{name}')
+                # figure out the class name
+                for attr in dir(module):
+                    obj = getattr(module, attr)
+                    if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
+                        results[name] = obj.description
+                        break
+            except AttributeError:
+                continue
+
+        results = dict(sorted(results.items()))
+        return results
 
 
 class BaseInterface(ABC):
@@ -77,7 +121,27 @@ class BaseInterface(ABC):
         Returns:
             datetime: The creation date and time of the sysdiagnose.
         """
-        with open(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'), 'r') as f:
+        return BaseInterface.get_sysdiagnose_creation_datetime_from_file(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'))
+
+    @staticmethod
+    def get_sysdiagnose_creation_datetime_from_file(file: str | TextIOWrapper) -> datetime:
+        """
+        Returns the creation date and time of the sysdiagnose as a datetime object.
+
+        Args:
+            file (str|TextIOWrapper): The path to the sysdiagnose log file or a file object.
+
+        Returns:
+            datetime: The creation date and time of the sysdiagnose.
+        """
+        need_to_close = False
+        if isinstance(file, str):
+            f = open(file, 'r')
+            need_to_close = True
+        else:
+            f = file
+        # now we need to find the timestamp in the sysdiagnose.log file
+        try:
             timestamp_regex = None
             for line in f:
                 if 'IN_PROGRESS_sysdiagnose' in line:
@@ -92,6 +156,9 @@ class BaseInterface(ABC):
                         return parsed_timestamp
                     else:
                         raise ValueError("Invalid timestamp format in sysdiagnose.log. Cannot figure out time of sysdiagnose creation.")
+        finally:
+            if need_to_close:
+                f.close()
 
     def output_exists(self) -> bool:
         """
@@ -182,6 +249,12 @@ class BaseInterface(ABC):
         # When implementing a parser, make sure you use the self.get_log_files() method to get the log files,
         # and then process those files using the magic you have implemented.
         pass
+
+    def contains_timestamp(self):
+        """
+            Returns true if the parser contains a timestamp
+        """
+        return self.format == "jsonl"
 
 
 class BaseParserInterface(BaseInterface):

@@ -24,6 +24,7 @@ class TestParsersPs(SysdiagnoseTestCase):
                     self.assertTrue('command' in item)
                     self.assertTrue('pid' in item)
                     self.assertTrue('user' in item)
+                    self.assert_has_required_fields_jsonl(item)
 
     def test_parse_ps_lower_than_v16(self):
         input = [
@@ -35,7 +36,9 @@ class TestParsersPs(SysdiagnoseTestCase):
                 'user': 'root', 'uid': 0, 'pid': 1, 'ppid': 0, '%cpu': 0.0, '%mem': 0.4, 'pri': 37, 'ni': 0, 'vsz': 4226848, 'rss': 8912, 'wchan': '-', 'tt': '??', 'stat': 'Ss', 'started': '14Jan19', 'time': '7:27.40', 'command': '/sbin/launchd with space',
                 'timestamp_desc': 'sysdiagnose creation',
                 'timestamp': 1.0,
-                'datetime': '1970-01-01T00:00:01.000000+00:00'
+                'datetime': '1970-01-01T00:00:01.000000+00:00',
+                'saf_module': 'ps',
+                'message': 'Process /sbin/launchd with space [1] running as root'
             }
         ]
         tmp_inputfile = tempfile.NamedTemporaryFile()
@@ -57,7 +60,9 @@ class TestParsersPs(SysdiagnoseTestCase):
                 'user': 'root', 'uid': 0, 'prsna': '-', 'pid': 1, 'ppid': 0, 'f': 4004, '%cpu': 0.0, '%mem': 0.0, 'pri': 0, 'ni': 0, 'vsz': 0, 'rss': 0, 'wchan': '-', 'tt': '??', 'stat': '?s', 'started': 'Tue09PM', 'time': '0:00.00', 'command': '/sbin/launchd',
                 'timestamp_desc': 'sysdiagnose creation',
                 'timestamp': 1.0,
-                'datetime': '1970-01-01T00:00:01.000000+00:00'
+                'datetime': '1970-01-01T00:00:01.000000+00:00',
+                'saf_module': 'ps',
+                'message': 'Process /sbin/launchd [1] running as root'
             }
         ]
         tmp_inputfile = tempfile.NamedTemporaryFile()

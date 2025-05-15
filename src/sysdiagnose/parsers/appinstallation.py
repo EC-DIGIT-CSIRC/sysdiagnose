@@ -40,20 +40,23 @@ class AppInstallationParser(BaseParserInterface):
             for filename in self.get_log_files():
                 db_json = misc.json_serializable(sqlite2json.sqlite2struct(filename))
                 skipped = set()
-                for key, values in db_json.items():
+                for key, items in db_json.items():
                     if 'sqlite_sequence' in key:
                         continue
-                    for value in values:
-                        if 'timestamp' not in value:
+                    for item in items:
+                        if 'timestamp' not in item:
                             skipped.add(key)
                             continue
 
                         try:
-                            timestamp = datetime.fromtimestamp(value['timestamp'], tz=timezone.utc)
-                            value['db_table'] = key
-                            value['datetime'] = timestamp.isoformat(timespec='microseconds')
-                            value['timestamp'] = timestamp.timestamp()
-                            result.append(value)
+                            timestamp = datetime.fromtimestamp(item['timestamp'], tz=timezone.utc)
+                            item['saf_db_table'] = key
+                            item['datetime'] = timestamp.isoformat(timespec='microseconds')
+                            item['timestamp'] = timestamp.timestamp()
+                            item['saf_module'] = self.module_name
+                            item['timestamp_desc'] = key
+                            item['message'] = ''
+                            result.append(item)
                         except TypeError:
                             # skip "None" values and such
                             pass

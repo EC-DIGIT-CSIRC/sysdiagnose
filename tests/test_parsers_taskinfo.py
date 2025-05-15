@@ -17,6 +17,9 @@ class TestParsersTaskinfo(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 0)
+            for item in result:
+                self.assert_has_required_fields_jsonl(item)
+
             # self.assertGreater(result['numb_tasks'], 0)
             # self.assertGreater(len(result['tasks']), 0)
             # numb_tasks = result['numb_tasks']

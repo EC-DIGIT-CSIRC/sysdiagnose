@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import glob
+import stat
 import sysdiagnose.utils.misc as misc
 import os
 import json
@@ -38,7 +39,8 @@ class PlistParser(BaseParserInterface):
     # LATER output_exists() now always returns False. This is because the output is saved in multiple files.
     # we may want to change this behavior in the future, but that requires overwriting output_exists() and get_result() here
 
-    def parse_file(self, file_path: str) -> dict:
+    @staticmethod
+    def parse_file(file_path: str) -> dict:
         try:
             return misc.load_plist_file_as_json(file_path)
         except Exception as e:

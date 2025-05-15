@@ -44,7 +44,9 @@ class TaskinfoParser(BaseParserInterface):
                         'timestamp': self.sysdiagnose_creation_datetime.timestamp(),
                         'datetime': self.sysdiagnose_creation_datetime.isoformat(timespec='microseconds'),
                         'tasks': numb_tasks,
-                        'datetime_description': f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
+                        'message': f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
+                        'saf_module': self.module_name,
+                        'timestamp_desc': 'taskinfo'
                     })
 
                 n = 1  # skip lines to right section
@@ -79,7 +81,10 @@ class TaskinfoParser(BaseParserInterface):
                         timestamp = self.sysdiagnose_creation_datetime - timedelta(seconds=seconds)
                         process['timestamp'] = timestamp.timestamp()
                         process['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        process['datetime_description'] = "Process launched at the timestamp, calculated from sysdiagnose creation time minus process run time"
+                        # process['datetime_description'] = "Process launched at the timestamp, calculated from sysdiagnose creation time minus process run time"
+                        process['timestamp_desc'] = 'process start time'
+                        process['saf_module'] = self.module_name
+                        process['message'] = f"{process['process']} started"
                         events.append(process)
                         extracted_block = []
                         n = n + 1  # add one more to n as we are skipping the empty line

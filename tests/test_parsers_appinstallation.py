@@ -20,7 +20,7 @@ class TestParsersAppinstallation(SysdiagnoseTestCase):
             result = p.get_result()
             for item in result:
                 self.assertTrue('db_table' in item)
-                self.assertTrue('datetime' in item)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

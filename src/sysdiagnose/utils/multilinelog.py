@@ -4,16 +4,16 @@ import sysdiagnose.utils.misc as misc
 from datetime import datetime
 
 
-def extract_from_file(fname, tzinfo):
+def extract_from_file(fname, tzinfo, module):
     with open(fname, 'r', encoding="utf-8") as f:
-        return extract_from_iowrapper(f, tzinfo=tzinfo)
+        return extract_from_iowrapper(f, tzinfo=tzinfo, module=module)
 
 
-def extract_from_string(logstring, tzinfo):
-    return extract_from_iowrapper(io.StringIO(logstring), tzinfo=tzinfo)
+def extract_from_string(logstring, tzinfo, module):
+    return extract_from_iowrapper(io.StringIO(logstring), tzinfo=tzinfo, module=module)
 
 
-def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo):
+def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
     # multiline parsing with the following logic:
     # - build an entry with the seen lines
     # - upon discovery of a new entry, or the end of the file, consider the entry as complete and process the lines
@@ -31,11 +31,11 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo):
                 kv_section = True
             if kv_section == 'end':
                 kv_section = False
-                events.append(build_from_kv_section(prev_lines, tzinfo=tzinfo))
+                events.append(build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module))
                 prev_lines = []
                 continue  # go to next line as current line is just the closure of the section
             elif prev_lines:
-                new_entry = build_from_logentry(''.join(prev_lines), tzinfo=tzinfo)
+                new_entry = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
                 events.append(new_entry)
             # build the new entry
             prev_lines = []
@@ -49,16 +49,16 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo):
             kv_section = 'end'
     # process the last entry
     if kv_section and len(prev_lines) > 1:
-        new_entry = build_from_kv_section(prev_lines, tzinfo=tzinfo)
+        new_entry = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
     else:
-        new_entry = build_from_logentry(''.join(prev_lines), tzinfo=tzinfo)
+        new_entry = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
     if new_entry:
         events.append(new_entry)
     return events
 
 
-def build_from_kv_section(lines, tzinfo):
-    new_entry = build_from_logentry(lines.pop(0), tzinfo=tzinfo)  # first line is a normal line
+def build_from_kv_section(lines, tzinfo, module):
+    new_entry = build_from_logentry(line=lines.pop(0), tzinfo=tzinfo, module=module)  # first line is a normal line
     if '_____' in lines[-1]:
         lines.pop()  # drop last line as it's just the closing line
     # complement with key-value section
@@ -69,7 +69,7 @@ def build_from_kv_section(lines, tzinfo):
     return new_entry
 
 
-def build_from_logentry(line, tzinfo):
+def build_from_logentry(line, tzinfo, module):
     entry = {}
     # timestamp
     timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
@@ -79,6 +79,8 @@ def build_from_logentry(line, tzinfo):
         timestamp = timestamp.replace(tzinfo=tzinfo)
         entry['timestamp'] = timestamp.timestamp()
         entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+        entry['timestamp_desc'] = f'{module} event'
+        entry['saf_module'] = module
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)

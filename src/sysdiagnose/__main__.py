@@ -3,7 +3,6 @@ import argparse
 import sys
 from sysdiagnose import Sysdiagnose
 import os
-import time
 from sysdiagnose.utils.logger import logger, set_console_logging
 
 
@@ -37,9 +36,13 @@ def main():
     subparsers = parser.add_subparsers(dest='mode')
 
     # init mode
-    init_parser = subparsers.add_parser('init', help='Initialize a new case')
+    init_parser = subparsers.add_parser('init', help='Initialise a new case')
     init_parser.add_argument('filename', help='Name of the sysdiagnose archive file')
     init_parser.add_argument('--force', action='store_true', help='Force case creation')
+
+    # delete mode
+    delete_parser = subparsers.add_parser('delete', help='Delete a case')
+    delete_parser.add_argument('--force', action='store_true', help='Force case deletion, do not ask for confirmation')
 
     # parse mode
     parse_parser = subparsers.add_parser('parse', help='Parse a case')
@@ -82,6 +85,25 @@ def main():
         elif args.what == 'analysers':
             sd.print_analysers_list()
 
+    elif args.mode == 'delete':
+        force = args.force
+        if not args.case_id and args.case_id not in sd.get_case_ids():
+            exit("No valid case ID given, use --case_id to specify a case ID")
+
+        if not force:
+            # Ask for confirmation
+            confirm = input(f"Are you sure you want to delete case '{args.case_id}'? (y/n): ")
+            if confirm.lower() != 'y':
+                print("Aborting deletion.")
+                exit(0)
+        # Delete the case
+        try:
+            sd.delete_case(args.case_id)
+            print(f"Case '{args.case_id}' deleted successfully.")
+        except Exception as e:
+            print(f"Error deleting case: {str(e)}")
+            exit(1)
+
     elif args.mode == 'cases':
         sd.print_list_cases(verbose=args.verbose)
 
@@ -115,7 +137,7 @@ def main():
             sd.print_parsers_list()
             exit("")
         elif args.parser == 'all':
-            parsers_list = list(sd.get_parsers().keys())
+            parsers_list = list(sd.config.get_parsers().keys())
             if args.exclude:
                 exclude_list = args.exclude.split(',')
                 parsers_list = [parser for parser in parsers_list if parser not in exclude_list]
@@ -154,7 +176,7 @@ def main():
             sd.print_analysers_list()
             exit("")
         elif args.analyser == 'all':
-            analysers_list = list(sd.get_analysers().keys())
+            analysers_list = list(sd.config.get_analysers().keys())
             if args.exclude:
                 exclude_list = args.exclude.split(',')
                 analysers_list = [analyser for analyser in analysers_list if analyser not in exclude_list]

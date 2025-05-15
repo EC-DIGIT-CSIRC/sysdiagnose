@@ -26,11 +26,11 @@ class LockdowndParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             with open(log_file, 'r') as f:
-                result = LockdowndParser.extract_from_list(f.readlines(), tzinfo=self.sysdiagnose_creation_datetime.tzinfo)
+                result = LockdowndParser.extract_from_list(f.readlines(), tzinfo=self.sysdiagnose_creation_datetime.tzinfo, module=self.module_name)
                 return result
         return []
 
-    def extract_from_list(lines: list, tzinfo) -> list:
+    def extract_from_list(lines: list, tzinfo, module) -> list:
         result = []
         i = 0
         while i < len(lines):
@@ -59,6 +59,8 @@ class LockdowndParser(BaseParserInterface):
             item = {
                 'timestamp': timestamp.timestamp(),
                 'datetime': timestamp.isoformat(timespec='microseconds'),
+                'saf_module': module,
+                'timestamp_desc': f'lockdownd {match.group(3)}',
                 'pid': int(match.group(2)),
                 'event_type': match.group(3),
                 'message': match.group(4).strip()

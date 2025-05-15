@@ -16,12 +16,13 @@ class TestParsersOlddsc(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            for entry in result:
-                self.assertTrue('Load_Address' in entry)
+            for item in result:
+                self.assertTrue('Load_Address' in item)
                 # self.assertTrue('Unslid_Base_Address' in result)
                 # self.assertTrue('Cache_UUID_String' in result)
                 # self.assertTrue('Binaries' in result)
                 # self.assertTrue(len(result['Binaries']) > 0)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

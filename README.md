@@ -15,6 +15,16 @@ Create a virtual environment and install dependencies:
  sudo apt install graphviz
  ```
 
+ On MacOS (Apple Silicon):
+```bash
+ python3 -m venv venv
+ source venv/bin/activate
+ pip3 install .
+ brew install graphviz  # Or your prefered way of installing graphviz binaries
+ brew install libmagic
+ ```
+
+
 On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser. See below for instructions how to do this.
 
 # Quickstart
