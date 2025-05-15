@@ -3,6 +3,7 @@
 import glob
 import os
 import re
+
 from sysdiagnose.utils.base import BaseParserInterface
 
 
@@ -49,7 +50,8 @@ class WifiScanParser(BaseParserInterface):
                     parsed_data['message'] = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
                 else:
                     # join key-value pairs
-                    parsed_data['message'] = f"Wifi scan: {', '.join(f"{k}={v}" for k, v in parsed_data.items())}"
+                    concatenated = ', '.join(f"{k}={v}" for k, v in parsed_data.items())
+                    parsed_data['message'] = f"Wifi scan: {concatenated}"
                 timestamp = self.sysdiagnose_creation_datetime
                 parsed_data['datetime'] = timestamp.isoformat(timespec='microseconds')
                 parsed_data['timestamp'] = timestamp.timestamp()
