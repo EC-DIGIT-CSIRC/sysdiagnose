@@ -6,7 +6,7 @@ import os
 
 class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
 
-    def test_parse(self):
+    def test_parse_avconverence(self):
         for case_id, case in self.sd.cases().items():
             p = AvConferenceCallSettingsParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()  # noqa F841
@@ -16,7 +16,7 @@ class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

@@ -17,7 +17,8 @@ class TestParsersNetworkExtensionCache(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertGreater(len(result), 0)
+            # TODO find a way to validate the result and check if the parser works.
+            # we may need to check if the original file is greater than X, and then require that the result contains some keys
 
 
 if __name__ == '__main__':

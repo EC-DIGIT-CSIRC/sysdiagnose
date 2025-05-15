@@ -150,6 +150,30 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse accessibility_tcc",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public parse accessibility_tcc",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse appinstallation",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public parse appinstallation",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse sysdiagnose_all",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c all parse sysdiagnose",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse brctl",
             "type": "debugpy",
             "request": "launch",
@@ -182,6 +206,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse sys",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public parse sys",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse powerlogs",
             "type": "debugpy",
             "request": "launch",
@@ -195,6 +227,14 @@
             "request": "launch",
             "module": "sysdiagnose.__main__",
             "args": "-c public parse mobileactivation",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse mobilebackup",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public parse mobilebackup",
             "cwd": "${workspaceFolder}/"
         },
         {

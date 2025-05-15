@@ -17,7 +17,7 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
+                self.assert_has_required_fields_jsonl(item)
 
     def test_header_section(self):
         lines = [

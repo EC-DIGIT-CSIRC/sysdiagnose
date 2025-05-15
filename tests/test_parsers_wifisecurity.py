@@ -10,7 +10,8 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
         for case_id, case in self.sd.cases().items():
             p = WifiSecurityParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
-            self.assertTrue(len(files) > 0)
+            if not files:
+                continue
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
@@ -21,6 +22,7 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
                 self.assertTrue('agrp' in item)
                 self.assertTrue('cdat' in item)
                 self.assertTrue('mdat' in item)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

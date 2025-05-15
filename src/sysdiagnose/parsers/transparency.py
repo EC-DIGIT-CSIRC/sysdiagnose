@@ -55,6 +55,8 @@ class TransparencyParser(BaseParserInterface):
                         'message': f"Transparency: registration app {item.get('app')} {key}",
                         'timestamp': timestamp.timestamp(),
                         'datetime': timestamp.isoformat(timespec='microseconds'),
+                        'timestamp_desc': 'app registration',
+                        'saf_module': self.module_name,
                     })
         sm = json_data.get('stateMachine')
         if sm:
@@ -65,6 +67,8 @@ class TransparencyParser(BaseParserInterface):
                     'message': f"Transparency: stateMachine {key}",
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
             except KeyError:
                 pass
@@ -75,6 +79,8 @@ class TransparencyParser(BaseParserInterface):
                     'message': f"Transparency: stateMachine {key}",
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
             except KeyError:
                 pass
@@ -85,6 +91,8 @@ class TransparencyParser(BaseParserInterface):
                     'message': f"Transparency: stateMachine {key}",
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
             except KeyError:
                 pass
@@ -95,6 +103,8 @@ class TransparencyParser(BaseParserInterface):
                     'message': f"Transparency: stateMachine last {key}",
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
 
             for launch in sm.get('launch', []):
@@ -102,9 +112,11 @@ class TransparencyParser(BaseParserInterface):
                 # parse the time in this format 2024-08-19T09:00:28.946+0200
                 timestamp = datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f%z")
                 events.append({
-                    'message': f"Transparency: stateMachine last {key}",
+                    'message': f"Transparency: stateMachine launch {key}",
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
 
             try:
@@ -117,6 +129,8 @@ class TransparencyParser(BaseParserInterface):
                     'timestamp': timestamp.timestamp(),
                     'datetime': timestamp.isoformat(timespec='microseconds'),
                     'data': sm[key],
+                    'timestamp_desc': 'stateMachine',
+                    'saf_module': self.module_name,
                 })
             except KeyError:
                 pass
@@ -126,9 +140,11 @@ class TransparencyParser(BaseParserInterface):
                     time_str = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', val).group(0)
                     timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S %z")
                     events.append({
-                        'message': f"Transparency: stateMachine op {val}",
+                        'message': f"Transparency: stateMachine ops {val}",
                         'timestamp': timestamp.timestamp(),
                         'datetime': timestamp.isoformat(timespec='microseconds'),
+                        'timestamp_desc': 'stateMachine',
+                        'saf_module': self.module_name,
                     })
                 except KeyError:
                     pass

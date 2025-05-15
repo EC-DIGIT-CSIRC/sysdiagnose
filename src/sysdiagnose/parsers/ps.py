@@ -62,6 +62,8 @@ class PsParser(BaseParserInterface):
                     entry['timestamp_desc'] = 'sysdiagnose creation'
                     entry['timestamp'] = timestamp.timestamp()
                     entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+                    entry['message'] = f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}"
+                    entry['saf_module'] = self.module_name
 
                     result.append(entry)
                 return result

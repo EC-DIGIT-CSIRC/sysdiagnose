@@ -33,12 +33,12 @@ class McSettingsEventsParser(BaseParserInterface):
         log_files = self.get_log_files()
         for log_file in log_files:
             json_data = misc.load_plist_file_as_json(log_file)
-            for entry in McSettingsEventsParser.traverse_and_collect(json_data):
+            for entry in McSettingsEventsParser.traverse_and_collect(data=json_data, module=self.module_name):
                 result.append(entry)
 
         return result
 
-    def traverse_and_collect(data, path=""):
+    def traverse_and_collect(data, module, path=""):
         '''
         recursively traverse json_data and search for dicts that contain the 'timestamp' key.
         when found, convert the value of the 'timestamp' key to a datetime object and add it to the entry dict.
@@ -54,9 +54,12 @@ class McSettingsEventsParser(BaseParserInterface):
                     entry['datetime'] = timestamp.isoformat(timespec='microseconds')
                     entry['timestamp'] = timestamp.timestamp()
                     entry['setting'] = current_path
+                    entry['saf_module'] = module
+                    entry['message'] = f"setting {entry['setting']} {entry['event']} by {entry['process']}"
+                    entry['timestamp_desc'] = f"{module} {entry['event']}"
                     yield entry
                 except ValueError:
                     pass
             elif isinstance(value, dict):
-                for entry in McSettingsEventsParser.traverse_and_collect(value, current_path):
+                for entry in McSettingsEventsParser.traverse_and_collect(data=value, module=module, path=current_path):
                     yield entry

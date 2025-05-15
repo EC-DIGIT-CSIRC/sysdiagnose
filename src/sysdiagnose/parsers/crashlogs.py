@@ -59,7 +59,9 @@ class CrashLogsParser(BaseParserInterface):
             elif file.endswith('.ips'):
                 try:
                     ips = CrashLogsParser.parse_ips_file(file)
-                    ips_hash = f"{ips.get('timestamp', '')}-{ips.get('app_name', '')}"
+                    ips['saf_module'] = self.module_name
+                    ips['timestamp_desc'] = 'crashlog'
+                    ips_hash = f"{ips.get('timestamp', '')}-{ips.get('name', '')}"
                     # skip duplicates
                     if ips_hash in seen:
                         continue
@@ -83,12 +85,24 @@ class CrashLogsParser(BaseParserInterface):
                 try:
                     timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%S.%f %z')
                 except ValueError:
-                    timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%SZ')
+                    try:
+                        timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%d %H:%M:%SZ')
+                    except ValueError:
+                        timestamp = datetime.strptime(result['report']['date'], '%Y-%m-%dT%H:%M:%SZ')
 
             if not timestamp:
                 timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
             result['datetime'] = timestamp.isoformat(timespec='microseconds')
             result['timestamp'] = timestamp.timestamp()
+
+            result['name'] = CrashLogsParser.metadata_from_filename(path)[0]
+            try:
+                result['message'] = f"Crashlog: {result['report']['reason']}"
+            except KeyError:
+                try:
+                    result['message'] = f"Crashlog: {result['report']['procName']}"
+                except KeyError:
+                    result['message'] = f"Crashlog: {result['name']}"
             return result
 
     def process_ips_lines(lines: list) -> dict:
@@ -209,15 +223,18 @@ class CrashLogsParser(BaseParserInterface):
                 if not line.startswith('/'):
                     continue
 
-                app, timestamp = self.metadata_from_filename(line)
+                app, timestamp = CrashLogsParser.metadata_from_filename(line, self.sysdiagnose_creation_datetime.tzinfo)
                 path = line.split(',')[0]
                 entry = {
                     'app_name': app,
                     'name': app,
                     'datetime': timestamp.isoformat(timespec='microseconds'),
                     'timestamp': timestamp.timestamp(),
+                    'saf_module': self.module_name,
+                    'timestamp_desc': 'crashlog',
                     'filename': os.path.basename(path),
                     'path': path,
+                    'message': f"Crashlog: {app}",
                     'warning': 'Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time'
                 }
                 if entry['path'] in seen:
@@ -262,7 +279,7 @@ class CrashLogsParser(BaseParserInterface):
         }
         return result
 
-    def metadata_from_filename(self, filename: str) -> tuple[str, datetime]:
+    def metadata_from_filename(filename: str, tzinfo=None) -> tuple[str, datetime]:
         while True:
             # option 1: YYYY-MM-DD-HHMMSS
             m = re.search(r'/([^/]+)-(\d{4}-\d{2}-\d{2}-\d{6})', filename)
@@ -280,5 +297,6 @@ class CrashLogsParser(BaseParserInterface):
 
         app = m.group(1)
         # FIXME timezone is from local phone time at file creation. Not the TZ while creating the sysdiagnose image
-        timestamp = timestamp.replace(tzinfo=self.sysdiagnose_creation_datetime.tzinfo)
+        if tzinfo:
+            timestamp = timestamp.replace(tzinfo=tzinfo)
         return app, timestamp

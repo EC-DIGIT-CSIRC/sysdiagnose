@@ -22,9 +22,9 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             # we don't test getting result in memory, but check one line in the output.
             with open(p.output_file, 'r') as f:
                 line = f.readline()
-                json_data = json.loads(line)
-                self.assertTrue('subsystem' in json_data)
-                self.assertTrue('datetime' in json_data)
+                item = json.loads(line)
+                self.assertTrue('subsystem' in item)
+                self.assert_has_required_fields_jsonl(item)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = '2023-05-24 13:03:28.908085-0700'
@@ -101,7 +101,9 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             'senderProgramCounter': 6084,
             'parentActivityIdentifier': 0,
             'datetime': '2023-05-24T13:03:28.908085-07:00',
-            'timestamp': 1684958608.908085
+            'timestamp': 1684958608.908085,
+            'timestamp_desc': 'logarchive',
+            'saf_module': 'logarchive',
         }
         result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
         self.maxDiff = None

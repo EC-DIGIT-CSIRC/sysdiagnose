@@ -9,7 +9,7 @@ import os
 import re
 from datetime import datetime, timezone
 
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class LogDataStatisticsTxtParser(BaseParserInterface):
@@ -23,7 +23,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
     description = 'Parsing logdata.statistics.txt files'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -107,8 +107,8 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                                     record = record_tpl.copy()
                                     record['process'] = process.strip()
                                     record['saf_module'] = self.module_name
-                                    record['timestamp_desc'] = record['type']
-                                    record['message'] = f"{record['type']} while {record['process']} is running"
+                                    record['timestamp_desc'] = f"Logd {record['type']}"
+                                    record['message'] = f"Logd {record['type']} while {record['process']} is running"
                                     output.append(record)
         except Exception as err:
             logger.error(f'Error parsing file {path}: {err}')

@@ -6,6 +6,8 @@ from sysdiagnose import Sysdiagnose
 
 class SysdiagnoseTestCase(unittest.TestCase):
 
+    required_fields_jsonl = ['message', 'datetime', 'timestamp_desc', 'saf_module']
+
     @classmethod
     def setUpClass(cls):
         # theoretically better to use tempfile.TemporaryDirectory(), but that would prevent re-use between test runs
@@ -33,7 +35,7 @@ class SysdiagnoseTestCase(unittest.TestCase):
                     cls.sd.create_case(archive_file)
                 except ValueError as ve:
                     # ignore errors as we know we may have multiple times the same case
-                    print(f"Error: {ve}")
+                    print(f"Warning: {ve}")
 
     def setUp(self):
         self.tmp_folder = '/tmp/sysdiagnose'
@@ -69,3 +71,10 @@ class SysdiagnoseTestCase(unittest.TestCase):
 
         results.sort()
         return results
+
+    def assert_has_required_fields_jsonl(self, entry: dict):
+        """
+        Check if the entry has all required fields.
+        """
+        for field in self.required_fields_jsonl:
+            self.assertTrue(field in entry, f'Parser result entry did not contain a {field}.')

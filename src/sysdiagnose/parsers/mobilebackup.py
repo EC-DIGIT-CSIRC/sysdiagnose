@@ -38,17 +38,21 @@ class MobileBackupParser(BaseParserInterface):
                 item = {
                     'datetime': timestamp.isoformat(timespec='microseconds'),
                     'timestamp': timestamp.timestamp(),
+                    'timestamp_desc': 'LastOnCondition error',
+                    'saf_module': self.module_name,
                     'domain': parts[12],
-                    'code': int(parts[13]),
+                    'code': int(parts[13])
                     # TODO understand the meaning of the other fields
                 }
-                item.update()
+
+                # FIXME below correlation is WRONG. The index of the BackupStateInfo error is not the same as the index of the LastOnConditionEvents
                 try:
                     backupstateinfo = json_data['BackupStateInfo']['errors'][i]
                     item.update(backupstateinfo)
                 except IndexError:
                     # could not find a correlating BackupStateInfo
                     pass
+                item['message'] = f"MobileBackup: {item.get('localizedDescription', '')} in {item['domain']} ",
                 result.append(item)
 
             # add PreflightSizing that does not have a timestamp
@@ -58,9 +62,11 @@ class MobileBackupParser(BaseParserInterface):
                     'type': 'MobileBackup PreflightSizing entry',
                     'datetime': timestamp.isoformat(timespec='microseconds'),
                     'timestamp': timestamp.timestamp(),
-                    'timestamp_desc': 'sysdiagnose creation time',
+                    'timestamp_info': 'sysdiagnose creation',
+                    'timestamp_desc': 'PreflightSizing entry',
+                    'saf_module': self.module_name,
                     'key': key,
-                    'size': value,
+                    'size': value
                 }
                 try:
                     item['bundle_id'] = re.search(r'[^-]+Domain[^-]*-(.+)$', key).group(1)
@@ -72,7 +78,7 @@ class MobileBackupParser(BaseParserInterface):
                 except Exception:
                     # not a domain
                     pass
-
+                item['message'] = f"{item['type']} bundle={item.get('bundle_id', '')} key={item['key']}"
                 result.append(item)
 
         return result

@@ -17,7 +17,7 @@ class TestParsersMcSettingsEvents(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

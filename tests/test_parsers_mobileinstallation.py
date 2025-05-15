@@ -17,10 +17,9 @@ class TestParsersMobileinstallation(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
                 self.assertTrue('loglevel' in item)
                 self.assertTrue('hexID' in item)
-                self.assertTrue('message' in item)
+                self.assert_has_required_fields_jsonl(item)
                 # self.assertTrue('event_type' in item) # not all logs have event_type
 
 

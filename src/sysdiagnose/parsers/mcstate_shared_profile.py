@@ -37,6 +37,9 @@ class McStateSharedProfileParser(BaseParserInterface):
             timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
             entry['datetime'] = timestamp.isoformat(timespec='microseconds')
             entry['timestamp'] = timestamp.timestamp()
+            entry['saf_module'] = self.module_name
+            entry['message'] = '# '.join([entry.get('PayloadDescription', ''), entry.get('PayloadDisplayName', ''), entry.get('PayloadOrganization', '')])
+            entry['timestamp_desc'] = f"MCState {entry['PayloadType']}"
             result.append(entry)
 
         return result

@@ -3,7 +3,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface
 
 
 class WifiScanParser(BaseParserInterface):
@@ -45,9 +45,16 @@ class WifiScanParser(BaseParserInterface):
                     # extract key-value by string
                     parsed_data.update(WifiScanParser.parse_line(line))
 
+                if 'ssid' in parsed_data:
+                    parsed_data['message'] = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
+                else:
+                    # join key-value pairs
+                    parsed_data['message'] = f"Wifi scan: {', '.join(f"{k}={v}" for k, v in parsed_data.items())}"
                 timestamp = self.sysdiagnose_creation_datetime
                 parsed_data['datetime'] = timestamp.isoformat(timespec='microseconds')
                 parsed_data['timestamp'] = timestamp.timestamp()
+                parsed_data['timestamp_desc'] = 'sysdiagnose creation'
+                parsed_data['saf_module'] = self.module_name
                 output.append(parsed_data)
         return output
 
@@ -80,7 +87,7 @@ class WifiScanParser(BaseParserInterface):
                 break
         if 'ssid' not in parsed:
             parsed['ssid'] = '<unknown>'
-            logger.warning(f"Failed to parse ssid from line: {line}")
+            # logger.warning(f"Failed to parse ssid from line: {line}")
         # key = first place with =
         #  check what is after =, if normal char then value is until next ,
         #                         if [ then value is until ]

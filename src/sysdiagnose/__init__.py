@@ -15,7 +15,7 @@ from io import TextIOWrapper
 class Sysdiagnose:
     def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
         self._cases = False   # will be populated through cases() singleton method
-        self.config = SysdiagnoseConfig(cases_path)
+        self.config: SysdiagnoseConfig = SysdiagnoseConfig(cases_path)
 
     def cases(self, force: bool = False) -> dict:
         # pseudo singleton, so it's not loaded unless necessary
@@ -186,7 +186,8 @@ class Sysdiagnose:
         :param source_file: Path to the sysdiagnose file/folder
         :return: sha256 hash of the file/folder
         """
-        from sysdiagnose.parsers import remotectl_dumpstate
+        from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
+        from sysdiagnose.parsers.sys import SystemVersionParser
 
         if os.path.isfile(source_file):
             with tarfile.open(source_file) as tf:
@@ -197,10 +198,14 @@ class Sysdiagnose:
                         if member.name.endswith('remotectl_dumpstate.txt'):
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
-                            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
+                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
                         elif member.name.endswith('sysdiagnose.log'):
                             sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
                             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+                        elif member.name.endswith('SystemVersion.plist'):
+                            sys_json_file = tf.extractfile(member)
+                            sys_json_file_content = sys_json_file.read().decode()
+                            sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
 
                 except Exception:
                     logger.error("File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive.")
@@ -208,7 +213,7 @@ class Sysdiagnose:
         elif os.path.isdir(source_file):
             sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
             remotectl_dumpstate_file = os.path.join(source_file, 'remotectl_dumpstate.txt')
-            remotectl_dumpstate_json = remotectl_dumpstate.RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
+            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
 
         else:
@@ -216,7 +221,8 @@ class Sysdiagnose:
             return None
 
         # Time to obtain the metadata
-        if 'error' not in remotectl_dumpstate_json:
+
+        if remotectl_dumpstate_json and 'error' not in remotectl_dumpstate_json:
             if 'Local device' in remotectl_dumpstate_json:
                 try:
                     serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
@@ -236,6 +242,18 @@ class Sysdiagnose:
                     logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
+        else:
+            # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
+            serial_number = 'unknown'
+            metadata = {
+                'serial_number': serial_number,
+                'unique_device_id': 'unknown',
+                'ios_version': sys_json['ProductVersion'],
+                'date': sysdiagnose_date.isoformat(timespec='microseconds'),
+                'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                'source_file': source_file,
+                'source_sha256': ''
+            }
 
         return None
 

@@ -54,10 +54,13 @@ class BatteryBDCParser(BaseParserInterface):
                     elif 'set_system_time' in row:
                         timestamp = datetime.strptime(row['set_system_time'], '%Y-%m-%d %H:%M:%S %z')
                     else:
-                        logger.error(f"No known timestamp field found in CSV file", extra={'header': str(row)})
+                        logger.error("No known timestamp field found in CSV file", extra={'header': str(row)})
                         raise ValueError('No known timestamp field found in CSV file')
                     row['datetime'] = timestamp.isoformat(timespec='microseconds')
                     row['timestamp'] = timestamp.timestamp()
+                    row['saf_module'] = self.module_name
+                    row['timestamp_desc'] = entry_type
+                    row['message'] = 'power state report'
                     result.append(row)
 
         return result

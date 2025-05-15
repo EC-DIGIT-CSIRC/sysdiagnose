@@ -36,6 +36,8 @@ class SystemVersionParser(BaseParserInterface):
             entry['timestamp_desc'] = 'sysdiagnose creation'
             entry['timestamp'] = timestamp.timestamp()
             entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+            entry['saf_module'] = self.module_name
+            entry['message'] = f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}"
             return [entry]
         except IndexError:
             logger.warning('No SystemVersion.plist file present')
@@ -43,3 +45,11 @@ class SystemVersionParser(BaseParserInterface):
 
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)
+
+    def parse_file_content(data: str) -> list | dict:
+        """
+        This function is used to parse the content of the file
+        :param data: The content of the file
+        :return: The parsed content
+        """
+        return misc.load_plist_string_as_json(data)

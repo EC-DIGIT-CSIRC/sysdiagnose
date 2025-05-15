@@ -70,7 +70,7 @@ default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apol
 
 
 class Apollo():
-    def __init__(self, logger: logging.Logger, mod_dir: str = default_mod_dir, os_version: str = 'yolo'):
+    def __init__(self, logger: logging.Logger, mod_dir: str = default_mod_dir, os_version: str = 'yolo', saf_module: str = None):
         """
         Initialize the Apollo class for parsing databases
 
@@ -81,6 +81,7 @@ class Apollo():
         self.logger = logger
         self.os_version = os_version
         self.mod_dir = mod_dir
+        self.saf_module = saf_module
 
         self.supported_database_names = set()
         self.mod_info = {}
@@ -164,8 +165,10 @@ class Apollo():
                     timestamp = timestamp.replace(tzinfo=timezone.utc)
                     item['timestamp'] = timestamp.timestamp()
                     item['datetime'] = timestamp.isoformat(timespec='microseconds')
+                    item['timestamp_desc'] = module_query['activity']
                     item['module_name'] = module_query['name']
-                    item['module_activity'] = module_query['activity']
+                    item['saf_module'] = self.saf_module
+                    item['message'] = module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k])
                     results.append(item)
                 except TypeError:
                     # problem with timestamp parsing

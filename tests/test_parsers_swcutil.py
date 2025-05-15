@@ -18,7 +18,7 @@ class TestParsersSwcutil(SysdiagnoseTestCase):
             result = p.get_result()
             self.assertGreater(len(result), 0)
             for item in result:
-                self.assertTrue('timestamp' in item)
+                self.assert_has_required_fields_jsonl(item)
 
     def test_parse_memory(self):
         p = SwcutilParser(self.sd.config, case_id='test')
@@ -29,9 +29,9 @@ class TestParsersSwcutil(SysdiagnoseTestCase):
             'hello:     10 MB'
         ]
         expected_outputs = [
-            {'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'Sysdiagnose creation', 'process': 'foo', 'usage': 6144},
-            {'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'Sysdiagnose creation', 'process': 'bar', 'usage': 434},
-            {'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'Sysdiagnose creation', 'process': 'hello', 'usage': 10485760}
+            {'saf_module': 'swcutil', 'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'sysdiagnose creation', 'process': 'foo', 'usage': 6144, 'message': 'foo memory usage: 6144 bytes'},
+            {'saf_module': 'swcutil', 'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'sysdiagnose creation', 'process': 'bar', 'usage': 434, 'message': 'bar memory usage: 434 bytes'},
+            {'saf_module': 'swcutil', 'section': 'memory', 'datetime': '1970-01-01T00:00:01.000000+00:00', 'timestamp': 1.0, 'timestamp_desc': 'sysdiagnose creation', 'process': 'hello', 'usage': 10485760, 'message': 'hello memory usage: 10485760 bytes'}
         ]
         for input, expected_output in zip(inputs, expected_outputs):
             result = p.parse_memory_entry(input)

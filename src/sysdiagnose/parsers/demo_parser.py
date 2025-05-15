@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
 import os
-import json
 from sysdiagnose.utils.base import BaseParserInterface, logger
+from datetime import datetime
 
 
 class DemoParser(BaseParserInterface):
@@ -27,9 +27,13 @@ class DemoParser(BaseParserInterface):
         for log_file in log_files:
             entry = {}
             try:
-                # timestamp = datetime.strptime(item['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
-                # entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-                # entry['timestamp'] = timestamp.timestamp()
+                timestamp = datetime.strptime('1980-01-01 12:34:56.001 +00:00', '%Y-%m-%d %H:%M:%S.%f %z')  # moment of interest
+                entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+                entry['timestamp'] = timestamp.timestamp()
+                entry['timestamp_desc'] = 'Demo timestamp'          # String explaining what type of timestamp it is for example file created
+                entry['message'] = f"Demo message from {log_file}"  # String with an informative message of the event
+                entry['saf_module'] = self.module_name
+
                 result.append(entry)
                 logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
                 logger.debug(f"Entry details {str(entry)}", extra={'entry': str(entry)})
