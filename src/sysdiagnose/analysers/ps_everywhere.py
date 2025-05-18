@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from typing import Generator
+from typing import Generator, Set, Optional
 from sysdiagnose.utils.base import BaseAnalyserInterface, logger
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
@@ -25,7 +25,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
-        self.all_ps = set()
+        self.all_ps: Set[str] = set()
 
     @staticmethod
     def _strip_flags(process: str) -> str:
@@ -37,6 +37,121 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         process, *_ = process.partition(' ')
         return process
+    
+    @staticmethod
+    def message_extract_binary(process: str, message: str) -> Optional[str | list[str]]:
+        """
+        Extracts process_name from special messages:
+        1. backboardd Signpost messages with process_name
+        2. tccd process messages with binary_path
+        3. '/kernel' process messages with app name mapping format 'App Name -> /path/to/app'
+        4. configd SCDynamicStore client sessions showing connected processes
+        
+        :param process: Process name.
+        :param message: Log message potentially containing process information.
+        :return: Extracted process name, list of process names, or None if not found.
+        """
+        # Case 1: Backboardd Signpost messages
+        if process == '/usr/libexec/backboardd' and 'Signpost' in message and 'process_name=' in message:
+            try:
+                # Find the process_name part in the message
+                process_name_start = message.find('process_name=')
+                if process_name_start != -1:
+                    # Extract from after 'process_name=' to the next space or end of string
+                    process_name_start += len('process_name=')
+                    process_name_end = message.find(' ', process_name_start)
+                    
+                    if process_name_end == -1:  # If no space after process_name
+                        return message[process_name_start:]
+                    else:
+                        return message[process_name_start:process_name_end]
+            except Exception as e:
+                logger.debug(f"Error extracting process_name from backboardd: {e}")
+        
+        # Case 2: TCCD process messages
+        if process == '/System/Library/PrivateFrameworks/TCC.framework/Support/tccd' and 'binary_path=' in message:
+            try:
+                # Extract only the clean binary paths without additional context
+                binary_paths = []
+                
+                # Find all occurrences of binary_path= in the message
+                start_pos = 0
+                while True:
+                    binary_path_start = message.find('binary_path=', start_pos)
+                    if binary_path_start == -1:
+                        break
+                    
+                    binary_path_start += len('binary_path=')
+                    # Find the end of the path (comma, closing bracket, or end of string)
+                    binary_path_end = None
+                    for delimiter in [',', '}', ' access to', ' is checking']:
+                        delimiter_pos = message.find(delimiter, binary_path_start)
+                        if delimiter_pos != -1 and (binary_path_end is None or delimiter_pos < binary_path_end):
+                            binary_path_end = delimiter_pos
+                    
+                    if binary_path_end is None:
+                        path = message[binary_path_start:].strip()
+                    else:
+                        path = message[binary_path_start:binary_path_end].strip()
+                    
+                    # Skip paths with excessive information
+                    if len(path) > 0 and path.startswith('/') and ' ' not in path:
+                        binary_paths.append(path)
+                    
+                    # Move to position after the current binary_path
+                    start_pos = binary_path_start + 1
+                
+                # Return all valid binary paths
+                if binary_paths:
+                    logger.debug(f"Extracted {len(binary_paths)} binary paths from tccd message")
+                    return binary_paths if len(binary_paths) > 1 else binary_paths[0]
+                    
+            except Exception as e:
+                logger.debug(f"Error extracting binary_path from tccd: {e}")
+        
+        # Case 3: /kernel process with App name mapping pattern "App Name -> /path/to/app"
+        if process == '/kernel' and ' -> ' in message and 'App Store Fast Path' in message:
+            try:
+                # Find the arrow mapping pattern
+                arrow_pos = message.find(' -> ')
+                if arrow_pos != -1:
+                    path_start = arrow_pos + len(' -> ')
+                    # Look for common path patterns - more flexible for kernel messages
+                    if message[path_start:].startswith('/'):
+                        # Find the end of the path (space or end of string)
+                        path_end = message.find(' ', path_start)
+                        if path_end == -1:  # If no space after path
+                            return message[path_start:]
+                        else:
+                            return message[path_start:path_end]
+            except Exception as e:
+                logger.debug(f"Error extracting app path from kernel mapping: {e}")
+                
+        # Case 4: configd SCDynamicStore client sessions
+        if process == '/usr/libexec/configd' and 'SCDynamicStore/client sessions' in message:
+            try:
+                # Process the list of connected clients from configd
+                process_paths = []
+                lines = message.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith('"') and '=' in line:
+                        # Extract the client path from lines like ""/usr/sbin/mDNSResponder:null" = 1;"
+                        client_path = line.split('"')[1]  # Get the part between the first pair of quotes
+                        if ':' in client_path:
+                            # Extract the actual process path part (before the colon)
+                            process_path = client_path.split(':')[0]
+                            if process_path.startswith('/') or process_path.startswith('com.apple.'):
+                                process_paths.append(process_path)
+                
+                # Return the list of process paths if any were found
+                if process_paths:
+                    logger.debug(f"Extracted {len(process_paths)} process paths from configd message")
+                    return process_paths
+            except Exception as e:
+                logger.debug(f"Error extracting client paths from configd SCDynamicStore: {e}")
+                
+        return None
 
     def execute(self) -> Generator[dict, None, None]:
         """
@@ -152,6 +267,31 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'log archive'
         try:
             for p in LogarchiveParser(self.config, self.case_id).get_result():
+                # First check if we can extract a binary from the message
+                if 'message' in p:
+                    extracted_process = self.message_extract_binary(p['process'], p['message'])
+                    if extracted_process:
+                        # Handle the case where extracted_process is a list of paths
+                        if isinstance(extracted_process, list):
+                            for proc_path in extracted_process:
+                                if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path)):
+                                    yield {
+                                        'process': self._strip_flags(proc_path),
+                                        'timestamp': p['timestamp'],
+                                        'datetime': p['datetime'],
+                                        'source': entity_type
+                                    }
+                        else:
+                            # Handle the case where it's a single string
+                            if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process)):
+                                yield {
+                                    'process': self._strip_flags(extracted_process),
+                                    'timestamp': p['timestamp'],
+                                    'datetime': p['datetime'],
+                                    'source': entity_type
+                                }
+                
+                # Process the original process name
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
                     yield {
                         'process': self._strip_flags(p['process']),
