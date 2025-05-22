@@ -26,8 +26,8 @@ def analyse_parser_error(message):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='sysdiagnose',
-        description='sysdiagnose parsing and analysis'
+        prog='sysdiag',
+        description='Sysdiagnose Analysis Framework - parsing and analysis'
     )
     # available for all
     parser.add_argument('-c', '--case_id', required=False, default='all', help='ID of the case, comma-separated list of IDs, or "all" for all cases (default)')
@@ -35,10 +35,14 @@ def main():
 
     subparsers = parser.add_subparsers(dest='mode')
 
-    # init mode
-    init_parser = subparsers.add_parser('init', help='Initialise a new case')
+    # create mode
+    init_parser = subparsers.add_parser('init', help='Initialise a new case (deprecated, use "create" instead)')
     init_parser.add_argument('filename', help='Name of the sysdiagnose archive file')
     init_parser.add_argument('--force', action='store_true', help='Force case creation')
+
+    create_parser = subparsers.add_parser('create', help='Create a new case')
+    create_parser.add_argument('filename', help='Name of the sysdiagnose archive file')
+    create_parser.add_argument('--force', action='store_true', help='Force case creation')
 
     # delete mode
     delete_parser = subparsers.add_parser('delete', help='Delete a case')
@@ -113,7 +117,9 @@ def main():
     elif args.mode == 'analysers':
         sd.print_analysers_list()
 
-    elif args.mode == 'init':
+    elif args.mode == 'init' or args.mode == 'create':
+        if args.mode == 'init':
+            print("The 'init' command is deprecated, use 'create' instead")
         # Handle init mode
         filename = args.filename
         force = args.force

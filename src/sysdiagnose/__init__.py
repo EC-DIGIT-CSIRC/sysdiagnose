@@ -291,7 +291,8 @@ class Sysdiagnose:
             except TypeError:
                 # python 3.11 compatibility
                 try:
-                    tf.extractall(path=destination_folder)
+                    with tarfile.open(sysdiagnose_file) as tf:
+                        tf.extractall(path=destination_folder)
                 except Exception as e:
                     raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
             except Exception as e:
