@@ -99,8 +99,8 @@ class Sysdiagnose:
 
         # only allow specific chars for case_id
         if case_id:
-            if not re.match(r'^[a-zA-Z0-9-_]+$', case_id):
-                raise ValueError("Invalid case ID. Only alphanumeric and -_ characters are allowed.")
+            if not re.match(r'^[a-zA-Z0-9-_\.]+$', case_id):
+                raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
 
         # check if sysdiagnise file is already in a case
         case = None
