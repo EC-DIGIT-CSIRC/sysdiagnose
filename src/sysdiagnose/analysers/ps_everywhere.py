@@ -37,7 +37,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         process, *_ = process.partition(' ')
         return process
-    
+
     @staticmethod
     def message_extract_binary(process: str, message: str) -> Optional[str | list[str]]:
         """
@@ -46,7 +46,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         2. tccd process messages with binary_path
         3. '/kernel' process messages with app name mapping format 'App Name -> /path/to/app'
         4. configd SCDynamicStore client sessions showing connected processes
-        
+
         :param process: Process name.
         :param message: Log message potentially containing process information.
         :return: Extracted process name, list of process names, or None if not found.
@@ -60,27 +60,27 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     # Extract from after 'process_name=' to the next space or end of string
                     process_name_start += len('process_name=')
                     process_name_end = message.find(' ', process_name_start)
-                    
+
                     if process_name_end == -1:  # If no space after process_name
                         return message[process_name_start:]
                     else:
                         return message[process_name_start:process_name_end]
             except Exception as e:
                 logger.debug(f"Error extracting process_name from backboardd: {e}")
-        
+
         # Case 2: TCCD process messages
         if process == '/System/Library/PrivateFrameworks/TCC.framework/Support/tccd' and 'binary_path=' in message:
             try:
                 # Extract only the clean binary paths without additional context
                 binary_paths = []
-                
+
                 # Find all occurrences of binary_path= in the message
                 start_pos = 0
                 while True:
                     binary_path_start = message.find('binary_path=', start_pos)
                     if binary_path_start == -1:
                         break
-                    
+
                     binary_path_start += len('binary_path=')
                     # Find the end of the path (comma, closing bracket, or end of string)
                     binary_path_end = None
@@ -88,27 +88,27 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         delimiter_pos = message.find(delimiter, binary_path_start)
                         if delimiter_pos != -1 and (binary_path_end is None or delimiter_pos < binary_path_end):
                             binary_path_end = delimiter_pos
-                    
+
                     if binary_path_end is None:
                         path = message[binary_path_start:].strip()
                     else:
                         path = message[binary_path_start:binary_path_end].strip()
-                    
+
                     # Skip paths with excessive information
                     if len(path) > 0 and path.startswith('/') and ' ' not in path:
                         binary_paths.append(path)
-                    
+
                     # Move to position after the current binary_path
                     start_pos = binary_path_start + 1
-                
+
                 # Return all valid binary paths
                 if binary_paths:
                     logger.debug(f"Extracted {len(binary_paths)} binary paths from tccd message")
                     return binary_paths if len(binary_paths) > 1 else binary_paths[0]
-                    
+
             except Exception as e:
                 logger.debug(f"Error extracting binary_path from tccd: {e}")
-        
+
         # Case 3: /kernel process with App name mapping pattern "App Name -> /path/to/app"
         if process == '/kernel' and ' -> ' in message and 'App Store Fast Path' in message:
             try:
@@ -126,7 +126,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             return message[path_start:path_end]
             except Exception as e:
                 logger.debug(f"Error extracting app path from kernel mapping: {e}")
-                
+
         # Case 4: configd SCDynamicStore client sessions
         if process == '/usr/libexec/configd' and 'SCDynamicStore/client sessions' in message:
             try:
@@ -143,14 +143,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             process_path = client_path.split(':')[0]
                             if process_path.startswith('/') or process_path.startswith('com.apple.'):
                                 process_paths.append(process_path)
-                
+
                 # Return the list of process paths if any were found
                 if process_paths:
                     logger.debug(f"Extracted {len(process_paths)} process paths from configd message")
                     return process_paths
             except Exception as e:
                 logger.debug(f"Error extracting client paths from configd SCDynamicStore: {e}")
-                
+
         return None
 
     def execute(self) -> Generator[dict, None, None]:
@@ -290,7 +290,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                     'datetime': p['datetime'],
                                     'source': entity_type
                                 }
-                
+
                 # Process the original process name
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
                     yield {
