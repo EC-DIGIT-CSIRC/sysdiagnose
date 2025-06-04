@@ -131,9 +131,11 @@ def main():
             if args.case_id and args.case_id != 'all':
                 case_id = args.case_id
                 sd.create_case(filename, force, case_id)
+                print(f"Case '{case_id}' created successfully from '{filename}'")
             else:
                 # ignore the given case_id and let the function generate one
                 case_id = sd.create_case(filename, force)['case_id']
+                print(f"Case '{case_id}' created successfully from '{filename}'")
         except Exception as e:
             exit(f"Error creating case: {str(e)}")
 

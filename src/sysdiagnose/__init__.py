@@ -148,8 +148,6 @@ class Sysdiagnose:
                 'tags': []
             }
 
-        print(f"Case ID: {str(case['case_id'])}")
-
         # create case folder
         case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
         os.makedirs(case_data_folder, exist_ok=True)
@@ -185,10 +183,24 @@ class Sysdiagnose:
         from sysdiagnose.parsers.sys import SystemVersionParser
 
         if os.path.isfile(source_file):
-            with tarfile.open(source_file) as tf:
-                remotectl_dumpstate_file = None
-                sysdiagnose_log_file = None
-                try:
+            remotectl_dumpstate_json = None
+            sysdiagnose_log_file = None
+
+            # workaround for incompatible filesystem such as SMB
+            targz_file = source_file
+            try:
+                with open(source_file, 'r+'):  # test
+                    # compatible filesystem
+                    pass
+            except OSError:
+                # incompatible filesystem, copy file locally instead
+                import shutil
+                import tempfile
+                targz_file = tempfile.mktemp(suffix='.tar.gz')
+                shutil.copyfile(source_file, targz_file)
+
+            try:
+                with tarfile.open(targz_file) as tf:
                     for member in tf.getmembers():
                         if member.name.endswith('remotectl_dumpstate.txt'):
                             remotectl_dumpstate_file = tf.extractfile(member)
@@ -202,8 +214,12 @@ class Sysdiagnose:
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
 
-                except Exception:
-                    logger.error("File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive.")
+            except Exception as e:
+                logger.error(f"File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive {source_file}: {e}", exc_info=True)
+            finally:
+                if targz_file != source_file:
+                    # remove the temporary file if we copied it
+                    os.remove(targz_file)
 
         elif os.path.isdir(source_file):
             sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
@@ -289,9 +305,9 @@ class Sysdiagnose:
                     with tarfile.open(sysdiagnose_file) as tf:
                         tf.extractall(path=destination_folder)
                 except Exception as e:
-                    raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
+                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
             except Exception as e:
-                raise Exception(f'Error while decompressing sysdiagnose file. Reason: {str(e)}')
+                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
 
         elif os.path.isdir(sysdiagnose_file):
             try:
