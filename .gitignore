@@ -5,6 +5,7 @@ not_yet_parsed.txt
 
 # private test data
 /tests/testdata-*
+/tests/tmp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

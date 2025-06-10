@@ -88,15 +88,17 @@ class TestSysdiagnose(SysdiagnoseTestCase):
             'serial_number': 'F4GT2K24HG7K',
             'unique_device_id': 'e22f7f830e5dcc1287a1690a2622c2b12afaa33c',
             'ios_version': '15.7.6',
+            'model': 'iPhone9,3',
             'date': '2023-05-24T13:29:15.000000-07:00',
             'case_id': 'F4GT2K24HG7K_20230524_132915',
-            'source_file': 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz', 'source_sha256': '43b6c590c5e1f73d7b4241c7c0b0d2cc8c14fc9f2e476942ce73683193769c22'
+            'source_file': 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz',
+            'source_sha256': '78054acba2a27820c2b7a360b512754d05cc831c5427191f47798ec1d1dd5add',
         }
         metadata = Sysdiagnose.get_case_metadata('tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz')
         self.assertEqual(metadata, expected_metadata)
 
         # check signature
-        expected_hash = '43b6c590c5e1f73d7b4241c7c0b0d2cc8c14fc9f2e476942ce73683193769c22'
+        expected_hash = '78054acba2a27820c2b7a360b512754d05cc831c5427191f47798ec1d1dd5add'
         hash = Sysdiagnose.calculate_metadata_signature(metadata)
         self.assertEqual(hash, expected_hash)
 

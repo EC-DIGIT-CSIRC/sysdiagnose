@@ -241,6 +241,7 @@ class Sysdiagnose:
                         'serial_number': serial_number,
                         'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
                         'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
+                        'model': remotectl_dumpstate_json['Local device']['Properties']['ProductType'],
                         'date': sysdiagnose_date.isoformat(timespec='microseconds'),
                         'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
                         'source_file': source_file,
@@ -255,11 +256,13 @@ class Sysdiagnose:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
         else:
             # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
+            # FIXME also write tests...
             serial_number = 'unknown'
             metadata = {
                 'serial_number': serial_number,
                 'unique_device_id': 'unknown',
                 'ios_version': sys_json['ProductVersion'],
+                'model': 'unknown',  # FIXME figure out a way to get the model from sysdiagnose
                 'date': sysdiagnose_date.isoformat(timespec='microseconds'),
                 'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
                 'source_file': source_file,
