@@ -82,7 +82,7 @@ class TestSysdiagnose(SysdiagnoseTestCase):
             # Ensure the temporary directory is cleaned up after the test
             shutil.rmtree(temp_dir)
 
-    def test_case_metadata(self):
+    def test_case_metadata_remotectl(self):
         # check if the metadata is correct
         expected_metadata = {
             'serial_number': 'F4GT2K24HG7K',
@@ -101,6 +101,12 @@ class TestSysdiagnose(SysdiagnoseTestCase):
         expected_hash = '78054acba2a27820c2b7a360b512754d05cc831c5427191f47798ec1d1dd5add'
         hash = Sysdiagnose.calculate_metadata_signature(metadata)
         self.assertEqual(hash, expected_hash)
+
+    # def test_cases_metadata(self):
+    #     for case_id, case in self.sd.cases().items():
+    #         metadata = self.sd.get_case_metadata(case['source_file'])
+
+    #         self.assertTrue(metadata['case_id'].startswith(case_id))
 
 
 if __name__ == '__main__':

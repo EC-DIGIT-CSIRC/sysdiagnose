@@ -314,7 +314,7 @@ class Sysdiagnose:
 
         elif os.path.isdir(sysdiagnose_file):
             try:
-                shutil.copytree(sysdiagnose_file, destination_folder, dirs_exist_ok=True)
+                shutil.copytree(sysdiagnose_file, os.path.join(destination_folder, 'sysdiagnose'), dirs_exist_ok=True)
             except Exception as e:
                 raise Exception(f'Error while copying sysdiagnose folder. Reason: {str(e)}')
 
