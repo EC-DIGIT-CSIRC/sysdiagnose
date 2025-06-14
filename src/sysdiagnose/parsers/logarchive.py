@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import shutil
+import orjson  # fast JSON library
 
 # --------------------------------------------#
 
@@ -40,6 +41,26 @@ cmd_parsing_linux_test = ['unifiedlog_iterator', '--help']
 
 # LATER consider refactoring using yield to lower memory consumption
 
+# Wrapper functions: fall back to stdlib if orjson is not available
+try:
+    def fast_json_loads(data):
+        # orjson.loads expects bytes-like; encode if we get str
+        if isinstance(data, str):
+            data = data.encode()
+        return orjson.loads(data)
+
+    def fast_json_dumps(obj) -> str:
+        # orjson.dumps returns bytes; decode to str so the rest of the code can keep using text mode
+        return orjson.dumps(obj).decode()
+except Exception:  # pragma: no cover
+    # Fallback – should very rarely trigger, but keeps the module usable without the extra dep.
+    import json as _json_std
+
+    def fast_json_loads(data):
+        return _json_std.loads(data)
+
+    def fast_json_dumps(obj) -> str:
+        return _json_std.dumps(obj)
 
 class LogarchiveParser(BaseParserInterface):
     description = 'Parsing system_logs.logarchive folder'
@@ -61,7 +82,7 @@ class LogarchiveParser(BaseParserInterface):
                 tmp_output_file = os.path.join(tmp_outpath.name, 'logarchive.tmp')
                 LogarchiveParser.parse_all_to_file(self.get_log_files(), tmp_output_file)
                 with open(tmp_output_file, 'r') as f:
-                    return [json.loads(line) for line in f]
+                    return [fast_json_loads(line) for line in f]
         except IndexError:
             return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
@@ -79,7 +100,7 @@ class LogarchiveParser(BaseParserInterface):
                 with open(self.output_file, 'r') as f:
                     for line in f:
                         try:
-                            yield json.loads(line)
+                            yield fast_json_loads(line)
                         except json.decoder.JSONDecodeError:  # last lines of the native logarchive.jsonl file
                             continue
         else:
@@ -135,7 +156,7 @@ class LogarchiveParser(BaseParserInterface):
                     with open(current_temp_file['file'].name, 'r') as f_in:
                         copy_over = False   # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
                         for line in f_in:
-                            if not copy_over and json.loads(line)['time'] > prev_temp_file['last_timestamp']:
+                            if not copy_over and fast_json_loads(line)['time'] > prev_temp_file['last_timestamp']:
                                 copy_over = True
                             if copy_over:
                                 f_out.write(line)
@@ -144,7 +165,7 @@ class LogarchiveParser(BaseParserInterface):
 
     def get_first_and_last_entries(output_file: str) -> tuple:
         with open(output_file, 'rb') as f:
-            first_entry = json.loads(f.readline().decode())
+            first_entry = fast_json_loads(f.readline())
             # discover last line efficiently
             f.seek(-2, os.SEEK_END)  # Move the pointer to the second-to-last byte in the file
             # Move backwards until a newline character is found, or we hit the start of the file
@@ -155,7 +176,7 @@ class LogarchiveParser(BaseParserInterface):
                 f.seek(-2, os.SEEK_CUR)  # Move backwards
 
             # Read the last line
-            last_entry = json.loads(f.readline().decode())
+            last_entry = fast_json_loads(f.readline())
 
             return (first_entry, last_entry)
 
@@ -202,7 +223,7 @@ class LogarchiveParser(BaseParserInterface):
             logger.exception('Error: No system_logs.logarchive/ folder found in logs/ directory')
             return False
 
-    def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
+    def __convert_using_native_logparser(input_folder: str, output_file: str) -> None:
         with open(output_file, 'w') as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
             cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson', '--info', '--debug', '--signpost']
@@ -210,8 +231,8 @@ class LogarchiveParser(BaseParserInterface):
             # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
                 try:
-                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
-                    f_out.write(json.dumps(entry_json) + '\n')
+                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(fast_json_loads(line))
+                    f_out.write(fast_json_dumps(entry_json) + '\n')
                 except json.JSONDecodeError as e:
                     logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
                 except KeyError:
@@ -221,11 +242,10 @@ class LogarchiveParser(BaseParserInterface):
                     logger.debug(f"Looks like we arrive to the end of the file: {line}")
                     break
 
-    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
+    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> None:
         with open(output_file, 'w') as f:
             for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
-                json.dump(entry, f)
-                f.write('\n')
+                f.write(fast_json_dumps(entry) + '\n')
 
     @DeprecationWarning
     def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
@@ -245,7 +265,7 @@ class LogarchiveParser(BaseParserInterface):
         # this approach limits memory consumption
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
             try:
-                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
+                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(fast_json_loads(line))
                 yield entry_json
             except json.JSONDecodeError:
                 pass
@@ -276,7 +296,7 @@ class LogarchiveParser(BaseParserInterface):
             if outputfile is None:
                 for line in iter(process.stdout.readline, ''):
                     try:
-                        result.append(json.loads(line))
+                        result.append(fast_json_loads(line))
                     except Exception:
                         result.append(line)
             elif outputfile == sys.stdout:
