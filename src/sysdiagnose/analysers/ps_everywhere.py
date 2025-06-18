@@ -1,447 +1,381 @@
 #! /usr/bin/env python3
 
-from typing import Generator, Set, Optional
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
-from sysdiagnose.parsers.ps import PsParser
-from sysdiagnose.parsers.psthread import PsThreadParser
-from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
-from sysdiagnose.parsers.shutdownlogs import ShutdownLogsParser
-from sysdiagnose.parsers.logarchive import LogarchiveParser
-from sysdiagnose.parsers.logdata_statistics import LogDataStatisticsParser
-from sysdiagnose.parsers.logdata_statistics_txt import LogDataStatisticsTxtParser
-from sysdiagnose.parsers.uuid2path import UUID2PathParser
-from sysdiagnose.parsers.taskinfo import TaskinfoParser
-from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
+# For Python3
+# Script to parse system_logs.logarchive
+# Author: david@autopsit.org
+#
+#
+from collections.abc import Generator
+from datetime import datetime, timezone
+from sysdiagnose.utils.base import BaseParserInterface, logger
+import glob
+import json
+import os
+import platform
+import subprocess
+import sys
+import tempfile
+import shutil
+import orjson  # fast JSON library
 
+# --------------------------------------------#
 
-class PsEverywhereAnalyser(BaseAnalyserInterface):
-    """
-    Analyser that gathers process information from multiple sources
-    to build a comprehensive list of running processes across different system logs.
-    """
+# On 2023-04-13: using ndjson instead of json to avoid parsing issues.
+# Based on manpage:
+#       json      JSON output.  Event data is synthesized as an array of JSON dictionaries.
+#
+#       ndjson    Line-delimited JSON output.  Event data is synthesized as JSON dictionaries, each emitted on a single line.
+#                 A trailing record, identified by the inclusion of a 'finished' field, is emitted to indicate the end of events.
+#
+# cmd_parsing_osx = '/usr/bin/log show %s --style ndjson'  # fastest and short version
+# cmd_parsing_osx = '/usr/bin/log show %s --style json' # fastest and short version
+# cmd_parsing_osx = '/usr/bin/log show %s --info --style json' # to enable debug, add --debug
+# cmd_parsing_osx = '/usr/bin/log show %s --info --debug --style json'
 
-    description = "List all processes we can find a bit everywhere."
-    format = "jsonl"
+# Linux parsing relies on UnifiedLogReader:
+#       https://github.com/mandiant/macos-UnifiedLogs
+# Follow instruction in the README.md in order to install it.
+# TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
+cmd_parsing_linux_test = ['unifiedlog_iterator', '--help']
+# --------------------------------------------------------------------------- #
+
+# LATER consider refactoring using yield to lower memory consumption
+
+# Wrapper functions: fall back to stdlib if orjson is not available
+try:
+    def fast_json_loads(data):
+        # orjson.loads expects bytes-like; encode if we get str
+        if isinstance(data, str):
+            data = data.encode()
+        return orjson.loads(data)
+
+    def fast_json_dumps(obj) -> str:
+        # orjson.dumps returns bytes; decode to str so the rest of the code can keep using text mode
+        return orjson.dumps(obj).decode()
+except Exception:  # pragma: no cover
+    # Fallback – should very rarely trigger, but keeps the module usable without the extra dep.
+    import json as _json_std
+
+    def fast_json_loads(data):
+        return _json_std.loads(data)
+
+    def fast_json_dumps(obj) -> str:
+        return _json_std.dumps(obj)
+
+class LogarchiveParser(BaseParserInterface):
+    description = 'Parsing system_logs.logarchive folder'
+    format = 'jsonl'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
-        self.all_ps: Set[str] = set()
 
-    @staticmethod
-    def _strip_flags(process: str) -> str:
-        """
-        Extracts the base command by removing everything after the first space.
+    def get_log_files(self) -> list:
+        log_folder_glob = '**/system_logs.logarchive/'
+        return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
 
-        :param process: Full process command string.
-        :return: Command string without flags.
-        """
-        process, *_ = process.partition(' ')
-        return process
-
-    @staticmethod
-    def message_extract_binary(process: str, message: str) -> Optional[str | list[str]]:
-        """
-        Extracts process_name from special messages:
-        1. backboardd Signpost messages with process_name
-        2. tccd process messages with binary_path
-        3. '/kernel' process messages with app name mapping format 'App Name -> /path/to/app'
-        4. configd SCDynamicStore client sessions showing connected processes
-
-        :param process: Process name.
-        :param message: Log message potentially containing process information.
-        :return: Extracted process name, list of process names, or None if not found.
-        """
-        # Case 1: Backboardd Signpost messages
-        if process == '/usr/libexec/backboardd' and 'Signpost' in message and 'process_name=' in message:
-            try:
-                # Find the process_name part in the message
-                process_name_start = message.find('process_name=')
-                if process_name_start != -1:
-                    # Extract from after 'process_name=' to the next space or end of string
-                    process_name_start += len('process_name=')
-                    process_name_end = message.find(' ', process_name_start)
-
-                    if process_name_end == -1:  # If no space after process_name
-                        return message[process_name_start:]
-                    else:
-                        return message[process_name_start:process_name_end]
-            except Exception as e:
-                logger.debug(f"Error extracting process_name from backboardd: {e}")
-
-        # Case 2: TCCD process messages
-        if process == '/System/Library/PrivateFrameworks/TCC.framework/Support/tccd' and 'binary_path=' in message:
-            try:
-                # Extract only the clean binary paths without additional context
-                binary_paths = []
-
-                # Find all occurrences of binary_path= in the message
-                start_pos = 0
-                while True:
-                    binary_path_start = message.find('binary_path=', start_pos)
-                    if binary_path_start == -1:
-                        break
-
-                    binary_path_start += len('binary_path=')
-                    # Find the end of the path (comma, closing bracket, or end of string)
-                    binary_path_end = None
-                    for delimiter in [',', '}', ' access to', ' is checking']:
-                        delimiter_pos = message.find(delimiter, binary_path_start)
-                        if delimiter_pos != -1 and (binary_path_end is None or delimiter_pos < binary_path_end):
-                            binary_path_end = delimiter_pos
-
-                    if binary_path_end is None:
-                        path = message[binary_path_start:].strip()
-                    else:
-                        path = message[binary_path_start:binary_path_end].strip()
-
-                    # Skip paths with excessive information
-                    if len(path) > 0 and path.startswith('/') and ' ' not in path:
-                        binary_paths.append(path)
-
-                    # Move to position after the current binary_path
-                    start_pos = binary_path_start + 1
-
-                # Return all valid binary paths
-                if binary_paths:
-                    logger.debug(f"Extracted {len(binary_paths)} binary paths from tccd message")
-                    return binary_paths if len(binary_paths) > 1 else binary_paths[0]
-
-            except Exception as e:
-                logger.debug(f"Error extracting binary_path from tccd: {e}")
-
-        # Case 3: /kernel process with App name mapping pattern "App Name -> /path/to/app"
-        if process == '/kernel' and ' -> ' in message and 'App Store Fast Path' in message:
-            try:
-                # Find the arrow mapping pattern
-                arrow_pos = message.find(' -> ')
-                if arrow_pos != -1:
-                    path_start = arrow_pos + len(' -> ')
-                    # Look for common path patterns - more flexible for kernel messages
-                    if message[path_start:].startswith('/'):
-                        # Find the end of the path (space or end of string)
-                        path_end = message.find(' ', path_start)
-                        if path_end == -1:  # If no space after path
-                            return message[path_start:]
-                        else:
-                            return message[path_start:path_end]
-            except Exception as e:
-                logger.debug(f"Error extracting app path from kernel mapping: {e}")
-
-        # Case 4: configd SCDynamicStore client sessions
-        if process == '/usr/libexec/configd' and 'SCDynamicStore/client sessions' in message:
-            try:
-                # Process the list of connected clients from configd
-                process_paths = []
-                lines = message.split('\n')
-                for line in lines:
-                    line = line.strip()
-                    if line.startswith('"') and '=' in line:
-                        # Extract the client path from lines like ""/usr/sbin/mDNSResponder:null" = 1;"
-                        client_path = line.split('"')[1]  # Get the part between the first pair of quotes
-                        if ':' in client_path:
-                            # Extract the actual process path part (before the colon)
-                            process_path = client_path.split(':')[0]
-                            if process_path.startswith('/') or process_path.startswith('com.apple.'):
-                                process_paths.append(process_path)
-
-                # Return the list of process paths if any were found
-                if process_paths:
-                    logger.debug(f"Extracted {len(process_paths)} process paths from configd message")
-                    return process_paths
-            except Exception as e:
-                logger.debug(f"Error extracting client paths from configd SCDynamicStore: {e}")
-
-        return None
-
-    def execute(self) -> Generator[dict, None, None]:
-        """
-        Executes all extraction methods dynamically, ensuring that each extracted process is unique.
-
-        :yield: A dictionary containing process details from various sources.
-        """
-        for func in dir(self):
-            if func.startswith(f"_{self.__class__.__name__}__extract_ps_"):
-                yield from getattr(self, func)()  # Dynamically call extract methods
-
-    def __extract_ps_base_file(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from ps.txt.
-
-        :return: A generator yielding dictionaries containing process details from ps.txt.
-        """
-        entity_type = 'ps.txt'
+    @DeprecationWarning
+    def execute(self) -> list | dict:
+        # OK, this is really inefficient as we're reading all to memory, writing it to a temporary file on disk, and re-reading it again
+        # but who cares, nobody uses this function anyway...
         try:
-            for p in PsParser(self.config, self.case_id).get_result():
-                ps_event = {
-                    'process': self._strip_flags(p['command']),
-                    'timestamp': p['timestamp'],
-                    'datetime': p['datetime'],
-                    'source': entity_type
-                }
-                if self.add_if_full_command_is_not_in_set(ps_event['process']):
-                    yield ps_event
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
+            with tempfile.TemporaryDirectory() as tmp_outpath:
+                tmp_output_file = os.path.join(tmp_outpath.name, 'logarchive.tmp')
+                LogarchiveParser.parse_all_to_file(self.get_log_files(), tmp_output_file)
+                with open(tmp_output_file, 'r') as f:
+                    return [fast_json_loads(line) for line in f]
+        except IndexError:
+            return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
-    def __extract_ps_thread_file(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from psthread.txt.
+    def get_result(self, force: bool = False):
+        if force:
+            # force parsing
+            self.save_result(force)
 
-        :return: A generator yielding dictionaries containing process details from psthread.txt.
-        """
-        entity_type = 'psthread.txt'
+        if not self._result:
+            if not self.output_exists():
+                self.save_result()
+
+            if self.output_exists():
+                # load existing output
+                with open(self.output_file, 'r') as f:
+                    for line in f:
+                        try:
+                            yield fast_json_loads(line)
+                        except json.decoder.JSONDecodeError:  # last lines of the native logarchive.jsonl file
+                            continue
+        else:
+            # should never happen, as we never keep it in memory
+            for entry in self._result:
+                yield entry
+
+    def save_result(self, force: bool = False, indent=None):
+        '''
+            Save the result of the parsing operation to a file in the parser output folder
+        '''
+        if not force and self._result is not None:
+            # the result was already computed, just save it now
+            super().save_result(force, indent)
+        else:
+            LogarchiveParser.parse_all_to_file(self.get_log_files(), self.output_file)
+
+    def merge_files(temp_files: list, output_file: str):
+        for temp_file in temp_files:
+            first_entry, last_entry = LogarchiveParser.get_first_and_last_entries(temp_file['file'].name)
+            temp_file['first_timestamp'] = first_entry['time']
+            temp_file['last_timestamp'] = last_entry['time']
+
+        # lowest first timestamp, second key highest last timestamp
+        temp_files.sort(key=lambda x: (x['first_timestamp'], -x['last_timestamp']))
+
+        # do the merging magic here
+        # Open output file, with r+,
+        # Look at next file,
+        # - if current_last < prev_last: continue # skip file
+        # - elif current_first  > prev_last: copy over full file, prev_last=current_last
+        # - else: # need to seek to prev_last and copy over new data
+        # Continue with other files with the same logic.
+        prev_temp_file = temp_files[0]
+        # first copy over first file to self.output_file
+        shutil.copyfile(prev_temp_file['file'].name, output_file)
+        with open(output_file, 'a') as f_out:
+            i = 1
+            while i < len(temp_files):
+                current_temp_file = temp_files[i]
+                if current_temp_file['last_timestamp'] < prev_temp_file['last_timestamp']:
+                    # skip file as we already have all the data
+                    # no need to update the prev_temp_file variable
+                    pass
+                elif current_temp_file['first_timestamp'] > prev_temp_file['last_timestamp']:
+                    # copy over the full file
+                    with open(current_temp_file['file'].name, 'r') as f_in:
+                        for line in f_in:
+                            f_out.write(line)
+                    prev_temp_file = current_temp_file
+                else:
+                    # need to seek to prev_last and copy over new data
+                    with open(current_temp_file['file'].name, 'r') as f_in:
+                        copy_over = False   # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
+                        for line in f_in:
+                            if not copy_over and fast_json_loads(line)['time'] > prev_temp_file['last_timestamp']:
+                                copy_over = True
+                            if copy_over:
+                                f_out.write(line)
+                    prev_temp_file = current_temp_file
+                i += 1
+
+    def get_first_and_last_entries(output_file: str) -> tuple:
+        with open(output_file, 'rb') as f:
+            first_entry = fast_json_loads(f.readline())
+            # discover last line efficiently
+            f.seek(-2, os.SEEK_END)  # Move the pointer to the second-to-last byte in the file
+            # Move backwards until a newline character is found, or we hit the start of the file
+            while f.tell() > 0:
+                char = f.read(1)
+                if char == b'\n':
+                    break
+                f.seek(-2, os.SEEK_CUR)  # Move backwards
+
+            # Read the last line
+            last_entry = fast_json_loads(f.readline())
+
+            return (first_entry, last_entry)
+
+    def parse_all_to_file(folders: list, output_file: str):
+        # no caching
+        # simple mode: only one folder
+        if len(folders) == 1:
+            LogarchiveParser.parse_folder_to_file(folders[0], output_file)
+            return
+
+        # complex mode: multiple folders, need to merge multiple files
+        # for each of the log folders
+        # - parse it to a temporary file, keep track of the file reference or name
+        # - keep track of the first and last timestamp of each file
+        # - order the files, and if a file contains a subset of another one, skip it.
+        #   this is a though one, as we may have partially overlapping timeframes, so we may need to re-assemble in a smart way.
+        # - once we know the order, bring the files together to the final single output file
+
+        temp_files = []
         try:
-            for p in PsThreadParser(self.config, self.case_id).get_result():
-                ps_event = {
-                    'process': self._strip_flags(p['command']),
-                    'timestamp': p['timestamp'],
-                    'datetime': p['datetime'],
-                    'source': entity_type
-                }
-                if self.add_if_full_command_is_not_in_set(ps_event['process']):
-                    yield ps_event
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
+            for folder in folders:
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
+                LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
+                temp_files.append({
+                    'file': temp_file,
+                })
 
-    def __extract_ps_spindump_nosymbols_file(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from spindump-nosymbols.txt.
+            # merge files to the output file
+            LogarchiveParser.merge_files(temp_files, output_file)
 
-        :return: A generator yielding dictionaries containing process and thread details from spindump-nosymbols.txt.
-        """
-        entity_type = 'spindump-nosymbols.txt'
+        finally:
+            # close all temp files, ensuring they are deleted
+            for temp_file in temp_files:
+                os.remove(temp_file['file'].name)
+
+    def parse_folder_to_file(input_folder: str, output_file: str) -> bool:
         try:
-            for p in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
-                if 'process' not in p:
-                    continue
-                process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
+            if (platform.system() == 'Darwin'):
+                LogarchiveParser.__convert_using_native_logparser(input_folder, output_file)
+            else:
+                LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
+            return True
+        except IndexError:
+            logger.exception('Error: No system_logs.logarchive/ folder found in logs/ directory')
+            return False
 
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name)):
-                    yield {
-                        'process': self._strip_flags(process_name),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+    def __convert_using_native_logparser(input_folder: str, output_file: str) -> None:
+        with open(output_file, 'w') as f_out:
+            # output to stdout and not to a file as we need to convert the output to a unified format
+            cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson', '--info', '--debug', '--signpost']
+            # read each line, convert line by line and write the output directly to the new file
+            # this approach limits memory consumption
+            for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
+                try:
+                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(fast_json_loads(line))
+                    f_out.write(fast_json_dumps(entry_json) + '\n')
+                except json.JSONDecodeError as e:
+                    logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
+                except KeyError:
+                    # last line of log does not contain 'time' field, nor the rest of the data.
+                    # so just ignore it and all the rest.
+                    # last line looks like {'count':xyz, 'finished':1}
+                    logger.debug(f"Looks like we arrive to the end of the file: {line}")
+                    break
 
-                for t in p['threads']:
+    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> None:
+        with open(output_file, 'w') as f:
+            for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
+                f.write(fast_json_dumps(entry) + '\n')
+
+    @DeprecationWarning
+    def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
+        logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+        # output to stdout and not to a file as we need to convert the output to a unified format
+        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--output', output_file, '--format', 'jsonl']
+        # read each line, convert line by line and write the output directly to the new file
+        # this approach limits memory consumption
+        result = LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
+        return result
+
+    def __convert_using_unifiedlogparser_generator(input_folder: str):
+        logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+        # output to stdout and not to a file as we need to convert the output to a unified format
+        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--format', 'jsonl']
+        # read each line, convert line by line and write the output directly to the new file
+        # this approach limits memory consumption
+        for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
+            try:
+                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(fast_json_loads(line))
+                yield entry_json
+            except json.JSONDecodeError:
+                pass
+            except KeyError:
+                pass
+
+    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[dict, None, None]:
+        '''
+            Return None if it failed or the result otherwise.
+
+        '''
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, universal_newlines=True) as process:
+            for line in iter(process.stdout.readline, ''):
+                yield line
+
+    def __execute_cmd_and_get_result(cmd_array: list, outputfile=None):
+        '''
+            Return None if it failed or the result otherwise.
+
+            Outfile can have 3 values:
+                - None: no output except return value
+                - sys.stdout: print to stdout
+                - path to a file to write to
+        '''
+        result = []
+
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
+            if outputfile is None:
+                for line in iter(process.stdout.readline, ''):
                     try:
-                        thread_name = f"{self._strip_flags(process_name)}::{t['thread_name']}"
-                        if self.add_if_full_command_is_not_in_set(thread_name):
-                            yield {
-                                'process': thread_name,
-                                'timestamp': p['timestamp'],
-                                'datetime': p['datetime'],
-                                'source': entity_type
-                            }
-                    except KeyError:
-                        pass
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type} file. {e}")
+                        result.append(fast_json_loads(line))
+                    except Exception:
+                        result.append(line)
+            elif outputfile == sys.stdout:
+                for line in iter(process.stdout.readline, ''):
+                    print(line)
+            else:
+                with open(outputfile, 'w') as outfd:
+                    for line in iter(process.stdout.readline, ''):
+                        outfd.write(line)
+                    result = f'Output written to {outputfile}'
 
-    def __extract_ps_shutdownlogs(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from shutdown logs.
+        return result
 
-        :return: A generator yielding dictionaries containing process details from shutdown logs.
-        """
-        entity_type = 'shutdown.logs'
-        try:
-            for p in ShutdownLogsParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['command'])):
-                    yield {
-                        'process': self._strip_flags(p['command']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+    def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
+        '''
+            Convert the entry to unifiedlog format
+        '''
+        # already in the Mandiant unifiedlog format
+        if 'event_type' in entry:
+            timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
+            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+            entry['timestamp'] = timestamp.timestamp()
+            return entry
+        '''
+        jq '. |= keys' logarchive-native.json > native_keys.txt
+        sort native_keys.txt | uniq -c | sort -n > native_keys_sort_unique.txt
+        '''
 
-    def __extract_ps_logarchive(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from logarchive.
+        mapper = {
+            'creatorActivityID': 'activity_id',
+            'messageType': 'log_type',
+            # 'source': '',   # not present in the Mandiant format
+            # 'backtrace': '',  # sub-dictionary
+            'activityIdentifier': 'activity_id',
+            'bootUUID': 'boot_uuid',   # remove - in the UUID
+            'category': 'category',
+            'eventMessage': 'message',
+            'eventType': 'event_type',
+            'formatString': 'raw_message',
+            # 'machTimestamp': '',   # not present in the Mandiant format
+            # 'parentActivityIdentifier': '',  # not present in the Mandiant format
+            'processID': 'pid',
+            'processImagePath': 'process',
+            'processImageUUID': 'process_uuid',  # remove - in the UUID
+            'senderImagePath': 'library',
+            'senderImageUUID': 'library_uuid',   # remove - in the UUID
+            # 'senderProgramCounter': '',  # not present in the Mandiant format
+            'subsystem': 'subsystem',
+            'threadID': 'thread_id',
+            'timestamp': 'time',  # requires conversion
+            'timezoneName': 'timezone_name',  # ignore timezone as time and timestamp are correct
+            # 'traceID': '',  # not present in the Mandiant format
+            'userID': 'euid'
+        }
 
-        :return: A generator yielding dictionaries containing process details from logarchive.
-        """
-        entity_type = 'log archive'
-        try:
-            for p in LogarchiveParser(self.config, self.case_id).get_result():
-                # First check if we can extract a binary from the message
-                if 'message' in p:
-                    extracted_process = self.message_extract_binary(p['process'], p['message'])
-                    if extracted_process:
-                        # Handle the case where extracted_process is a list of paths
-                        if isinstance(extracted_process, list):
-                            for proc_path in extracted_process:
-                                if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path)):
-                                    yield {
-                                        'process': self._strip_flags(proc_path),
-                                        'timestamp': p['timestamp'],
-                                        'datetime': p['datetime'],
-                                        'source': entity_type
-                                    }
-                        else:
-                            # Handle the case where it's a single string
-                            if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process)):
-                                yield {
-                                    'process': self._strip_flags(extracted_process),
-                                    'timestamp': p['timestamp'],
-                                    'datetime': p['datetime'],
-                                    'source': entity_type
-                                }
+        new_entry = {}
+        for key, value in entry.items():
+            if key in mapper:
+                new_key = mapper[key]
+                if 'uuid' in new_key:  # remove - in UUID
+                    new_entry[new_key] = value.replace('-', '')
+                else:
+                    new_entry[new_key] = value
+            else:
+                # keep the non-matching entries
+                new_entry[key] = value
+        # convert time
+        timestamp = datetime.fromisoformat(new_entry['time'])
+        new_entry['datetime'] = timestamp.isoformat(timespec='microseconds')
+        new_entry['timestamp'] = timestamp.timestamp()
+        new_entry['time'] = new_entry['timestamp'] * 1000000000
 
-                # Process the original process name
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+        return new_entry
 
-    def __extract_ps_uuid2path(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from UUID2PathParser.
+    def convert_native_time_to_unifiedlog_format(time: str) -> int:
+        timestamp = datetime.fromisoformat(time)
+        return int(timestamp.timestamp() * 1000000000)
 
-        :return: A generator yielding process data from uuid2path.
-        """
-        entity_type = 'uuid2path'
-        try:
-            for p in UUID2PathParser(self.config, self.case_id).get_result().values():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p)):
-                    yield {
-                        'process': self._strip_flags(p),
-                        'timestamp': None,
-                        'datetime': None,
-                        'source': entity_type
-                    }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
-
-    def __extract_ps_taskinfo(self) -> Generator[dict, None, None]:
-        """
-        Extracts process and thread information from TaskinfoParser.
-
-        :return: A generator yielding process and thread information from taskinfo.
-        """
-        entity_type = 'taskinfo.txt'
-        try:
-            for p in TaskinfoParser(self.config, self.case_id).get_result():
-                if 'name' not in p:
-                    continue
-
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['name'])):
-                    yield {
-                        'process': self._strip_flags(p['name']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
-
-                for t in p['threads']:
-                    try:
-                        thread_name = f"{self._strip_flags(p['name'])}::{t['thread name']}"
-                        if self.add_if_full_path_is_not_in_set(thread_name):
-                            yield {
-                                'process': thread_name,
-                                'timestamp': p['timestamp'],
-                                'datetime': p['datetime'],
-                                'source': entity_type
-                            }
-                    except KeyError:
-                        pass
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
-
-    def __extract_ps_remotectl_dumpstate(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from RemotectlDumpstateParser.
-
-        :return: A generator yielding process data from remotectl_dumpstate.txt.
-        """
-        entity_type = 'remotectl_dumpstate.txt'
-        try:
-            remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
-            if remotectl_dumpstate_json:
-                for p in remotectl_dumpstate_json['Local device']['Services']:
-                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p)):
-                        yield {
-                            'process': self._strip_flags(p),
-                            'timestamp': None,
-                            'datetime': None,
-                            'source': entity_type
-                        }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
-
-    def __extract_ps_logdata_statistics(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from logdata_statistics.jsonl.
-
-        :return: A generator yielding process data from logdata_statistics.jsonl.
-        """
-        entity_type = 'logdata.statistics.jsonl'
-        try:
-            for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
-
-    def __extract_ps_logdata_statistics_txt(self) -> Generator[dict, None, None]:
-        """
-        Extracts process data from logdata.statistics.txt.
-
-        :return: A generator yielding process data from logdata.statistics.txt.
-        """
-        entity_type = "logdata.statistics.txt"
-
-        try:
-            for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
-        except Exception as e:
-            logger.exception(f"ERROR while extracting {entity_type}. {e}")
-
-    def add_if_full_path_is_not_in_set(self, name: str) -> bool:
-        """
-        Ensures that a process path is unique before adding it to the shared set.
-
-        :param name: Process path name
-        :return: True if the process was not in the set and was added, False otherwise.
-        """
-        for item in self.all_ps:
-            if item.endswith(name):
-                return False
-            if item.split('::')[0].endswith(name):
-                return False
-            if '::' not in item and item.split(' ')[0].endswith(name):
-                return False  # This covers cases with space-separated commands
-        self.all_ps.add(name)
-        return True
-
-    def add_if_full_command_is_not_in_set(self, name: str) -> bool:
-        """
-        Ensures that a process command is unique before adding it to the shared set.
-
-        :param name: Process command name
-        :return: True if the process was not in the set and was added, False otherwise.
-        """
-        for item in self.all_ps:
-            if item.startswith(name):
-                return False
-        self.all_ps.add(name)
-        return True
+    def convert_unifiedlog_time_to_datetime(time: int) -> datetime:
+        # convert time to datetime object
+        timestamp = datetime.fromtimestamp(time / 1000000000, tz=timezone.utc)
+        return timestamp
