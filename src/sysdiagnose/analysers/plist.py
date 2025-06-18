@@ -63,6 +63,6 @@ class PListAnalyzer(BaseAnalyserInterface):
                     yield mdm_entry
 
         except FileNotFoundError as e:
-            logger.exception(f'{entity_type} not found for {self.case_id}. {e}')
+            logger.warning(f'{entity_type} not found for {self.case_id}. {e}')
         except Exception as e:
             logger.exception(f'ERROR while extracting {entity_type} file. {e}')

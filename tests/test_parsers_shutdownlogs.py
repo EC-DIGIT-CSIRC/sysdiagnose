@@ -20,6 +20,7 @@ class TestParsersShutdownlogs(SysdiagnoseTestCase):
             for item in result:
                 self.assertTrue('pid' in item)
                 self.assertTrue('path' in item)
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

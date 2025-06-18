@@ -12,7 +12,7 @@ from sysdiagnose.utils.base import BaseParserInterface, logger
 
 
 class OldDscParser(BaseParserInterface):
-    description = "Parsing olddsc files"
+    description = "Parsing olddsc (Dynamic Shared Cache) files"
     format = 'jsonl'
 
     json_pretty = False
@@ -35,7 +35,9 @@ class OldDscParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         timestamp_dict['timestamp'] = timestamp.timestamp()
         timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
-        timestamp_dict['timestamp_desc'] = 'sysdiagnose creation'
+        timestamp_dict['timestamp_info'] = 'sysdiagnose creation'
+        timestamp_dict['timestamp_desc'] = 'olddsc'
+        timestamp_dict['saf_module'] = self.module_name
 
         entries = []
         # we're not doing anything with
@@ -45,6 +47,7 @@ class OldDscParser(BaseParserInterface):
         for log_file in self.get_log_files():
             for entry in OldDscParser.parse_file(log_file).get('Binaries', []):
                 entry.update(timestamp_dict)
+                entry['message'] = f"olddsc {entry['Path']} {entry['UUID_String']}"
                 entries.append(entry)
         if not entries:
             logger.warning('No olddsc files present')

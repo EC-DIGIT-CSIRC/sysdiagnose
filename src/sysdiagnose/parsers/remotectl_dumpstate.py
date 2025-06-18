@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.tabbasedhierarchy import parse_tab_based_hierarchal_file
+from sysdiagnose.utils.tabbasedhierarchy import parse_tab_based_hierarchal_file, parse_block
 from sysdiagnose.utils.base import BaseParserInterface
 
 
@@ -27,3 +27,18 @@ class RemotectlDumpstateParser(BaseParserInterface):
             return parse_tab_based_hierarchal_file(self.get_log_files()[0])
         except IndexError:
             return {'error': 'No remotectl_dumpstate.txt file present'}
+
+    @staticmethod
+    def parse_file(file_path: str) -> dict:
+        """
+        Parse the file and return a dictionary with the parsed data.
+        """
+        return parse_tab_based_hierarchal_file(file_path)
+
+    @staticmethod
+    def parse_file_content(file_content: str) -> dict:
+        """
+        Parse the file content and return a dictionary with the parsed data.
+        """
+        lines = file_content.splitlines()
+        return parse_block(lines)

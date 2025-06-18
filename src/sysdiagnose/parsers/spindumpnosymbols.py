@@ -15,6 +15,7 @@ from sysdiagnose.utils.misc import snake_case
 class SpindumpNoSymbolsParser(BaseParserInterface):
     description = 'Parsing spindump-nosymbols file'
     format = 'jsonl'
+    module_name = 'spindumpnosymbols'
 
     def __init__(self, config: dict, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -69,6 +70,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 events = []
                 if status != 'empty':
                     basic = SpindumpNoSymbolsParser.parse_basic(headers)
+                    basic['message'] = f"spindump {basic['data_source']}"
                     events.append(basic)
                     events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['timestamp']))
                 # Logging
@@ -93,6 +95,8 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 timestamp = datetime.strptime(output['date_time'], "%Y-%m-%d %H:%M:%S %z")
             output['timestamp'] = timestamp.timestamp()
             output['datetime'] = timestamp.isoformat(timespec='microseconds')
+            output['timestamp_desc'] = 'spindump'
+            output['saf_module'] = SpindumpNoSymbolsParser.module_name
 
         return output
 
@@ -121,7 +125,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 process_buffer.append(line.strip())
 
         process = SpindumpNoSymbolsParser.parse_process(process_buffer)
-        timestamp = start_time - timedelta(seconds=int(process['time_since_fork'].rstrip('s')))
+        timestamp = start_time - timedelta(seconds=int(process.get('time_since_fork', '0').rstrip('s')))
         process['timestamp'] = timestamp.timestamp()
         process['datetime'] = timestamp.isoformat(timespec='microseconds')
         processes.append(process)
@@ -162,6 +166,10 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         except KeyError:  # some don't have a parent
             pass
         process['uid'] = 501
+
+        process['saf_module'] = SpindumpNoSymbolsParser.module_name
+        process['timestamp_desc'] = 'process running during spindump'
+        process['message'] = f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}"
         return process
 
     def parse_threads(data):

@@ -82,7 +82,9 @@ class ShutdownLogsParser(BaseParserInterface):
                     for item in running_processes.values():
                         item['timestamp'] = timestamp.timestamp()
                         item['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        item['event'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
+                        item['timestamp_desc'] = 'process running at shutdown'
+                        item['saf_module'] = 'shutdownlogs'
+                        item['message'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
                         events.append(item)
                 index += 1
         except IndexError:

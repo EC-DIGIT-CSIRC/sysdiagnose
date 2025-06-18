@@ -4,6 +4,7 @@
 # Script to print WIFI info from ./WiFi/security.txt
 # Author: david@autopsit.org
 
+import glob
 import os
 from sysdiagnose.utils.base import BaseParserInterface, logger
 from datetime import datetime
@@ -20,10 +21,14 @@ class WifiSecurityParser(BaseParserInterface):
         """
             Get the list of log files to be parsed
         """
-        log_files = [
+        log_files_globs = [
             "WiFi/security.txt"
         ]
-        return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
+
+        return log_files
 
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
@@ -58,11 +63,25 @@ class WifiSecurityParser(BaseParserInterface):
                         logger.debug(f"key: {key.strip()}, value: {value.strip()}")
                         element[key.strip()] = value.strip()
                     elif element:
-                        timestamp = datetime.strptime(element['mdat'], "%Y-%m-%d %H:%M:%S %z")
+                        # created
+                        timestamp = datetime.strptime(element['cdat'], "%Y-%m-%d %H:%M:%S %z")
                         element['datetime'] = timestamp.isoformat(timespec='microseconds')
                         element['timestamp'] = timestamp.timestamp()
+                        element['timestamp_desc'] = 'wifi AP config created'
+                        element['saf_module'] = 'wifi_security'
+                        element['message'] = f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}"
                         entries.append(element)
-                        logger.debug(f"appending {element}")
+
+                        if element['mdat'] != element['cdat']:
+                            # also add the modified date
+                            element_mdat = element.copy()
+                            timestamp = datetime.strptime(element_mdat['mdat'], "%Y-%m-%d %H:%M:%S %z")
+                            element_mdat['datetime'] = timestamp.isoformat(timespec='microseconds')
+                            element_mdat['timestamp'] = timestamp.timestamp()
+                            element_mdat['timestamp_desc'] = 'wifi AP config modified'
+                            entries.append(element_mdat)
+
+                        # reset element for next entry
                         element = {}
         except IndexError:
             return {'error': 'No WiFi/security.txt file present'}

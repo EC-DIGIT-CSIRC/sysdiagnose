@@ -21,6 +21,7 @@ class TestParsersPsthread(SysdiagnoseTestCase):
                     self.assertTrue('command' in item)
                     self.assertTrue('pid' in item)
                     self.assertTrue('user' in item)
+                    self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

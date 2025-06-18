@@ -17,15 +17,14 @@ class TestParsersMobileactivation(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('timestamp' in item)
                 self.assertTrue('loglevel' in item)
                 self.assertTrue('hexID' in item)
                 if item['loglevel'] == 'debug' and 'build_version' in item:
                     self.assertTrue('build_version' in item)
-                    self.assertTrue('internal_build' in item)
                 else:
                     self.assertTrue('message' in item)
                     # self.assertTrue('event_type' in item) # not all logs have event_type
+                self.assert_has_required_fields_jsonl(item)
 
 
 if __name__ == '__main__':

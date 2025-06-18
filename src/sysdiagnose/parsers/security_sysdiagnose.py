@@ -26,9 +26,10 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
     def execute(self) -> dict:
         log_files = self.get_log_files()
         if not log_files:
-            return {'errors': ['No security-sysdiagnose.txt file present']}
+            logger.error('ERROR: No security-sysdiagnose.txt file present.')
+            return {}
 
-        json_result = {'errors': [], 'events': [], 'meta': {}}
+        json_result = {'events': [], 'meta': {}}
         with open(log_files[0], "r") as f:
             buffer = []
             buffer_section = None
@@ -39,53 +40,69 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 if line == '':
                     continue
                 elif line.startswith('ccstatus:'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'circle'
                     buffer = [line]
                 elif line.startswith('Engine state:'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'engine_state'
                     buffer = []
                 elif line.endswith('keychain state:'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'keychain_state'
                     buffer = [line]
-                elif line.startswith('Analystics sysdiagnose'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                elif line.startswith('Analytics sysdiagnose'):
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'analytics'
                     buffer = []
                 elif line.startswith('Client:'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'client'
                     buffer = [line]  # this line contains the client type. (trust, cloudservices, networking, ...)
                 elif line.startswith('All keys and values'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'keys_and_values'
                     buffer = ['keysandvalues']
                 elif line.startswith('All values in'):
-                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+                    SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
                     buffer_section = 'keys_and_values'
                     buffer = ['values']
                 else:
                     buffer.append(line)
 
             # call the last buffer
-            SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result)
+            SecuritySysdiagnoseParser.process_buffer(buffer, buffer_section, json_result, self.module_name)
 
-            # transform the 'meta' into one jsonl entry
+            # transform the 'meta' into multiple jsonl entries
             timestamp = self.sysdiagnose_creation_datetime
-            item = {
+            item_tpl = {
                 'timestamp': timestamp.timestamp(),
                 'datetime': timestamp.isoformat(timespec='microseconds'),
-                'timestamp_desc': 'sysdiagnose_creation_datetime',
-                'section': 'metadata'
+                'timestamp_info': 'sysdiagnose creation',
+                'timestamp_desc': 'security meta event',
+                'saf_module': self.module_name,
+
             }
-            item.update(json_result['meta'])
-            json_result['events'].append(item)
+            for root_key, items in json_result['meta'].items():
+                if isinstance(items, list):
+                    for item in items:
+                        item = item_tpl.copy()
+                        item['section'] = root_key
+                        item['message'] = f"{root_key} {item}"
+                        item['attributes'] = {}
+                        json_result['events'].append(item)
+
+                elif isinstance(items, dict):
+                    for key, item in items.items():
+                        item = item_tpl.copy()
+                        item['section'] = root_key
+                        item['message'] = f"{root_key} {key}: {item}"
+                        item['attributes'] = items[key]
+                        json_result['events'].append(item)
 
         return json_result['events']
 
-    def process_buffer(buffer: list, section: str, json_result: dict):
+    def process_buffer(buffer: list, section: str, json_result: dict, module_name: str):
         """
         process the buffer for the given section
         """
@@ -93,12 +110,11 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             return
         function_name = f'process_buffer_{section}'
         if function_name in dir(SecuritySysdiagnoseParser):
-            getattr(SecuritySysdiagnoseParser, function_name)(buffer, json_result)
+            getattr(SecuritySysdiagnoseParser, function_name)(buffer, json_result, module_name)
         else:
             logger.error(f"ERROR: Function {function_name} not found in the SecuritySysdiagnoseParser class.")
-            json_result['errors'].append(f"Cannot parse section {function_name} as it is unknown. Parser needs to be extended.")
 
-    def process_buffer_circle(buffer: list, json_result: dict):
+    def process_buffer_circle(buffer: list, json_result: dict, module_name: str = None):
         """
         process the buffer for the circle section
 
@@ -109,7 +125,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         """
         json_result['meta']['circle'] = buffer
 
-    def process_buffer_engine_state(buffer: list, json_result: dict):
+    def process_buffer_engine_state(buffer: list, json_result: dict, module_name: str = None):
         """
         process the buffer for the engine section
         """
@@ -118,7 +134,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         json_result['meta']['engine'] = buffer
         pass
 
-    def process_buffer_keychain_state(buffer: list, json_result: dict):
+    def process_buffer_keychain_state(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the homekit section
         """
@@ -151,20 +167,57 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                     start = i + 1
                     # start new key value pair
                     key = None
-
+                else:
+                    pass
                 i += 1
             # process the last key value pair
             row[key] = line[start:]
-            json_result['meta'][section].append(row)
+            if 'cdat' in row or 'mdat' in row:
+                msg = f"{section} {row.get('desc', row.get('labl', ''))} - {row.get('agrp')}"
+                if 'cdat' in row:
+                    match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', row['cdat'])
+                    if match:
+                        timestamp = datetime.fromisoformat(match.group(1))
+                    else:
+                        raise ValueError(f"Cannot parse line: {line}")
 
-    def process_buffer_analytics(buffer: list, json_result: dict):
+                    time_row = {
+                        'timestamp': timestamp.timestamp(),
+                        'datetime': timestamp.isoformat(timespec='microseconds'),
+                        'timestamp_desc': f"{section}: entry creation time",
+                        'saf_module': module_name,
+                        'message': msg,
+                        'section': section,
+                        'attributes': row
+                    }
+                    json_result['events'].append(time_row)
+                if 'mdat' in row:
+                    match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', row['mdat'])
+                    if match:
+                        timestamp = datetime.fromisoformat(match.group(1))
+                    else:
+                        raise ValueError(f"Cannot parse line: {line}")
+                    time_row = {
+                        'timestamp': timestamp.timestamp(),
+                        'datetime': timestamp.isoformat(timespec='microseconds'),
+                        'timestamp_desc': f"{section}: entry modification time",
+                        'saf_module': module_name,
+                        'message': msg,
+                        'section': section,
+                        'attributes': row
+                    }
+                    json_result['events'].append(time_row)
+            else:
+                json_result['meta'][section].append(row)
+
+    def process_buffer_analytics(buffer: list, json_result: dict, module_name: str = None):
         """
         process the buffer for the analytics section
         """
         # nothing to do here
         pass
 
-    def process_buffer_client(buffer: list, json_result: dict):
+    def process_buffer_client(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the client section
         """
@@ -187,11 +240,14 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             row = {
                 'timestamp': timestamp.timestamp(),
                 'datetime': timestamp.isoformat(timespec='microseconds'),
+                'timestamp_desc': match.group(3),
+                'saf_module': module_name,
                 'section': section,
                 'result': match.group(2),
                 'event': match.group(3),
                 'attributes': {}
             }
+            row['message'] = f"{row['section']} {row['result']} {row['event']}"
             attribute_string = match.group(4)
 
             # while next rows do not start with a date, they are part of the attributes
@@ -210,7 +266,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             json_result['events'].append(row)
             i += 1
 
-    def process_buffer_keys_and_values(buffer: list, json_result: dict):
+    def process_buffer_keys_and_values(buffer: list, json_result: dict, module_name: str = None):
         """
         process the buffer for the values section
         """

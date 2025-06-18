@@ -36,8 +36,10 @@ class PsThreadParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         timestamp_dict['timestamp'] = timestamp.timestamp()
         timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
-        timestamp_dict['timestamp_desc'] = 'sysdiagnose creation'
-        timestamp_dict['THREADS'] = 1
+        timestamp_dict['timestamp_info'] = 'sysdiagnose creation'
+        timestamp_dict['timestamp_desc'] = 'running process'
+        timestamp_dict['threads'] = 1
+        timestamp_dict['saf_module'] = self.module_name
 
         result = []
         try:
@@ -49,6 +51,7 @@ class PsThreadParser(BaseParserInterface):
                     if '??' in line:
                         # append previous entry
                         if row:
+                            row['message'] = f"{row['command']} [{row['pid']}] as {row['user']}"
                             result.append(row)
 
                         patterns = line.strip().split(None, header_length - 1)
@@ -66,9 +69,10 @@ class PsThreadParser(BaseParserInterface):
                                 except ValueError:
                                     row[col_name] = patterns[col]
                     else:
-                        row['THREADS'] += 1
+                        row['threads'] += 1
                 # append last entry
                 if row:
+                    row['message'] = f"{row['command']} [{row['pid']}] as {row['user']}"
                     result.append(row)
                 return result
         except IndexError:

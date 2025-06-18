@@ -15,6 +15,16 @@ Create a virtual environment and install dependencies:
  sudo apt install graphviz
  ```
 
+ On MacOS (Apple Silicon):
+```bash
+ python3 -m venv venv
+ source venv/bin/activate
+ pip3 install .
+ brew install graphviz  # Or your prefered way of installing graphviz binaries
+ brew install libmagic
+ ```
+
+
 On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser. See below for instructions how to do this.
 
 # Quickstart
@@ -24,7 +34,7 @@ On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser.
 Creating a new case, with the optional `-c` parameter if you want to specify the case number yourself. (such as an uuid)
 
 ```bash
-$ sysdiag init test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
+$ sysdiag create test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 
 Sysdiagnose file has been processed
 Case ID: 1

@@ -20,8 +20,9 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
 
-            first = p.get_result()[0]
-            self.assertTrue('timestamp' in first)
+            result = p.get_result()
+            for item in result:
+                self.assert_has_required_fields_jsonl(item)
 
     def test_parse_lockdownd_simple(self):
         input = [
@@ -33,6 +34,8 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             {
                 'timestamp': 1684932938.410307,
                 'datetime': '2023-05-24T13:55:38.410307+01:00',
+                'timestamp_desc': 'lockdownd mglog',
+                'saf_module': 'TestModule',
                 'pid': 76,
                 'event_type': 'mglog',
                 'message': 'libMobileGestalt utility.c:70: Could not open /private/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist: No such file or directory'
@@ -40,6 +43,8 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             {
                 'timestamp': 1684932938.453538,
                 'datetime': '2023-05-24T13:55:38.453538+01:00',
+                'timestamp_desc': 'lockdownd data_ark_set_block_invoke',
+                'saf_module': 'TestModule',
                 'pid': 76,
                 'event_type': 'data_ark_set_block_invoke',
                 'message': 'dirtied by changing -HasSiDP'
@@ -47,12 +52,14 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             {
                 'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
+                'timestamp_desc': 'lockdownd lockstart_local',
+                'saf_module': 'TestModule',
                 'pid': 76,
                 'event_type': 'lockstart_local',
                 'message': 'Build version: 19H349'
             }
         ]
-        result = LockdowndParser.extract_from_list(input, tzinfo=self.tzinfo)
+        result = LockdowndParser.extract_from_list(input, tzinfo=self.tzinfo, module='TestModule')
         self.maxDiff = None
         self.assertEqual(result, expected_result)
 
@@ -67,6 +74,8 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             {
                 'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
+                'timestamp_desc': 'lockdownd lockstart_local',
+                'saf_module': 'TestModule',
                 'pid': 76,
                 'event_type': 'lockstart_local',
                 'message': 'Build version: 19H349hello world'
@@ -74,12 +83,14 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             {
                 'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
+                'timestamp_desc': 'lockdownd lockstart_local',
+                'saf_module': 'TestModule',
                 'pid': 76,
                 'event_type': 'lockstart_local',
                 'message': 'Build version: 19H349'
             }
         ]
-        result = LockdowndParser.extract_from_list(input, tzinfo=self.tzinfo)
+        result = LockdowndParser.extract_from_list(input, tzinfo=self.tzinfo, module='TestModule')
         self.maxDiff = None
         self.assertEqual(result, expected_result)
 

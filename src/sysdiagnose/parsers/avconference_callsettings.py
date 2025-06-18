@@ -45,16 +45,22 @@ class AvConferenceCallSettingsParser(BaseParserInterface):
         # extract the start-timestamp from the filename
         entries = []
 
-        entry_tpl = {}
         timestamp_m = re.search(r'([0-9]{8}-[0-9]{6})-', os.path.basename(fname))
         timestamp = datetime.strptime(timestamp_m.group(1), '%Y%m%d-%H%M%S')
         timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
-        entry_tpl['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry_tpl['timestamp'] = timestamp.timestamp()
+        entry_tpl = {
+            'datetime': timestamp.isoformat(timespec='microseconds'),
+            'timestamp': timestamp.timestamp(),
+            'timestamp_desc': self.module_name,
+            'saf_module': self.module_name,
+        }
         # parse the rest of the
         lines = file_content.decode().split('\n')
         for line in lines:
             entry = entry_tpl.copy()
-            entry['message'] = line.rstrip()
+            if re.match(r'^[0-9]{6}\.[0-9]{6} ', line):
+                entry['message'] = line[13:].strip()
+            else:
+                entry['message'] = line.strip()
             entries.append(entry)
         return entries

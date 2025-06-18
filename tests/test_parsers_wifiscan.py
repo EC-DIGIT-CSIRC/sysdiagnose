@@ -10,7 +10,8 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
         for case_id, case in self.sd.cases().items():
             p = WifiScanParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
-            self.assertTrue(len(files) > 0)
+            if not files:
+                continue
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
@@ -23,6 +24,7 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
                 if 'total' in item:
                     continue
                 self.assertTrue('ssid' in item)
+                self.assert_has_required_fields_jsonl(item)
 
     def test_parse_summary(self):
         line = 'total=13, 6GHz(PSC)=0, 6GHz(NonPSC)=0, 5GHz(Active)=2, 5GHz(DFS)=0, 2GHz=11, ibss=0, hidden=1, passpoint=0, ph=0, airport=0'

@@ -1,0 +1,11 @@
+services:
+  sysdiag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sysdiagnose
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./cases:/cases
+      - ./yara:/yara
