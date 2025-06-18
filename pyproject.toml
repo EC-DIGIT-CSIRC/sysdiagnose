@@ -30,7 +30,8 @@ dependencies = [
     "numpy==2.2.0",
     "nska-deserialize==1.5.1",
     "yara-python==4.5.1",
-    "python-json-logger==3.2.0"
+    "python-json-logger==3.2.0",
+    "orjson>=3.9.10"
 ]
 
 [project.scripts]
