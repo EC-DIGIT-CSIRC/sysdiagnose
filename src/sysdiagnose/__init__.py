@@ -75,7 +75,7 @@ class Sysdiagnose:
         finally:
             FileLock.release_lock(self.config.cases_file)
 
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False) -> int:
+    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
         '''
         Extracts the sysdiagnose file and creates a new case.
 
@@ -83,6 +83,7 @@ class Sysdiagnose:
             sysdiagnose_file (str): Path to the sysdiagnose file.
             force (bool): Whether to force the creation of a new case.
             case_id (str): The case ID to use, or False to generate a new incremental one.
+            tags (list): List of tags to add to the case.
 
         Returns:
             int: The case ID of the new case.
@@ -147,6 +148,9 @@ class Sysdiagnose:
                 'ios_version': metadata['ios_version'],
                 'tags': []
             }
+
+        if tags:
+            case['tags'].extend(tags)
 
         # create case folder
         case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
