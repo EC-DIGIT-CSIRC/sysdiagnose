@@ -4,7 +4,7 @@ from sysdiagnose.utils.lock import FileLock
 import unittest
 
 
-class TestMisc(SysdiagnoseTestCase):
+class TestLock(SysdiagnoseTestCase):
 
     def test_lock(self):
         lock = FileLock('foo.txt', timeout=1)
