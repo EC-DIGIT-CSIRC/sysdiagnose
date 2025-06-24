@@ -166,7 +166,7 @@ class Apollo():
                     item['timestamp'] = timestamp.timestamp()
                     item['datetime'] = timestamp.isoformat(timespec='microseconds')
                     item['timestamp_desc'] = module_query['activity']
-                    item['module_name'] = module_query['name']
+                    item['apollo_module'] = module_query['name']
                     item['saf_module'] = self.saf_module
                     item['message'] = module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k])
                     results.append(item)
