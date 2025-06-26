@@ -22,8 +22,9 @@ class Sysdiagnose:
         # pseudo singleton, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
+            lock = FileLock(self.config.cases_file)
             try:
-                FileLock.acquire_lock(self.config.cases_file)
+                lock.acquire()
                 with open(self.config.cases_file, 'r+') as f:
                     self._cases = json.load(f)
                     if 'cases' in self._cases:  # conversion is needed
@@ -41,7 +42,7 @@ class Sysdiagnose:
                 with open(self.config.cases_file, 'w') as f:
                     json.dump(self._cases, f, indent=4)
             finally:
-                FileLock.release_lock(self.config.cases_file)
+                lock.release()
 
         return self._cases
 
@@ -65,8 +66,9 @@ class Sysdiagnose:
                 raise Exception(f"Error while deleting case folder: {str(e)}")
 
         # delete case from the cases
+        lock = FileLock(self.config.cases_file)
         try:
-            FileLock.acquire_lock(self.config.cases_file)
+            lock.acquire()
             with open(self.config.cases_file, 'r+') as f:
                 self._cases = json.load(f)           # load latest version
                 self._cases.pop(case_id, None)       # delete case
@@ -74,7 +76,7 @@ class Sysdiagnose:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
                 f.truncate()                         # truncate the rest of the file ensuring no old data is left
         finally:
-            FileLock.release_lock(self.config.cases_file)
+            lock.release()
 
     def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
         '''
@@ -161,8 +163,9 @@ class Sysdiagnose:
         self.extract_sysdiagnose_files(sysdiagnose_file, case_data_folder)
 
         # update case with new data
+        lock = FileLock(self.config.cases_file)
         try:
-            FileLock.acquire_lock(self.config.cases_file)
+            lock.acquire()
             with open(self.config.cases_file, 'r+') as f:
                 self._cases = json.load(f)           # load latest version
                 self._cases[case['case_id']] = case  # update own case
@@ -170,7 +173,7 @@ class Sysdiagnose:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
                 f.truncate()                         # truncate the rest of the file ensuring no old data is left
         finally:
-            FileLock.release_lock(self.config.cases_file)
+            lock.release()
 
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
