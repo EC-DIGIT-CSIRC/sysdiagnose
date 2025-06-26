@@ -6,6 +6,7 @@ import json
 import os
 import re
 import tarfile
+from datetime import timezone
 from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.logger import set_json_logging, logger
 from io import TextIOWrapper
@@ -178,13 +179,14 @@ class Sysdiagnose:
         return case
 
     @staticmethod
-    def get_case_metadata(source_file: str) -> str:
+    def get_case_metadata(source_file: str) -> dict | None:
         """
-        Returns the sha256 hash of the sysdiagnose source file/folder.
-        The hash is calculated by concatenating the contents of the case metadata: udid, serial, ios version and date.
+        Returns the metadata related to the given sysdiagnose file/folder.
+        This includes serial number, unique device ID, iOS version, model, date of sysdiagnose creation,
+        and a case ID based on the serial number and date.
 
         :param source_file: Path to the sysdiagnose file/folder
-        :return: sha256 hash of the file/folder
+        :return: dictionary with metadata or None if the file is invalid
         """
         from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
         from sysdiagnose.parsers.sys import SystemVersionParser
@@ -239,7 +241,8 @@ class Sysdiagnose:
             return None
 
         # Time to obtain the metadata
-
+        # Turn the sysdiagnose date into UTC
+        sysdiagnose_date_utc = sysdiagnose_date.astimezone(timezone.utc)
         if remotectl_dumpstate_json and 'error' not in remotectl_dumpstate_json:
             if 'Local device' in remotectl_dumpstate_json:
                 try:
@@ -249,8 +252,8 @@ class Sysdiagnose:
                         'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
                         'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
                         'model': remotectl_dumpstate_json['Local device']['Properties']['ProductType'],
-                        'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                        'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                        'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
+                        'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
                         'source_file': source_file,
                         'source_sha256': ''
                     }
@@ -270,8 +273,8 @@ class Sysdiagnose:
                 'unique_device_id': 'unknown',
                 'ios_version': sys_json['ProductVersion'],
                 'model': 'unknown',  # FIXME figure out a way to get the model from sysdiagnose
-                'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
+                'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
                 'source_file': source_file,
                 'source_sha256': ''
             }

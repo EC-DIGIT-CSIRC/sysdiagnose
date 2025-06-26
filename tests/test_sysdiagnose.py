@@ -89,16 +89,16 @@ class TestSysdiagnose(SysdiagnoseTestCase):
             'unique_device_id': 'e22f7f830e5dcc1287a1690a2622c2b12afaa33c',
             'ios_version': '15.7.6',
             'model': 'iPhone9,3',
-            'date': '2023-05-24T13:29:15.000000-07:00',
-            'case_id': 'F4GT2K24HG7K_20230524_132915',
+            'date': '2023-05-24T20:29:15.000000+00:00',
+            'case_id': 'F4GT2K24HG7K_20230524_202915',
             'source_file': 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz',
-            'source_sha256': '78054acba2a27820c2b7a360b512754d05cc831c5427191f47798ec1d1dd5add',
+            'source_sha256': '870dc007c0ee7b04960e6e88c1d25c11461b0f1f5fba0914a1d2a7947045dbf2',
         }
         metadata = Sysdiagnose.get_case_metadata('tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz')
         self.assertEqual(metadata, expected_metadata)
 
         # check signature
-        expected_hash = '78054acba2a27820c2b7a360b512754d05cc831c5427191f47798ec1d1dd5add'
+        expected_hash = '870dc007c0ee7b04960e6e88c1d25c11461b0f1f5fba0914a1d2a7947045dbf2'
         hash = Sysdiagnose.calculate_metadata_signature(metadata)
         self.assertEqual(hash, expected_hash)
 
