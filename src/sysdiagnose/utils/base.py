@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime as datetime_datetime, UTC
 from functools import cached_property
 import importlib
 from pathlib import Path
+
 from sysdiagnose.utils.logger import logger
 import glob
 import json
 import os
 import re
 from io import TextIOWrapper
+from typing import Self
 
 
 class SysdiagnoseConfig:
@@ -114,7 +117,7 @@ class BaseInterface(ABC):
         self._result: dict | list = None  # empty result set, used for caching
 
     @cached_property
-    def sysdiagnose_creation_datetime(self) -> datetime:
+    def sysdiagnose_creation_datetime(self) -> datetime_datetime:
         """
         Returns the creation date and time of the sysdiagnose as a datetime object.
 
@@ -124,7 +127,7 @@ class BaseInterface(ABC):
         return BaseInterface.get_sysdiagnose_creation_datetime_from_file(os.path.join(self.case_data_subfolder, 'sysdiagnose.log'))
 
     @staticmethod
-    def get_sysdiagnose_creation_datetime_from_file(file: str | TextIOWrapper) -> datetime:
+    def get_sysdiagnose_creation_datetime_from_file(file: str | TextIOWrapper) -> datetime_datetime:
         """
         Returns the creation date and time of the sysdiagnose as a datetime object.
 
@@ -152,7 +155,7 @@ class BaseInterface(ABC):
                     match = re.search(timestamp_regex, line)
                     if match:
                         timestamp = match.group(1)
-                        parsed_timestamp = datetime.strptime(timestamp, "%Y.%m.%d_%H-%M-%S%z")
+                        parsed_timestamp = datetime_datetime.strptime(timestamp, "%Y.%m.%d_%H-%M-%S%z")
                         return parsed_timestamp
                     else:
                         raise ValueError("Invalid timestamp format in sysdiagnose.log. Cannot figure out time of sysdiagnose creation.")
@@ -276,3 +279,100 @@ class BaseParserInterface(BaseInterface):
 class BaseAnalyserInterface(BaseInterface):
     def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
         super().__init__(module_filename, config, case_id)
+
+
+@dataclass(order=True)
+class Event():
+    datetime: datetime_datetime  # timestamp of the event
+    message: str    # human-readable message
+    module: str     # module name (e.g. "crashlogs")
+
+    timestamp_desc: str = ''   # description of the timestamp (e.g. "sysdiagnose creation time")
+    data: dict = field(default_factory=dict)         # dict with the data of the event
+    # extra: dict = field(default_factory=dict)  # LATER more fields at the root, but this is a bit more complex and needs to be implemented everywhere, so we leave it out for now
+
+    # allows access to the attributes as if they were dictionary keys
+    def __getitem__(self, key):
+        if 'datetime' == key:
+            # return the timestamp as a datetime str
+            return self.datetime.isoformat(timespec='microseconds')
+        elif 'timestamp' == key:  # temporary backwards compatibility
+            # return the timestamp as a timestamp int
+            return int(self.datetime.timestamp())
+        return getattr(self, key)
+
+    # allows access to the attributes as if they were dictionary keys
+    def __setitem__(self, key, value):
+        if 'datetime' == key:
+            if isinstance(value, str):
+                # if the value is a string, try to parse it as a datetime
+                try:
+                    value = datetime_datetime.fromisoformat(value)
+                except ValueError:
+                    logger.error(f"Invalid timestamp format: {value}")
+                    raise ValueError("Invalid timestamp format, expected ISO 8601 format.")
+            elif isinstance(value, datetime_datetime):
+                # if the value is already a datetime, just use it
+                pass
+            else:
+                logger.error(f"Invalid timestamp type: {type(value)}")
+                raise TypeError("Timestamp must be a datetime object or an ISO 8601 formatted string.")
+
+        return setattr(self, key, value)
+
+    def to_json(self) -> str:
+        """
+        Converts the Event object to a JSON string.
+
+        Returns:
+            str: A JSON string representation of the Event object.
+        """
+        return json.dumps(self.to_dict(), ensure_ascii=False)
+
+    def to_dict(self) -> dict:
+        """
+        Converts the Event object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the Event object.
+        """
+
+        output = {}
+        # add extra fields if they exist
+        # if self.extra:
+        #     output.update(self.extra)
+
+        # keep this last as this ensures the mandatory fields have precedence
+        output.update({
+            'datetime': self.datetime.isoformat(timespec='microseconds'),
+            'message': self.message,
+            'timestamp_desc': self.timestamp_desc,
+            'module': self.module,
+            'data': self.data
+        })
+        return output
+
+    @staticmethod
+    def from_dict(data: dict) -> Self:
+        """
+        Populates the Event object from a dictionary.
+
+        Args:
+            data (dict): A dictionary containing the event data.
+        """
+        try:
+            datetime = datetime_datetime.fromisoformat(data.get('datetime', ''))
+        except Exception:
+            try:
+                datetime = datetime_datetime.fromtimestamp(data.get('timestamp', ''), tz=UTC)
+            except Exception as e:
+                logger.error(f"Failed to parse timestamp: {e}", exc_info=True)
+                raise ValueError("Invalid timestamp format in data dictionary: no isoformat datetime or timestamp int.")
+
+        message = data.get('message', '')
+        module = data.get('module', '')
+        event = Event(datetime=datetime, message=message, module=module)
+        event.timestamp_desc = data.get('timestamp_desc', '')
+        event.data = data.get('data', {})
+        # event.extra = # LATER also load the other fields that exist
+        return event

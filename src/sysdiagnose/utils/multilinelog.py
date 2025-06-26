@@ -1,6 +1,8 @@
 import re
 import io
+
 import sysdiagnose.utils.misc as misc
+from sysdiagnose.utils.base import Event
 from datetime import datetime
 
 
@@ -31,12 +33,13 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
                 kv_section = True
             if kv_section == 'end':
                 kv_section = False
-                events.append(build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module))
+                event = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
+                events.append(event.to_dict())
                 prev_lines = []
                 continue  # go to next line as current line is just the closure of the section
             elif prev_lines:
-                new_entry = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
-                events.append(new_entry)
+                event = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
+                events.append(event.to_dict())
             # build the new entry
             prev_lines = []
             prev_lines.append(line)
@@ -49,27 +52,27 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
             kv_section = 'end'
     # process the last entry
     if kv_section and len(prev_lines) > 1:
-        new_entry = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
+        event = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
     else:
-        new_entry = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
-    if new_entry:
-        events.append(new_entry)
+        event = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
+    if event:
+        events.append(event.to_dict())
     return events
 
 
-def build_from_kv_section(lines, tzinfo, module):
-    new_entry = build_from_logentry(line=lines.pop(0), tzinfo=tzinfo, module=module)  # first line is a normal line
+def build_from_kv_section(lines, tzinfo, module) -> Event:
+    event = build_from_logentry(line=lines.pop(0), tzinfo=tzinfo, module=module)  # first line is a normal line
     if '_____' in lines[-1]:
         lines.pop()  # drop last line as it's just the closing line
     # complement with key-value section
     for line in lines:
         splitted = line.split(":")
         if len(splitted) > 1:
-            new_entry[splitted[-2].strip()] = splitted[-1].strip()
-    return new_entry
+            event.data[splitted[-2].strip()] = splitted[-1].strip()
+    return event
 
 
-def build_from_logentry(line, tzinfo, module):
+def build_from_logentry(line, tzinfo, module) -> Event:
     entry = {}
     # timestamp
     timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
@@ -77,10 +80,6 @@ def build_from_logentry(line, tzinfo, module):
         timestamp_str = timeregex.group(1)
         timestamp = datetime.strptime(timestamp_str, "%a %b %d %H:%M:%S %Y")
         timestamp = timestamp.replace(tzinfo=tzinfo)
-        entry['timestamp'] = timestamp.timestamp()
-        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry['timestamp_desc'] = f'{module} event'
-        entry['saf_module'] = module
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)
@@ -104,7 +103,7 @@ def build_from_logentry(line, tzinfo, module):
         # plist parsing
         if line.endswith('</plist>'):
             plist_start = line.index('<?xml version')
-            entry['message'] = line[:plist_start].strip()
+            message = line[:plist_start].strip()
             plist_data = line[plist_start:]
             entry['plist'] = misc.load_plist_string_as_json(plist_data)
             # LATER parse the plist content
@@ -112,8 +111,16 @@ def build_from_logentry(line, tzinfo, module):
             # - decode the certificates into nice JSON
             # - and so on with more fun for the future
         else:
-            entry['message'] = msgregex.group(1).strip()
+            message = msgregex.group(1).strip()
 
+        event = Event(
+            datetime=timestamp,
+            message=message,
+            module=module,
+            timestamp_desc=f'{module} event',
+            data=entry
+        )
+        return event
     return entry
 
 

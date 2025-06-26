@@ -2,7 +2,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, Event
 import sysdiagnose.utils.misc as misc
 from datetime import datetime, timezone
 
@@ -35,11 +35,13 @@ class McStateSharedProfileParser(BaseParserInterface):
             entry = misc.load_plist_file_as_json(log_file)
             timestamp = datetime.strptime(entry['InstallDate'], '%Y-%m-%dT%H:%M:%S.%f')
             timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
-            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-            entry['timestamp'] = timestamp.timestamp()
-            entry['saf_module'] = self.module_name
-            entry['message'] = '# '.join([entry.get('PayloadDescription', ''), entry.get('PayloadDisplayName', ''), entry.get('PayloadOrganization', '')])
-            entry['timestamp_desc'] = f"MCState {entry['PayloadType']}"
-            result.append(entry)
+            event = Event(
+                datetime=timestamp,
+                message='# '.join([entry.get('PayloadDescription', ''), entry.get('PayloadDisplayName', ''), entry.get('PayloadOrganization', '')]),
+                module=self.module_name,
+                timestamp_desc=f"MCState {entry['PayloadType']}",
+                data=entry
+            )
+            result.append(event.to_dict())
 
         return result

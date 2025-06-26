@@ -7,8 +7,8 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger
-from datetime import datetime, timedelta, timezone
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from datetime import datetime, timedelta
 from sysdiagnose.utils.misc import snake_case
 
 
@@ -70,9 +70,9 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 events = []
                 if status != 'empty':
                     basic = SpindumpNoSymbolsParser.parse_basic(headers)
-                    basic['message'] = f"spindump {basic['data_source']}"
+                    basic['message'] = f"spindump {basic['data']['data_source']}"
                     events.append(basic)
-                    events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['timestamp']))
+                    events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic['datetime']))
                 # Logging
                 logger.debug(f"{len(events)} events retrieved", extra={'num_events': len(events)})
 
@@ -93,16 +93,21 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 timestamp = datetime.strptime(output['date_time'], "%Y-%m-%d %H:%M:%S.%f %z")
             except ValueError:
                 timestamp = datetime.strptime(output['date_time'], "%Y-%m-%d %H:%M:%S %z")
-            output['timestamp'] = timestamp.timestamp()
-            output['datetime'] = timestamp.isoformat(timespec='microseconds')
-            output['timestamp_desc'] = 'spindump'
-            output['saf_module'] = SpindumpNoSymbolsParser.module_name
+            output.pop('date_time', None)  # remove date_time as we have timestamp and datetime now
+            event = Event(
+                datetime=timestamp,
+                message='spindump',
+                module=SpindumpNoSymbolsParser.module_name,
+                timestamp_desc='spindump',
+                data=output
+            )
+            return event.to_dict()
 
         return output
 
-    def parse_processes(data: list, start_timestamp: int) -> list[dict]:
+    def parse_processes(data: list, start_timestamp: str) -> list[dict]:
         # init
-        start_time = datetime.fromtimestamp(start_timestamp, tz=timezone.utc)
+        start_time = datetime.fromisoformat(start_timestamp)
         processes = []
         init = True
         process_buffer = []
@@ -114,9 +119,15 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                         timestamp = start_time - timedelta(seconds=int(process['time_since_fork'].rstrip('s')))
                     except KeyError:  # some don't have a time since fork, like zombie processes
                         timestamp = start_time
-                    process['timestamp'] = timestamp.timestamp()
-                    process['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    processes.append(process)
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",
+                        module=SpindumpNoSymbolsParser.module_name,
+                        timestamp_desc='process running during spindump',
+                        data=process
+                    )
+
+                    processes.append(event.to_dict())
                     process_buffer = [line.strip()]
                 else:
                     init = False
@@ -126,9 +137,14 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
         process = SpindumpNoSymbolsParser.parse_process(process_buffer)
         timestamp = start_time - timedelta(seconds=int(process.get('time_since_fork', '0').rstrip('s')))
-        process['timestamp'] = timestamp.timestamp()
-        process['datetime'] = timestamp.isoformat(timespec='microseconds')
-        processes.append(process)
+        event = Event(
+            datetime=timestamp,
+            message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",
+            module=SpindumpNoSymbolsParser.module_name,
+            timestamp_desc='process running during spindump',
+            data=process
+        )
+        processes.append(event.to_dict())
         return processes
 
     def parse_process(data):
@@ -167,9 +183,6 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             pass
         process['uid'] = 501
 
-        process['saf_module'] = SpindumpNoSymbolsParser.module_name
-        process['timestamp_desc'] = 'process running during spindump'
-        process['message'] = f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}"
         return process
 
     def parse_threads(data):

@@ -9,7 +9,7 @@
 import os
 import glob
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 
 
 class SystemVersionParser(BaseParserInterface):
@@ -33,12 +33,14 @@ class SystemVersionParser(BaseParserInterface):
         try:
             entry = SystemVersionParser.parse_file(self.get_log_files()[0])
             timestamp = self.sysdiagnose_creation_datetime
-            entry['timestamp_desc'] = 'sysdiagnose creation'
-            entry['timestamp'] = timestamp.timestamp()
-            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-            entry['saf_module'] = self.module_name
-            entry['message'] = f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}"
-            return [entry]
+            event = Event(
+                datetime=timestamp,
+                message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
+                module=self.module_name,
+                timestamp_desc='sys at sysdiagnose creation',
+                data=entry
+            )
+            return [event.to_dict()]
         except IndexError:
             logger.warning('No SystemVersion.plist file present')
             return []

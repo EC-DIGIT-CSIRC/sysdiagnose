@@ -4,7 +4,7 @@ import glob
 import os
 import re
 
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, Event
 
 
 class WifiScanParser(BaseParserInterface):
@@ -47,17 +47,21 @@ class WifiScanParser(BaseParserInterface):
                     parsed_data.update(WifiScanParser.parse_line(line))
 
                 if 'ssid' in parsed_data:
-                    parsed_data['message'] = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
+                    message = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
                 else:
                     # join key-value pairs
                     concatenated = ', '.join(f"{k}={v}" for k, v in parsed_data.items())
-                    parsed_data['message'] = f"Wifi scan: {concatenated}"
+                    message = f"Wifi scan: {concatenated}"
                 timestamp = self.sysdiagnose_creation_datetime
-                parsed_data['datetime'] = timestamp.isoformat(timespec='microseconds')
-                parsed_data['timestamp'] = timestamp.timestamp()
-                parsed_data['timestamp_desc'] = 'sysdiagnose creation'
-                parsed_data['saf_module'] = self.module_name
-                output.append(parsed_data)
+
+                event = Event(
+                    datetime=timestamp,
+                    message=message,
+                    module=self.module_name,
+                    timestamp_desc='wifi scan at sysdiagnose creation',
+                    data=parsed_data
+                )
+                output.append(event.to_dict())
         return output
 
     def parse_summary(line: str) -> dict:

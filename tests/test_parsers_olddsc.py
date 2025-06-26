@@ -17,7 +17,7 @@ class TestParsersOlddsc(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('Load_Address' in item)
+                self.assertTrue('Load_Address' in item['data'])
                 # self.assertTrue('Unslid_Base_Address' in result)
                 # self.assertTrue('Cache_UUID_String' in result)
                 # self.assertTrue('Binaries' in result)

@@ -1,7 +1,7 @@
 import json
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from datetime import datetime
 import re
 
@@ -51,87 +51,86 @@ class TransparencyParser(BaseParserInterface):
                 if 'At' in key:
                     # parse the time in this format "2023-04-11 09:38:27 +0000"
                     timestamp = datetime.strptime(item[key], "%Y-%m-%d %H:%M:%S %z")
-                    events.append({
-                        'message': f"Transparency: registration app {item.get('app')} {key}",
-                        'timestamp': timestamp.timestamp(),
-                        'datetime': timestamp.isoformat(timespec='microseconds'),
-                        'timestamp_desc': 'app registration',
-                        'saf_module': self.module_name,
-                    })
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"Transparency: registration app {item.get('app')} {key}",
+                        module=self.module_name,
+                        timestamp_desc='app registration'
+                    )
+                    events.append(event.to_dict())
         sm = json_data.get('stateMachine')
         if sm:
             try:
                 key = 'accountFirstSeen'
                 timestamp = datetime.strptime(sm[key], "%Y-%m-%d %H:%M:%S %z")
-                events.append({
-                    'message': f"Transparency: stateMachine {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
             except KeyError:
                 pass
             try:
                 key = 'backgroundOp lastDutyCycle'
                 timestamp = datetime.strptime(sm['backgroundOp']['lastDutyCycle'], "%Y-%m-%dT%H:%M:%SZ")
-                events.append({
-                    'message': f"Transparency: stateMachine {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
             except KeyError:
                 pass
             try:
                 key = 'backgroundOp lastSuccess'
                 timestamp = datetime.strptime(sm['backgroundOp']['lastSuccess'], "%Y-%m-%dT%H:%M:%SZ")
-                events.append({
-                    'message': f"Transparency: stateMachine {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
             except KeyError:
                 pass
 
             for key, t in sm.get('lasts', {}).items():
                 timestamp = datetime.strptime(t, "%Y-%m-%d %H:%M:%S %z")
-                events.append({
-                    'message': f"Transparency: stateMachine last {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine last {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
 
             for launch in sm.get('launch', []):
                 t, key = launch.split(' - ')
                 # parse the time in this format 2024-08-19T09:00:28.946+0200
                 timestamp = datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f%z")
-                events.append({
-                    'message': f"Transparency: stateMachine launch {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine launch {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
 
             try:
                 key = 'lockState'
                 # extract the time from the string using regex "foobar 2024-08-19 09:00:28 +0200"
                 time_str = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}', sm[key]).group(0)
                 timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S %z")
-                events.append({
-                    'message': f"Transparency: stateMachine {key}",
-                    'timestamp': timestamp.timestamp(),
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'data': sm[key],
-                    'timestamp_desc': 'stateMachine',
-                    'saf_module': self.module_name,
-                })
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Transparency: stateMachine {key}",
+                    module=self.module_name,
+                    timestamp_desc='stateMachine'
+                )
+                events.append(event.to_dict())
             except KeyError:
                 pass
 
@@ -139,13 +138,13 @@ class TransparencyParser(BaseParserInterface):
                 try:
                     time_str = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', val).group(0)
                     timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S %z")
-                    events.append({
-                        'message': f"Transparency: stateMachine ops {val}",
-                        'timestamp': timestamp.timestamp(),
-                        'datetime': timestamp.isoformat(timespec='microseconds'),
-                        'timestamp_desc': 'stateMachine',
-                        'saf_module': self.module_name,
-                    })
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"Transparency: stateMachine ops {val}",
+                        module=self.module_name,
+                        timestamp_desc='stateMachine'
+                    )
+                    events.append(event.to_dict())
                 except KeyError:
                     pass
         return events

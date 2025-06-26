@@ -6,7 +6,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from sysdiagnose.utils.misc import snake_case
 from datetime import datetime
 import re
@@ -96,35 +96,40 @@ class SwcutilParser(BaseParserInterface):
             splitted = line.split(":", 1)
             if len(splitted) > 1:
                 entry[snake_case(splitted[0])] = splitted[1].strip()
-        entry['saf_module'] = SwcutilParser.module_name
+        entry['module'] = SwcutilParser.module_name
         return entry
 
     def parse_headers_entry(self, data) -> dict:
         entry = self.parse_basic(data)
         entry['section'] = 'headers'
         timestamp = self.sysdiagnose_creation_datetime
-        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'swcutil headers at sysdiagnose creation'
-        entry['message'] = "swcutil headers"
-        return entry
+        event = Event(
+            datetime=timestamp,
+            message="swcutil headers",
+            module=SwcutilParser.module_name,
+            timestamp_desc='swcutil headers at sysdiagnose creation',
+            data=entry
+        )
+        return event.to_dict()
 
     def parse_network(self, data) -> list:
         results = []
-        item_tpl = {}
         timestamp = self.sysdiagnose_creation_datetime
-        item_tpl['timestamp_desc'] = 'sysdiagnose creation'
-        item_tpl['datetime'] = timestamp.isoformat(timespec='microseconds')
-        item_tpl['timestamp'] = timestamp.timestamp()
-        item_tpl['saf_module'] = SwcutilParser.module_name
-        item_tpl['section'] = 'network'
 
         for line in data:
             for entry in line.split(', '):
-                item = item_tpl.copy()
-                item['domain'] = entry.split(' ')[0]
-                item['message'] = f"Network: {item['domain']}"
-                results.append(item)
+                domain = entry.split(' ')[0]
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Network: {domain}",
+                    module=SwcutilParser.module_name,
+                    timestamp_desc='sysdiagnose creation time',
+                    data={
+                        'domain': domain,
+                        'section': 'network'
+                    }
+                )
+                results.append(event.to_dict())
         return results
 
     def parse_db(self, data) -> list:
@@ -149,18 +154,22 @@ class SwcutilParser(BaseParserInterface):
             rex = re.compile(r'(\d{4}-\d{2}-\d{2}\s+)(\d):')
             normalised_ts = rex.sub(r'\g<1>0\2:', entry['last_checked'])
             timestamp = datetime.strptime(normalised_ts, '%Y-%m-%d %H:%M:%S %z')
-            entry['timestamp_desc'] = 'last checked'
+            timestamp_desc = 'db last checked'
         except KeyError:
             timestamp = self.sysdiagnose_creation_datetime
-            entry['timestamp_desc'] = 'sysdiagnose creation'
+            timestamp_desc = 'sysdiagnose creation time'
         except ValueError:
             timestamp = datetime.strptime(normalised_ts, '%Y-%m-%d %I:%M:%S %p %z')
-            entry['timestamp_desc'] = 'last checked'
+            timestamp_desc = 'db last checked'
 
-        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry['timestamp'] = timestamp.timestamp()
-        entry['message'] = f"{entry['service']}: {entry['app_id']} for {entry['domain']}"
-        return entry
+        event = Event(
+            datetime=timestamp,
+            message=f"{entry['service']}: {entry['app_id']} for {entry['domain']}",
+            module=SwcutilParser.module_name,
+            timestamp_desc=timestamp_desc,
+            data=entry
+        )
+        return event.to_dict()
 
     def parse_settings(self, data) -> list:
         results = []
@@ -199,21 +208,20 @@ class SwcutilParser(BaseParserInterface):
         entry['settings'] = {snake_case(key): value.strip() for key, value in settings_matches}
 
         timestamp = self.sysdiagnose_creation_datetime
-        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'sysdiagnose creation'
-        entry['saf_module'] = SwcutilParser.module_name
-        entry['message'] = f"swcutil settings {entry['s']} {entry['a']}"
-        return entry
+        event = Event(
+            datetime=timestamp,
+            message=f"swcutil settings {entry['s']} {entry['a']}",
+            module=SwcutilParser.module_name,
+            timestamp_desc='sysdiagnose creation time',
+            data=entry
+        )
+
+        return event.to_dict()
 
     def parse_memory_entry(self, line):
         entry = {}
         entry['section'] = 'memory'
         timestamp = self.sysdiagnose_creation_datetime
-        entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        entry['timestamp'] = timestamp.timestamp()
-        entry['timestamp_desc'] = 'sysdiagnose creation'
-        entry['saf_module'] = SwcutilParser.module_name
 
         proc, value = line.split(":", 1)
         entry['process'] = proc.strip()
@@ -228,7 +236,15 @@ class SwcutilParser(BaseParserInterface):
         elif 'GB' in value or 'go' in value:
             entry['usage'] = int(value.split(' ')[0]) * 1024 * 1024 * 1024
 
-        entry['message'] = entry['process']
+        message = entry['process']
         if 'usage' in entry:
-            entry['message'] += f" memory usage: {entry['usage']} bytes"
-        return entry
+            message += f" memory usage: {entry['usage']} bytes"
+
+        event = Event(
+            datetime=timestamp,
+            message=message,
+            module=SwcutilParser.module_name,
+            timestamp_desc='memory usage at sysdiagnose creation',
+            data=entry
+        )
+        return event.to_dict()

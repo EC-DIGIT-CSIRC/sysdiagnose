@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, Event
 from datetime import datetime
 import re
 
@@ -56,16 +56,17 @@ class LockdowndParser(BaseParserInterface):
             timestamp = timestamp.replace(tzinfo=tzinfo)
 
             # LATER parse the json blob that can sometimes be in the message
-            item = {
-                'timestamp': timestamp.timestamp(),
-                'datetime': timestamp.isoformat(timespec='microseconds'),
-                'saf_module': module,
-                'timestamp_desc': f'lockdownd {match.group(3)}',
-                'pid': int(match.group(2)),
-                'event_type': match.group(3),
-                'message': match.group(4).strip()
-            }
-            result.append(item)
+            event = Event(
+                datetime=timestamp,
+                message=match.group(4).strip(),
+                module=module,
+                timestamp_desc=f'lockdownd {match.group(3)}',
+                data={
+                    'pid': int(match.group(2)),
+                    'event_type': match.group(3)
+                }
+            )
+            result.append(event.to_dict())
 
             i += 1
             pass

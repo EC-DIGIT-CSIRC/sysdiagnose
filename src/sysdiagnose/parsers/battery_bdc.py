@@ -2,7 +2,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from datetime import datetime, timezone
 import csv
 
@@ -46,6 +46,7 @@ class BatteryBDCParser(BaseParserInterface):
                 reader = csv.DictReader(f)
                 entry_type = os.path.basename(log_file).rsplit('_', maxsplit=2)[0]
                 for row in reader:
+
                     row['type'] = entry_type
                     if 'TimeStamp' in row:
                         timestamp = datetime.strptime(row['TimeStamp'], '%Y-%m-%d %H:%M:%S')
@@ -56,11 +57,14 @@ class BatteryBDCParser(BaseParserInterface):
                     else:
                         logger.error("No known timestamp field found in CSV file", extra={'header': str(row)})
                         raise ValueError('No known timestamp field found in CSV file')
-                    row['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    row['timestamp'] = timestamp.timestamp()
-                    row['saf_module'] = self.module_name
-                    row['timestamp_desc'] = entry_type
-                    row['message'] = 'power state report'
-                    result.append(row)
+
+                    event = Event(
+                        datetime=timestamp,
+                        message='power state report',
+                        module=self.module_name,
+                        timestamp_desc=entry_type,
+                        data=row
+                    )
+                    result.append(event.to_dict())
 
         return result
