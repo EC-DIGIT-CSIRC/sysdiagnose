@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import glob
-import stat
 import sysdiagnose.utils.misc as misc
 import os
 import json

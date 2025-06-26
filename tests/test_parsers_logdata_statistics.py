@@ -18,7 +18,7 @@ class TestParsersLogdataStatistics(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('process' in item)
+                self.assertTrue('process' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
 
 

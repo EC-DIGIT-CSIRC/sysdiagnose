@@ -12,7 +12,7 @@ from sysdiagnose.utils import sqlite2json
 import glob
 import os
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from datetime import datetime, timezone
 
 
@@ -50,13 +50,15 @@ class AppInstallationParser(BaseParserInterface):
 
                         try:
                             timestamp = datetime.fromtimestamp(item['timestamp'], tz=timezone.utc)
-                            item['saf_db_table'] = key
-                            item['datetime'] = timestamp.isoformat(timespec='microseconds')
-                            item['timestamp'] = timestamp.timestamp()
-                            item['saf_module'] = self.module_name
-                            item['timestamp_desc'] = key
-                            item['message'] = ''
-                            result.append(item)
+                            item['db_table'] = key
+                            event = Event(
+                                datetime=timestamp,
+                                message='',
+                                module=self.module_name,
+                                timestamp_desc=key,
+                                data=item
+                            )
+                            result.append(event.to_dict())
                         except TypeError:
                             # skip "None" values and such
                             pass

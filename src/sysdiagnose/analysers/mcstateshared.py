@@ -19,11 +19,11 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
 
         for entry in mcstate_result:
             for key in ['SignerCerts', 'datetime', 'timestamp']:
-                entry.pop(key, None)
+                entry['data'].pop(key, None)
 
-            payload_contents = entry.pop('PayloadContent', None)
+            payload_contents = entry['data'].pop('PayloadContent', None)
 
-            entry_tpl = misc.flatten_dict(entry)
+            entry_tpl = misc.flatten_dict(entry['data'])
 
             for payload_content in payload_contents:
                 item = entry_tpl.copy()

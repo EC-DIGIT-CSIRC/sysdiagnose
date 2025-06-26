@@ -1,7 +1,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from datetime import datetime
 
 
@@ -75,30 +75,38 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
 
             # transform the 'meta' into multiple jsonl entries
             timestamp = self.sysdiagnose_creation_datetime
-            item_tpl = {
-                'timestamp': timestamp.timestamp(),
-                'datetime': timestamp.isoformat(timespec='microseconds'),
-                'timestamp_info': 'sysdiagnose creation',
-                'timestamp_desc': 'security meta event',
-                'saf_module': self.module_name,
-
-            }
             for root_key, items in json_result['meta'].items():
                 if isinstance(items, list):
                     for item in items:
-                        item = item_tpl.copy()
-                        item['section'] = root_key
-                        item['message'] = f"{root_key} {item}"
-                        item['attributes'] = {}
-                        json_result['events'].append(item)
+
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"{root_key} {item}",
+                            module=self.module_name,
+                            timestamp_desc='security meta event',
+                            data={
+                                'item': item,
+                                'timestamp_info': 'sysdiagnose creation time',
+                                'section': root_key,
+                                'attributes': {}
+                            }
+                        )
+                        json_result['events'].append(event.to_dict())
 
                 elif isinstance(items, dict):
                     for key, item in items.items():
-                        item = item_tpl.copy()
-                        item['section'] = root_key
-                        item['message'] = f"{root_key} {key}: {item}"
-                        item['attributes'] = items[key]
-                        json_result['events'].append(item)
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"{root_key} {key}: {item}",
+                            module=self.module_name,
+                            timestamp_desc='security meta event',
+
+                        )
+
+                        event.data['timestamp_info'] = 'sysdiagnose creation time'
+                        event.data['section'] = root_key
+                        event.data['attributes'] = items[key]
+                        json_result['events'].append(event.to_dict())
 
         return json_result['events']
 
@@ -181,32 +189,34 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                     else:
                         raise ValueError(f"Cannot parse line: {line}")
 
-                    time_row = {
-                        'timestamp': timestamp.timestamp(),
-                        'datetime': timestamp.isoformat(timespec='microseconds'),
-                        'timestamp_desc': f"{section}: entry creation time",
-                        'saf_module': module_name,
-                        'message': msg,
-                        'section': section,
-                        'attributes': row
-                    }
-                    json_result['events'].append(time_row)
+                    event = Event(
+                        datetime=timestamp,
+                        message=msg,
+                        module=module_name,
+                        timestamp_desc=f"{section}: entry creation time",
+                        data={
+                            'section': section,
+                            'attributes': row
+                        }
+                    )
+                    json_result['events'].append(event.to_dict())
                 if 'mdat' in row:
                     match = re.search(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', row['mdat'])
                     if match:
                         timestamp = datetime.fromisoformat(match.group(1))
                     else:
                         raise ValueError(f"Cannot parse line: {line}")
-                    time_row = {
-                        'timestamp': timestamp.timestamp(),
-                        'datetime': timestamp.isoformat(timespec='microseconds'),
-                        'timestamp_desc': f"{section}: entry modification time",
-                        'saf_module': module_name,
-                        'message': msg,
-                        'section': section,
-                        'attributes': row
-                    }
-                    json_result['events'].append(time_row)
+                    event = Event(
+                        datetime=timestamp,
+                        message=msg,
+                        module=module_name,
+                        timestamp_desc=f"{section}: entry modification time",
+                        data={
+                            'section': section,
+                            'attributes': row
+                        }
+                    )
+                    json_result['events'].append(event.to_dict())
             else:
                 json_result['meta'][section].append(row)
 
@@ -237,17 +247,22 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                     timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %I:%M:%S %p %z")
                 else:
                     raise ValueError(f"Cannot parse line: {line}")
-            row = {
-                'timestamp': timestamp.timestamp(),
-                'datetime': timestamp.isoformat(timespec='microseconds'),
-                'timestamp_desc': match.group(3),
-                'saf_module': module_name,
-                'section': section,
-                'result': match.group(2),
-                'event': match.group(3),
-                'attributes': {}
-            }
-            row['message'] = f"{row['section']} {row['result']} {row['event']}"
+
+            result = match.group(2)
+            client_event = match.group(3)
+
+            event = Event(
+                datetime=timestamp,
+                message=f"{section} {result} {client_event}",
+                module=module_name,
+                timestamp_desc=match.group(3),
+                data={
+                    'section': section,
+                    'result': result,
+                    'event': client_event,
+                    'attributes': {}
+                }
+            )
             attribute_string = match.group(4)
 
             # while next rows do not start with a date, they are part of the attributes
@@ -261,9 +276,9 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             attribute_string = attribute_string.replace('\n', '').strip()[:-1].strip()
             attribute_pairs = re.findall(r'(\w+)\s*:\s*(\([^)]+\)|.+?)(?:, |$)', attribute_string)
             for key, value in attribute_pairs:
-                row['attributes'][key.strip()] = value.strip()
+                event.data['attributes'][key.strip()] = value.strip()
 
-            json_result['events'].append(row)
+            json_result['events'].append(event.to_dict())
             i += 1
 
     def process_buffer_keys_and_values(buffer: list, json_result: dict, module_name: str = None):

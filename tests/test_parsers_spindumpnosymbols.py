@@ -1,4 +1,3 @@
-from re import L
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from tests import SysdiagnoseTestCase
 import unittest
@@ -18,7 +17,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 1)
-            self.assertTrue('os_version' in result[0])
+            self.assertTrue('os_version' in result[0]['data'])
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
 
@@ -31,14 +30,15 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             'Report Version:   35.1',
         ]
         expected_result = {
-            'timestamp': 1684960155.759,
             'datetime': '2023-05-24T13:29:15.759000-07:00',
-            'date_time': '2023-05-24 13:29:15.759 -0700',
-            'end_time': '2023-05-24 13:29:17.757 -0700',
-            'os_version': 'iPhone OS 15.7.6 (Build 19H349)',
-            'architecture': 'arm64',
-            'report_version': '35.1',
-            'saf_module': 'spindumpnosymbols',
+            'message': 'spindump',
+            'data': {
+                'end_time': '2023-05-24 13:29:17.757 -0700',
+                'os_version': 'iPhone OS 15.7.6 (Build 19H349)',
+                'architecture': 'arm64',
+                'report_version': '35.1'
+            },
+            'module': 'spindumpnosymbols',
             'timestamp_desc': 'spindump'
         }
         result = SpindumpNoSymbolsParser.parse_basic(lines)
@@ -50,11 +50,11 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             'Date/Time:        2023-05-24 13:29:15 -0700',
         ]
         expected_result = {
-            'timestamp': 1684960155.000,
             'datetime': '2023-05-24T13:29:15.000000-07:00',
-            'date_time': '2023-05-24 13:29:15 -0700',
             'timestamp_desc': 'spindump',
-            'saf_module': 'spindumpnosymbols'
+            'module': 'spindumpnosymbols',
+            'message': 'spindump',
+            'data': {}
         }
         result = SpindumpNoSymbolsParser.parse_basic(lines)
         self.maxDiff = None
@@ -93,9 +93,6 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
         ]
         expected_result = {
-            'timestamp_desc': 'process running during spindump',
-            'saf_module': 'spindumpnosymbols',
-            'message': '/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd [176] as 501 parent=launchd',
             'process': 'accessoryd',
             'pid': 176,
             'ppid': 1,

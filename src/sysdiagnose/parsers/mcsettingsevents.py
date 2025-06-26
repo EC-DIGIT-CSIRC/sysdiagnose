@@ -2,7 +2,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, Event
 import sysdiagnose.utils.misc as misc
 from datetime import datetime, timezone
 
@@ -50,16 +50,19 @@ class McSettingsEventsParser(BaseParserInterface):
                 try:
                     timestamp = datetime.strptime(value['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
                     timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
-                    entry = value.copy()
-                    entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    entry['timestamp'] = timestamp.timestamp()
-                    entry['setting'] = current_path
-                    entry['saf_module'] = module
-                    entry['message'] = f"setting {entry['setting']} {entry['event']} by {entry['process']}"
-                    entry['timestamp_desc'] = f"{module} {entry['event']}"
-                    yield entry
+                    value.pop('timestamp')  # remove timestamp from value to avoid duplication
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"setting {current_path} {value['event']} by {value['process']}",
+                        module=module,
+                        timestamp_desc=f"{module} {value['event']}",
+                        data=value
+                    )
+                    event.data['setting'] = current_path
+
+                    yield event.to_dict()
                 except ValueError:
                     pass
             elif isinstance(value, dict):
-                for entry in McSettingsEventsParser.traverse_and_collect(data=value, module=module, path=current_path):
-                    yield entry
+                for event in McSettingsEventsParser.traverse_and_collect(data=value, module=module, path=current_path):
+                    yield event

@@ -1,6 +1,6 @@
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 import re
 import json
 from datetime import datetime, timezone
@@ -59,8 +59,7 @@ class CrashLogsParser(BaseParserInterface):
             elif file.endswith('.ips'):
                 try:
                     ips = CrashLogsParser.parse_ips_file(file)
-                    ips['saf_module'] = self.module_name
-                    ips['timestamp_desc'] = 'crashlog'
+                    ips['module'] = self.module_name
                     ips_hash = f"{ips.get('timestamp', '')}-{ips.get('name', '')}"
                     # skip duplicates
                     if ips_hash in seen:
@@ -71,7 +70,7 @@ class CrashLogsParser(BaseParserInterface):
                     logger.warning(f"Skipping file due to error {file}", exc_info=True)
         return result
 
-    def parse_ips_file(path: str) -> list | dict:
+    def parse_ips_file(path: str) -> dict:
         # identify the type of file
         with open(path, 'r') as f:
             result = json.loads(f.readline())  # first line
@@ -92,18 +91,25 @@ class CrashLogsParser(BaseParserInterface):
 
             if not timestamp:
                 timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
-            result['datetime'] = timestamp.isoformat(timespec='microseconds')
-            result['timestamp'] = timestamp.timestamp()
 
             result['name'] = CrashLogsParser.metadata_from_filename(path)[0]
             try:
-                result['message'] = f"Crashlog: {result['report']['reason']}"
+                message = f"Crashlog: {result['report']['reason']}"
             except KeyError:
                 try:
-                    result['message'] = f"Crashlog: {result['report']['procName']}"
+                    message = f"Crashlog: {result['report']['procName']}"
                 except KeyError:
-                    result['message'] = f"Crashlog: {result['name']}"
-            return result
+                    message = f"Crashlog: {result['name']}"
+
+            event = Event(
+                datetime=timestamp,
+                message=message,
+                module='crashlogs',
+                timestamp_desc='crashlog',
+                data=result
+            )
+
+            return event.to_dict()
 
     def process_ips_lines(lines: list) -> dict:
         '''
@@ -214,7 +220,7 @@ class CrashLogsParser(BaseParserInterface):
 
         return result
 
-    def parse_summary_file(self, path: str) -> list | dict:
+    def parse_summary_file(self, path: str) -> list[dict]:
         logger.info(f"Parsing summary file: {path}")
         result = []
         seen = set()  # to ensure unique entries
@@ -225,22 +231,24 @@ class CrashLogsParser(BaseParserInterface):
 
                 app, timestamp = CrashLogsParser.metadata_from_filename(line, self.sysdiagnose_creation_datetime.tzinfo)
                 path = line.split(',')[0]
-                entry = {
-                    'app_name': app,
-                    'name': app,
-                    'datetime': timestamp.isoformat(timespec='microseconds'),
-                    'timestamp': timestamp.timestamp(),
-                    'saf_module': self.module_name,
-                    'timestamp_desc': 'crashlog',
-                    'filename': os.path.basename(path),
-                    'path': path,
-                    'message': f"Crashlog: {app}",
-                    'warning': 'Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time'
-                }
-                if entry['path'] in seen:
+                event = Event(
+                    datetime=timestamp,
+                    message=f"Crashlog: {app}",
+                    module=self.module_name,
+                    timestamp_desc='crashlog',
+                    data={
+                        'app_name': app,
+                        'name': app,
+                        'filename': os.path.basename(path),
+                        'path': path,
+                        'warning': 'Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time'
+                    }
+                )
+
+                if event.data['path'] in seen:
                     continue
-                seen.add(entry['path'])
-                result.append(entry)
+                seen.add(event.data['path'])
+                result.append(event.to_dict())
 
         return result
 

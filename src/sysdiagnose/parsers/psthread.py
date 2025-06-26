@@ -8,7 +8,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 from sysdiagnose.utils.misc import snake_case
 
 
@@ -32,48 +32,49 @@ class PsThreadParser(BaseParserInterface):
     def execute(self) -> list:
         # not really easy to conver to true timebased jsonl, as the timestamp is complex to compute.
         # so we just fall back to the sysdiagnose creation timestamp
-        timestamp_dict = {}
         timestamp = self.sysdiagnose_creation_datetime
-        timestamp_dict['timestamp'] = timestamp.timestamp()
-        timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
-        timestamp_dict['timestamp_info'] = 'sysdiagnose creation'
-        timestamp_dict['timestamp_desc'] = 'running process'
-        timestamp_dict['threads'] = 1
-        timestamp_dict['saf_module'] = self.module_name
 
         result = []
         try:
             with open(self.get_log_files()[0], "r") as f:
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
-                row = None
+                event = None
                 for line in f:
                     if '??' in line:
                         # append previous entry
-                        if row:
-                            row['message'] = f"{row['command']} [{row['pid']}] as {row['user']}"
-                            result.append(row)
+                        if event:
+                            event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
+                            result.append(event.to_dict())
 
                         patterns = line.strip().split(None, header_length - 1)
-                        row = timestamp_dict.copy()
+                        event = Event(
+                            datetime=timestamp,
+                            message='',
+                            module=self.module_name,
+                            timestamp_desc='running process',
+                            data={
+                                'timestamp_info': 'sysdiagnose creation time',
+                                'threads': 1}
+                        )
                         # merge last entries together, as last entry may contain spaces
                         for col in range(header_length):
                             # try to cast as int, float and fallback to string
                             col_name = snake_case(header[col])
                             try:
-                                row[col_name] = int(patterns[col])
+                                event.data[col_name] = int(patterns[col])
                                 continue
                             except ValueError:
                                 try:
-                                    row[col_name] = float(patterns[col])
+                                    event.data[col_name] = float(patterns[col])
                                 except ValueError:
-                                    row[col_name] = patterns[col]
+                                    event.data[col_name] = patterns[col]
                     else:
-                        row['threads'] += 1
+                        event.data['threads'] += 1
                 # append last entry
-                if row:
-                    row['message'] = f"{row['command']} [{row['pid']}] as {row['user']}"
-                    result.append(row)
+                if event:
+                    event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
+                    result.append(event.to_dict())
                 return result
         except IndexError:
             logger.warning('No ps_thread.txt file present')

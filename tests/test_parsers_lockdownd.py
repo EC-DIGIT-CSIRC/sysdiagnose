@@ -32,30 +32,33 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
         ]
         expected_result = [
             {
-                'timestamp': 1684932938.410307,
                 'datetime': '2023-05-24T13:55:38.410307+01:00',
                 'timestamp_desc': 'lockdownd mglog',
-                'saf_module': 'TestModule',
-                'pid': 76,
-                'event_type': 'mglog',
+                'module': 'TestModule',
+                'data': {
+                    'pid': 76,
+                    'event_type': 'mglog'
+                },
                 'message': 'libMobileGestalt utility.c:70: Could not open /private/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist: No such file or directory'
             },
             {
-                'timestamp': 1684932938.453538,
                 'datetime': '2023-05-24T13:55:38.453538+01:00',
                 'timestamp_desc': 'lockdownd data_ark_set_block_invoke',
-                'saf_module': 'TestModule',
-                'pid': 76,
-                'event_type': 'data_ark_set_block_invoke',
+                'module': 'TestModule',
+                'data': {
+                    'pid': 76,
+                    'event_type': 'data_ark_set_block_invoke'
+                },
                 'message': 'dirtied by changing -HasSiDP'
             },
             {
-                'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
                 'timestamp_desc': 'lockdownd lockstart_local',
-                'saf_module': 'TestModule',
-                'pid': 76,
-                'event_type': 'lockstart_local',
+                'module': 'TestModule',
+                'data': {
+                    'pid': 76,
+                    'event_type': 'lockstart_local'
+                },
                 'message': 'Build version: 19H349'
             }
         ]
@@ -72,21 +75,23 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
 
         expected_result = [
             {
-                'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
                 'timestamp_desc': 'lockdownd lockstart_local',
-                'saf_module': 'TestModule',
-                'pid': 76,
-                'event_type': 'lockstart_local',
+                'module': 'TestModule',
+                'data': {
+                    'pid': 76,
+                    'event_type': 'lockstart_local'
+                },
                 'message': 'Build version: 19H349hello world'
             },
             {
-                'timestamp': 1684932945.978543,
                 'datetime': '2023-05-24T13:55:45.978543+01:00',
                 'timestamp_desc': 'lockdownd lockstart_local',
-                'saf_module': 'TestModule',
-                'pid': 76,
-                'event_type': 'lockstart_local',
+                'module': 'TestModule',
+                'data': {
+                    'pid': 76,
+                    'event_type': 'lockstart_local'
+                },
                 'message': 'Build version: 19H349'
             }
         ]

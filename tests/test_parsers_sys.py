@@ -20,9 +20,9 @@ class TestParsersSys(SysdiagnoseTestCase):
             result = p.get_result()
             self.assertGreater(len(result), 0)
             for item in result:
-                self.assertTrue(item.keys() | self.productinfo_keys == item.keys())  # check if the result contains at least the following keys
-                self.assertTrue(item['ProductName'] in self.productnames)  # check if the result contains at least the following keys
-                self.assertTrue(item['BuildID'])
+                self.assertTrue(item['data'].keys() | self.productinfo_keys == item['data'].keys())  # check if the result contains at least the following keys
+                self.assertTrue(item['data']['ProductName'] in self.productnames)  # check if the result contains at least the following keys
+                self.assertTrue(item['data']['BuildID'])
                 self.assert_has_required_fields_jsonl(item)
 
 

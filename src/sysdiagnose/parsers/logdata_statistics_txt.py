@@ -9,7 +9,7 @@ import os
 import re
 from datetime import datetime, timezone
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class LogDataStatisticsTxtParser(BaseParserInterface):
@@ -86,8 +86,6 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                         if line.startswith('time  :'):
                             time_str = line.split(':', 1)[1].strip()
                             timestamp = self.parse_timestamp(time_str)
-                            record_tpl['timestamp'] = timestamp.timestamp()
-                            record_tpl['datetime'] = timestamp.isoformat(timespec='microseconds')
                             continue
 
                         if line.startswith('file  :'):
@@ -101,15 +99,18 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                         if line.startswith('- ['):
                             match = re.match(r'- \[\s*(\d+),\s*([\d.]+),\s*(.*)\s*\]', line)
                             if match:
-                                process = match.group(3)  # Process path
+                                process = match.group(3).strip()  # Process path
 
                                 if timestamp:
-                                    record = record_tpl.copy()
-                                    record['process'] = process.strip()
-                                    record['saf_module'] = self.module_name
-                                    record['timestamp_desc'] = f"Logd {record['type']}"
-                                    record['message'] = f"Logd {record['type']} while {record['process']} is running"
-                                    output.append(record)
+                                    event = Event(
+                                        datetime=timestamp,
+                                        message=f"Logd {record_tpl['type']} while {process} is running",
+                                        module=self.module_name,
+                                        timestamp_desc=f"Logd {record_tpl['type']}",
+                                        data=record_tpl.copy()
+                                    )
+                                    event.data['process'] = process
+                                    output.append(event.to_dict())
         except Exception as err:
             logger.error(f'Error parsing file {path}: {err}')
 

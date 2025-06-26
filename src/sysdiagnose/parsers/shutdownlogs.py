@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
@@ -80,12 +80,14 @@ class ShutdownLogsParser(BaseParserInterface):
 
                     # add entries
                     for item in running_processes.values():
-                        item['timestamp'] = timestamp.timestamp()
-                        item['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        item['timestamp_desc'] = 'process running at shutdown'
-                        item['saf_module'] = 'shutdownlogs'
-                        item['message'] = f"{item['command']} is still there during shutdown after {item['time_waiting']}s"
-                        events.append(item)
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"{item['command']} is still there during shutdown after {item['time_waiting']}s",
+                            module='shutdownlogs',
+                            timestamp_desc='process running at shutdown',
+                            data=item
+                        )
+                        events.append(event.to_dict())
                 index += 1
         except IndexError:
             # some shutdown log files don't contain a last SIGTERM entry

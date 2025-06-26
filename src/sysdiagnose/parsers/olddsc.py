@@ -8,7 +8,7 @@
 import glob
 import os
 from sysdiagnose.utils.misc import load_plist_file_as_json
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, logger, Event
 
 
 class OldDscParser(BaseParserInterface):
@@ -31,13 +31,7 @@ class OldDscParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        timestamp_dict = {}
         timestamp = self.sysdiagnose_creation_datetime
-        timestamp_dict['timestamp'] = timestamp.timestamp()
-        timestamp_dict['datetime'] = timestamp.isoformat(timespec='microseconds')
-        timestamp_dict['timestamp_info'] = 'sysdiagnose creation'
-        timestamp_dict['timestamp_desc'] = 'olddsc'
-        timestamp_dict['saf_module'] = self.module_name
 
         entries = []
         # we're not doing anything with
@@ -46,9 +40,17 @@ class OldDscParser(BaseParserInterface):
         # only acting on Binaries list
         for log_file in self.get_log_files():
             for entry in OldDscParser.parse_file(log_file).get('Binaries', []):
-                entry.update(timestamp_dict)
-                entry['message'] = f"olddsc {entry['Path']} {entry['UUID_String']}"
-                entries.append(entry)
+                event = Event(
+                    datetime=timestamp,
+                    message=f"olddsc {entry['Path']} {entry['UUID_String']}",
+                    module=self.module_name,
+                    timestamp_desc='olddsc',
+                    data=entry
+                )
+                event.data['timestamp_info'] = 'sysdiagnose creation time'
+
+                entries.append(event.to_dict())
+
         if not entries:
             logger.warning('No olddsc files present')
         return entries
