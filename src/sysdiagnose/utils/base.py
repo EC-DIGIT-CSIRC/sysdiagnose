@@ -11,7 +11,6 @@ import json
 import os
 import re
 from io import TextIOWrapper
-from typing import Self
 
 
 class SysdiagnoseConfig:
@@ -352,8 +351,8 @@ class Event():
         })
         return output
 
-    @staticmethod
-    def from_dict(data: dict) -> Self:
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Event':
         """
         Populates the Event object from a dictionary.
 
@@ -371,7 +370,7 @@ class Event():
 
         message = data.get('message', '')
         module = data.get('module', '')
-        event = Event(datetime=datetime, message=message, module=module)
+        event = cls(datetime=datetime, message=message, module=module)
         event.timestamp_desc = data.get('timestamp_desc', '')
         event.data = data.get('data', {})
         # event.extra = # LATER also load the other fields that exist
