@@ -26,7 +26,7 @@ class AppsAnalyser(BaseAnalyserInterface):
         apps = {}
         json_data = AccessibilityTccParser(self.config, self.case_id).get_result()
         for entry in json_data:
-            apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
+            apps[entry['data']['client']] = {'found': ['accessibility-tcc'], 'services': [entry['data']['service']]}
 
         json_data = BrctlParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
@@ -55,7 +55,8 @@ class AppsAnalyser(BaseAnalyserInterface):
         re_bundle_id_pattern = r'(([a-zA-Z0-9-_]+\.)+[a-zA-Z0-9-_]+)'
         # list files in here
         json_entries = LogarchiveParser(self.config, self.case_id).get_result()
-        for entry in json_entries:
+        for events in json_entries:
+            entry = events['data']
             try:
                 # skip empty entries
                 if entry['subsystem'] == '':
