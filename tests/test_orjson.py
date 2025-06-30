@@ -35,7 +35,7 @@ class TestOrjson(SysdiagnoseTestCase):
         data = orjsonl.stream(fname)
         i = 0
         for item in data:
-            #self.assertIsInstance(item, dict)
+            # self.assertIsInstance(item, dict)
             i += 1
 
         # print(f'Loaded {i} items')
@@ -47,7 +47,7 @@ class TestOrjson(SysdiagnoseTestCase):
         i = 0
         for item in data:
             e = Event.from_dict(item)
-            #self.assertIsInstance(e, Event)
+            # self.assertIsInstance(e, Event)
             i += 1
 
         # print(f'Loaded {i} items')
@@ -72,7 +72,7 @@ class TestOrjson(SysdiagnoseTestCase):
         with open(fname, 'r', encoding='utf-8') as f:
             for line in f:
                 item = orjson.loads(line)
-                #self.assertIsInstance(item, dict)
+                # self.assertIsInstance(item, dict)
                 i += 1
 
         # print(f'Loaded {i} items')
@@ -101,7 +101,6 @@ class TestOrjson(SysdiagnoseTestCase):
                     e = Event.from_dict(item)
                     f_out.write(orjson.dumps(e.to_dict()))
                     i += 1
-
 
     # def load_plist_dict(self):
     #     fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
