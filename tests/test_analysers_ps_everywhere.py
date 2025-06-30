@@ -17,10 +17,8 @@ class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
 
             result = a.get_result()
             for item in result:
-                self.assertTrue('process' in item)
-                self.assertTrue('timestamp' in item)
-                self.assertTrue('datetime' in item)
-                self.assertTrue('source' in item)
+                self.assert_has_required_fields_jsonl(item)
+                self.assertTrue('source' in item['data'])
 
 
 if __name__ == '__main__':
