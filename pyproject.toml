@@ -35,6 +35,7 @@ dependencies = [
   "python-magic==0.4.27",
   "jinja2==3.1.6",
   "matplotlib==3.10.1",
+  "orjson==3.10.18"
 ]
 
 
