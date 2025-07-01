@@ -4,7 +4,7 @@
 # Author: Emiliern Le Jamtel
 
 import re
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
@@ -15,7 +15,7 @@ class AppsAnalyser(BaseAnalyserInterface):
     description = 'Get list of Apps installed on the device'
     format = 'json'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     # this code is quite slow, but that's due to logarchive.jsonl being slow to parse

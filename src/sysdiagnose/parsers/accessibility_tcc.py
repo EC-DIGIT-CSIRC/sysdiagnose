@@ -6,7 +6,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.apollo import Apollo
 
 
@@ -14,7 +14,7 @@ class AccessibilityTccParser(BaseParserInterface):
     description = 'Parsing Accessibility TCC logs'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

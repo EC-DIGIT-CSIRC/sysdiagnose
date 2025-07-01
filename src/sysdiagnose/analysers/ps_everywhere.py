@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Generator, Set, Optional
 from sysdiagnose.parsers import ps
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger, Event
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
@@ -27,7 +27,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     description = "List all processes we can find a bit everywhere."
     format = "jsonl"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
         self.all_ps: Set[str] = set()
 

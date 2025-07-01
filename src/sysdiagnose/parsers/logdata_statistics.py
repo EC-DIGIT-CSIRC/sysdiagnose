@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class LogDataStatisticsParser(BaseParserInterface):
@@ -23,7 +23,7 @@ class LogDataStatisticsParser(BaseParserInterface):
     description = 'Parsing logdata.statistics.jsonl files'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

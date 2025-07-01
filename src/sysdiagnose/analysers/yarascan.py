@@ -3,7 +3,7 @@ import os
 import glob
 import threading
 import queue
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 
 
 # These are the commonly used external variables that can be used in the YARA rules
@@ -20,7 +20,7 @@ class YaraAnalyser(BaseAnalyserInterface):
     description = "Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)"
     format = "json"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
         self.yara_rules_path = os.getenv('SYSDIAGNOSE_YARA_RULES_PATH', './yara')
 

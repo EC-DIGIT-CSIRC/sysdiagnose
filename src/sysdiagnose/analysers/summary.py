@@ -1,5 +1,5 @@
 from sysdiagnose.analysers import plist
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from sysdiagnose.parsers.transparency_json import TransparencyJsonParser
@@ -12,7 +12,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
     description = "Gives some summary info from the device"
     format = 'md'  # by default json
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def execute(self):

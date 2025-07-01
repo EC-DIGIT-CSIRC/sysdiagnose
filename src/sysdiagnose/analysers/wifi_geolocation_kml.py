@@ -4,7 +4,7 @@
 # Author: Aaron Kaplan <aaron@lo-res.org>
 
 import xml.etree.ElementTree as ET
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 
 
@@ -12,7 +12,7 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
     description = "Generate KML file for wifi geolocations"
     format = "kml"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_result(self, force: bool = False):

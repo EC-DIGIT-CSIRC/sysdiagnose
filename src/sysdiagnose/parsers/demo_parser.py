@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime
 
 
@@ -9,7 +9,7 @@ class DemoParser(BaseParserInterface):
     description = "Demo parsers"
     format = "jsonl"  # by default json, use jsonl for event-based data
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
