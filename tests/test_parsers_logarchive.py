@@ -23,7 +23,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             with open(p.output_file, 'r') as f:
                 line = f.readline()
                 item = json.loads(line)
-                self.assertTrue('subsystem' in item)
+                self.assertTrue('subsystem' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
 
     def test_convert_native_time_to_unifiedlog(self):
