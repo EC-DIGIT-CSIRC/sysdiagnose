@@ -7,7 +7,7 @@
 #
 from collections.abc import Generator
 from datetime import datetime, timezone
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 import glob
 import json
 import os
@@ -307,15 +307,23 @@ class LogarchiveParser(BaseParserInterface):
         '''
             Convert the entry to unifiedlog format
         '''
-        entry['timestamp_desc'] = 'logarchive'
-        entry['saf_module'] = 'logarchive'
+
+        timestamp_desc = 'logarchive'
+        module = 'logarchive'
 
         # already in the Mandiant unifiedlog format
         if 'event_type' in entry:
             timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
             entry['datetime'] = timestamp.isoformat(timespec='microseconds')
             entry['timestamp'] = timestamp.timestamp()
-            return entry
+            event = Event(
+                datetime=timestamp,
+                message=entry.get('message', ''),
+                module=module,
+                timestamp_desc=timestamp_desc,
+                data=entry
+            )
+            return event.to_dict()
         '''
         jq '. |= keys' logarchive-native.json > native_keys.txt
         sort native_keys.txt | uniq -c | sort -n > native_keys_sort_unique.txt
@@ -324,7 +332,7 @@ class LogarchiveParser(BaseParserInterface):
         mapper = {
             # our own fields
             'timestamp_desc': 'timestamp_desc',
-            'saf_module': 'saf_module',
+            'module': 'module',
             # logarchive fields
             'creatorActivityID': 'activity_id',
             'messageType': 'log_type',
@@ -351,25 +359,28 @@ class LogarchiveParser(BaseParserInterface):
             # 'traceID': '',  # not present in the Mandiant format
             'userID': 'euid'
         }
+        # convert time
+        timestamp = datetime.fromisoformat(entry['timestamp'])
+        event = Event(
+            datetime=timestamp,
+            message=entry.get('eventMessage', ''),
+            module=module,
+            timestamp_desc=timestamp_desc
+        )
+        entry.pop('eventMessage')
+        entry.pop('timestamp')
 
-        new_entry = {}
         for key, value in entry.items():
             if key in mapper:
                 new_key = mapper[key]
                 if 'uuid' in new_key:  # remove - in UUID
-                    new_entry[new_key] = value.replace('-', '')
+                    event.data[new_key] = value.replace('-', '')
                 else:
-                    new_entry[new_key] = value
+                    event.data[new_key] = value
             else:
                 # keep the non-matching entries
-                new_entry[key] = value
-        # convert time
-        timestamp = datetime.fromisoformat(new_entry['time'])
-        new_entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-        new_entry['timestamp'] = timestamp.timestamp()
-        new_entry['time'] = new_entry['timestamp'] * 1000000000
-
-        return new_entry
+                event.data[key] = value
+        return event.to_dict()
 
     def convert_native_time_to_unifiedlog_format(time: str) -> int:
         timestamp = datetime.fromisoformat(time)

@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 
+from datetime import datetime
 from typing import Generator, Set, Optional
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.parsers import ps
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
@@ -25,7 +27,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     description = "List all processes we can find a bit everywhere."
     format = "jsonl"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
         self.all_ps: Set[str] = set()
 
@@ -174,14 +176,15 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'ps.txt'
         try:
             for p in PsParser(self.config, self.case_id).get_result():
-                ps_event = {
-                    'process': self._strip_flags(p['command']),
-                    'timestamp': p['timestamp'],
-                    'datetime': p['datetime'],
-                    'source': entity_type
-                }
-                if self.add_if_full_command_is_not_in_set(ps_event['process']):
-                    yield ps_event
+                ps_event = Event(
+                    datetime=datetime.fromisoformat(p['datetime']),
+                    message= self._strip_flags(p['data']['command']),
+                    timestamp_desc=p['timestamp_desc'],
+                    module=self.module_name,
+                    data={'source': entity_type}
+                )
+                if self.add_if_full_command_is_not_in_set(ps_event.message):
+                    yield ps_event.to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type} file. {e}")
 
@@ -194,14 +197,15 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'psthread.txt'
         try:
             for p in PsThreadParser(self.config, self.case_id).get_result():
-                ps_event = {
-                    'process': self._strip_flags(p['command']),
-                    'timestamp': p['timestamp'],
-                    'datetime': p['datetime'],
-                    'source': entity_type
-                }
-                if self.add_if_full_command_is_not_in_set(ps_event['process']):
-                    yield ps_event
+                ps_event = Event(
+                    datetime=datetime.fromisoformat(p['datetime']),
+                    message=self._strip_flags(p['data']['command']),
+                    timestamp_desc=p['timestamp_desc'],
+                    module=self.module_name,
+                    data={'source': entity_type}
+                )
+                if self.add_if_full_command_is_not_in_set(ps_event.message):
+                    yield ps_event.to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type} file. {e}")
 
@@ -213,29 +217,32 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = 'spindump-nosymbols.txt'
         try:
-            for p in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+            for event in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+                p = event['data']
                 if 'process' not in p:
                     continue
                 process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
 
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name)):
-                    yield {
-                        'process': self._strip_flags(process_name),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                    yield Event(
+                        datetime=datetime.fromisoformat(event['datetime']),
+                        message=self._strip_flags(process_name),
+                        timestamp_desc=event['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
 
                 for t in p['threads']:
                     try:
                         thread_name = f"{self._strip_flags(process_name)}::{t['thread_name']}"
                         if self.add_if_full_command_is_not_in_set(thread_name):
-                            yield {
-                                'process': thread_name,
-                                'timestamp': p['timestamp'],
-                                'datetime': p['datetime'],
-                                'source': entity_type
-                            }
+                            yield Event(
+                                datetime=datetime.fromisoformat(event['datetime']),
+                                message=self._strip_flags(thread_name),
+                                timestamp_desc=event['timestamp_desc'],
+                                module=self.module_name,
+                                data={'source': entity_type}
+                            ).to_dict()
                     except KeyError:
                         pass
         except Exception as e:
@@ -250,13 +257,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'shutdown.logs'
         try:
             for p in ShutdownLogsParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['command'])):
-                    yield {
-                        'process': self._strip_flags(p['command']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['command'])):
+                    yield Event(
+                        datetime=datetime.fromisoformat(p['datetime']),
+                        message=self._strip_flags(p['data']['command']),
+                        timestamp_desc=p['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
@@ -270,37 +278,39 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogarchiveParser(self.config, self.case_id).get_result():
                 # First check if we can extract a binary from the message
-                if 'message' in p:
-                    extracted_process = self.message_extract_binary(p['process'], p['message'])
-                    if extracted_process:
-                        # Handle the case where extracted_process is a list of paths
-                        if isinstance(extracted_process, list):
-                            for proc_path in extracted_process:
-                                if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path)):
-                                    yield {
-                                        'process': self._strip_flags(proc_path),
-                                        'timestamp': p['timestamp'],
-                                        'datetime': p['datetime'],
-                                        'source': entity_type
-                                    }
-                        else:
-                            # Handle the case where it's a single string
-                            if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process)):
-                                yield {
-                                    'process': self._strip_flags(extracted_process),
-                                    'timestamp': p['timestamp'],
-                                    'datetime': p['datetime'],
-                                    'source': entity_type
-                                }
+                extracted_process = self.message_extract_binary(p['data']['process'], p['message'])
+                if extracted_process:
+                    # Handle the case where extracted_process is a list of paths
+                    if isinstance(extracted_process, list):
+                        for proc_path in extracted_process:
+                            if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path)):
+                                yield Event(
+                                    datetime.fromisoformat(p['datetime']),
+                                    message=self._strip_flags(proc_path),
+                                    timestamp_desc=p['timestamp_desc'],
+                                    module=self.module_name,
+                                    data={'source': entity_type}
+                                ).to_dict()
+                    else:
+                        # Handle the case where it's a single string
+                        if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process)):
+                            yield Event(
+                                datetime=datetime.fromisoformat(p['datetime']),
+                                message=self._strip_flags(extracted_process),
+                                timestamp_desc=p['timestamp_desc'],
+                                module=self.module_name,
+                                data={'source': entity_type}
+                            ).to_dict()
 
                 # Process the original process name
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process'])):
+                    yield Event(
+                        datetime=datetime.fromisoformat(p['datetime']),
+                        message=self._strip_flags(p['data']['process']),
+                        timestamp_desc=p['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
@@ -314,12 +324,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in UUID2PathParser(self.config, self.case_id).get_result().values():
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(p)):
-                    yield {
-                        'process': self._strip_flags(p),
-                        'timestamp': None,
-                        'datetime': None,
-                        'source': entity_type
-                    }
+                    # FIXME: what timestamp to use here?
+                    yield Event(
+                        datetime=self.sysdiagnose_creation_datetime,
+                        message=self._strip_flags(p),
+                        timestamp_desc="Process path from UUID existing at sysdiagnose creation time",
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
@@ -332,27 +344,29 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'taskinfo.txt'
         try:
             for p in TaskinfoParser(self.config, self.case_id).get_result():
-                if 'name' not in p:
+                if 'name' not in p['data']:
                     continue
 
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['name'])):
-                    yield {
-                        'process': self._strip_flags(p['name']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['name'])):
+                    yield Event(
+                        datetime=datetime.fromisoformat(p['datetime']),
+                        message=self._strip_flags(p['data']['name']),
+                        timestamp_desc=p['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
 
-                for t in p['threads']:
+                for t in p['data']['threads']:
                     try:
-                        thread_name = f"{self._strip_flags(p['name'])}::{t['thread name']}"
+                        thread_name = f"{self._strip_flags(p['data']['name'])}::{t['thread name']}"
                         if self.add_if_full_path_is_not_in_set(thread_name):
-                            yield {
-                                'process': thread_name,
-                                'timestamp': p['timestamp'],
-                                'datetime': p['datetime'],
-                                'source': entity_type
-                            }
+                            yield Event(
+                                datetime.fromisoformat(p['datetime']),
+                                message=thread_name,
+                                timestamp_desc=p['timestamp_desc'],
+                                module=self.module_name,
+                                data={'source': entity_type}
+                            ).to_dict()
                     except KeyError:
                         pass
         except Exception as e:
@@ -370,12 +384,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json['Local device']['Services']:
                     if self.add_if_full_path_is_not_in_set(self._strip_flags(p)):
-                        yield {
-                            'process': self._strip_flags(p),
-                            'timestamp': None,
-                            'datetime': None,
-                            'source': entity_type
-                        }
+                        # FIXME: what timestamp to use here?
+                        yield Event(
+                            datetime=self.sysdiagnose_creation_datetime,
+                            message=self._strip_flags(p),
+                            timestamp_desc="Existing service at sysdiagnose creation time",
+                            module=self.module_name,
+                            data={'source': entity_type}
+                        ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
@@ -388,13 +404,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'logdata.statistics.jsonl'
         try:
             for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process'])):
+                    yield Event(
+                        datetime=datetime.fromisoformat(p['datetime']),
+                        message=self._strip_flags(p['data']['process']),
+                        timestamp_desc=p['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
@@ -408,13 +425,15 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         try:
             for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['process'])):
-                    yield {
-                        'process': self._strip_flags(p['process']),
-                        'timestamp': p['timestamp'],
-                        'datetime': p['datetime'],
-                        'source': entity_type
-                    }
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['process'])):
+                    yield Event(
+                        datetime=datetime.fromisoformat(p['datetime']),
+                        message=self._strip_flags(p['data']['process']),
+                        timestamp_desc=p['timestamp_desc'],
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    ).to_dict()
+
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 

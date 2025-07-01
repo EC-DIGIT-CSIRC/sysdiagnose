@@ -6,7 +6,7 @@ from sysdiagnose import Sysdiagnose
 
 class SysdiagnoseTestCase(unittest.TestCase):
 
-    required_fields_jsonl = ['message', 'datetime', 'timestamp_desc', 'saf_module']
+    required_fields_jsonl = ['message', 'datetime', 'timestamp_desc', 'module']
 
     @classmethod
     def setUpClass(cls):

@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class LogDataStatisticsParser(BaseParserInterface):
@@ -23,7 +23,7 @@ class LogDataStatisticsParser(BaseParserInterface):
     description = 'Parsing logdata.statistics.jsonl files'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -74,24 +74,25 @@ class LogDataStatisticsParser(BaseParserInterface):
                         logger.error(f'Error parsing JSON in file {path}: {e}')
                         continue
 
-                    timestamp = record.get('unixTime')
-                    if timestamp is None:
+                    try:
+                        timestamp = datetime.fromtimestamp(record.get('unixTime'), tz=timezone.utc)
+                    except Exception:
                         logger.warning(f'No unixTime found in record in file {path}')
                         continue
-                    dt = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat(timespec='microseconds')
 
                     # Iterate over each process in processList and create an output record
                     for proc in record.get('processList', []):
-                        entry = {
-                            'process': proc['process'],
-                            'file': record['file'],
-                            'timestamp_desc': f"Logd {record['type']}",
-                            'timestamp': timestamp,
-                            'datetime': dt,
-                            'saf_module': self.module_name,
-                            'message': f"Logd {record['type']} while {proc['process']} is running"
-                        }
-                        output.append(entry)
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"Logd {record['type']} while {proc['process']} is running",
+                            module=self.module_name,
+                            timestamp_desc=f"Logd {record['type']}",
+                            data={
+                                'process': proc['process'],
+                                'file': record['file']
+                            }
+                        )
+                        output.append(event.to_dict())
         except Exception as err:
             logger.error(f'Error parsing file {path}: {err}')
 

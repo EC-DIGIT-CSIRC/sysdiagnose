@@ -4,7 +4,7 @@
 
 import pandas as pd
 from tabulate import tabulate
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.taskinfo import TaskinfoParser
@@ -15,27 +15,27 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
     description = "Makes a matrix comparing ps, psthread, taskinfo"
     format = "txt"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def execute(self):
         all_pids = set()
 
         ps_json = PsParser(self.config, self.case_id).get_result()
-        ps_dict = {int(p['pid']): p for p in ps_json}
+        ps_dict = {int(p['data']['pid']): p['data'] for p in ps_json}
         all_pids.update(ps_dict.keys())
 
         psthread_json = PsThreadParser(self.config, self.case_id).get_result()
-        psthread_dict = {int(p['pid']): p for p in psthread_json}
+        psthread_dict = {int(p['data']['pid']): p['data'] for p in psthread_json}
         all_pids.update(psthread_dict.keys())
 
         taskinfo_json = TaskinfoParser(self.config, self.case_id).get_result()
         taskinfo_dict = {}
         for p in taskinfo_json:
-            if 'pid' not in p:
+            if 'pid' not in p['data']:
                 continue
-            taskinfo_dict[int(p['pid'])] = {
-                'pid': p['pid']
+            taskinfo_dict[int(p['data']['pid'])] = {
+                'pid': p['data']['pid']
             }
         all_pids.update(taskinfo_dict.keys())
 
@@ -44,12 +44,12 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
         spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
         spindumpnosymbols_dict = {}
         for p in spindumpnosymbols_json:
-            if 'process' not in p:
+            if 'process' not in p['data']:
                 continue
-            spindumpnosymbols_dict[int(p['pid'])] = {
-                'pid': p['pid'],
-                'ppid': p.get('ppid', ''),
-                'command': p.get('path', ''),
+            spindumpnosymbols_dict[int(p['data']['pid'])] = {
+                'pid': p['data']['pid'],
+                'ppid': p['data'].get('ppid', ''),
+                'command': p['data'].get('path', ''),
             }
 
         matrix = {}

@@ -63,6 +63,7 @@ import os
 import configparser
 import re
 from datetime import datetime, timezone
+from sysdiagnose.utils.base import Event
 import glob
 import logging
 
@@ -163,13 +164,15 @@ class Apollo():
                 try:
                     timestamp = datetime.fromisoformat(item[key_timestamp])
                     timestamp = timestamp.replace(tzinfo=timezone.utc)
-                    item['timestamp'] = timestamp.timestamp()
-                    item['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    item['timestamp_desc'] = module_query['activity']
                     item['apollo_module'] = module_query['name']
-                    item['saf_module'] = self.saf_module
-                    item['message'] = module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k])
-                    results.append(item)
+                    event = Event(
+                        datetime=timestamp,
+                        message=module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k]),
+                        module=self.saf_module,
+                        timestamp_desc=module_query['activity'],
+                        data=item
+                    )
+                    results.append(event.to_dict())
                 except TypeError:
                     # problem with timestamp parsing
                     self.logger.warning(f"WARNING: Problem with timestamp parsing for table {db_fname}, row {list(row)}",

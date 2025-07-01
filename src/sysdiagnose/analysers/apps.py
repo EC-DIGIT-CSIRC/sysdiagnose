@@ -4,7 +4,7 @@
 # Author: Emiliern Le Jamtel
 
 import re
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
@@ -15,7 +15,7 @@ class AppsAnalyser(BaseAnalyserInterface):
     description = 'Get list of Apps installed on the device'
     format = 'json'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     # this code is quite slow, but that's due to logarchive.jsonl being slow to parse
@@ -26,7 +26,7 @@ class AppsAnalyser(BaseAnalyserInterface):
         apps = {}
         json_data = AccessibilityTccParser(self.config, self.case_id).get_result()
         for entry in json_data:
-            apps[entry['client']] = {'found': ['accessibility-tcc'], 'services': [entry['service']]}
+            apps[entry['data']['client']] = {'found': ['accessibility-tcc'], 'services': [entry['data']['service']]}
 
         json_data = BrctlParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
@@ -55,7 +55,8 @@ class AppsAnalyser(BaseAnalyserInterface):
         re_bundle_id_pattern = r'(([a-zA-Z0-9-_]+\.)+[a-zA-Z0-9-_]+)'
         # list files in here
         json_entries = LogarchiveParser(self.config, self.case_id).get_result()
-        for entry in json_entries:
+        for events in json_entries:
+            entry = events['data']
             try:
                 # skip empty entries
                 if entry['subsystem'] == '':

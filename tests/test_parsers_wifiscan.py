@@ -18,12 +18,12 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 0)
-            self.assertTrue('total' in result[0])
+            self.assertTrue('total' in result[0]['data'])
 
             for item in result:
-                if 'total' in item:
+                if 'total' in item['data']:
                     continue
-                self.assertTrue('ssid' in item)
+                self.assertTrue('ssid' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
 
     def test_parse_summary(self):

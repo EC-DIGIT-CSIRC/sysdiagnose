@@ -3,14 +3,14 @@
 # For Python3
 # DEMO - Skeleton
 
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 
 
 class DemoAnalyser(BaseAnalyserInterface):
     description = "Do something useful (DEMO)"
     # format = "json"  # by default json
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def execute(self):
