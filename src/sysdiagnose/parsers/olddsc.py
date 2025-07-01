@@ -8,7 +8,7 @@
 import glob
 import os
 from sysdiagnose.utils.misc import load_plist_file_as_json
-from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class OldDscParser(BaseParserInterface):
@@ -17,7 +17,7 @@ class OldDscParser(BaseParserInterface):
 
     json_pretty = False
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> dict:

@@ -31,7 +31,7 @@ class TestAnalysers(SysdiagnoseTestCase):
 
             self.assertIsNotNone(obj_instance, f'Analyser {name} is missing a class definition inheriting BaseAnalyserInterface.')
             # ensure the module_filename is correct, and not from a parent class
-            self.assertEqual(obj_instance.module_name, name, f'Analyser {name} has incorrect module_filename. Did you add the following?\n    def __init__(self, config: dict, case_id: str):\n        super().__init__(__file__, config, case_id)')
+            self.assertEqual(obj_instance.module_name, name, f'Analyser {name} has incorrect module_filename. Did you add the following?\n    def __init__(self, config: SysdiagnoseConfig, case_id: str):\n        super().__init__(__file__, config, case_id)')
 
             # check for required functions and variables
             for required_function in required_functions:

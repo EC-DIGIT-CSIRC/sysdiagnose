@@ -2,7 +2,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
 from sysdiagnose.utils import misc
 from datetime import datetime, timezone
 import re
@@ -12,7 +12,7 @@ class MobileBackupParser(BaseParserInterface):
     description = "Parsing mobilebackup plist file"
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

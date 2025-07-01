@@ -8,7 +8,7 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.utils.misc import snake_case
 
 
@@ -16,7 +16,7 @@ class PsThreadParser(BaseParserInterface):
     description = "Parsing ps_thread.txt file"
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
@@ -19,7 +19,7 @@ class ShutdownLogsParser(BaseParserInterface):
     description = 'Parsing shutdown.log file'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

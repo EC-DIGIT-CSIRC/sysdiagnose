@@ -10,7 +10,7 @@ import glob
 import os
 
 from sysdiagnose.utils import tabbasedhierarchy
-from sysdiagnose.utils.base import BaseParserInterface, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
 from datetime import timedelta
 
 
@@ -18,7 +18,7 @@ class TaskinfoParser(BaseParserInterface):
     description = "Parsing taskinfo txt file"
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

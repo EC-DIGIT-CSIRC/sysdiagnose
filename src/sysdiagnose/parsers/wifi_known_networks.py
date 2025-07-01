@@ -9,14 +9,14 @@
 import os
 import glob
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 # FIXME convert to timeline - warning: format changes from one iOS version to another
 class WifiKnownNetworksParser(BaseParserInterface):
     description = "Parsing Known Wifi Networks plist file"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
