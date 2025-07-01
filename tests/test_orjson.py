@@ -5,33 +5,36 @@ import orjson
 import orjsonl
 import timeit
 import json
+from pathlib import Path
 
 
 class TestOrjson(SysdiagnoseTestCase):
 
     def test_orjson(self):
-        print("")
-        # print("load_orjsonl_dict: ", end=" ")
-        # print(timeit.timeit("self.load_orjsonl_dict()", globals=locals(), number=3))
-        # print("load_orjsonl_dataclass: ", end=" ")
-        # print(timeit.timeit("self.load_orjsonl_dataclass()", globals=locals(), number=3))
-        print("load_save_dumps_orjson_dict: ", end=" ")
-        print(timeit.timeit("self.load_save_dumps_orjson_dict()", globals=locals(), number=3))
-        print("load_save_dumpstodict_orjson_dict: ", end=" ")
-        print(timeit.timeit("self.load_save_dumpstodict_orjson_dict()", globals=locals(), number=3))
-        # Uncomment the following lines if you want to test without datetime
+        for case in self.sd.cases():
+            fname = Path(self.sd.config.get_case_parsed_data_folder(case_id=case)) / 'logarchive.jsonl'
 
-        # print("load_orjsonl_dataclass_nodatetime: ", end=" ")
-        # print(timeit.timeit("self.load_orjsonl_dataclass_nodatetime()", globals=locals(), number=3))
-        # print("load_orjson_dict: ", end=" ")
-        # print(timeit.timeit("self.load_orjson_dict()", globals=locals(), number=3))
-        # print("load_plist_dict: ", end=" ")
-        # print(timeit.timeit("self.load_plist_dict()", globals=locals(), number=3))
-        # print("load_plist_dataclass: ", end=" ")
-        # print(timeit.timeit("self.load_plist_dataclass()", globals=locals(), number=3))
+            print(f"Benchmarking {fname}...")
+            # print("load_orjsonl_dict: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_orjsonl_dict(fname)", number=3))
+            # print("load_orjsonl_dataclass: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_orjsonl_dataclass(fname)", number=3))
+            print("load_save_dumps_orjson_dict: ", end=" ")
+            print(timeit.timeit(lambda: self.load_save_dumps_orjson_dict(fname), number=3))
+            print("load_save_dumpstodict_orjson_dict: ", end=" ")
+            print(timeit.timeit(lambda: self.load_save_dumpstodict_orjson_dict(fname), number=3))
+            # Uncomment the following lines if you want to test without datetime
 
-    def load_orjsonl_dict(self):
-        fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
+            # print("load_orjsonl_dataclass_nodatetime: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_orjsonl_dataclass_nodatetime(fname)", number=3))
+            # print("load_orjson_dict: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_orjson_dict(fname)", number=3))
+            # print("load_plist_dict: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_plist_dict(fname)", number=3))
+            # print("load_plist_dataclass: ", end=" ")
+            # print(timeit.timeit(lambda: self.load_plist_dataclass(fname)", number=3))
+
+    def load_orjsonl_dict(self, fname: Path):
         data = orjsonl.stream(fname)
         i = 0
         for item in data:
@@ -41,8 +44,7 @@ class TestOrjson(SysdiagnoseTestCase):
         # print(f'Loaded {i} items')
         self.assertGreater(i, 0)
 
-    def load_orjsonl_dataclass(self):
-        fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
+    def load_orjsonl_dataclass(self, fname: Path):
         data = orjsonl.stream(fname)
         i = 0
         for item in data:
@@ -53,8 +55,7 @@ class TestOrjson(SysdiagnoseTestCase):
         # print(f'Loaded {i} items')
         self.assertGreater(i, 0)
 
-    # def load_orjsonl_dataclass_nodatetime(self):
-    #     fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
+    # def load_orjsonl_dataclass_nodatetime(self, fname: Path):
     #     data = orjsonl.stream(fname)
     #     i = 0
     #     for item in data:
@@ -65,9 +66,7 @@ class TestOrjson(SysdiagnoseTestCase):
     #     # print(f'Loaded {i} items')
     #     self.assertGreater(i, 0)
 
-    def load_orjson_dict(self):
-        fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    def load_orjson_dict(self, fname: Path):
         i = 0
         with open(fname, 'r', encoding='utf-8') as f:
             for line in f:
@@ -78,9 +77,7 @@ class TestOrjson(SysdiagnoseTestCase):
         # print(f'Loaded {i} items')
         self.assertGreater(i, 0)
 
-    def load_save_dumps_orjson_dict(self):
-        fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    def load_save_dumps_orjson_dict(self, fname: Path):
         i = 0
         with open(fname, 'r', encoding='utf-8') as f_in:
             with open('/tmp/logarchive.jsonl', 'wb') as f_out:
@@ -90,9 +87,7 @@ class TestOrjson(SysdiagnoseTestCase):
                     f_out.write(orjson.dumps(e))
                     i += 1
 
-    def load_save_dumpstodict_orjson_dict(self):
-        fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    def load_save_dumpstodict_orjson_dict(self, fname: Path):
         i = 0
         with open(fname, 'r', encoding='utf-8') as f_in:
             with open('/tmp/logarchive.jsonl', 'wb') as f_out:
@@ -102,9 +97,7 @@ class TestOrjson(SysdiagnoseTestCase):
                     f_out.write(orjson.dumps(e.to_dict()))
                     i += 1
 
-    # def load_plist_dict(self):
-    #     fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    # def load_plist_dict(self, fname: Path):
     #     i = 0
     #     with open(fname, 'r', encoding='utf-8') as f:
     #         for line in f:
@@ -115,9 +108,7 @@ class TestOrjson(SysdiagnoseTestCase):
     #     # print(f'Loaded {i} items')
     #     self.assertGreater(i, 0)
 
-    # def load_plist_dataclass(self):
-    #     fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    # def load_plist_dataclass(self, fname: Path):
     #     i = 0
     #     with open(fname, 'r', encoding='utf-8') as f:
     #         for line in f:
@@ -128,9 +119,7 @@ class TestOrjson(SysdiagnoseTestCase):
     #     # print(f'Loaded {i} items')
     #     self.assertGreater(i, 0)
 
-    # def load_plist_dataclass_nodatetime(self):
-    #     fname = '/home/chri/Projects/sysdiagnose/sysdiagnose/cases/david_202305/parsed_data/logarchive.jsonl'
-
+    # def load_plist_dataclass_nodatetime(self, fname: Path):
     #     i = 0
     #     with open(fname, 'r', encoding='utf-8') as f:
     #         for line in f:
