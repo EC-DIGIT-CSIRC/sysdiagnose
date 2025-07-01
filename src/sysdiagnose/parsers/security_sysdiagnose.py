@@ -110,7 +110,8 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
 
         return json_result['events']
 
-    def process_buffer(buffer: list, section: str, json_result: dict, module_name: str):
+    @staticmethod
+    def process_buffer(buffer: list, section: str | None, json_result: dict, module_name: str):
         """
         process the buffer for the given section
         """
@@ -122,7 +123,8 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         else:
             logger.error(f"ERROR: Function {function_name} not found in the SecuritySysdiagnoseParser class.")
 
-    def process_buffer_circle(buffer: list, json_result: dict, module_name: str = None):
+    @staticmethod
+    def process_buffer_circle(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the circle section
 
@@ -133,7 +135,8 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         """
         json_result['meta']['circle'] = buffer
 
-    def process_buffer_engine_state(buffer: list, json_result: dict, module_name: str = None):
+    @staticmethod
+    def process_buffer_engine_state(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the engine section
         """
@@ -142,6 +145,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         json_result['meta']['engine'] = buffer
         pass
 
+    @staticmethod
     def process_buffer_keychain_state(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the homekit section
@@ -220,13 +224,15 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             else:
                 json_result['meta'][section].append(row)
 
-    def process_buffer_analytics(buffer: list, json_result: dict, module_name: str = None):
+    @staticmethod
+    def process_buffer_analytics(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the analytics section
         """
         # nothing to do here
         pass
 
+    @staticmethod
     def process_buffer_client(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the client section
@@ -281,7 +287,8 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             json_result['events'].append(event.to_dict())
             i += 1
 
-    def process_buffer_keys_and_values(buffer: list, json_result: dict, module_name: str = None):
+    @staticmethod
+    def process_buffer_keys_and_values(buffer: list, json_result: dict, module_name: str):
         """
         process the buffer for the values section
         """

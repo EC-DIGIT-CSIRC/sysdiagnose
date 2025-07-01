@@ -32,6 +32,7 @@ class NetworkExtensionParser(BaseParserInterface):
             return NetworkExtensionParser.parse_file(log_file)
         return {'error': ['No com.apple.networkextension.plist file present']}
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         try:
             return misc.load_plist_file_as_json(path)

@@ -34,6 +34,7 @@ class NetworkExtensionCacheParser(BaseParserInterface):
         else:
             return {'error': 'No com.apple.networkextension.cache.plist file present'}
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         try:
             return misc.load_plist_file_as_json(path)
