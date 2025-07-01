@@ -118,7 +118,7 @@ class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
             }
         }
         result = {'meta': {}}
-        SecuritySysdiagnoseParser.process_buffer_keys_and_values(input, result)
+        SecuritySysdiagnoseParser.process_buffer_keys_and_values(input, result, 'TestModule')
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
