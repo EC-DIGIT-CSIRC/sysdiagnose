@@ -3,7 +3,6 @@
 # For Python3
 # Script to parse ps.txt to ease parsing
 # Author: david@autopsit.org
-# Improvements: https://linkedin.com/in/josemiguelsoriano
 #
 
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
@@ -39,46 +38,46 @@ class PsParser(BaseParserInterface):
         result = []
         pid_to_process = {}  # Dictionary to store PID -> process_name mapping
 
-		# Field name mapping for standardization
-		field_mapping = {
-			'f': 'process_flags_bitmask',
-			'ni': 'nice_priority_adjustment',
-			'pri': 'kernel_priority',
-			'prsna': 'process_resident_address',
-			'rss': 'physical_memory_kb',
-			'vsz': 'virtual_memory_kb',
-			'tt': 'controlling_terminal',
-			'wchan': 'kernel_wait_channel',
-			'uid': 'owner_user_id',
-			'cpu': 'cpu_usage_percent',
-			'mem': 'memory_usage_percent'
-		}
+        # Field name mapping for standardization
+        field_mapping = {
+            'f': 'process_flags_bitmask',
+            'ni': 'nice_priority_adjustment',
+            'pri': 'kernel_priority',
+            'prsna': 'process_resident_address',
+            'rss': 'physical_memory_kb',
+            'vsz': 'virtual_memory_kb',
+            'tt': 'controlling_terminal',
+            'wchan': 'kernel_wait_channel',
+            'uid': 'owner_user_id',
+            'cpu': 'cpu_usage_percent',
+            'mem': 'memory_usage_percent'
+        }
 
-		# Heuristic mapping for common process titles to likely executable paths
-		# Based on typical Unix/Linux/macOS installations
-		process_title_mapping = {
-			'sshd': '/usr/sbin/sshd',
-			'httpd': '/usr/sbin/httpd',
-			'nginx': '/usr/sbin/nginx',
-			'postgres': '/usr/bin/postgres',
-			'mysqld': '/usr/sbin/mysqld',
-			'apache2': '/usr/sbin/apache2',
-			'sendmail': '/usr/sbin/sendmail',
-			'postfix': '/usr/sbin/postfix',
-			'dovecot': '/usr/sbin/dovecot',
-			'vsftpd': '/usr/sbin/vsftpd',
-			'proftpd': '/usr/sbin/proftpd',
-			'bind9': '/usr/sbin/named',
-			'named': '/usr/sbin/named',
-			'dhcpd': '/usr/sbin/dhcpd',
-			'ntpd': '/usr/sbin/ntpd',
-			'chronyd': '/usr/sbin/chronyd',
-			'systemd': '/sbin/systemd',
-			'kthreadd': '[kthreadd]',
-			'migration': '[migration]',
-			'rcu_gp': '[rcu_gp]',
-			'watchdog': '[watchdog]'
-		}
+        # Heuristic mapping for common process titles to likely executable paths
+        # Based on typical Unix/Linux/macOS installations
+        process_title_mapping = {
+            'sshd': '/usr/sbin/sshd',
+            'httpd': '/usr/sbin/httpd',
+            'nginx': '/usr/sbin/nginx',
+            'postgres': '/usr/bin/postgres',
+            'mysqld': '/usr/sbin/mysqld',
+            'apache2': '/usr/sbin/apache2',
+            'sendmail': '/usr/sbin/sendmail',
+            'postfix': '/usr/sbin/postfix',
+            'dovecot': '/usr/sbin/dovecot',
+            'vsftpd': '/usr/sbin/vsftpd',
+            'proftpd': '/usr/sbin/proftpd',
+            'bind9': '/usr/sbin/named',
+            'named': '/usr/sbin/named',
+            'dhcpd': '/usr/sbin/dhcpd',
+            'ntpd': '/usr/sbin/ntpd',
+            'chronyd': '/usr/sbin/chronyd',
+            'systemd': '/sbin/systemd',
+            'kthreadd': '[kthreadd]',
+            'migration': '[migration]',
+            'rcu_gp': '[rcu_gp]',
+            'watchdog': '[watchdog]'
+        }
 
         try:
             with open(filename, "r") as f:
