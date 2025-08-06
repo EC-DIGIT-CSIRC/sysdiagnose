@@ -39,51 +39,51 @@ class PsParser(BaseParserInterface):
         result = []
         pid_to_process = {}  # Dictionary to store PID -> process_name mapping
 
+		# Field name mapping for standardization
+		field_mapping = {
+			'f': 'process_flags_bitmask',
+			'ni': 'nice_priority_adjustment',
+			'pri': 'kernel_priority',
+			'prsna': 'process_resident_address',
+			'rss': 'physical_memory_kb',
+			'vsz': 'virtual_memory_kb',
+			'tt': 'controlling_terminal',
+			'wchan': 'kernel_wait_channel',
+			'uid': 'owner_user_id',
+			'cpu': 'cpu_usage_percent',
+			'mem': 'memory_usage_percent'
+		}
+
+		# Heuristic mapping for common process titles to likely executable paths
+		# Based on typical Unix/Linux/macOS installations
+		process_title_mapping = {
+			'sshd': '/usr/sbin/sshd',
+			'httpd': '/usr/sbin/httpd',
+			'nginx': '/usr/sbin/nginx',
+			'postgres': '/usr/bin/postgres',
+			'mysqld': '/usr/sbin/mysqld',
+			'apache2': '/usr/sbin/apache2',
+			'sendmail': '/usr/sbin/sendmail',
+			'postfix': '/usr/sbin/postfix',
+			'dovecot': '/usr/sbin/dovecot',
+			'vsftpd': '/usr/sbin/vsftpd',
+			'proftpd': '/usr/sbin/proftpd',
+			'bind9': '/usr/sbin/named',
+			'named': '/usr/sbin/named',
+			'dhcpd': '/usr/sbin/dhcpd',
+			'ntpd': '/usr/sbin/ntpd',
+			'chronyd': '/usr/sbin/chronyd',
+			'systemd': '/sbin/systemd',
+			'kthreadd': '[kthreadd]',
+			'migration': '[migration]',
+			'rcu_gp': '[rcu_gp]',
+			'watchdog': '[watchdog]'
+		}
+
         try:
             with open(filename, "r") as f:
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
-
-                # Field name mapping for standardization
-                field_mapping = {
-                    'f': 'process_flags_bitmask',
-                    'ni': 'nice_priority_adjustment',
-                    'pri': 'kernel_priority',
-                    'prsna': 'process_resident_address',
-                    'rss': 'physical_memory_kb',
-                    'vsz': 'virtual_memory_kb',
-                    'tt': 'controlling_terminal',
-                    'wchan': 'kernel_wait_channel',
-                    'uid': 'owner_user_id',
-                    '%cpu': 'cpu_usage_percent',
-                    '%mem': 'memory_usage_percent'
-                }
-
-                # Heuristic mapping for common process titles to likely executable paths
-                # Based on typical Unix/Linux/macOS installations
-                process_title_mapping = {
-                    'sshd': '/usr/sbin/sshd',
-                    'httpd': '/usr/sbin/httpd',
-                    'nginx': '/usr/sbin/nginx',
-                    'postgres': '/usr/bin/postgres',
-                    'mysqld': '/usr/sbin/mysqld',
-                    'apache2': '/usr/sbin/apache2',
-                    'sendmail': '/usr/sbin/sendmail',
-                    'postfix': '/usr/sbin/postfix',
-                    'dovecot': '/usr/sbin/dovecot',
-                    'vsftpd': '/usr/sbin/vsftpd',
-                    'proftpd': '/usr/sbin/proftpd',
-                    'bind9': '/usr/sbin/named',
-                    'named': '/usr/sbin/named',
-                    'dhcpd': '/usr/sbin/dhcpd',
-                    'ntpd': '/usr/sbin/ntpd',
-                    'chronyd': '/usr/sbin/chronyd',
-                    'systemd': '/sbin/systemd',
-                    'kthreadd': '[kthreadd]',
-                    'migration': '[migration]',
-                    'rcu_gp': '[rcu_gp]',
-                    'watchdog': '[watchdog]'
-                }
 
                 # First pass: parse all entries and build PID mapping
                 entries = []
@@ -141,7 +141,7 @@ class PsParser(BaseParserInterface):
 
                     entries.append(entry)
 
-                # Second pass: resolve parent processes and add metadata
+                # Second pass: resolve parent processes and create Event objects
                 for entry in entries:
                     # Resolve parent process name from PPID
                     ppid = entry.get('ppid')
@@ -150,15 +150,19 @@ class PsParser(BaseParserInterface):
                     else:
                         entry['parent_process'] = None
 
-                    # Add original metadata
+                    # Create Event object with enhanced data
                     timestamp = self.sysdiagnose_creation_datetime
-                    entry['timestamp_desc'] = 'sysdiagnose creation'
-                    entry['timestamp'] = timestamp.timestamp()
-                    entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    entry['message'] = f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}"
-                    entry['saf_module'] = self.module_name
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}",
+                        module=self.module_name,
+                        timestamp_desc='process running',
+                        data=entry
+                    )
+                    event.data['timestamp_info'] = 'sysdiagnose creation time'
+                    result.append(event.to_dict())
 
-                return entries
+                return result
 
         except Exception:
             logger.exception("Could not parse ps.txt")
