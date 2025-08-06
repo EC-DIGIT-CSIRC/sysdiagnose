@@ -86,7 +86,7 @@ class PsParser(BaseParserInterface):
                         # Split on first space - everything before is process_name, rest is args
                         command_parts = command.split(' ', 1)
                         process_name = command_parts[0]
-                        
+
                         # Handle special case: process names ending with ':' (like sshd:, httpd:)
                         # This indicates a process title, not the actual executable name
                         if process_name.endswith(':') and len(process_name) > 1:
