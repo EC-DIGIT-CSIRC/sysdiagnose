@@ -38,7 +38,7 @@ class PsParser(BaseParserInterface):
     def parse_file(self, filename):
         result = []
         pid_to_process = {}  # Dictionary to store PID -> process_name mapping
-        
+
         try:
             with open(filename, "r") as f:
                 header = re.split(r"\s+", f.readline().strip())
@@ -47,7 +47,7 @@ class PsParser(BaseParserInterface):
                 # Field name mapping for standardization
                 field_mapping = {
                     'f': 'process_flags_bitmask',
-                    'ni': 'nice_priority_adjustment', 
+                    'ni': 'nice_priority_adjustment',
                     'pri': 'kernel_priority',
                     'prsna': 'process_resident_address',
                     'rss': 'physical_memory_kb',
@@ -64,13 +64,13 @@ class PsParser(BaseParserInterface):
                 for line in f:
                     patterns = line.strip().split(None, header_length - 1)
                     entry = {}
-                    
+
                     # Process each column
                     for col in range(header_length):
                         original_col_name = snake_case(header[col])
                         # Use standardized name if available, otherwise use original
                         col_name = field_mapping.get(original_col_name, original_col_name)
-                        
+
                         try:
                             entry[col_name] = int(patterns[col])
                             continue
@@ -91,7 +91,7 @@ class PsParser(BaseParserInterface):
                         # This indicates a process title, not the actual executable name
                         if process_name.endswith(':') and len(process_name) > 1:
                             base_name = process_name[:-1]  # Remove the trailing colon
-                            
+
                             # Heuristic mapping for common process titles to likely executable paths
                             # Based on typical Unix/Linux/macOS installations
                             process_title_mapping = {
@@ -117,16 +117,16 @@ class PsParser(BaseParserInterface):
                                 'rcu_gp': '[rcu_gp]',
                                 'watchdog': '[watchdog]'
                             }
-                            
+
                             # Try to resolve the process name, fallback to cleaned name
                             resolved_name = process_title_mapping.get(base_name, base_name)
                             entry['process_name'] = resolved_name
                             entry['process_name_resolved'] = resolved_name != base_name  # Flag indicating heuristic resolution
-                            
+
                         else:
                             entry['process_name'] = process_name
                             entry['process_name_resolved'] = False
-                        
+
                         entry['process_args'] = command_parts[1] if len(command_parts) > 1 else None
                     else:
                         entry['process_name'] = None
@@ -159,7 +159,7 @@ class PsParser(BaseParserInterface):
                     entry['saf_module'] = self.module_name
 
                 return entries
-                
+
         except Exception:
             logger.exception("Could not parse ps.txt")
             return []
