@@ -6,7 +6,7 @@
 # Improvements: https://linkedin.com/in/josemiguelsoriano
 #
 
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.utils.misc import snake_case
 import glob
 import os
@@ -17,7 +17,7 @@ class PsParser(BaseParserInterface):
     description = "Parsing ps.txt file"
     format = "jsonl"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -31,7 +31,6 @@ class PsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        # LATER not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
         for log_file in self.get_log_files():
             return self.parse_file(log_file)
         return {'error': ['No ps.txt file present']}
