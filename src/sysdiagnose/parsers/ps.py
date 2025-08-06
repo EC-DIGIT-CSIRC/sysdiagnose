@@ -59,6 +59,32 @@ class PsParser(BaseParserInterface):
                     '%mem': 'memory_usage_percent'
                 }
 
+                # Heuristic mapping for common process titles to likely executable paths
+                # Based on typical Unix/Linux/macOS installations
+                process_title_mapping = {
+                    'sshd': '/usr/sbin/sshd',
+                    'httpd': '/usr/sbin/httpd',
+                    'nginx': '/usr/sbin/nginx',
+                    'postgres': '/usr/bin/postgres',
+                    'mysqld': '/usr/sbin/mysqld',
+                    'apache2': '/usr/sbin/apache2',
+                    'sendmail': '/usr/sbin/sendmail',
+                    'postfix': '/usr/sbin/postfix',
+                    'dovecot': '/usr/sbin/dovecot',
+                    'vsftpd': '/usr/sbin/vsftpd',
+                    'proftpd': '/usr/sbin/proftpd',
+                    'bind9': '/usr/sbin/named',
+                    'named': '/usr/sbin/named',
+                    'dhcpd': '/usr/sbin/dhcpd',
+                    'ntpd': '/usr/sbin/ntpd',
+                    'chronyd': '/usr/sbin/chronyd',
+                    'systemd': '/sbin/systemd',
+                    'kthreadd': '[kthreadd]',
+                    'migration': '[migration]',
+                    'rcu_gp': '[rcu_gp]',
+                    'watchdog': '[watchdog]'
+                }
+
                 # First pass: parse all entries and build PID mapping
                 entries = []
                 for line in f:
@@ -91,32 +117,6 @@ class PsParser(BaseParserInterface):
                         # This indicates a process title, not the actual executable name
                         if process_name.endswith(':') and len(process_name) > 1:
                             base_name = process_name[:-1]  # Remove the trailing colon
-
-                            # Heuristic mapping for common process titles to likely executable paths
-                            # Based on typical Unix/Linux/macOS installations
-                            process_title_mapping = {
-                                'sshd': '/usr/sbin/sshd',
-                                'httpd': '/usr/sbin/httpd',
-                                'nginx': '/usr/sbin/nginx',
-                                'postgres': '/usr/bin/postgres',
-                                'mysqld': '/usr/sbin/mysqld',
-                                'apache2': '/usr/sbin/apache2',
-                                'sendmail': '/usr/sbin/sendmail',
-                                'postfix': '/usr/sbin/postfix',
-                                'dovecot': '/usr/sbin/dovecot',
-                                'vsftpd': '/usr/sbin/vsftpd',
-                                'proftpd': '/usr/sbin/proftpd',
-                                'bind9': '/usr/sbin/named',
-                                'named': '/usr/sbin/named',
-                                'dhcpd': '/usr/sbin/dhcpd',
-                                'ntpd': '/usr/sbin/ntpd',
-                                'chronyd': '/usr/sbin/chronyd',
-                                'systemd': '/sbin/systemd',
-                                'kthreadd': '[kthreadd]',
-                                'migration': '[migration]',
-                                'rcu_gp': '[rcu_gp]',
-                                'watchdog': '[watchdog]'
-                            }
 
                             # Try to resolve the process name, fallback to cleaned name
                             resolved_name = process_title_mapping.get(base_name, base_name)
