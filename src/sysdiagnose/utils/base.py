@@ -24,6 +24,11 @@ class SysdiagnoseConfig:
         self.cases_file = os.path.join(self.cases_root_folder, "cases.json")
         os.makedirs(self.cases_root_folder, exist_ok=True)
 
+    def get_case_root_folder(self, case_id: str) -> str:
+        case_root_folder = os.path.join(self.cases_root_folder, case_id)
+        os.makedirs(case_root_folder, exist_ok=True)
+        return case_root_folder
+
     def get_case_data_folder(self, case_id: str) -> str:
         case_data_folder = os.path.join(self.cases_root_folder, case_id, 'data')
         os.makedirs(case_data_folder, exist_ok=True)
