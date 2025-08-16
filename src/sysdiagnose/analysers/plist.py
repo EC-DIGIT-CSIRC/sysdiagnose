@@ -1,7 +1,8 @@
+from datetime import datetime
 import json
 from typing import Generator
 
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.parsers.plists import PlistParser
 
 
@@ -14,7 +15,7 @@ class PListAnalyzer(BaseAnalyserInterface):
     description = 'Gathers information from a plist file.'
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
         self.parser = PlistParser(config, case_id)
 
@@ -53,14 +54,15 @@ class PListAnalyzer(BaseAnalyserInterface):
                 for line in f:
                     entry = json.loads(line)
 
-                    mdm_entry: dict[str, str] = {
-                        'ManagingProfileIdentifier': entry.get('ManagingProfileIdentifier'),
-                        'AccessRights': entry.get('AccessRights'),
-                        'LastPollingAttempt': entry.get('LastPollingAttempt'),
-                        'source': entity_type,
-                    }
+                    mdm_entry = Event(
+                        datetime=datetime.fromisoformat(entry.get('LastPollingAttempt')),
+                        message= f"MDM Profile: {entry.get('ManagingProfileIdentifier')} with access rights {entry.get('AccessRights')}",
+                        timestamp_desc='Last Polling Attempt',
+                        module=self.module_name,
+                        data={'source': entity_type}
+                    )
 
-                    yield mdm_entry
+                    yield mdm_entry.to_dict()
 
         except FileNotFoundError as e:
             logger.warning(f'{entity_type} not found for {self.case_id}. {e}')

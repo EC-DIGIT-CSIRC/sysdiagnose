@@ -6,7 +6,7 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime
 
 
@@ -14,7 +14,7 @@ class WifiSecurityParser(BaseParserInterface):
     description = "Parsing WiFi Security logs"
     format = "jsonl"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -65,21 +65,26 @@ class WifiSecurityParser(BaseParserInterface):
                     elif element:
                         # created
                         timestamp = datetime.strptime(element['cdat'], "%Y-%m-%d %H:%M:%S %z")
-                        element['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        element['timestamp'] = timestamp.timestamp()
-                        element['timestamp_desc'] = 'wifi AP config created'
-                        element['saf_module'] = 'wifi_security'
-                        element['message'] = f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}"
-                        entries.append(element)
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",
+                            module='wifi_security',
+                            timestamp_desc='wifi AP config created',
+                            data=element
+                        )
+                        entries.append(event.to_dict())
 
                         if element['mdat'] != element['cdat']:
                             # also add the modified date
-                            element_mdat = element.copy()
-                            timestamp = datetime.strptime(element_mdat['mdat'], "%Y-%m-%d %H:%M:%S %z")
-                            element_mdat['datetime'] = timestamp.isoformat(timespec='microseconds')
-                            element_mdat['timestamp'] = timestamp.timestamp()
-                            element_mdat['timestamp_desc'] = 'wifi AP config modified'
-                            entries.append(element_mdat)
+                            timestamp = datetime.strptime(element['mdat'], "%Y-%m-%d %H:%M:%S %z")
+                            event_mdat = Event(
+                                datetime=timestamp,
+                                message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",
+                                module='wifi_security',
+                                timestamp_desc='wifi AP config modified',
+                                data=element
+                            )
+                            entries.append(event_mdat.to_dict())
 
                         # reset element for next entry
                         element = {}

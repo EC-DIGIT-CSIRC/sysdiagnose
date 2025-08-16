@@ -6,6 +6,7 @@ import json
 import os
 import re
 import tarfile
+from datetime import timezone
 from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.logger import set_json_logging, logger
 from io import TextIOWrapper
@@ -21,8 +22,9 @@ class Sysdiagnose:
         # pseudo singleton, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
+            lock = FileLock(self.config.cases_file)
             try:
-                FileLock.acquire_lock(self.config.cases_file)
+                lock.acquire()
                 with open(self.config.cases_file, 'r+') as f:
                     self._cases = json.load(f)
                     if 'cases' in self._cases:  # conversion is needed
@@ -40,7 +42,7 @@ class Sysdiagnose:
                 with open(self.config.cases_file, 'w') as f:
                     json.dump(self._cases, f, indent=4)
             finally:
-                FileLock.release_lock(self.config.cases_file)
+                lock.release()
 
         return self._cases
 
@@ -64,8 +66,9 @@ class Sysdiagnose:
                 raise Exception(f"Error while deleting case folder: {str(e)}")
 
         # delete case from the cases
+        lock = FileLock(self.config.cases_file)
         try:
-            FileLock.acquire_lock(self.config.cases_file)
+            lock.acquire()
             with open(self.config.cases_file, 'r+') as f:
                 self._cases = json.load(f)           # load latest version
                 self._cases.pop(case_id, None)       # delete case
@@ -73,9 +76,9 @@ class Sysdiagnose:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
                 f.truncate()                         # truncate the rest of the file ensuring no old data is left
         finally:
-            FileLock.release_lock(self.config.cases_file)
+            lock.release()
 
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False) -> int:
+    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
         '''
         Extracts the sysdiagnose file and creates a new case.
 
@@ -83,6 +86,7 @@ class Sysdiagnose:
             sysdiagnose_file (str): Path to the sysdiagnose file.
             force (bool): Whether to force the creation of a new case.
             case_id (str): The case ID to use, or False to generate a new incremental one.
+            tags (list): List of tags to add to the case.
 
         Returns:
             int: The case ID of the new case.
@@ -148,6 +152,9 @@ class Sysdiagnose:
                 'tags': []
             }
 
+        if tags:
+            case['tags'].extend(tags)
+
         # create case folder
         case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
         os.makedirs(case_data_folder, exist_ok=True)
@@ -156,8 +163,9 @@ class Sysdiagnose:
         self.extract_sysdiagnose_files(sysdiagnose_file, case_data_folder)
 
         # update case with new data
+        lock = FileLock(self.config.cases_file)
         try:
-            FileLock.acquire_lock(self.config.cases_file)
+            lock.acquire()
             with open(self.config.cases_file, 'r+') as f:
                 self._cases = json.load(f)           # load latest version
                 self._cases[case['case_id']] = case  # update own case
@@ -165,19 +173,20 @@ class Sysdiagnose:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
                 f.truncate()                         # truncate the rest of the file ensuring no old data is left
         finally:
-            FileLock.release_lock(self.config.cases_file)
+            lock.release()
 
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
 
     @staticmethod
-    def get_case_metadata(source_file: str) -> str:
+    def get_case_metadata(source_file: str) -> dict | None:
         """
-        Returns the sha256 hash of the sysdiagnose source file/folder.
-        The hash is calculated by concatenating the contents of the case metadata: udid, serial, ios version and date.
+        Returns the metadata related to the given sysdiagnose file/folder.
+        This includes serial number, unique device ID, iOS version, model, date of sysdiagnose creation,
+        and a case ID based on the serial number and date.
 
         :param source_file: Path to the sysdiagnose file/folder
-        :return: sha256 hash of the file/folder
+        :return: dictionary with metadata or None if the file is invalid
         """
         from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
         from sysdiagnose.parsers.sys import SystemVersionParser
@@ -232,7 +241,8 @@ class Sysdiagnose:
             return None
 
         # Time to obtain the metadata
-
+        # Turn the sysdiagnose date into UTC
+        sysdiagnose_date_utc = sysdiagnose_date.astimezone(timezone.utc)
         if remotectl_dumpstate_json and 'error' not in remotectl_dumpstate_json:
             if 'Local device' in remotectl_dumpstate_json:
                 try:
@@ -242,8 +252,8 @@ class Sysdiagnose:
                         'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
                         'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
                         'model': remotectl_dumpstate_json['Local device']['Properties']['ProductType'],
-                        'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                        'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                        'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
+                        'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
                         'source_file': source_file,
                         'source_sha256': ''
                     }
@@ -263,8 +273,8 @@ class Sysdiagnose:
                 'unique_device_id': 'unknown',
                 'ios_version': sys_json['ProductVersion'],
                 'model': 'unknown',  # FIXME figure out a way to get the model from sysdiagnose
-                'date': sysdiagnose_date.isoformat(timespec='microseconds'),
-                'case_id': f"{serial_number}_{sysdiagnose_date.strftime('%Y%m%d_%H%M%S')}",
+                'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
+                'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
                 'source_file': source_file,
                 'source_sha256': ''
             }

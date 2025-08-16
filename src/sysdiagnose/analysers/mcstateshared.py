@@ -1,4 +1,4 @@
-from sysdiagnose.utils.base import BaseAnalyserInterface
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 from sysdiagnose.utils import misc
 import csv
@@ -9,7 +9,7 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
     description = "Exports MCState Shared Profile stub files to CSV for better analysis."
     format = "csv"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def execute(self):
@@ -19,11 +19,11 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
 
         for entry in mcstate_result:
             for key in ['SignerCerts', 'datetime', 'timestamp']:
-                entry.pop(key, None)
+                entry['data'].pop(key, None)
 
-            payload_contents = entry.pop('PayloadContent', None)
+            payload_contents = entry['data'].pop('PayloadContent', None)
 
-            entry_tpl = misc.flatten_dict(entry)
+            entry_tpl = misc.flatten_dict(entry['data'])
 
             for payload_content in payload_contents:
                 item = entry_tpl.copy()

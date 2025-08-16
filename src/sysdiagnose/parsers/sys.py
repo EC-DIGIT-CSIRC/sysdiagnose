@@ -9,14 +9,14 @@
 import os
 import glob
 import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class SystemVersionParser(BaseParserInterface):
     description = "Parsing SystemVersion plist file"
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -33,12 +33,14 @@ class SystemVersionParser(BaseParserInterface):
         try:
             entry = SystemVersionParser.parse_file(self.get_log_files()[0])
             timestamp = self.sysdiagnose_creation_datetime
-            entry['timestamp_desc'] = 'sysdiagnose creation'
-            entry['timestamp'] = timestamp.timestamp()
-            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-            entry['saf_module'] = self.module_name
-            entry['message'] = f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}"
-            return [entry]
+            event = Event(
+                datetime=timestamp,
+                message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
+                module=self.module_name,
+                timestamp_desc='sys at sysdiagnose creation',
+                data=entry
+            )
+            return [event.to_dict()]
         except IndexError:
             logger.warning('No SystemVersion.plist file present')
             return []

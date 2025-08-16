@@ -5,7 +5,7 @@
 # Author: david@autopsit.org
 #
 
-from sysdiagnose.utils.base import BaseParserInterface, logger
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.utils.misc import snake_case
 import glob
 import os
@@ -16,7 +16,7 @@ class PsParser(BaseParserInterface):
     description = "Parsing ps.txt file"
     format = "jsonl"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -30,7 +30,6 @@ class PsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        # LATER not really easy to conver to timebased jsonl, as the timestamp is complex to compute.
         for log_file in self.get_log_files():
             return self.parse_file(log_file)
         return {'error': ['No ps.txt file present']}
@@ -59,13 +58,15 @@ class PsParser(BaseParserInterface):
                             except ValueError:
                                 entry[col_name] = patterns[col]
                     timestamp = self.sysdiagnose_creation_datetime
-                    entry['timestamp_desc'] = 'sysdiagnose creation'
-                    entry['timestamp'] = timestamp.timestamp()
-                    entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-                    entry['message'] = f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}"
-                    entry['saf_module'] = self.module_name
-
-                    result.append(entry)
+                    event = Event(
+                        datetime=timestamp,
+                        message=f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}",
+                        module=self.module_name,
+                        timestamp_desc='process running',
+                        data=entry
+                    )
+                    event.data['timestamp_info'] = 'sysdiagnose creation time'
+                    result.append(event.to_dict())
                 return result
         except Exception:
             logger.exception("Could not parse ps.txt")

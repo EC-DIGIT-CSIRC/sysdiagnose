@@ -6,7 +6,7 @@
 import dateutil.parser
 import gpxpy
 import gpxpy.gpx
-from sysdiagnose.utils.base import BaseAnalyserInterface, logger
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 
 
@@ -14,7 +14,7 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
     description = "Generate GPS Exchange (GPX) of wifi geolocations"
     format = "gpx"
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_result(self, force: bool = False):

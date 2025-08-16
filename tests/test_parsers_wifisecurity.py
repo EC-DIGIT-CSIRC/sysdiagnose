@@ -18,10 +18,10 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('acct' in item)
-                self.assertTrue('agrp' in item)
-                self.assertTrue('cdat' in item)
-                self.assertTrue('mdat' in item)
+                self.assertTrue('acct' in item['data'])
+                self.assertTrue('agrp' in item['data'])
+                self.assertTrue('cdat' in item['data'])
+                self.assertTrue('mdat' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
 
 

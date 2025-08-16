@@ -8,8 +8,9 @@
 import re
 import glob
 import os
+
 from sysdiagnose.utils import tabbasedhierarchy
-from sysdiagnose.utils.base import BaseParserInterface
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
 from datetime import timedelta
 
 
@@ -17,7 +18,7 @@ class TaskinfoParser(BaseParserInterface):
     description = "Parsing taskinfo txt file"
     format = 'jsonl'
 
-    def __init__(self, config: dict, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -40,14 +41,14 @@ class TaskinfoParser(BaseParserInterface):
                 result = re.search(r'(num tasks: )(\d+)', lines[0])
                 if (result is not None):
                     numb_tasks = int(result.group(2))
-                    events.append({
-                        'timestamp': self.sysdiagnose_creation_datetime.timestamp(),
-                        'datetime': self.sysdiagnose_creation_datetime.isoformat(timespec='microseconds'),
-                        'tasks': numb_tasks,
-                        'message': f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
-                        'saf_module': self.module_name,
-                        'timestamp_desc': 'taskinfo'
-                    })
+                    event = Event(
+                        datetime=self.sysdiagnose_creation_datetime,
+                        message=f"{numb_tasks} tasks/programs running at sysdiagnose creation time.",
+                        module=self.module_name,
+                        timestamp_desc='taskinfo',
+                        data={'tasks': numb_tasks}
+                    )
+                    events.append(event.to_dict())
 
                 n = 1  # skip lines to right section
                 extracted_block = []
@@ -79,13 +80,15 @@ class TaskinfoParser(BaseParserInterface):
                         # compute start time: start time = sysdiagnose_creation_time minus process['run time']
                         seconds = int(process['run time'].split()[0])
                         timestamp = self.sysdiagnose_creation_datetime - timedelta(seconds=seconds)
-                        process['timestamp'] = timestamp.timestamp()
-                        process['datetime'] = timestamp.isoformat(timespec='microseconds')
-                        # process['datetime_description'] = "Process launched at the timestamp, calculated from sysdiagnose creation time minus process run time"
-                        process['timestamp_desc'] = 'process start time'
-                        process['saf_module'] = self.module_name
-                        process['message'] = f"{process['process']} started"
-                        events.append(process)
+
+                        event = Event(
+                            datetime=timestamp,
+                            message=f"{process['process']} started",
+                            module=self.module_name,
+                            timestamp_desc='process start time',
+                            data=process
+                        )
+                        events.append(event.to_dict())
                         extracted_block = []
                         n = n + 1  # add one more to n as we are skipping the empty line
                     else:
