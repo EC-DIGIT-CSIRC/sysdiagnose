@@ -181,7 +181,14 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             process['parent'] = process['parent'].split("[", 1)[0].strip()
         except KeyError:  # some don't have a parent
             pass
-        process['uid'] = 501
+        # Extract UID from parsed data if available, convert to int
+        if 'uid' in process and process['uid']:
+            try:
+                process['uid'] = int(process['uid'])
+            except (ValueError, TypeError):
+                process['uid'] = None
+        else:
+            process['uid'] = None
 
         return process
 
