@@ -73,3 +73,6 @@ venv/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local development and testing files
+.claude/
