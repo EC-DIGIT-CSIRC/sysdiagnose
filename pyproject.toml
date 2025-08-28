@@ -22,26 +22,26 @@ classifiers = [
 ]
 keywords = ["sysdiagnose", "analysis", "parsing", "iOS", "apple", "malware", "forensics"]
 dependencies = [
-  "docopt==0.6.2",
-  "graphviz==0.20.3",
-  "tabulate==0.9.0",
-  "python-dateutil==2.9.0.post0",
-  "gpxpy==1.6.2",
-  "pandas==2.2.3",
-  "numpy==2.2.5",
-  "nska-deserialize==1.5.1",
-  "yara-python==4.5.2",
-  "python-json-logger==3.3.0",
-  "python-magic==0.4.27",
-  "jinja2==3.1.6",
-  "matplotlib==3.10.1",
-  "orjsonl==1.0.0"
+  "docopt>=0.6.0,<1.0.0",
+  "graphviz>=0.20.0,<0.21.0",
+  "tabulate>=0.9.0,<0.10.0",
+  "python-dateutil>=2.9.0,<3.0.0",
+  "gpxpy>=1.6.0,<1.7.0",
+  "pandas>=2.2.0,<2.3.0",
+  "numpy>=2.2.0,<2.3.0",
+  "nska-deserialize>=1.5.0,<1.6.0",
+  "yara-python>=4.5.0,<4.6.0",
+  "python-json-logger>=3.3.0,<3.4.0",
+  "python-magic>=0.4.0,<0.5.0",
+  "jinja2>=3.1.0,<3.2.0",
+  "matplotlib>=3.10.0,<3.11.0",
+  "orjsonl>=1.0.0,<1.1.0",
 ]
 
 
 [project.optional-dependencies]
 dev = [
-  "ruff>=0.11.0",
+  "ruff>=0.11.0,<0.12.0",
 ]
 
 [project.urls]
