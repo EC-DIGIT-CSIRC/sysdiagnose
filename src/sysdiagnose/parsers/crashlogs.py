@@ -52,25 +52,36 @@ class CrashLogsParser(BaseParserInterface):
         seen = set()
         for file in files:
             logger.info(f"Processing file: {file}")
-            if file.endswith('crashes_and_spins.log'):
-                result.extend(self.parse_summary_file(file))
-            elif os.path.basename(file).startswith('.'):
+            if os.path.basename(file).startswith('.'):
                 pass
             elif file.endswith('.ips'):
                 try:
-                    ips = CrashLogsParser.parse_ips_file(file)
-                    ips['module'] = self.module_name
-                    ips_hash = f"{ips.get('timestamp', '')}-{ips.get('name', '')}"
+                    event = CrashLogsParser.parse_ips_file(file)
+                    event['module'] = self.module_name
+                    event_hash = f"{event.data.get('timestamp', '')[:-9]}-{event.data.get('name', '')}"
                     # skip duplicates
-                    if ips_hash in seen:
+                    if event_hash in seen:
                         continue
-                    seen.add(ips_hash)
-                    result.append(ips)
+                    seen.add(event_hash)
+                    result.append(event.to_dict())
                 except Exception:
                     logger.warning(f"Skipping file due to error {file}", exc_info=True)
+
+        # process crashes_and_spings.log at the end
+        for file in files:
+            logger.info(f"Processing file: {file}")
+            if file.endswith('crashes_and_spins.log'):
+                log_results = self.parse_summary_file(file)
+                for event in log_results:
+                    event_hash = f"{event.datetime.strftime('%Y-%m-%d %H:%M:%S')}-{event.data.get('name', '')}"
+                    if event_hash in seen:
+                        continue
+                    seen.add(event_hash)
+                    result.append(event.to_dict())
+
         return result
 
-    def parse_ips_file(path: str) -> dict:
+    def parse_ips_file(path: str) -> Event:
         # identify the type of file
         with open(path, 'r') as f:
             result = json.loads(f.readline())  # first line
@@ -109,7 +120,7 @@ class CrashLogsParser(BaseParserInterface):
                 data=result
             )
 
-            return event.to_dict()
+            return event
 
     def process_ips_lines(lines: list) -> dict:
         '''
@@ -220,7 +231,7 @@ class CrashLogsParser(BaseParserInterface):
 
         return result
 
-    def parse_summary_file(self, path: str) -> list[dict]:
+    def parse_summary_file(self, path: str) -> list[Event]:
         logger.info(f"Parsing summary file: {path}")
         result = []
         seen = set()  # to ensure unique entries
@@ -248,7 +259,7 @@ class CrashLogsParser(BaseParserInterface):
                 if event.data['path'] in seen:
                     continue
                 seen.add(event.data['path'])
-                result.append(event.to_dict())
+                result.append(event)
 
         return result
 
