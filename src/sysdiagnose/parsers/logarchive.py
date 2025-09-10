@@ -210,6 +210,9 @@ class LogarchiveParser(BaseParserInterface):
         except IndexError:
             logger.exception('Error: No system_logs.logarchive/ folder found in logs/ directory')
             return False
+        except FileNotFoundError:
+            logger.exception('Error: unifiedlogs command not found, please refer to the README for further instructions')
+            return False
 
     def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
         with open(output_file, 'w') as f_out:
