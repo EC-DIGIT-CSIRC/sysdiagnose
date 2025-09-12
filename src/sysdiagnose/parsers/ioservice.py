@@ -22,7 +22,7 @@ class IOServiceParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_file = "ioreg/IOServiceTestData.txt"
+        log_file = "ioreg/IOServiceTestData2.txt"
         return [os.path.join(self.case_data_subfolder, log_file)]
 
     def execute(self) -> list | dict:
@@ -35,7 +35,7 @@ class IOServiceParser(BaseParserInterface):
                 self.parse_file(log_file, data_tree)
                     
             except Exception:
-                logger.exception("Got an exception !")
+                logger.exception("IOService parsing crashed")
                 
         return data_tree
     
@@ -51,12 +51,10 @@ class IOServiceParser(BaseParserInterface):
             So we know that the data doesn't contain the node identifier ('+-o')
 
         """
-        print('===============================')
         with open(file, 'r') as f:
             self.open_file = f
             self.recursive_fun(data_tree)
             self.open_file = None
-        print('===============================')
 
     def get_line(self):
         self.rollback_addr = self.open_file.tell()
@@ -104,9 +102,33 @@ class IOServiceParser(BaseParserInterface):
         data_tree['Data'] = self.node_data_to_json(node_data)
         return res
     
+    def handle_anomalies(self, dictio, data, key):
+        """
+            some values overflow on the few next lines
+            this condition assumes there is no '=' in the exceeding data
+            (which was the case up to what I saw)
+
+            p.s. :  if you wonder why cond4 is necessary, it is only for 
+                    the last leaf, which has no '|' symbols. without cond4,
+                    these lines would be seen as anomalies
+        """
+        cond1 = not re.search('^\s*\|+', data)
+        cond2 = len(data.strip()) > 0
+        cond3 = data.strip() not in ('{', '}')
+        cond4 = '=' not in data
+
+        if cond1 and cond2 and cond3 and cond4:
+            dictio[key] += data.strip()
+            return True
+        return False
+    
     def node_data_to_json(self, data_array: list[str]) -> dict:
         res = {}
+        key = None
+
         for data in data_array:
+            self.handle_anomalies(res, data, key)
+
             # remove spaces and pipes at start
             clean_line = re.sub('^(\s|\|)*', '', data)
 
@@ -119,9 +141,10 @@ class IOServiceParser(BaseParserInterface):
             # remove first and last " (in case the key has more quotes inside)
             key = key.replace('"', '', 1)
             key = key[::-1].replace('"', '', 1)[::-1]
+            key = key.strip()
 
             self.check_key_uniqueness(res, key)
-            res[key.strip()] = value.strip()
+            res[key] = value.strip()
         
         return res
     
@@ -133,7 +156,6 @@ class IOServiceParser(BaseParserInterface):
         self.check_start_node()
 
         node_name = self.line.split("+-o")[1].strip()
-        print("Node : ", node_name)
         data_tree['Name'] = node_name
         data_tree['Children'] = []
         depth = self.line.index('o') # to identify the other nodes that have the same parent
