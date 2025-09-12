@@ -1,18 +1,22 @@
 #! /usr/bin/env python3
 
+import array
+from ctypes import Array
 import os
 import string
 from tokenize import String
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from datetime import datetime
+import re
 
 
-class DemoParser(BaseParserInterface):
-    description = "Demo parsers"
-    format = "json"  # by default json, use jsonl for event-based data
+class IOServiceParser(BaseParserInterface):
+    description = "IOService.txt file parser"
+    format = "json"
     rollback_addr = None
     line = None
     open_file = None
+    
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -22,36 +26,20 @@ class DemoParser(BaseParserInterface):
         return [os.path.join(self.case_data_subfolder, log_file)]
 
     def execute(self) -> list | dict:
-        '''
-        this is the function that will be called
-        '''
-        result = []
         log_files = self.get_log_files()
+        data_tree = {}
+
         for log_file in log_files:
-            entry = {}
             try:
-                timestamp = datetime.strptime('1980-01-01 12:34:56.001 +00:00', '%Y-%m-%d %H:%M:%S.%f %z')  # moment of interest
-                event = Event(
-                    datetime=timestamp,
-                    message=f"Demo event from {log_file}",  # String with an informative message of the event
-                    module=self.module_name,
-                    timestamp_desc='Demo timestamp',        # String explaining what type of timestamp it is for example file created
-                )
-
-                self.parse_file(log_file)
-
-                result.append(event.to_dict())
                 logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
-                logger.debug(f"Entry details {str(entry)}", extra={'entry': str(entry)})
-                if not entry:
-                    logger.warning("Empty entry.")
+                self.parse_file(log_file, data_tree)
                     
             except Exception:
                 logger.exception("Got an exception !")
                 
-        return result
+        return data_tree
     
-    def parse_file(self, file: string):
+    def parse_file(self, file: str, data_tree: dict):
         """           IOService file notes
 
             # Regex for +-o starting at start of file -> 1213 results
@@ -66,7 +54,7 @@ class DemoParser(BaseParserInterface):
         print('===============================')
         with open(file, 'r') as f:
             self.open_file = f
-            self.recursive_fun()
+            self.recursive_fun(data_tree)
             self.open_file = None
         print('===============================')
 
@@ -74,9 +62,9 @@ class DemoParser(BaseParserInterface):
         self.rollback_addr = self.open_file.tell()
         self.line = self.open_file.readline().replace('\n', '')
 
-    def recursive_call(self):
+    def recursive_call(self, data_tree: dict):
         self.open_file.seek(self.rollback_addr)
-        self.recursive_fun()
+        self.recursive_fun(data_tree)
 
     def check_start_node(self):
         if '+-o' not in self.line:
@@ -88,26 +76,56 @@ class DemoParser(BaseParserInterface):
             logger.error("+-o in two consecutive lines, not supposed to be possible")
             exit(1)
 
-    def iterate_children(self, depth):
+    def iterate_children(self, depth: int, data_tree_list: list[dict]):
         while self.line and (self.line[depth] == '|' or self.line[depth: depth+3] == '+-o'):
             if self.line[depth: depth+3] == '+-o':
-                self.recursive_call()
+                data_tree_list.append({})
+                self.recursive_call(data_tree_list[-1])
 
             else:
                 self.get_line()
 
-    def fetch_node_data(self):
+    def check_key_uniqueness(self, dictio, key):
+        if dictio.get(key):
+            logger.warning('Key is already in dictionary, data may be lost')
+
+    def fetch_node_data(self, data_tree):
+        node_data = [] # array of lines, to be transformed in json
+        res = True
+
         while '+-o' not in self.line:
-            if not self.line:
-                return False # end of file
+            if not self.line:   # end of file
+                res = False
+                break
             
-            node_data = [] # array of lines, to be transformed in json
             node_data.append(self.line)
             self.get_line()
 
-        return True
+        data_tree['Data'] = self.node_data_to_json(node_data)
+        return res
     
-    def recursive_fun(self):
+    def node_data_to_json(self, data_array: list[str]) -> dict:
+        res = {}
+        for data in data_array:
+            # remove spaces and pipes at start
+            clean_line = re.sub('^(\s|\|)*', '', data)
+
+            if '=' not in clean_line:
+                continue
+
+            # split at the first equal only
+            key, value = clean_line.split('=', 1)
+
+            # remove first and last " (in case the key has more quotes inside)
+            key = key.replace('"', '', 1)
+            key = key[::-1].replace('"', '', 1)[::-1]
+
+            self.check_key_uniqueness(res, key)
+            res[key.strip()] = value.strip()
+        
+        return res
+    
+    def recursive_fun(self, data_tree: dict):
         is_leaf = False
         self.get_line()
 
@@ -116,6 +134,8 @@ class DemoParser(BaseParserInterface):
 
         node_name = self.line.split("+-o")[1].strip()
         print("Node : ", node_name)
+        data_tree['Name'] = node_name
+        data_tree['Children'] = []
         depth = self.line.index('o') # to identify the other nodes that have the same parent
         self.get_line()
 
@@ -124,7 +144,7 @@ class DemoParser(BaseParserInterface):
             is_leaf = True
 
         # Fetch the data of the node
-        if not self.fetch_node_data():
+        if not self.fetch_node_data(data_tree):
             return  # EOF
 
         # stop if we're a leaf
@@ -135,12 +155,8 @@ class DemoParser(BaseParserInterface):
         # sanity check
         self.not_empty_node_check()
 
-        # going back one line to retrieve the node title line
-        self.recursive_call()
-        self.get_line()
-
         # Iterates over each child to call the current function
-        self.iterate_children(depth)
+        self.iterate_children(depth, data_tree['Children'])
         
         
 
