@@ -2,8 +2,8 @@
 
 import array
 from ctypes import Array
+from io import BufferedReader
 import os
-import string
 from tokenize import String
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from datetime import datetime
@@ -22,7 +22,7 @@ class IOServiceParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_file = "ioreg/IOServiceTestData2.txt"
+        log_file = "ioreg/IOService.txt"
         return [os.path.join(self.case_data_subfolder, log_file)]
 
     def execute(self) -> list | dict:
@@ -51,14 +51,41 @@ class IOServiceParser(BaseParserInterface):
             So we know that the data doesn't contain the node identifier ('+-o')
 
         """
-        with open(file, 'r') as f:
+        with open(file, 'rb') as f:
             self.open_file = f
             self.recursive_fun(data_tree)
             self.open_file = None
 
     def get_line(self):
         self.rollback_addr = self.open_file.tell()
-        self.line = self.open_file.readline().replace('\n', '')
+        self.line = self.safe_readline(self.open_file)
+        self.line = self.line.replace('\n', '')
+
+    def safe_readline(self, open_file: BufferedReader, replacement_char: str = '?'):
+        """
+        Simulates readline() in binary mode, replacing non-ASCII bytes.
+
+        This fixes an anomaly where a non-ascii (non-utf-8-) byte is present in the IOService.txt file
+        (line 10797 in the testdata)
+        """
+        buffer = ""
+
+        while True:
+            byte = open_file.read(1)
+
+            if not byte: # EOF
+                return buffer
+
+            if byte == b'\n':
+                return buffer
+            else:
+                # Check if ASCII (0–127), else replace
+                if byte[0] < 128:
+                    buffer += chr(byte[0])
+                else:
+                    buffer += replacement_char[0]
+                #buffer.append(byte[0] if ord(byte[0]) < 128 else replacement_byte[0])
+
 
     def recursive_call(self, data_tree: dict):
         self.open_file.seek(self.rollback_addr)
@@ -74,20 +101,11 @@ class IOServiceParser(BaseParserInterface):
             logger.error("+-o in two consecutive lines, not supposed to be possible")
             exit(1)
 
-    def iterate_children(self, depth: int, data_tree_list: list[dict]):
-        while self.line and (self.line[depth] == '|' or self.line[depth: depth+3] == '+-o'):
-            if self.line[depth: depth+3] == '+-o':
-                data_tree_list.append({})
-                self.recursive_call(data_tree_list[-1])
-
-            else:
-                self.get_line()
-
-    def check_key_uniqueness(self, dictio, key):
+    def check_key_uniqueness(self, dictio: dict, key: str):
         if dictio.get(key):
             logger.warning('Key is already in dictionary, data may be lost')
 
-    def fetch_node_data(self, data_tree):
+    def fetch_node_data(self, data_tree: dict) -> bool:
         node_data = [] # array of lines, to be transformed in json
         res = True
 
@@ -102,7 +120,7 @@ class IOServiceParser(BaseParserInterface):
         data_tree['Data'] = self.node_data_to_json(node_data)
         return res
     
-    def handle_anomalies(self, dictio, data, key):
+    def handle_anomalies(self, dictio: dict, data: str, key: str) -> bool:
         """
             some values overflow on the few next lines
             this condition assumes there is no '=' in the exceeding data
@@ -147,6 +165,15 @@ class IOServiceParser(BaseParserInterface):
             res[key] = value.strip()
         
         return res
+    
+    def iterate_children(self, depth: int, data_tree_list: list[dict]):
+        while self.line and (self.line[depth] == '|' or self.line[depth: depth+3] == '+-o'):
+            if self.line[depth: depth+3] == '+-o':
+                data_tree_list.append({})
+                self.recursive_call(data_tree_list[-1])
+
+            else:
+                self.get_line()
     
     def recursive_fun(self, data_tree: dict):
         is_leaf = False
