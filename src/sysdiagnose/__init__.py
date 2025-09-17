@@ -6,6 +6,7 @@ import json
 import os
 import re
 import tarfile
+from pathlib import Path
 from datetime import timezone
 from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.logger import set_json_logging, logger
@@ -211,14 +212,15 @@ class Sysdiagnose:
             try:
                 with tarfile.open(targz_file) as tf:
                     for member in tf.getmembers():
-                        if member.name.endswith('remotectl_dumpstate.txt'):
+                        member_path = Path(member.name)
+                        if member_path.name == 'remotectl_dumpstate.txt':
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
                             remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
-                        elif member.name.endswith('sysdiagnose.log'):
+                        elif member_path.name == 'sysdiagnose.log':
                             sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
                             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
-                        elif member.name.endswith('SystemVersion.plist'):
+                        elif member_path.name == 'SystemVersion.plist':
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
