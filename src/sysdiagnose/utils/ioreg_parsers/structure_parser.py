@@ -1,5 +1,5 @@
 from sysdiagnose.utils.base import logger
-from sysdiagnose.utils.ioreg_parsers.string_parser import IORegStringParser
+from sysdiagnose.utils.ioreg_parsers import string_parser
 import re
 
 class IORegStructParser:
@@ -9,7 +9,7 @@ class IORegStructParser:
     def __init__(self):
         pass
 
-    def get_dict(self, file_path):
+    def parse(self, file_path):
         data_tree = {}
 
         with open(file_path, 'r', errors='backslashreplace') as f:
@@ -39,7 +39,7 @@ class IORegStructParser:
 
     def check_key_uniqueness(self, dictio: dict, key: str):
         if dictio.get(key):
-            logger.warning('Key is already in dictionary, data may be lost')
+            logger.warning('Key is already in dictionary, data may be lost\n\tKey : ' + key)
 
     def fetch_node_data(self, data_tree: dict) -> bool:
         node_data = []  # array of lines, to be transformed in json
@@ -77,7 +77,7 @@ class IORegStructParser:
             logger.warning("Title doesnt respect the usual <class ... > format, to invesstigate")
 
         name = whole_title.split('<class', 1)[0].strip()
-        data = "".join(whole_title.split('<class', 1)[1:])[:-1].strip()
+        data = '<class ' + "".join(whole_title.split('<class', 1)[1:]).strip()
 
         return name, data
 
@@ -146,7 +146,7 @@ class IORegStructParser:
         self.check_start_node()
 
         additional_data = self.parse_title()[1]
-        additional_data = IORegStringParser().get_parsed(additional_data)
+        additional_data = string_parser.get_parsed(additional_data)
         self.dict_update(data_tree, additional_data)
 
         depth = self.line.index('o')  # to identify the other nodes that have the same parent
