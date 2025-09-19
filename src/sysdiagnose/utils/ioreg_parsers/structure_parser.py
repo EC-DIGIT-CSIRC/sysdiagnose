@@ -54,6 +54,7 @@ class IORegStructParser:
             self.get_line()
 
         data_dict = self.node_data_to_json(node_data)
+        # TODO parse each value
         self.dict_update(data_tree, data_dict)
 
         return res
@@ -146,7 +147,7 @@ class IORegStructParser:
         self.check_start_node()
 
         additional_data = self.parse_title()[1]
-        additional_data = string_parser.get_parsed(additional_data)
+        additional_data = string_parser.parse(additional_data)
         self.dict_update(data_tree, additional_data)
 
         depth = self.line.index('o')  # to identify the other nodes that have the same parent
