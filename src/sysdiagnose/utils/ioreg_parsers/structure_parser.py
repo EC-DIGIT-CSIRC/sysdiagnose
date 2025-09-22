@@ -54,18 +54,30 @@ class IORegStructParser:
             self.get_line()
 
         data_dict = self.node_data_to_json(node_data)
-        # TODO parse each value
+        # TODO test this
+        self.parse_values(data_dict)
         self.dict_update(data_tree, data_dict)
 
         return res
 
-    def dict_update(self, main_dict, data_dict):
-        data_dict_len = len(data_dict)
-        main_dict_len = len(main_dict)
-        main_dict.update(data_dict)
+    def parse_values(self, data_dict: dict):
+        for key in data_dict:
+            value = data_dict[key]
+            constructed = string_parser.parse(value)
+            if constructed:
+                data_dict[key] = constructed
 
-        if len(main_dict) != data_dict_len + main_dict_len:
-            logger.warning("One of the keys was already present in the json, data loss may occur")
+    def dict_update(self, main_dict, data_dict):
+        """ Redefining the dict.update function to handle key collisions """
+
+        for key in data_dict:
+            if main_dict.get(key):
+                if isinstance(main_dict[key], list):
+                    main_dict[key].append(data_dict[key])
+                else:
+                    main_dict[key] = [main_dict[key], data_dict[key]]
+            else:
+                main_dict[key] = data_dict[key]
 
     def parse_title(self):
         if "+-o" not in self.line:
@@ -81,6 +93,10 @@ class IORegStructParser:
         data = '<class ' + "".join(whole_title.split('<class', 1)[1:]).strip()
 
         return name, data
+
+    def warn_if_no_struct(self, data: str | dict | list):
+        if isinstance(data, str):
+            logger.warning("No struct found in a title, should always have one\n---> " + data)
 
     def handle_anomalies(self, dictio: dict, data: str, key: str) -> bool:
         """
@@ -132,12 +148,29 @@ class IORegStructParser:
         while self.line and (self.line[depth] == '|' or self.line[depth: depth + 3] == '+-o'):
             if self.line[depth: depth + 3] == '+-o':
                 name = self.parse_title()[0]
-                self.check_key_uniqueness(data_tree, name)
-                data_tree[name] = {}
-                self.recursive_call(data_tree[name])
+                new_child = self.setup_new_child(data_tree, name)
+                self.recursive_call(new_child)
 
             else:
                 self.get_line()
+
+    def setup_new_child(self, data_tree, key):
+        """ This function is dedicated to iterate_child, it handles the special cases
+            where a node name is already present for the same parent """
+
+        if data_tree.get(key):
+            if isinstance(data_tree[key], list):
+                # case already list of data nodes
+                data_tree[key].append({})
+            else:
+                # case currently single data node
+                data_tree[key] = [data_tree[key], {}]
+            return data_tree[key][-1]
+
+        else:
+            # case new key
+            data_tree[key] = {}
+            return data_tree[key]
 
     def recursive_fun(self, data_tree: dict):
         is_leaf = False
@@ -146,8 +179,11 @@ class IORegStructParser:
         # check if we're at the start of a node
         self.check_start_node()
 
-        additional_data = self.parse_title()[1]
-        additional_data = string_parser.parse(additional_data)
+        # try to get a struct out of the data
+        title_data = self.parse_title()[1]
+        additional_data = string_parser.parse(title_data) or title_data
+        self.warn_if_no_struct(additional_data)
+
         self.dict_update(data_tree, additional_data)
 
         depth = self.line.index('o')  # to identify the other nodes that have the same parent

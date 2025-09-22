@@ -32,14 +32,14 @@ class TestStringParser(SysdiagnoseTestCase):
     ]
 
     expected_detect = [
-        ('key val, k2 v2', sp.DataType.XML_LIKE),
+        ('key val, k2 v2', sp.DataType.XML_DICT),
         ('li1, li2, li3, li4', sp.DataType.LIST),
-        (' k1     v1  ,  k2 v2,   k3    v3      ,k4 v4    ', sp.DataType.XML_LIKE),
-        ('k11 v11', sp.DataType.XML_LIKE),
+        (' k1     v1  ,  k2 v2,   k3    v3      ,k4 v4    ', sp.DataType.XML_DICT),
+        ('k11 v11', sp.DataType.XML_DICT),
         ('    li 1, li   2   , li3', sp.DataType.LIST),
         ('li1 , li2 ,li3, li4 ', sp.DataType.LIST),
         ('li1 , li2 ,li3, li4 ', sp.DataType.LIST),
-        ('k11 v11,k22 v22', sp.DataType.XML_LIKE),
+        ('k11 v11,k22 v22', sp.DataType.XML_DICT),
         ('()', sp.DataType.STRING),
         ('(li111)', sp.DataType.STRING)
     ]
