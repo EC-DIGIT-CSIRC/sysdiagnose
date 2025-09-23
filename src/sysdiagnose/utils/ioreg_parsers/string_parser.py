@@ -29,7 +29,8 @@ class Detect:
 
             CURLY_DICT : like xml_dict but with {} instead of <>
 
-            LIST : data in parentheses with at least one comma
+            LIST : data in parentheses ('[]', '()') or d-quotes with at least one comma
+                   Note : most of basic d-quotes have been sinitized in prepare_data()
 
             STRING : parentheses that dont contain any comma.
                 example : I'm good at coding (not really)  <-- shouldn't be a list, simply text
@@ -62,7 +63,7 @@ class Detect:
             self.assign_best(hit, DataType.STRING)
 
         # find simple double-quotes ex : "hello world"
-        hit = re.search(r'("[^"]*")', input)
+        hit = re.search(r'"([^"]*)"', input)
         if hit and len(hit.group(0)) < self._best_len:
             self.assign_best(hit, DataType.STRING)
 
@@ -75,7 +76,7 @@ class Detect:
         self._best_content = hit.group(1)
         self._found = True
 
-    def find_smallest(self, regex: str, data: str):
+    def find_smallest(self, regex: str, data: str) -> re.Match:
         pattern = re.compile(regex)
         matches = list(pattern.finditer(data))
         if not matches:
@@ -128,7 +129,7 @@ def check_anomaly(s: str, tag: str):
         logger.warning("Warning : Anomaly: some data was right next to "
                        "the struct (without space), this data is thus lost\n---> " + structured)
 
-def is_redundent_syntax_regex(s: str):
+def is_redundent_syntax_regex(s: str) -> re.Match:
     """ If we have for example ([ ]) around a struct, we consider it useless
         Example : "[(<key value, k1 v1>)]" is the same as <key value, k1 v1> """
     return re.search(r'^[(){}\[\]<>""]+$', s)
@@ -219,7 +220,7 @@ def parse_dict(input_string: str, separator: str) -> dict:
     return res
 
 
-def parse_type(input_string: str, type: DataType):
+def parse_type(input_string: str, type: DataType) -> dict | list | str:
     match type:
         case DataType.XML_DICT:
             return parse_dict(input_string, ' ')
@@ -237,41 +238,7 @@ def parse_type(input_string: str, type: DataType):
             logger.error("Error : Type not found in parse_type(). (Note : "
                          "you probably forgot to add it to the match case)")
 
-
-def resolve_tag_dict(final_struct: dict, tag: str, constructed: dict | list):
-    for key in final_struct:
-        elem = final_struct[key]
-        #return resolve_tag_list_dict(final_struct, elem, key, tag, constructed)
-
-        if isinstance(elem, str) and tag in elem:
-            if isinstance(constructed, str):
-                final_struct[key] = final_struct[key].replace(tag, constructed)
-            else:
-                check_anomaly(elem, tag)
-                final_struct[key] = constructed
-            return True
-
-        elif isinstance(key, str) and tag in key:
-            if isinstance(constructed, str):
-                new_key = key.replace(tag, constructed)
-                value = final_struct[key]
-                del final_struct[key]
-                final_struct[new_key] = value
-            else:
-                logger.error("Error : Trying to use a struct as a key in a dict")
-                final_struct[key] = constructed
-            return True
-
-        elif isinstance(elem, list):
-            if resolve_tag_list(elem, tag, constructed):
-                return True
-
-        elif isinstance(elem, dict):
-            if resolve_tag_dict(elem, tag, constructed):
-                return True
-        return False
-
-def resolve_tag_list_dict(final_struct: list | dict, elem: list | dict | str, key: str, tag: str, constructed: dict | list | str):
+def resolve_tag_list_dict(final_struct: list | dict, elem: list | dict | str, key: str, tag: str, constructed: dict | list | str) -> bool:
     if isinstance(elem, str) and tag in elem:
         if isinstance(constructed, str):
             final_struct[key] = final_struct[key].replace(tag, constructed)
@@ -301,30 +268,38 @@ def resolve_tag_list_dict(final_struct: list | dict, elem: list | dict | str, ke
 
     return False
 
-
-def resolve_tag_list(final_struct: list, tag: str, constructed: dict | list):
-    for i in range(len(final_struct)):
-        elem = final_struct[i]
-        #return resolve_tag_list_dict(final_struct, elem, i, tag, constructed)
-
-        if isinstance(elem, str) and tag in elem:
-            if isinstance(constructed, str):
-                final_struct[i] = final_struct[i].replace(tag, constructed)
-            else:
-                check_anomaly(elem, tag)
-                final_struct[i] = constructed
+def resolve_tag_dict(final_struct: dict, tag: str, constructed: dict | list | str) -> bool:
+    for key in final_struct:
+        elem = final_struct[key]
+        if resolve_tag_list_dict(final_struct, elem, key, tag, constructed):
             return True
 
-        elif isinstance(elem, list):
-            if resolve_tag_list(elem, tag, constructed):
-                return True
+    return False
 
-        elif isinstance(elem, dict):
-            if resolve_tag_dict(elem, tag, constructed):
-                return True
-        return False
+def resolve_tag_list(final_struct: list, tag: str, constructed: dict | list | str):
+    for i in range(len(final_struct)):
+        elem = final_struct[i]
+        if resolve_tag_list_dict(final_struct, elem, i, tag, constructed):
+            return True
 
-def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | list | str):
+    return False
+
+def resolve_tag_str(final_struct: dict | list | str, tag: str, constructed: dict | list | str) -> dict | list | str:
+    if not isinstance(constructed, str):
+        if final_struct.replace(tag, "") == '()':
+            final_struct = constructed
+        else:
+            user_friendly = final_struct.replace(tag, "[STRUCT]")
+            lost_data = final_struct.replace(tag, "")
+            if not is_redundent_syntax_regex(lost_data) and lost_data:
+                logger.warning("Warning : trying to incorporate dict/list in a string :\n---> " + user_friendly)
+            final_struct = constructed
+    else:
+        final_struct = final_struct.replace(tag, constructed)
+
+    return final_struct
+
+def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | list | str) -> dict | list | str:
     if isinstance(final_struct, dict):
         resolve_tag_dict(final_struct, tag, constructed)
 
@@ -332,27 +307,17 @@ def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | l
         resolve_tag_list(final_struct, tag, constructed)
 
     elif isinstance(final_struct, str):
-        if not isinstance(constructed, str):
-            if final_struct.replace(tag, "") == '()':
-                final_struct = constructed
-            else:
-                user_friendly = final_struct.replace(tag, "[STRUCT]")
-                lost_data = final_struct.replace(tag, "")
-                if not is_redundent_syntax_regex(lost_data):
-                    logger.warning("Warning : trying to incorporate dict/list in a string :\n---> " + user_friendly)
-                final_struct = constructed
-        else:
-            final_struct = final_struct.replace(tag, constructed)
+        final_struct = resolve_tag_str(final_struct, tag, constructed)
 
     else:
         logger.error('Error : struct type not found')
         exit(1)
 
-    # return is necessary bcs strings are not passed by reference in python
+    # return is necessary, strings are not passed by reference in python
     return final_struct
 
 
-def parse_main_loop(data_string: str, depth: dict):
+def parse_main_loop(data_string: str, depth: dict) -> dict | list | str:
     depth['value'] += 1
 
     # Detection
@@ -361,7 +326,7 @@ def parse_main_loop(data_string: str, depth: dict):
 
     # recursion stop
     if not hit.found:
-        return None
+        return data_string
 
     # form basic struct
     constructed = parse_type(hit.content, hit.type)
@@ -374,14 +339,11 @@ def parse_main_loop(data_string: str, depth: dict):
     final_struct = parse_main_loop(data_string, depth)
 
     # reconstruct data structure
-    if not final_struct:
-        final_struct = constructed      # at the root
-    else:
-        final_struct = resolve_tag(final_struct, tag, constructed)
+    final_struct = resolve_tag(final_struct, tag, constructed)
 
     return final_struct
 
-def parse(data_string: str):
+def parse(data_string: str) -> dict | list | str:
     # make it a struct so it is passed by reference
     depth = {'value': 0}
 
@@ -392,7 +354,7 @@ def parse(data_string: str):
     data_string = prepare_line(data_string)
 
     try:
-        data_string = parse_main_loop(data_string, depth)
+        data_string = parse_main_loop(data_string, depth) or data_string
     except RecursionError:
         logger.warning("Skipped line with " + str(len(data_string)) + " characters. "
                        "Recursion depth : " + str(depth['value']) + "\n"
@@ -400,6 +362,3 @@ def parse(data_string: str):
                        " in parse(). Feel free to try as high as needed to parse this line.")
 
     return data_string
-
-
-print(parse('<k1 v1, k2 v2, k:3 (li1 , li2 ,li3, li4 )  ,k4 v4 >'))

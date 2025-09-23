@@ -38,7 +38,7 @@ class TestStringParser(SysdiagnoseTestCase):
         ('k11 v11', sp.DataType.XML_DICT),
         ('    li 1, li   2   , li3', sp.DataType.LIST),
         ('li1 , li2 ,li3, li4 ', sp.DataType.LIST),
-        ('li1 , li2 ,li3, li4 ', sp.DataType.LIST),
+        ('li11, li22', sp.DataType.LIST),
         ('k11 v11,k22 v22', sp.DataType.XML_DICT),
         ('()', sp.DataType.STRING),
         ('(li111)', sp.DataType.STRING)
@@ -53,7 +53,6 @@ class TestStringParser(SysdiagnoseTestCase):
     def test_parsing(self):
         for test_val, expected in zip(self.test_list, self.expected_parsed):
             result = sp.parse(test_val)
-            print(result)
             self.assertTrue(result == expected)
 
 

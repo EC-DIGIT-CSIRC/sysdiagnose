@@ -67,7 +67,7 @@ class IORegStructParser:
             if constructed:
                 data_dict[key] = constructed
 
-    def dict_update(self, main_dict, data_dict):
+    def dict_update(self, main_dict: dict, data_dict: dict):
         """ Redefining the dict.update function to handle key collisions """
 
         for key in data_dict:
@@ -79,10 +79,10 @@ class IORegStructParser:
             else:
                 main_dict[key] = data_dict[key]
 
-    def parse_title(self):
+    def parse_title(self) -> tuple:
         if "+-o" not in self.line:
             logger.warning("'non-title' line given to title parser, should not happen")
-            return ""
+            return "", ""
 
         whole_title = self.line.split("+-o", 1)[1].strip()
 
@@ -154,8 +154,8 @@ class IORegStructParser:
             else:
                 self.get_line()
 
-    def setup_new_child(self, data_tree, key):
-        """ This function is dedicated to iterate_child, it handles the special cases
+    def setup_new_child(self, data_tree: dict, key: str) -> dict:
+        """ This function is dedicated to iterate_children, it handles the special cases
             where a node name is already present for the same parent """
 
         if data_tree.get(key):
