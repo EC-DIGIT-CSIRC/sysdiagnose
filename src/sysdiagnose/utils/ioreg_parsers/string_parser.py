@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+import sys
 from sysdiagnose.utils.base import logger
 import uuid
 
@@ -132,6 +133,50 @@ def is_redundent_syntax_regex(s: str):
         Example : "[(<key value, k1 v1>)]" is the same as <key value, k1 v1> """
     return re.search(r'^[(){}\[\]<>""]+$', s)
 
+def prepare_line(line: str) -> str:
+    """ remove unnecessary double-quotes
+    quotes are needed when a comma is inside.
+        example :
+        <key1 val1, k2 "hello, world"> != <key1 val1, k2 hello, world>
+
+    Note : regex cant be used, need to be statefull i.e. consider opening and closing quotes
+        example that doesnt work with regex: "a,"b"c,"
+        gives : '"a,bc,"'
+        should give : '"a,"b"c,"'
+        (the quotes in "a," aren't removed bcs of the comma, so "b" is detected as a string)
+    """
+    inside = False
+    opening_pos = None
+    skipping = False
+    parse_char = (',', '=', '{', '}', '(', ')')
+    line = line.strip()
+
+    i = 0
+    while i < len(line):
+        if line[i] == '"':
+            if inside:
+                if not skipping:
+                    line = line[:i] + line[i + 1:]    # remove last "
+                    line = line[:opening_pos] + line[opening_pos + 1:]    # remove first "
+                    i -= 1
+                else:
+                    i += 1
+                inside = False
+
+            else:
+                inside = True
+                opening_pos = i
+                skipping = False
+                i += 1
+            continue
+
+        if inside and line[i] in parse_char:
+            skipping = True
+
+        i += 1
+
+    return line
+
 def check_key_uniqueness(dictio: dict, key: str):
     if dictio.get(key):
         logger.warning('Warning : Key is already in dictionary, data may be lost\n---> ' + key)
@@ -196,6 +241,7 @@ def parse_type(input_string: str, type: DataType):
 def resolve_tag_dict(final_struct: dict, tag: str, constructed: dict | list):
     for key in final_struct:
         elem = final_struct[key]
+        #return resolve_tag_list_dict(final_struct, elem, key, tag, constructed)
 
         if isinstance(elem, str) and tag in elem:
             if isinstance(constructed, str):
@@ -223,6 +269,35 @@ def resolve_tag_dict(final_struct: dict, tag: str, constructed: dict | list):
         elif isinstance(elem, dict):
             if resolve_tag_dict(elem, tag, constructed):
                 return True
+        return False
+
+def resolve_tag_list_dict(final_struct: list | dict, elem: list | dict | str, key: str, tag: str, constructed: dict | list | str):
+    if isinstance(elem, str) and tag in elem:
+        if isinstance(constructed, str):
+            final_struct[key] = final_struct[key].replace(tag, constructed)
+        else:
+            check_anomaly(elem, tag)
+            final_struct[key] = constructed
+        return True
+
+    elif isinstance(key, str) and tag in key:   # only for dict, key is int for list
+        if isinstance(constructed, str):
+            new_key = key.replace(tag, constructed)
+            value = final_struct[key]
+            del final_struct[key]
+            final_struct[new_key] = value
+        else:
+            logger.error("Error : Trying to use a struct as a key in a dict")
+            final_struct[key] = constructed
+        return True
+
+    elif isinstance(elem, list):
+        if resolve_tag_list(elem, tag, constructed):
+            return True
+
+    elif isinstance(elem, dict):
+        if resolve_tag_dict(elem, tag, constructed):
+            return True
 
     return False
 
@@ -230,8 +305,8 @@ def resolve_tag_dict(final_struct: dict, tag: str, constructed: dict | list):
 def resolve_tag_list(final_struct: list, tag: str, constructed: dict | list):
     for i in range(len(final_struct)):
         elem = final_struct[i]
+        #return resolve_tag_list_dict(final_struct, elem, i, tag, constructed)
 
-        # TODO repetition with resolve_tag_dict, put in a func
         if isinstance(elem, str) and tag in elem:
             if isinstance(constructed, str):
                 final_struct[i] = final_struct[i].replace(tag, constructed)
@@ -247,9 +322,7 @@ def resolve_tag_list(final_struct: list, tag: str, constructed: dict | list):
         elif isinstance(elem, dict):
             if resolve_tag_dict(elem, tag, constructed):
                 return True
-
-    return False
-
+        return False
 
 def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | list | str):
     if isinstance(final_struct, dict):
@@ -258,7 +331,6 @@ def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | l
     elif isinstance(final_struct, list):
         resolve_tag_list(final_struct, tag, constructed)
 
-    # TODO struct in string doesnt work, for example (<some>)
     elif isinstance(final_struct, str):
         if not isinstance(constructed, str):
             if final_struct.replace(tag, "") == '()':
@@ -280,15 +352,10 @@ def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | l
     return final_struct
 
 
-def parse(data_string: str, first_run: bool = True):
-    data_string = data_string.strip()
-    # if first_run: print('========= ' + data_string)
+def parse_main_loop(data_string: str, depth: dict):
+    depth['value'] += 1
 
-    # dont parse if too long
-    if first_run and len(data_string) > 10000:
-        logger.warning('Skipped a too long lines with ' + str(len(data_string)) + ' characters')
-        return data_string
-
+    # Detection
     hit = Detect(data_string)
     final_struct = None
 
@@ -304,7 +371,7 @@ def parse(data_string: str, first_run: bool = True):
     data_string = data_string.replace(hit.whole_match, tag, 1)
 
     # recursion
-    final_struct = parse(data_string, False)
+    final_struct = parse_main_loop(data_string, depth)
 
     # reconstruct data structure
     if not final_struct:
@@ -313,3 +380,26 @@ def parse(data_string: str, first_run: bool = True):
         final_struct = resolve_tag(final_struct, tag, constructed)
 
     return final_struct
+
+def parse(data_string: str):
+    # make it a struct so it is passed by reference
+    depth = {'value': 0}
+
+    # increase recursion depth, default is at 1000
+    sys.setrecursionlimit(3000)
+
+    # greatly reduce recursion depth i.e. 80 000+ chars parsed against max 10 000 chars before
+    data_string = prepare_line(data_string)
+
+    try:
+        data_string = parse_main_loop(data_string, depth)
+    except RecursionError:
+        logger.warning("Skipped line with " + str(len(data_string)) + " characters. "
+                       "Recursion depth : " + str(depth['value']) + "\n"
+                       "--> max recursion depth can be increased in utils/string_parser.py"
+                       " in parse(). Feel free to try as high as needed to parse this line.")
+
+    return data_string
+
+
+print(parse('<k1 v1, k2 v2, k:3 (li1 , li2 ,li3, li4 )  ,k4 v4 >'))

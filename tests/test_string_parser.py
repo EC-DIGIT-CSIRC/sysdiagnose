@@ -53,6 +53,7 @@ class TestStringParser(SysdiagnoseTestCase):
     def test_parsing(self):
         for test_val, expected in zip(self.test_list, self.expected_parsed):
             result = sp.parse(test_val)
+            print(result)
             self.assertTrue(result == expected)
 
 
