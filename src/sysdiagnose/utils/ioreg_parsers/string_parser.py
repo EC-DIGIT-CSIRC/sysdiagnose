@@ -24,7 +24,7 @@ class Detect:
     def detect_type(self, input: str):
         """         Note on the match types
 
-            XML_DICT : data inside <>
+            XML_DICT : data inside <> with at least a comma or space between chars
                 excluded : <> , < > , <       >
 
             CURLY_DICT : like xml_dict but with {} instead of <>
@@ -38,7 +38,7 @@ class Detect:
         """  # noqa: W605
 
         # find xml like dict ex : <key value, k2 v2>
-        hit = self.find_smallest(r'<([^<>]*[^\s<>][^<>]*)>', input)
+        hit = self.find_smallest(r'<([^<>]*([,]|[^\s<>][\s]+[^\s<>])[^<>]*)>', input)
         if hit and len(hit.group(0)) < self._best_len:
             self.assign_best(hit, DataType.XML_DICT)
 
@@ -51,6 +51,11 @@ class Detect:
         hit = self.find_smallest(r'\(([^()]*,[^()]*)\)', input)
         if hit and len(hit.group(0)) < self._best_len:
             self.assign_best(hit, DataType.LIST)
+
+        # find simple string data in <> ex : <648a4c>
+        hit = re.search(r'(<[^,<>\s]*>)', input)
+        if hit and len(hit.group(0)) < self._best_len:
+            self.assign_best(hit, DataType.STRING)
 
         # find simple parentheses without ',' ex : (hello world)
         hit = re.search(r'(\([^,)(]*\))', input)

@@ -54,7 +54,6 @@ class IORegStructParser:
             self.get_line()
 
         data_dict = self.node_data_to_json(node_data)
-        # TODO test this
         self.parse_values(data_dict)
         self.dict_update(data_tree, data_dict)
 
