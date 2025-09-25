@@ -1,14 +1,15 @@
-version: "0.1"
+version: "2"
 
 services:
-  so1:
+  splunk:
     image: ${SPLUNK_IMAGE:-splunk/splunk:latest}
-    container_name: so1
+    container_name: splunk
     environment:
       - SPLUNK_START_ARGS=--accept-license
       - SPLUNK_PASSWORD=Password1234
+      - SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com
     ports:
       - 8000:8000
     volumes:
       - ../../cases:/cases
-
+      - ./add-ta.sh:/add-ta.sh
