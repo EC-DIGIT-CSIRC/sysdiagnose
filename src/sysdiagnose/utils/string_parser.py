@@ -316,7 +316,7 @@ def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | l
 
     else:
         logger.error('Error : struct type not found')
-        exit(1)
+        raise ValueError("Structure passed has to be a dict, a list or a string. Type : " + str(type(final_struct)))
 
     # return is necessary, strings are not passed by reference in python
     return final_struct

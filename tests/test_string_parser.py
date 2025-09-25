@@ -1,6 +1,6 @@
 from tests import SysdiagnoseTestCase
 import unittest
-import sysdiagnose.utils.ioreg_parsers.string_parser as sp
+import sysdiagnose.utils.string_parser as sp
 
 
 class TestStringParser(SysdiagnoseTestCase):

@@ -1,10 +1,10 @@
 from sysdiagnose.utils.base import logger
-from sysdiagnose.utils.ioreg_parsers import string_parser
+from sysdiagnose.utils import string_parser
 import re
 
 class IORegStructParser:
-    rollback_addr = None
-    line = None
+    __rollback_addr = None
+    __curr_line = None
 
     def __init__(self):
         pass
@@ -19,23 +19,18 @@ class IORegStructParser:
         return data_tree
 
     def get_line(self):
-        self.rollback_addr = self.open_file.tell()
-        self.line = self.open_file.readline()
-        self.line = self.line.replace('\n', '')
+        self.__rollback_addr = self.open_file.tell()
+        self.__curr_line = self.open_file.readline()
+        self.__curr_line = self.__curr_line.replace('\n', '')
 
     def recursive_call(self, data_tree: dict):
-        self.open_file.seek(self.rollback_addr)
+        self.open_file.seek(self.__rollback_addr)
         self.recursive_fun(data_tree)
 
     def check_start_node(self):
-        if '+-o' not in self.line:
+        if '+-o' not in self.__curr_line:
             logger.error('This is not normal. Recursive function called on random line.')
-            exit(1)
-
-    def not_empty_node_check(self):
-        if not self.rollback_addr:
-            logger.error("+-o in two consecutive lines, not supposed to be possible")
-            exit(1)
+            raise Exception("File has an invalid structure, '+-o' tag was not found in first line")
 
     def check_key_uniqueness(self, dictio: dict, key: str):
         if dictio.get(key):
@@ -45,12 +40,12 @@ class IORegStructParser:
         node_data = []  # array of lines, to be transformed in json
         res = True
 
-        while '+-o' not in self.line:
-            if not self.line:   # end of file
+        while '+-o' not in self.__curr_line:
+            if not self.__curr_line:   # end of file
                 res = False
                 break
 
-            node_data.append(self.line)
+            node_data.append(self.__curr_line)
             self.get_line()
 
         data_dict = self.node_data_to_json(node_data)
@@ -79,11 +74,11 @@ class IORegStructParser:
                 main_dict[key] = data_dict[key]
 
     def parse_title(self) -> tuple:
-        if "+-o" not in self.line:
+        if "+-o" not in self.__curr_line:
             logger.warning("'non-title' line given to title parser, should not happen")
             return "", ""
 
-        whole_title = self.line.split("+-o", 1)[1].strip()
+        whole_title = self.__curr_line.split("+-o", 1)[1].strip()
 
         if "<class" not in whole_title or whole_title[-1] != '>':
             logger.warning("Title doesnt respect the usual <class ... > format, to invesstigate")
@@ -144,8 +139,8 @@ class IORegStructParser:
         return res
 
     def iterate_children(self, depth: int, data_tree: dict):
-        while self.line and (self.line[depth] == '|' or self.line[depth: depth + 3] == '+-o'):
-            if self.line[depth: depth + 3] == '+-o':
+        while self.__curr_line and (self.__curr_line[depth] == '|' or self.__curr_line[depth: depth + 3] == '+-o'):
+            if self.__curr_line[depth: depth + 3] == '+-o':
                 name = self.parse_title()[0]
                 new_child = self.setup_new_child(data_tree, name)
                 self.recursive_call(new_child)
@@ -185,11 +180,11 @@ class IORegStructParser:
 
         self.dict_update(data_tree, additional_data)
 
-        depth = self.line.index('o')  # to identify the other nodes that have the same parent
+        depth = self.__curr_line.index('o')  # to identify the other nodes that have the same parent
         self.get_line()
 
         # check if its a leaf
-        if self.line[depth] != '|':
+        if self.__curr_line[depth] != '|':
             is_leaf = True
 
         # Fetch the data of the node
@@ -198,11 +193,8 @@ class IORegStructParser:
 
         # stop if we're a leaf
         if is_leaf:
-            self.open_file.seek(self.rollback_addr)
+            self.open_file.seek(self.__rollback_addr)
             return
-
-        # sanity check
-        self.not_empty_node_check()
 
         # Iterates over each child to call the current function
         self.iterate_children(depth, data_tree)
