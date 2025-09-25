@@ -5,7 +5,7 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logge
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
 
-class IOServiceParser(BaseParserInterface):
+class IOUSBParser(BaseParserInterface):
     description = "IOUSB.txt file parser"
     format = "json"
 

@@ -1,16 +1,16 @@
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
-from sysdiagnose.parsers.ioservice import IOServiceParser
+from sysdiagnose.parsers.iofirewire import IOFireWireParser
 from tests import SysdiagnoseTestCase
 import unittest
 import io
 import os
 
 
-class TestParsersIOService(SysdiagnoseTestCase):
+class TestParsersIOFireWire(SysdiagnoseTestCase):
 
     def test_parse_case(self):
         for case_id, case in self.sd.cases().items():
-            p = IOServiceParser(self.sd.config, case_id=case_id)
+            p = IOFireWireParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)
 
