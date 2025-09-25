@@ -16,11 +16,11 @@ from sysdiagnose.utils.lock import FileLock
 
 class Sysdiagnose:
     def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
-        self._cases = False   # will be populated through cases() singleton method
+        self._cases = False   # will be populated through cases() method
         self.config: SysdiagnoseConfig = SysdiagnoseConfig(cases_path)
 
     def cases(self, force: bool = False) -> dict:
-        # pseudo singleton, so it's not loaded unless necessary
+        # kinda caching, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
             lock = FileLock(self.config.cases_file)
