@@ -129,7 +129,6 @@ class CoverageAnalyser(BaseAnalyserInterface):
         from jinja2 import Template
         from pathlib import Path
 
-
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')
         coverage_df.index = [str(Path(p).relative_to(*Path(p).parts[:3])) if len(Path(p).parts) > 3 else Path(p).name for p in coverage_df.index]
@@ -235,7 +234,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
                 })
 
         # Convert DataFrame to HTML table for the Details section
-        coverage_table_html = coverage_df.to_html(
+        coverage_table_html = coverage_df.drop(columns=['folder_name']).to_html(
             classes='coverage-table',
             border=0,
             index=True,
