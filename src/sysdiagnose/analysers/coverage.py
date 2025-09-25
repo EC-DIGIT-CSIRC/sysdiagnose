@@ -5,6 +5,7 @@ import os
 import magic
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
+import glob
 
 
 class CoverageAnalyser(BaseAnalyserInterface):
@@ -61,7 +62,18 @@ class CoverageAnalyser(BaseAnalyserInterface):
         for parser_name in self.config.get_parsers():
             parser = self.get_parser(parser_name)
             if parser:
-                for file in parser.get_log_files():
+                parser_files = parser.get_log_files()
+                # ugly hack to compensate for parsers that return folders
+                if parser.module_name == 'logarchive':
+
+                    # all files below the logarchive folder, excluding Extra
+                    os.path.join(parser.get_log_files().pop(), '**')
+                    extra_files = glob.glob(os.path.join(parser.get_log_files().pop(), '**'), recursive=True)
+                    # exclude all files in the Extra folder
+                    extra_files = [f for f in extra_files if '/Extra/' not in f]
+                    parser_files.extend(extra_files)
+
+                for file in parser_files:
                     if file in coverage:
                         coverage[file]['parser'] = parser_name
                         coverage[file]['parser_format'] = parser.format
@@ -115,9 +127,12 @@ class CoverageAnalyser(BaseAnalyserInterface):
         import base64
         from io import BytesIO
         from jinja2 import Template
+        from pathlib import Path
+
 
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')
+        coverage_df.index = [str(Path(p).relative_to(*Path(p).parts[:3])) if len(Path(p).parts) > 3 else Path(p).name for p in coverage_df.index]
 
         # Calculate statistics for parsed vs. not parsed files
         parsed_count = coverage_df['parser'].notna().sum()
@@ -247,7 +262,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
                 .content { display: none; padding: 10px; border: 1px solid #ddd; margin-top: 5px; border-radius: 8px; }
                 .content.show { display: block; }
                 table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th, td { border: 1px solid #ddd; padding: 2px; text-align: left; }
                 th { background-color: #f4f4f4; }
                 .section { margin-bottom: 20px; }
                 .light-red { background-color: #ffe6e6; }
