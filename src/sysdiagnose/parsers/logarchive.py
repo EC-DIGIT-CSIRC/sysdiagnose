@@ -9,7 +9,7 @@ from collections.abc import Generator
 from datetime import datetime, timezone
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 import glob
-import json
+import orjson
 import os
 import platform
 import subprocess
@@ -69,8 +69,8 @@ class LogarchiveParser(BaseParserInterface):
             with tempfile.TemporaryDirectory() as tmp_outpath:
                 tmp_output_file = os.path.join(tmp_outpath.name, 'logarchive.tmp')
                 LogarchiveParser.parse_all_to_file(self.get_log_files(), tmp_output_file)
-                with open(tmp_output_file, 'r') as f:
-                    return [json.loads(line) for line in f]
+                with open(tmp_output_file, 'rb') as f:
+                    return [orjson.loads(line) for line in f]
         except IndexError:
             return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
 
@@ -85,11 +85,11 @@ class LogarchiveParser(BaseParserInterface):
 
             if self.output_exists():
                 # load existing output
-                with open(self.output_file, 'r') as f:
+                with open(self.output_file, 'rb') as f:
                     for line in f:
                         try:
-                            yield json.loads(line)
-                        except json.decoder.JSONDecodeError:  # last lines of the native logarchive.jsonl file
+                            yield orjson.loads(line)
+                        except orjson.JSONDecodeError:  # last lines of the native logarchive.jsonl file
                             continue
         else:
             # should never happen, as we never keep it in memory
@@ -125,7 +125,7 @@ class LogarchiveParser(BaseParserInterface):
         prev_temp_file = temp_files[0]
         # first copy over first file to self.output_file
         shutil.copyfile(prev_temp_file['file'].name, output_file)
-        with open(output_file, 'a') as f_out:
+        with open(output_file, 'ab') as f_out:
             i = 1
             while i < len(temp_files):
                 current_temp_file = temp_files[i]
@@ -135,16 +135,16 @@ class LogarchiveParser(BaseParserInterface):
                     pass
                 elif current_temp_file['first_timestamp'] > prev_temp_file['last_timestamp']:
                     # copy over the full file
-                    with open(current_temp_file['file'].name, 'r') as f_in:
+                    with open(current_temp_file['file'].name, 'rb') as f_in:
                         for line in f_in:
                             f_out.write(line)
                     prev_temp_file = current_temp_file
                 else:
                     # need to seek to prev_last and copy over new data
-                    with open(current_temp_file['file'].name, 'r') as f_in:
-                        copy_over = False   # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
+                    with open(current_temp_file['file'].name, 'rb') as f_in:
+                        copy_over = False   # store if we need to copy over, spares us of orjson.loads() every line when we know we should be continuing
                         for line in f_in:
-                            if not copy_over and json.loads(line)['time'] > prev_temp_file['last_timestamp']:
+                            if not copy_over and orjson.loads(line)['time'] > prev_temp_file['last_timestamp']:
                                 copy_over = True
                             if copy_over:
                                 f_out.write(line)
@@ -153,7 +153,7 @@ class LogarchiveParser(BaseParserInterface):
 
     def get_first_and_last_entries(output_file: str) -> tuple:
         with open(output_file, 'rb') as f:
-            first_entry = json.loads(f.readline().decode())
+            first_entry = orjson.loads(f.readline())
             # discover last line efficiently
             f.seek(-2, os.SEEK_END)  # Move the pointer to the second-to-last byte in the file
             # Move backwards until a newline character is found, or we hit the start of the file
@@ -164,7 +164,7 @@ class LogarchiveParser(BaseParserInterface):
                 f.seek(-2, os.SEEK_CUR)  # Move backwards
 
             # Read the last line
-            last_entry = json.loads(f.readline().decode())
+            last_entry = orjson.loads(f.readline())
 
             return (first_entry, last_entry)
 
@@ -215,16 +215,17 @@ class LogarchiveParser(BaseParserInterface):
             return False
 
     def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
-        with open(output_file, 'w') as f_out:
+        with open(output_file, 'wb') as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
             cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson', '--info', '--debug', '--signpost']
             # read each line, convert line by line and write the output directly to the new file
             # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
                 try:
-                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
-                    f_out.write(json.dumps(entry_json) + '\n')
-                except json.JSONDecodeError as e:
+                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(orjson.loads(line))
+                    f_out.write(orjson.dumps(entry_json))
+                    f_out.write(b'\n')
+                except orjson.JSONDecodeError as e:
                     logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
                 except KeyError:
                     # last line of log does not contain 'time' field, nor the rest of the data.
@@ -234,10 +235,10 @@ class LogarchiveParser(BaseParserInterface):
                     break
 
     def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
-        with open(output_file, 'w') as f:
+        with open(output_file, 'wb') as f:
             for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
-                json.dump(entry, f)
-                f.write('\n')
+                f.write(orjson.dumps(entry))
+                f.write(b'\n')
 
     @DeprecationWarning
     def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
@@ -257,9 +258,9 @@ class LogarchiveParser(BaseParserInterface):
         # this approach limits memory consumption
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
             try:
-                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
+                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(orjson.loads(line))
                 yield entry_json
-            except json.JSONDecodeError:
+            except orjson.JSONDecodeError:
                 pass
             except KeyError:
                 pass
@@ -292,7 +293,7 @@ class LogarchiveParser(BaseParserInterface):
             if outputfile is None:
                 for line in iter(process.stdout.readline, ''):
                     try:
-                        result.append(json.loads(line))
+                        result.append(orjson.loads(line))
                     except Exception:
                         result.append(line)
             elif outputfile == sys.stdout:
