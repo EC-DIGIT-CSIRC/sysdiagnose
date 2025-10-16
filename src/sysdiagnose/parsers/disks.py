@@ -83,7 +83,7 @@ class DisksParser(BaseParserInterface):
     def execute(self) -> list | dict:
         files = self.get_log_files()
         if not files:
-            return { 'error': ['No disks.txt file present'] }
+            return {'error': ['No disks.txt file present']}
         result: list = []
         for file_path in files:
             result.extend(self.parse_file(file_path))
@@ -158,5 +158,3 @@ class DisksParser(BaseParserInterface):
             logger.exception("Could not parse disks.txt")
 
         return events
-
-
