@@ -1,6 +1,0 @@
-Case ID: FCMCG27UN70X_20250109_113342
-Parser 'logarchive' for case ID 'FCMCG27UN70X_20250109_113342'
-[PERF] Starting p with 1 folders
-[PERF] Single folder mode: ./cases/FCMCG27UN70X_20250109_113342/data/sysdiagnose_2025.01.09_14-33-42+0300_iPhone-OS_iPhone_21G80/system_logs.logarchive/
-[PERF] Single folder parsing took 65.79s
-[PERF] Total p time: 65.79s
