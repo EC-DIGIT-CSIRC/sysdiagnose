@@ -63,6 +63,7 @@ import os
 import configparser
 import re
 from datetime import datetime, timezone
+from typing import Optional
 from sysdiagnose.utils.base import Event
 import glob
 import logging
@@ -71,7 +72,7 @@ default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apol
 
 
 class Apollo():
-    def __init__(self, logger: logging.Logger, mod_dir: str = default_mod_dir, os_version: str = 'yolo', saf_module: str = None):
+    def __init__(self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = 'yolo'):
         """
         Initialize the Apollo class for parsing databases
 
@@ -122,7 +123,7 @@ class Apollo():
                             'sql': sql_query
                         })
 
-    def parse_db(self, db_fname: str, db_type: str = None) -> list:
+    def parse_db(self, db_fname: str, db_type: Optional[str] = None) -> list:
         results = []
         if not db_type:
             db_type = os.path.basename(db_fname)
