@@ -13,4 +13,11 @@ colima start --cpu 8 --memory 32 --disk 120
 
 # verify Colima is running
 colima status
+
+# Create the containers
+docker compose up -d
 ```
+
+# References
+
+- <https://discuss.elastic.co/t/no-logs-from-logstash-docker/342882/6>
