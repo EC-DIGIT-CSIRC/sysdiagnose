@@ -1,0 +1,68 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.5
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms16g -Xmx16g   # Set Elasticsearch heap (<=32g)
+    ports:
+      - "9200:9200"
+    # volumes:
+    #   - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.1.5
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.1.5
+    container_name: logstash
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      es-init:
+        condition: service_completed_successfully
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - LS_JAVA_OPTS=-Xms4g -Xmx4g
+      - LS_LOG_LEVEL=debug             # <-- enable debug logs
+      - LOGSTASH_DEBUG=true  # Set to true to enable debug output to stdout
+    ports:
+      - "9600:9600"   # expose Logstash monitoring API to the host
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /Users/borrdar/git/ec-digit-csirc/sysdiagnose/tests/tmp/cases:/usr/share/logstash/data/input  # <-- folder to watch
+      - ./log4j2.properties:/usr/share/logstash/config/log4j2.properties:ro  # mount custom log4j2 config to enable debug logging
+
+  es-init:
+    image: curlimages/curl:latest
+    container_name: es-init
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./digit_sysdiagnose-template.json:/templates/digit_sysdiagnose-template.json:ro
+    entrypoint: >
+      sh -c "
+      echo 'Waiting for Elasticsearch...';
+      until curl -s http://elasticsearch:9200 >/dev/null; do sleep 3; done;
+      echo 'Installing index template digit_sysdiagnose_template...';
+      curl -X PUT http://elasticsearch:9200/_index_template/digit_sysdiagnose_template
+           -H 'Content-Type: application/json'
+           -d @/templates/digit_sysdiagnose_template.json;
+      echo 'Template installed successfully.';
+      "
+
+# volumes:
+  # es_data:
