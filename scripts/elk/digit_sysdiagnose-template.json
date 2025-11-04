@@ -1,0 +1,37 @@
+{
+  "index_patterns": ["digit_sysdiagnose*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "dynamic": true,
+      "properties": {
+        "@timestamp":   { "type": "date" },
+        "datetime":     { "type": "date" },
+        "message":      { "type": "text" },
+        "module":       { "type": "keyword" },
+        "timestamp_desc": { "type": "keyword" },
+        "data":         { "type": "flattened" },
+        "event": {
+          "properties": {
+            "ingested": { "type": "date" }
+          }
+        },
+        "file": {
+          "properties": {
+            "path": { "type": "keyword" }
+          }
+        },
+        "sysdiagnose": {
+          "properties": {
+            "case_id":    { "type": "keyword" },
+            "source_type":{ "type": "keyword" },
+            "filename":   { "type": "keyword" }
+          }
+        }
+      }
+    }
+  }
+}

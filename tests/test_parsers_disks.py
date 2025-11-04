@@ -25,5 +25,3 @@ class TestParsersDisks(SysdiagnoseTestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
