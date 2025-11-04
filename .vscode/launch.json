@@ -182,6 +182,14 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: parse kbdebug",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public parse kbdebug",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
             "name": "Python Debugger: parse logarchive",
             "type": "debugpy",
             "request": "launch",
