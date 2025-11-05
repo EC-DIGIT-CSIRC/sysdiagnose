@@ -22,7 +22,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     to build a comprehensive list of running processes across different system logs.
 
     The timestamp is 'a' time the process was seen in the log, without being specifically the first or last seen.
-    
+
     Deduplication strategy: Processes are deduplicated within a 1-hour window. If the same process
     appears more than 1 hour apart, both occurrences are kept to track temporal patterns.
     """
@@ -51,7 +51,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     def _sanitize_uid(uid: Optional[int]) -> Optional[int]:
         """
         Sanitizes UID values by filtering out invalid/placeholder values.
-        
+
         :param uid: The UID value to sanitize
         :return: The UID if valid, None if invalid/placeholder
         """
@@ -274,7 +274,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     def __extract_ps_shutdownlogs(self) -> Generator[dict, None, None]:
         """
         Extracts process data from shutdown logs.
-        
+
         Note: Unlike other sources, shutdown logs always keep all entries even if duplicate,
         as each entry represents a different shutdown event where the process was blocking.
 
@@ -306,7 +306,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             for p in LogarchiveParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p['datetime'])
                 euid = self._sanitize_uid(p['data'].get('euid'))
-                
+
                 # First check if we can extract a binary from the message
                 extracted_process = self.message_extract_binary(p['data']['process'], p['message'])
                 if extracted_process:
@@ -481,7 +481,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         # Create a unique key that includes both name and UID
         unique_key = f"{name}|uid:{uid}"
-        
+
         # If no timestamp provided, use old behavior (always check for duplicates)
         if timestamp is None:
             for item in self.all_ps:
@@ -493,14 +493,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     return False  # This covers cases with space-separated commands
             self.all_ps.add(unique_key)
             return True
-        
+
         # Time-based deduplication: check if we've seen this process+uid combination recently
         if unique_key in self.process_last_seen:
             time_diff = timestamp - self.process_last_seen[unique_key]
             # Only add if more than 1 hour has passed
             if time_diff < timedelta(hours=1):
                 return False
-        
+
         # Add or update the process
         self.all_ps.add(unique_key)
         self.process_last_seen[unique_key] = timestamp
@@ -519,7 +519,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         # Create a unique key that includes both name and UID
         unique_key = f"{name}|uid:{uid}"
-        
+
         # If no timestamp provided, use old behavior (always check for duplicates)
         if timestamp is None:
             for item in self.all_ps:
@@ -527,14 +527,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     return False
             self.all_ps.add(unique_key)
             return True
-        
+
         # Time-based deduplication: check if we've seen this process+uid combination recently
         if unique_key in self.process_last_seen:
             time_diff = timestamp - self.process_last_seen[unique_key]
             # Only add if more than 1 hour has passed
             if time_diff < timedelta(hours=1):
                 return False
-        
+
         # Add or update the process
         self.all_ps.add(unique_key)
         self.process_last_seen[unique_key] = timestamp
