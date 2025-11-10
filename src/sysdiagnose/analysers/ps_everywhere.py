@@ -200,7 +200,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 ppid = p['data'].get('ppid')
                 ps_event = Event(
                     datetime=datetime.fromisoformat(p['datetime']),
-                    message= self._strip_flags(p['data']['command']),
+                    message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
                     data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid}
