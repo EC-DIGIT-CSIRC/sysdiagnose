@@ -196,12 +196,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsParser(self.config, self.case_id).get_result():
                 uid = self._sanitize_uid(p['data'].get('uid'))
+                pid = p['data'].get('pid')
+                ppid = p['data'].get('ppid')
                 ps_event = Event(
                     datetime=datetime.fromisoformat(p['datetime']),
                     message= self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': uid}
+                    data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid}
                 )
                 if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid):
                     yield ps_event.to_dict()
@@ -218,12 +220,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsThreadParser(self.config, self.case_id).get_result():
                 uid = self._sanitize_uid(p['data'].get('uid'))
+                pid = p['data'].get('pid')
+                ppid = p['data'].get('ppid')
                 ps_event = Event(
                     datetime=datetime.fromisoformat(p['datetime']),
                     message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': uid}
+                    data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid}
                 )
                 if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid):
                     yield ps_event.to_dict()
@@ -245,6 +249,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
                 event_datetime = datetime.fromisoformat(event['datetime'])
                 uid = self._sanitize_uid(p.get('uid'))
+                pid = p.get('pid')
+                ppid = p.get('ppid')
 
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name), event_datetime, uid):
                     yield Event(
@@ -252,7 +258,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         message=self._strip_flags(process_name),
                         timestamp_desc=event['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': uid}
+                        data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid}
                     ).to_dict()
 
                 for t in p['threads']:
@@ -264,7 +270,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                 message=self._strip_flags(thread_name),
                                 timestamp_desc=event['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': uid}
+                                data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid}
                             ).to_dict()
                     except KeyError:
                         pass
@@ -285,12 +291,13 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             for p in ShutdownLogsParser(self.config, self.case_id).get_result():
                 # Always yield shutdown log entries, even if duplicate
                 # Each occurrence represents a different shutdown event
+                pid = p['data'].get('pid')
                 yield Event(
                     datetime=datetime.fromisoformat(p['datetime']),
                     message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': None}
+                    data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None}
                 ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -306,6 +313,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             for p in LogarchiveParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p['datetime'])
                 euid = self._sanitize_uid(p['data'].get('euid'))
+                pid = p['data'].get('pid')
 
                 # First check if we can extract a binary from the message
                 extracted_process = self.message_extract_binary(p['data']['process'], p['message'])
@@ -319,7 +327,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                     message=self._strip_flags(proc_path),
                                     timestamp_desc=p['timestamp_desc'],
                                     module=self.module_name,
-                                    data={'source': entity_type, 'uid': None}
+                                    data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                                 ).to_dict()
                     else:
                         # Handle the case where it's a single string
@@ -329,7 +337,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                 message=self._strip_flags(extracted_process),
                                 timestamp_desc=p['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': None}
+                                data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                             ).to_dict()
 
                 # Process the original process name
@@ -339,7 +347,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': euid}
+                        data={'source': entity_type, 'uid': euid, 'pid': pid, 'ppid': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -359,7 +367,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         message=self._strip_flags(p),
                         timestamp_desc="Process path from UUID existing at sysdiagnose creation time",
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -377,13 +385,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     continue
 
                 p_datetime = datetime.fromisoformat(p['datetime'])
+                pid = p['data'].get('pid')
                 if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['name']), p_datetime, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p['data']['name']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None}
                     ).to_dict()
 
                 for t in p['data']['threads']:
@@ -395,7 +404,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                 message=thread_name,
                                 timestamp_desc=p['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': None}
+                                data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None}
                             ).to_dict()
                     except KeyError:
                         pass
@@ -419,7 +428,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             message=self._strip_flags(p),
                             timestamp_desc="Existing service at sysdiagnose creation time",
                             module=self.module_name,
-                            data={'source': entity_type, 'uid': None}
+                            data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                         ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -440,7 +449,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -462,7 +471,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None}
                     ).to_dict()
 
         except Exception as e:
