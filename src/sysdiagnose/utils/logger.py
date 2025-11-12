@@ -1,5 +1,5 @@
 import logging
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger import json
 from datetime import datetime
 
 logger = logging.getLogger('sysdiagnose')
@@ -7,7 +7,7 @@ logger = logging.getLogger('sysdiagnose')
 logger.setLevel(logging.DEBUG)
 
 
-class SysdiagnoseJsonFormatter(jsonlogger.JsonFormatter):
+class SysdiagnoseJsonFormatter(json.JsonFormatter):
     '''Custom JSON logger formatter '''
     # https://stackoverflow.com/questions/50873446/python-logger-output-dates-in-is8601-format
     def formatTime(self, record, datefmt=None):
