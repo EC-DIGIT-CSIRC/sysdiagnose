@@ -22,7 +22,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     to build a comprehensive list of running processes across different system logs.
 
     The timestamp is 'a' time the process was seen in the log, without being specifically the first or last seen.
-    
+
     Deduplication strategy: Processes are deduplicated within a 1-hour window. If the same process
     appears more than 1 hour apart, both occurrences are kept to track temporal patterns.
     """
@@ -35,6 +35,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         self.all_ps: Set[str] = set()
         # Track last seen timestamp for each process (for time-based deduplication)
         self.process_last_seen: Dict[str, datetime] = {}
+        # PID to process name mapping for parent name resolution
+        self.pid_to_name: Dict[int, str] = {}
 
     @staticmethod
     def _strip_flags(process: str) -> str:
@@ -51,7 +53,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     def _sanitize_uid(uid: Optional[int]) -> Optional[int]:
         """
         Sanitizes UID values by filtering out invalid/placeholder values.
-        
+
         :param uid: The UID value to sanitize
         :return: The UID if valid, None if invalid/placeholder
         """
@@ -60,6 +62,67 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         if uid in (2863311530, 4294967295):
             return None
         return uid
+
+    def _resolve_ppname(self, ppid: Optional[int]) -> Optional[str]:
+        """
+        Resolves parent process ID to parent process name using the PID mapping.
+
+        :param ppid: Parent process ID
+        :return: Parent process name if found, None otherwise
+        """
+        if ppid is None:
+            return None
+        return self.pid_to_name.get(ppid)
+
+    def _build_pid_mapping(self):
+        """
+        Builds a PID to process name mapping from available parsers.
+        This mapping is used to resolve parent process names from PPIDs.
+        """
+        # Build from ps.txt
+        try:
+            for p in PsParser(self.config, self.case_id).get_result():
+                pid = p['data'].get('pid')
+                command = p['data'].get('command')
+                if pid and command:
+                    self.pid_to_name[pid] = self._strip_flags(command)
+        except Exception as e:
+            logger.debug(f"Could not build PID mapping from ps.txt: {e}")
+
+        # Build from psthread.txt
+        try:
+            for p in PsThreadParser(self.config, self.case_id).get_result():
+                pid = p['data'].get('pid')
+                command = p['data'].get('command')
+                if pid and command:
+                    self.pid_to_name[pid] = self._strip_flags(command)
+        except Exception as e:
+            logger.debug(f"Could not build PID mapping from psthread.txt: {e}")
+
+        # Build from spindump
+        try:
+            for event in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+                p = event['data']
+                if 'process' in p:
+                    pid = p.get('pid')
+                    process_name = p.get('path', p['process'])
+                    if pid and process_name:
+                        self.pid_to_name[pid] = self._strip_flags(process_name)
+        except Exception as e:
+            logger.debug(f"Could not build PID mapping from spindump: {e}")
+
+        # Build from taskinfo
+        try:
+            for p in TaskinfoParser(self.config, self.case_id).get_result():
+                if 'name' in p['data']:
+                    pid = p['data'].get('pid')
+                    name = p['data'].get('name')
+                    if pid and name:
+                        self.pid_to_name[pid] = self._strip_flags(name)
+        except Exception as e:
+            logger.debug(f"Could not build PID mapping from taskinfo: {e}")
+
+        logger.info(f"Built PID mapping with {len(self.pid_to_name)} entries")
 
     @staticmethod
     def message_extract_binary(process: str, message: str) -> Optional[str | list[str]]:
@@ -182,6 +245,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         :yield: A dictionary containing process details from various sources.
         """
+        # Build PID to name mapping first for parent name resolution
+        self._build_pid_mapping()
+
         for func in dir(self):
             if func.startswith(f"_{self.__class__.__name__}__extract_ps_"):
                 yield from getattr(self, func)()  # Dynamically call extract methods
@@ -196,14 +262,17 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsParser(self.config, self.case_id).get_result():
                 uid = self._sanitize_uid(p['data'].get('uid'))
+                pid = p['data'].get('pid')
+                ppid = p['data'].get('ppid')
+                ppname = self._resolve_ppname(ppid)
                 ps_event = Event(
                     datetime=datetime.fromisoformat(p['datetime']),
-                    message= self._strip_flags(p['data']['command']),
+                    message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': uid}
+                    data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
                 )
-                if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid):
+                if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid, pid, ppid):
                     yield ps_event.to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type} file. {e}")
@@ -218,14 +287,17 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in PsThreadParser(self.config, self.case_id).get_result():
                 uid = self._sanitize_uid(p['data'].get('uid'))
+                pid = p['data'].get('pid')
+                ppid = p['data'].get('ppid')
+                ppname = self._resolve_ppname(ppid)
                 ps_event = Event(
                     datetime=datetime.fromisoformat(p['datetime']),
                     message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': uid}
+                    data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
                 )
-                if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid):
+                if self.add_if_full_command_is_not_in_set(ps_event.message, ps_event.datetime, uid, pid, ppid):
                     yield ps_event.to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type} file. {e}")
@@ -245,26 +317,30 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 process_name = p.get('path', '/kernel' if p['process'] == 'kernel_task [0]' else p['process'])
                 event_datetime = datetime.fromisoformat(event['datetime'])
                 uid = self._sanitize_uid(p.get('uid'))
+                pid = p.get('pid')
+                ppid = p.get('ppid')
+                # Spindump has a direct 'parent' field with the parent process name
+                ppname = p.get('parent')
 
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name), event_datetime, uid):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name), event_datetime, uid, pid, ppid):
                     yield Event(
                         datetime=event_datetime,
                         message=self._strip_flags(process_name),
                         timestamp_desc=event['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': uid}
+                        data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
                     ).to_dict()
 
                 for t in p['threads']:
                     try:
                         thread_name = f"{self._strip_flags(process_name)}::{t['thread_name']}"
-                        if self.add_if_full_command_is_not_in_set(thread_name, event_datetime, uid):
+                        if self.add_if_full_command_is_not_in_set(thread_name, event_datetime, uid, pid, ppid):
                             yield Event(
                                 datetime=event_datetime,
                                 message=self._strip_flags(thread_name),
                                 timestamp_desc=event['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': uid}
+                                data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
                             ).to_dict()
                     except KeyError:
                         pass
@@ -274,7 +350,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     def __extract_ps_shutdownlogs(self) -> Generator[dict, None, None]:
         """
         Extracts process data from shutdown logs.
-        
+
         Note: Unlike other sources, shutdown logs always keep all entries even if duplicate,
         as each entry represents a different shutdown event where the process was blocking.
 
@@ -285,12 +361,13 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             for p in ShutdownLogsParser(self.config, self.case_id).get_result():
                 # Always yield shutdown log entries, even if duplicate
                 # Each occurrence represents a different shutdown event
+                pid = p['data'].get('pid')
                 yield Event(
                     datetime=datetime.fromisoformat(p['datetime']),
                     message=self._strip_flags(p['data']['command']),
                     timestamp_desc=p['timestamp_desc'],
                     module=self.module_name,
-                    data={'source': entity_type, 'uid': None}
+                    data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None, 'ppname': None}
                 ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -306,40 +383,41 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             for p in LogarchiveParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p['datetime'])
                 euid = self._sanitize_uid(p['data'].get('euid'))
-                
+                pid = p['data'].get('pid')
+
                 # First check if we can extract a binary from the message
                 extracted_process = self.message_extract_binary(p['data']['process'], p['message'])
                 if extracted_process:
                     # Handle the case where extracted_process is a list of paths
                     if isinstance(extracted_process, list):
                         for proc_path in extracted_process:
-                            if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path), p_datetime, None):
+                            if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path), p_datetime, None, None, None):
                                 yield Event(
                                     p_datetime,
                                     message=self._strip_flags(proc_path),
                                     timestamp_desc=p['timestamp_desc'],
                                     module=self.module_name,
-                                    data={'source': entity_type, 'uid': None}
+                                    data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                                 ).to_dict()
                     else:
                         # Handle the case where it's a single string
-                        if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None):
+                        if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None, None, None):
                             yield Event(
                                 datetime=p_datetime,
                                 message=self._strip_flags(extracted_process),
                                 timestamp_desc=p['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': None}
+                                data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                             ).to_dict()
 
                 # Process the original process name
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, euid):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, euid, pid, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': euid}
+                        data={'source': entity_type, 'uid': euid, 'pid': pid, 'ppid': None, 'ppname': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -353,13 +431,13 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = 'uuid2path'
         try:
             for p in UUID2PathParser(self.config, self.case_id).get_result().values():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
                     yield Event(
                         datetime=self.sysdiagnose_creation_datetime,
                         message=self._strip_flags(p),
                         timestamp_desc="Process path from UUID existing at sysdiagnose creation time",
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -377,25 +455,26 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     continue
 
                 p_datetime = datetime.fromisoformat(p['datetime'])
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['name']), p_datetime, None):
+                pid = p['data'].get('pid')
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['name']), p_datetime, None, pid, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p['data']['name']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None, 'ppname': None}
                     ).to_dict()
 
                 for t in p['data']['threads']:
                     try:
                         thread_name = f"{self._strip_flags(p['data']['name'])}::{t['thread name']}"
-                        if self.add_if_full_path_is_not_in_set(thread_name, p_datetime, None):
+                        if self.add_if_full_path_is_not_in_set(thread_name, p_datetime, None, pid, None):
                             yield Event(
                                 p_datetime,
                                 message=thread_name,
                                 timestamp_desc=p['timestamp_desc'],
                                 module=self.module_name,
-                                data={'source': entity_type, 'uid': None}
+                                data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None, 'ppname': None}
                             ).to_dict()
                     except KeyError:
                         pass
@@ -413,13 +492,13 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json['Local device']['Services']:
-                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None):
+                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
                         yield Event(
                             datetime=self.sysdiagnose_creation_datetime,
                             message=self._strip_flags(p),
                             timestamp_desc="Existing service at sysdiagnose creation time",
                             module=self.module_name,
-                            data={'source': entity_type, 'uid': None}
+                            data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                         ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -434,13 +513,13 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p['datetime'])
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, None):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, None, None, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                     ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
@@ -456,32 +535,34 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p['datetime'])
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, None):
+                if self.add_if_full_path_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, None, None, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p['data']['process']),
                         timestamp_desc=p['timestamp_desc'],
                         module=self.module_name,
-                        data={'source': entity_type, 'uid': None}
+                        data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                     ).to_dict()
 
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
-    def add_if_full_path_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None) -> bool:
+    def add_if_full_path_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None, pid: Optional[int] = None, ppid: Optional[int] = None) -> bool:
         """
         Ensures that a process path is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.
-        UID is considered part of the uniqueness - same process with different UID is treated as separate.
+        UID, PID, and PPID are considered part of the uniqueness - same process with different values is treated as separate.
 
         :param name: Process path name
         :param timestamp: Timestamp of the process occurrence (optional, for time-based deduplication)
         :param uid: User ID of the process (optional, considered in uniqueness check)
+        :param pid: Process ID (optional, considered in uniqueness check)
+        :param ppid: Parent Process ID (optional, considered in uniqueness check)
         :return: True if the process was not in the set or last seen > 1 hour ago, False otherwise.
         """
-        # Create a unique key that includes both name and UID
-        unique_key = f"{name}|uid:{uid}"
-        
+        # Create a unique key that includes name, UID, PID, and PPID
+        unique_key = f"{name}|uid:{uid}|pid:{pid}|ppid:{ppid}"
+
         # If no timestamp provided, use old behavior (always check for duplicates)
         if timestamp is None:
             for item in self.all_ps:
@@ -493,33 +574,35 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     return False  # This covers cases with space-separated commands
             self.all_ps.add(unique_key)
             return True
-        
+
         # Time-based deduplication: check if we've seen this process+uid combination recently
         if unique_key in self.process_last_seen:
             time_diff = timestamp - self.process_last_seen[unique_key]
             # Only add if more than 1 hour has passed
             if time_diff < timedelta(hours=1):
                 return False
-        
+
         # Add or update the process
         self.all_ps.add(unique_key)
         self.process_last_seen[unique_key] = timestamp
         return True
 
-    def add_if_full_command_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None) -> bool:
+    def add_if_full_command_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None, pid: Optional[int] = None, ppid: Optional[int] = None) -> bool:
         """
         Ensures that a process command is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.
-        UID is considered part of the uniqueness - same process with different UID is treated as separate.
+        UID, PID, and PPID are considered part of the uniqueness - same process with different values is treated as separate.
 
         :param name: Process command name
         :param timestamp: Timestamp of the process occurrence (optional, for time-based deduplication)
         :param uid: User ID of the process (optional, considered in uniqueness check)
+        :param pid: Process ID (optional, considered in uniqueness check)
+        :param ppid: Parent Process ID (optional, considered in uniqueness check)
         :return: True if the process was not in the set or last seen > 1 hour ago, False otherwise.
         """
-        # Create a unique key that includes both name and UID
-        unique_key = f"{name}|uid:{uid}"
-        
+        # Create a unique key that includes name, UID, PID, and PPID
+        unique_key = f"{name}|uid:{uid}|pid:{pid}|ppid:{ppid}"
+
         # If no timestamp provided, use old behavior (always check for duplicates)
         if timestamp is None:
             for item in self.all_ps:
@@ -527,14 +610,14 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     return False
             self.all_ps.add(unique_key)
             return True
-        
+
         # Time-based deduplication: check if we've seen this process+uid combination recently
         if unique_key in self.process_last_seen:
             time_diff = timestamp - self.process_last_seen[unique_key]
             # Only add if more than 1 hour has passed
             if time_diff < timedelta(hours=1):
                 return False
-        
+
         # Add or update the process
         self.all_ps.add(unique_key)
         self.process_last_seen[unique_key] = timestamp
