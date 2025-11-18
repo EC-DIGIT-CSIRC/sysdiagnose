@@ -31,7 +31,7 @@ class AccessibilityTccParser(BaseParserInterface):
         # only one file to parse
         try:
             result = []
-            apollo = Apollo(logger=logger, os_version='yolo', saf_module=self.module_name)  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
+            apollo = Apollo(logger=logger, saf_module=self.module_name, os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
             for logfile in self.get_log_files():
                 result.extend(apollo.parse_db(db_fname=logfile, db_type='TCC.db'))
             return result

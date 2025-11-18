@@ -54,6 +54,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
 
                 coverage[os.path.join(root, file)] = {
                     'file_type': self.get_file_type(os.path.join(root, file)),
+                    'file_size': os.path.getsize(os.path.join(root, file)),
                     'folder_name': os.path.relpath(root, start=path),
                     'parser': None,
                     'parser_format': None
@@ -81,6 +82,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
                     elif not os.path.isdir(file):
                         coverage[file] = {
                             'file_type': 'unknown',
+                            'file_size': os.path.getsize(file) if os.path.exists(file) else 0,
                             'folder_name': os.path.relpath(file, start=path),
                             'parser': parser_name,
                             'parser_format': parser.format
