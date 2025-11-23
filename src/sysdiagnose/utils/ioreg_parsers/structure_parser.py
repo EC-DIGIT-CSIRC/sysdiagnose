@@ -14,7 +14,7 @@ class IORegStructParser:
 
         with open(file_path, 'r', errors='backslashreplace') as f:
             self.open_file = f
-            self.recursive_fun(data_tree)
+            self.recursive_loop(data_tree)
 
         return data_tree
 
@@ -25,7 +25,7 @@ class IORegStructParser:
 
     def recursive_call(self, data_tree: dict):
         self.open_file.seek(self.__rollback_addr)
-        self.recursive_fun(data_tree)
+        self.recursive_loop(data_tree)
 
     def check_start_node(self):
         if '+-o' not in self.__curr_line:
@@ -166,7 +166,7 @@ class IORegStructParser:
             data_tree[key] = {}
             return data_tree[key]
 
-    def recursive_fun(self, data_tree: dict):
+    def recursive_loop(self, data_tree: dict):
         is_leaf = False
         self.get_line()
 

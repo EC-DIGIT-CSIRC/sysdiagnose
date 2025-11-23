@@ -4,7 +4,7 @@ import unittest
 import os
 
 
-class TestParsersIOService(SysdiagnoseTestCase):
+class TestParsersIOUSB(SysdiagnoseTestCase):
 
     def test_parse_case(self):
         for case_id, case in self.sd.cases().items():

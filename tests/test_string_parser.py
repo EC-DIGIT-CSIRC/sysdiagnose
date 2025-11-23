@@ -15,7 +15,8 @@ class TestStringParser(SysdiagnoseTestCase):
         '<k1 v1, k2 (li1 , li2 ,li3, li4 )  ,k3 (li11, li22)     , k4 (li111, li222, li333) >',
         '<k1 v1, k2 (li1 , li2,li3, li4 )  ,k3 <k11 v11,k22 v22>     , k4 (li111, li222, li333) >',
         '<l (1, 2, <k (,,,)>), m <g (), k ( ,), m ((),(()))>>',
-        '<k1 v1, k2 <k11 v11, k22 v22>  ,k3 (<k111 <a b, c (l1, l2)>>, (li111), (li8, li9))    , k4 (li111, li222, li333) >'
+        '<k1 v1, k2 <k11 v11, k22 v22>  ,k3 (<k111 <a b, c (l1, l2)>>, (li111), (li8, li9))    , k4 (li111, li222, li333) >',
+        '<"!!J>">'
     ]
 
     expected_parsed = [
@@ -28,7 +29,8 @@ class TestStringParser(SysdiagnoseTestCase):
         {'k1': 'v1', 'k2': ['li1', 'li2', 'li3', 'li4'], 'k3': ['li11', 'li22'], 'k4': ['li111', 'li222', 'li333']},
         {'k1': 'v1', 'k2': ['li1', 'li2', 'li3', 'li4'], 'k3': {'k11': 'v11', 'k22': 'v22'}, 'k4': ['li111', 'li222', 'li333']},
         {'l': ['1', '2', {'k': ['', '', '', '']}], 'm': {'g': '()', 'k': ['', ''], 'm': ['()', '(())']}},
-        {'k1': 'v1', 'k2': {'k11': 'v11', 'k22': 'v22'}, 'k3': [{'k111': {'a': 'b', 'c': ['l1', 'l2']}}, '(li111)', ['li8', 'li9']], 'k4': ['li111', 'li222', 'li333']}
+        {'k1': 'v1', 'k2': {'k11': 'v11', 'k22': 'v22'}, 'k3': [{'k111': {'a': 'b', 'c': ['l1', 'l2']}}, '(li111)', ['li8', 'li9']], 'k4': ['li111', 'li222', 'li333']},
+        "!!J>"
     ]
 
     expected_detect = [
@@ -41,7 +43,8 @@ class TestStringParser(SysdiagnoseTestCase):
         ('li11, li22', sp.DataType.LIST),
         ('k11 v11,k22 v22', sp.DataType.XML_DICT),
         ('()', sp.DataType.STRING),
-        ('(li111)', sp.DataType.STRING)
+        ('(li111)', sp.DataType.STRING),
+        ("!!J>", sp.DataType.STRING)
     ]
 
     def test_detect(self):

@@ -1,8 +1,8 @@
 import re
 from enum import Enum
-import sys
 from sysdiagnose.utils.base import logger
 import uuid
+
 
 class DataType(Enum):
     XML_DICT = 1
@@ -37,6 +37,11 @@ class Detect:
 
         """  # noqa: W605
 
+        # find simple double-quotes ex : "hello world"
+        hit = re.search(r'"([^"]*)"', input)
+        if hit and len(hit.group(0)) < self._best_len:
+            self.assign_best(hit, DataType.STRING)
+
         # find xml like dict ex : <key value, k2 v2>
         hit = self.find_smallest(r'<([^<>]*([,]|[^\s<>][\s]+[^\s<>])[^<>]*)>', input)
         if hit and len(hit.group(0)) < self._best_len:
@@ -64,11 +69,6 @@ class Detect:
 
         # find [] parentheses without ',' nor '=' ex : [hello world]
         hit = re.search(r'(\[[^,=\[\]]*\])', input)
-        if hit and len(hit.group(0)) < self._best_len:
-            self.assign_best(hit, DataType.STRING)
-
-        # find simple double-quotes ex : "hello world"
-        hit = re.search(r'"([^"]*)"', input)
         if hit and len(hit.group(0)) < self._best_len:
             self.assign_best(hit, DataType.STRING)
 
@@ -154,7 +154,7 @@ def prepare_line(line: str) -> str:
     inside = False
     opening_pos = None
     skipping = False
-    parse_char = (',', '=', '{', '}', '(', ')')
+    parse_char = (',', '=', '{', '}', '(', ')', '<', '>')
     line = line.strip()
 
     i = 0
@@ -315,55 +315,49 @@ def resolve_tag(final_struct: dict | list | str, tag: str, constructed: dict | l
         final_struct = resolve_tag_str(final_struct, tag, constructed)
 
     else:
-        logger.error('Error : struct type not found')
+        logger.error('Error : struct type not found : ' + str(type(final_struct)))
         raise ValueError("Structure passed has to be a dict, a list or a string. Type : " + str(type(final_struct)))
 
     # return is necessary, strings are not passed by reference in python
     return final_struct
 
-
-def parse_main_loop(data_string: str, depth: dict) -> dict | list | str:
-    depth['value'] += 1
+def parse_main_loop(data_string: str) -> dict | list | str:
 
     # Detection
     hit = Detect(data_string)
     final_struct = None
+    tag_stack = []
+    constructed_stack = []
 
-    # recursion stop
-    if not hit.found:
-        return data_string
+    # ----------- parse string -----------
+    while hit.found:
+        # form basic struct
+        constructed = parse_type(hit.content, hit.type)
 
-    # form basic struct
-    constructed = parse_type(hit.content, hit.type)
+        # replace struct by an unique tag
+        tag = generate_tag()
+        data_string = data_string.replace(hit.whole_match, tag, 1)
 
-    # replace struct by an unique tag
-    tag = generate_tag()
-    data_string = data_string.replace(hit.whole_match, tag, 1)
+        # add tag and constructed to stack, to rebuild later
+        tag_stack.append(tag)
+        constructed_stack.append(constructed)
 
-    # recursion
-    final_struct = parse_main_loop(data_string, depth)
+        hit = Detect(data_string)
 
-    # reconstruct data structure
-    final_struct = resolve_tag(final_struct, tag, constructed)
+    # ----------- reconstruct -----------
+    while tag_stack:
+        tag = tag_stack.pop()
+        constructed = constructed_stack.pop()
+
+        final_struct = resolve_tag(final_struct or tag, tag, constructed)
 
     return final_struct
 
 def parse(data_string: str) -> dict | list | str:
-    # make it a struct so it is passed by reference
-    depth = {'value': 0}
 
-    # increase recursion depth, default is at 1000
-    sys.setrecursionlimit(3000)
-
-    # greatly reduce recursion depth i.e. 80 000+ chars parsed against max 10 000 chars before
+    # greatly optimizes the process
     data_string = prepare_line(data_string)
 
-    try:
-        data_string = parse_main_loop(data_string, depth) or data_string
-    except RecursionError:
-        logger.warning("Skipped line with " + str(len(data_string)) + " characters. "
-                       "Recursion depth : " + str(depth['value']) + "\n"
-                       "--> max recursion depth can be increased in utils/string_parser.py"
-                       " in parse(). Feel free to try as high as needed to parse this line.")
+    data_string = parse_main_loop(data_string) or data_string
 
     return data_string

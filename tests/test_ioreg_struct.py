@@ -4,7 +4,7 @@ import unittest
 import io
 
 
-class TestParsersIOService(SysdiagnoseTestCase):
+class TestIORegStruct(SysdiagnoseTestCase):
 
     def test_basic_structure(self):
         p = IORegStructParser()
@@ -100,7 +100,7 @@ class TestParsersIOService(SysdiagnoseTestCase):
 
         p.open_file = start_file
         result = {}
-        p.recursive_fun(result)
+        p.recursive_loop(result)
 
         self.assertTrue(result == expected)
 
@@ -202,7 +202,7 @@ dddd
 
         p.open_file = start_file
         result = {}
-        p.recursive_fun(result)
+        p.recursive_loop(result)
 
         self.assertTrue(result == expected)
 
@@ -300,7 +300,7 @@ dddd
 
         p.open_file = start_file
         result = {}
-        p.recursive_fun(result)
+        p.recursive_loop(result)
 
         self.assertTrue(result == expected)
 
