@@ -72,8 +72,6 @@ class Detect:
         if hit and len(hit.group(0)) < self._best_len:
             self.assign_best(hit, DataType.STRING)
 
-        self.warn_unknown_struct(input)
-
     def assign_best(self, hit: re.Match, type: DataType):
         self._best_len = len(hit.group(0))
         self._best_type = type
@@ -87,18 +85,6 @@ class Detect:
         if not matches:
             return None
         return min(matches, key=lambda m: len(m.group(0)))
-
-    def warn_unknown_struct(self, input: str):
-        main_cond = self._best_type is DataType.UNKNOWN
-        cond_exceptions = input != '{}' and input != '<>' and input != '()'
-        cond_1 = '<' in input and '>' in input
-        cond_2 = '(' in input and ')' in input
-        cond_3 = '{' in input and '}' in input
-
-        if (main_cond and cond_exceptions and (cond_1 or cond_2 or cond_3)):
-            logger.warning('Warning : A structure might have been recognized '
-                           'in here, if so please consider adding it to the '
-                           'string_parser.py file\n---> ' + input)
 
     @property
     def len(self) -> int:
