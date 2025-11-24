@@ -6,6 +6,8 @@ import sysdiagnose.utils.string_parser as sp
 class TestStringParser(SysdiagnoseTestCase):
 
     test_list = [
+        '[hello world]',
+        '<this_is_[not a struct]_here>',
         '<key val, k2 v2>',
         '(li1, li2, li3, li4)',
         '< k1     v1  ,  k2 v2,   k3    v3      ,k4 v4    >',
@@ -20,6 +22,8 @@ class TestStringParser(SysdiagnoseTestCase):
     ]
 
     expected_parsed = [
+        "[hello world]",
+        '<this_is_[not a struct]_here>',
         {'key': 'val', 'k2': 'v2'},
         ['li1', 'li2', 'li3', 'li4'],
         {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4'},
@@ -34,6 +38,8 @@ class TestStringParser(SysdiagnoseTestCase):
     ]
 
     expected_detect = [
+        ("[hello world]", sp.DataType.STRING),
+        ('[not a struct]', sp.DataType.STRING),
         ('key val, k2 v2', sp.DataType.XML_DICT),
         ('li1, li2, li3, li4', sp.DataType.LIST),
         (' k1     v1  ,  k2 v2,   k3    v3      ,k4 v4    ', sp.DataType.XML_DICT),
