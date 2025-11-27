@@ -46,8 +46,8 @@ def log_stderr(process, logger):
     """
     Reads the stderr of a subprocess and logs it line by line.
     """
-    for line in iter(process.stderr.readline, ''):
-        logger.debug(line.strip())
+    for line in iter(process.stderr.readline, b''):
+        logger.debug(line.decode('utf-8', errors='replace').strip())
 
 
 class LogarchiveParser(BaseParserInterface):
@@ -265,18 +265,41 @@ class LogarchiveParser(BaseParserInterface):
             except KeyError:
                 pass
 
-    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[dict, None, None]:
+    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[str, None, None]:
         '''
             Return None if it failed or the result otherwise.
-
+            Uses buffered reading for better performance.
+            
+            Chunk size of 1MB provides optimal balance between:
+            - Reducing system call overhead (fewer read() calls)
+            - Memory efficiency (not too large)
+            - Pipe buffer utilization (macOS pipes are typically 64KB-512KB)
         '''
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as process:
+        CHUNK_SIZE = 1024 * 1024  # 1MB chunks for optimal throughput
+        BUFFER_SIZE = 2 * 1024 * 1024  # 2MB subprocess buffer
+        
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=False, bufsize=BUFFER_SIZE) as process:
             # start a thread to log stderr
             stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
             stderr_thread.start()
 
-            for line in iter(process.stdout.readline, ''):
-                yield line
+            # Use buffered reading for better performance
+            buffer = b''
+            while True:
+                chunk = process.stdout.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                buffer += chunk
+                
+                # Process complete lines
+                while b'\n' in buffer:
+                    line, buffer = buffer.split(b'\n', 1)
+                    if line:  # Skip empty lines
+                        yield line.decode('utf-8')
+            
+            # Process any remaining data in buffer
+            if buffer:
+                yield buffer.decode('utf-8')
 
     def __execute_cmd_and_get_result(cmd_array: list, outputfile=None):
         '''
@@ -320,9 +343,11 @@ class LogarchiveParser(BaseParserInterface):
             timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
             entry['datetime'] = timestamp.isoformat(timespec='microseconds')
             entry['timestamp'] = timestamp.timestamp()
+            # Extract message before passing entry to data to avoid duplication
+            message = entry.pop('message', '')
             event = Event(
                 datetime=timestamp,
-                message=entry.get('message', ''),
+                message=message,
                 module=module,
                 timestamp_desc=timestamp_desc,
                 data=entry
