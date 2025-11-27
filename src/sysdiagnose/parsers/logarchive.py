@@ -244,7 +244,7 @@ class LogarchiveParser(BaseParserInterface):
     def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
         logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
         # output to stdout and not to a file as we need to convert the output to a unified format
-        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--output', output_file, '--format', 'jsonl']
+        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--output', output_file, '--format', 'jsonl', '--exclude-fields', 'message_entries,raw_message,message_entries,library_uuid,process_uuid,boot_uuid,timezone_name,activity_id', '--threads', '4']
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
         result = LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
@@ -253,7 +253,7 @@ class LogarchiveParser(BaseParserInterface):
     def __convert_using_unifiedlogparser_generator(input_folder: str):
         logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
         # output to stdout and not to a file as we need to convert the output to a unified format
-        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--format', 'jsonl']
+        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--format', 'jsonl', '--exclude-fields', 'message_entries,raw_message,message_entries,library_uuid,process_uuid,boot_uuid,timezone_name,activity_id', '--threads', '4']
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
