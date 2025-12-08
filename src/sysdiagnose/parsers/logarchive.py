@@ -250,16 +250,16 @@ class LogarchiveParser(BaseParserInterface):
             '--output-format', 'event',
             '--threads', '10'
         ]
-        
+
         logger.info(f'Running: {" ".join(cmd_array)}')
-        
+
         result = subprocess.run(cmd_array, capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             logger.error(f'unifiedlog_iterator failed with code {result.returncode}')
             logger.error(f'stderr: {result.stderr}')
             raise RuntimeError(f'unifiedlog_iterator failed: {result.stderr}')
-        
+
         logger.info(f'Successfully wrote {output_file}')
         return []
 
@@ -276,7 +276,7 @@ class LogarchiveParser(BaseParserInterface):
             '--output-format', 'event',
             '--threads', '10'
         ]
-        
+
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
             try:
                 entry_json = orjson.loads(line)
@@ -288,7 +288,7 @@ class LogarchiveParser(BaseParserInterface):
         '''
             Return None if it failed or the result otherwise.
             Uses buffered reading for better performance.
-            
+
             Chunk size of 1MB provides optimal balance between:
             - Reducing system call overhead (fewer read() calls)
             - Memory efficiency (not too large)
@@ -296,7 +296,7 @@ class LogarchiveParser(BaseParserInterface):
         '''
         CHUNK_SIZE = 1024 * 1024  # 1MB chunks for optimal throughput
         BUFFER_SIZE = 2 * 1024 * 1024  # 2MB subprocess buffer
-        
+
         with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=False, bufsize=BUFFER_SIZE) as process:
             # start a thread to log stderr
             stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
@@ -309,13 +309,13 @@ class LogarchiveParser(BaseParserInterface):
                 if not chunk:
                     break
                 buffer += chunk
-                
+
                 # Process complete lines
                 while b'\n' in buffer:
                     line, buffer = buffer.split(b'\n', 1)
                     if line:  # Skip empty lines
                         yield line.decode('utf-8')
-            
+
             # Process any remaining data in buffer
             if buffer:
                 yield buffer.decode('utf-8')
