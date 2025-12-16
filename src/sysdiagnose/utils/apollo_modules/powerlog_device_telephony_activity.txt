@@ -63,7 +63,7 @@ MODULE_NOTES=Telephony Activity
 [Database Metadata]
 DATABASE=CurrentPowerlog.PLSQL
 PLATFORM=IOS
-VERSIONS=9,10,11,12,13,14
+VERSIONS=9,10,11,12,13,14,15,16,17,18
 
 [Query Metadata]
 QUERY_NAME=powerlog_device_telephony_activity
@@ -87,3 +87,24 @@ QUERY=
       ID AS "PLBBAGENT_EVENTPOINT_TELEPHONYACTIVITY TABLE ID" 
    FROM
       PLBBAGENT_EVENTPOINT_TELEPHONYACTIVITY
+
+[SQL Query 15,16,17,18]
+QUERY=
+    SELECT
+        DATETIME(timestamp, 'UNIXEPOCH') AS TIMESTAMP,
+        airplaneMode AS "AIRPLANE MODE",
+        callStatus AS "CALL STATUS",
+        signalBars AS "SIGNAL BARS",
+        signalStrength AS "SIGNAL STRENGTH",
+        campedRat AS "CAMPED RAT",
+        currentRat AS "CURRENT RAT",
+        preferredRat AS "PREFERRED RAT",
+        activeBand AS "ACTIVE BAND",
+        dataStatus AS "DATA STATUS",
+        simStatus AS "SIM STATUS",
+        subsId AS "SUBSCRIPTION ID",
+        ID AS "BASEBANDMETRICS_TELEPHONYACTIVITY TABLE ID"
+    FROM
+        BasebandMetrics_TelephonyActivity_1_2
+    ORDER BY
+        timestamp DESC
