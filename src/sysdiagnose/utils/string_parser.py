@@ -5,11 +5,11 @@ class Type(Enum):
     NONE = 0
     STRING_SINGLE = 1
     STRING_DOUBLE = 2
-    STRING_HOOK = 3
-    XML_DICT = 4
-    CURLY_DICT = 5
-    MUTATED_STRING = 6
-    LIST = 7
+    XML_DICT = 3
+    CURLY_DICT = 4
+    MUTATED_STRING = 5
+    LIST = 6
+    HOOK_LIST = 7
 
 
 class String:
@@ -60,16 +60,11 @@ class StringDouble(String):
         pass
 
 
-class StringHook(String):
-    type = Type.STRING_HOOK
-    start_char = '['
-    end_char = ']'
-
-
 class StackBase(String):
     def add_struct(self, struct):
-        self.data = struct.data
-        self.type = struct.type
+        if struct.data:
+            self.data = struct.data
+            self.type = struct.type
 
     def accepted_struct(self):
         return Type
@@ -86,6 +81,9 @@ class XmlDict:
         self.currently_key = True
         self.temp_key = ""
         self.temp_val = ""
+
+        # fixes a special case '<"!!J>">' where we dont want the ! interpreted as a bool
+        self.flag_key_is_string = False
 
     def handle_char(self, c):
         match c:
@@ -108,6 +106,7 @@ class XmlDict:
         self.currently_key = True
         self.temp_key = ""
         self.temp_val = ""
+        self.flag_key_is_string = False
 
     def end_chunk(self):
         if self.temp_key.strip():
@@ -116,8 +115,9 @@ class XmlDict:
                 self.temp_val = self.temp_val.strip()
 
             # special case, key without val -> true/false value
-            if not self.temp_val:
+            if not self.temp_val and self.currently_key and not self.flag_key_is_string:
                 if self.temp_key[0] == '!':
+                    self.temp_key = self.temp_key[1:]
                     self.temp_val = False
                 else:
                     self.temp_val = True
@@ -129,6 +129,7 @@ class XmlDict:
         if self.currently_key:
             if isinstance(struct.data, str):
                 self.temp_key += struct.data
+                self.flag_key_is_string = True
             else:
                 print("ERROR : non-string found as key to a dict. Using str(struct) instead")
                 self.temp_key += str(struct.data)
@@ -141,7 +142,7 @@ class XmlDict:
 
     def accepted_struct(self):
         if self.currently_key:
-            return Type.STRING_SINGLE, Type.STRING_DOUBLE, Type.STRING_HOOK, Type.XML_DICT
+            return Type.STRING_SINGLE, Type.STRING_DOUBLE, Type.XML_DICT, Type.CURLY_DICT, Type.LIST, Type.HOOK_LIST
         else:
             return Type
 
@@ -150,6 +151,11 @@ class XmlDict:
         if list(self.data.values()) in ([""], [True], [False]):
             self.data = "<" + next(iter(self.data)) + ">"
             self.type = Type.MUTATED_STRING
+
+        # case it has multiple keys, without values its a list
+        elif self.data and all(v == "" for v in self.data.values()):
+            self.data = list(self.data.keys())
+            self.type = Type.LIST   # might be unacurate since its a mutated list but shouldn't matter
 
 
 class CurlyDict(XmlDict):
@@ -208,8 +214,19 @@ class List:
     def post_treatment(self):
         # case there is no comma, its a string , not a list. ex : (hello world)
         if len(self.data) == 1 and isinstance(self.data[0], str):
-            self.data = "(" + self.data[0] + ")"
+            self.data = self.start_char + self.data[0] + self.end_char
             self.type = Type.MUTATED_STRING
+
+        # case we have useless (), ex : '((a, b))' same as '(a, b)' or even '(({a: b}))' same as '{a: b}'
+        elif len(self.data) == 1:
+            self.data = self.data[0]
+            self.type = Type.NONE
+
+
+class HookList(List):
+    type = Type.HOOK_LIST
+    start_char = "["
+    end_char = "]"
 
 
 class Parser:
@@ -255,10 +272,10 @@ class Parser:
             case StringDouble.end_char if current_struct.type is Type.STRING_DOUBLE:
                 self.end_struct()
 
-            case StringHook.start_char if Type.STRING_HOOK in possible:
-                self.stack.append(StringHook())
+            case HookList.start_char if Type.HOOK_LIST in possible:
+                self.stack.append(HookList())
 
-            case StringHook.end_char if current_struct.type is Type.STRING_HOOK:
+            case HookList.end_char if current_struct.type is Type.HOOK_LIST:
                 self.end_struct()
 
             case List.start_char if Type.LIST in possible:
