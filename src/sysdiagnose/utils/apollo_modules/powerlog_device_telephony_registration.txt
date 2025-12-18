@@ -63,7 +63,7 @@ MODULE_NOTES=Records telephony registration details such AS carrier and service.
 [Database Metadata]
 DATABASE=CurrentPowerlog.PLSQL
 PLATFORM=IOS
-VERSIONS=9,10,11,12,13,14
+VERSIONS=9,10,11,12,13,14,15,16,17,18
 
 [Query Metadata]
 QUERY_NAME=powerlog_device_telephony_registration
@@ -127,3 +127,24 @@ QUERY=
         GROUP BY
 			TELEPHONYREG_ID 
       )
+
+[SQL Query 15,16,17,18]
+QUERY=
+    SELECT
+        DATETIME(timestamp, 'UNIXEPOCH') AS ADJUSTED_TIMESTAMP,
+        cellId AS "CELL ID",
+        dataInd AS "SERVICE",
+        operator AS "OPERATOR",
+        status AS "STATUS",
+        dataActive AS "DATA ACTIVE",
+        dataAttached AS "DATA ATTACHED",
+        home AS "HOME",
+        lac AS "LAC",
+        subsId AS "SUBSCRIPTION ID",
+        ID AS "BASEBANDMETRICS_TELEPHONYREGISTRATION TABLE ID"
+    FROM
+        BasebandMetrics_TelephonyRegistration_1_2
+    WHERE
+        cellId IS NOT NULL AND cellId > 0
+    ORDER BY
+        timestamp DESC
