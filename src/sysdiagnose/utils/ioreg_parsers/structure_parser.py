@@ -57,7 +57,7 @@ class IORegStructParser:
     def parse_values(self, data_dict: dict):
         for key in data_dict:
             value = data_dict[key]
-            constructed = string_parser.parse(value)
+            constructed = string_parser.Parser().parse(value)
             if constructed:
                 data_dict[key] = constructed
 
@@ -175,7 +175,7 @@ class IORegStructParser:
 
         # try to get a struct out of the data
         title_data = self.parse_title()[1]
-        additional_data = string_parser.parse(title_data) or title_data
+        additional_data = string_parser.Parser().parse(title_data) or title_data
         self.warn_if_no_struct(additional_data)
 
         self.dict_update(data_tree, additional_data)

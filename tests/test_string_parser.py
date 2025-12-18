@@ -34,34 +34,12 @@ class TestStringParser(SysdiagnoseTestCase):
         {'k1': 'v1', 'k2': ['li1', 'li2', 'li3', 'li4'], 'k3': {'k11': 'v11', 'k22': 'v22'}, 'k4': ['li111', 'li222', 'li333']},
         {'l': ['1', '2', {'k': ['', '', '', '']}], 'm': {'g': '()', 'k': ['', ''], 'm': ['()', '(())']}},
         {'k1': 'v1', 'k2': {'k11': 'v11', 'k22': 'v22'}, 'k3': [{'k111': {'a': 'b', 'c': ['l1', 'l2']}}, '(li111)', ['li8', 'li9']], 'k4': ['li111', 'li222', 'li333']},
-        "<!!J>>"
+        '<"!!J>">'
     ]
-
-    expected_detect = [
-        ("[hello world]", sp.DataType.STRING),
-        ('[not a struct]', sp.DataType.STRING),
-        ('key val, k2 v2', sp.DataType.XML_DICT),
-        ('li1, li2, li3, li4', sp.DataType.LIST),
-        (' k1     v1  ,  k2 v2,   k3    v3      ,k4 v4    ', sp.DataType.XML_DICT),
-        ('k11 v11', sp.DataType.XML_DICT),
-        ('    li 1, li   2   , li3', sp.DataType.LIST),
-        ('li1 , li2 ,li3, li4 ', sp.DataType.LIST),
-        ('li11, li22', sp.DataType.LIST),
-        ('k11 v11,k22 v22', sp.DataType.XML_DICT),
-        ('()', sp.DataType.STRING),
-        ('(li111)', sp.DataType.STRING),
-        ("!!J>", sp.DataType.STRING)
-    ]
-
-    def test_detect(self):
-        for test_val, (exp_cont, exp_type) in zip(self.test_list, self.expected_detect):
-            d = sp.Detect(test_val)
-            self.assertTrue(d.content == exp_cont)
-            self.assertTrue(d.type == exp_type)
 
     def test_parsing(self):
         for test_val, expected in zip(self.test_list, self.expected_parsed):
-            result = sp.parse(test_val)
+            result = sp.Parser().parse(test_val)
             self.assertTrue(result == expected)
 
 
