@@ -1,4 +1,5 @@
 from enum import Enum
+from sysdiagnose.utils.base import logger
 
 
 class Type(Enum):
@@ -26,11 +27,12 @@ class String:
                 if isinstance(self.data, str):
                     self.data += c
                 else:
-                    print('ERROR : malformed data')
-                    raise Exception
+                    logger.error('ERROR : malformed data, random character found next to a structure')
+                    raise ValueError('malformed data, random character found next to a structure')
 
     def add_struct(self, struct):
-        print("error not possible : set struct in string")
+        logger.error("ERROR : This function should never be called, if you see this there is a coding mistake")
+        raise Exception("Code that shouldn't be called was called")
 
     def accepted_struct(self):
         return Type.NONE,
@@ -100,7 +102,7 @@ class XmlDict:
                 elif isinstance(self.temp_val, str):
                     self.temp_val += c
                 elif c != " ":
-                    print("ERROR : chars found after a struct, should not happen")
+                    logger.error("ERROR : Chars found AFTER a struct")
 
     def values_reset(self):
         self.currently_key = True
@@ -135,7 +137,7 @@ class XmlDict:
                 self.temp_key += struct.data
                 self.flag_key_is_string = True
             else:
-                print("ERROR : non-string found as key to a dict. Using str(struct) instead")
+                logger.error("ERROR : Non-string found as key to a dict. Using str(struct) instead")
                 self.temp_key += str(struct.data)
 
         else:
@@ -187,7 +189,7 @@ class List:
                 if isinstance(self.temp_data, str):
                     self.temp_data += c
                 elif c != " ":
-                    print("ERROR : found dangling characters after a struct in a list. Ignoring these character")
+                    logger.error("ERROR : Found random characters AFTER a struct in a list. Ignoring these character")
 
     def end_chunk(self):
         if isinstance(self.temp_data, str):
@@ -204,11 +206,7 @@ class List:
 
         else:
             if self.temp_data.strip():
-                print("ERROR : found dangling characters before a struct in a list. Ignoring these character : ")
-                print(self.temp_data)
-                print(struct.data)
-                print()
-                raise Exception
+                print("ERROR : Found random characters BEFORE a struct in a list. Ignoring these character")
 
             self.temp_data = struct.data
 
@@ -300,12 +298,7 @@ class Parser:
         return self.stack[-1].type == type
 
     def end_struct(self):
-        try:
-            struct = self.stack.pop()
-            struct.end_chunk()
-            struct.post_treatment()
-            self.stack[-1].add_struct(struct)
-
-        except Exception:
-            # print(self.base_line)
-            pass
+        struct = self.stack.pop()
+        struct.end_chunk()
+        struct.post_treatment()
+        self.stack[-1].add_struct(struct)
