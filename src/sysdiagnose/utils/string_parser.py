@@ -122,6 +122,10 @@ class XmlDict:
                 else:
                     self.temp_val = True
 
+            # case the value is a number, make it a number
+            if isinstance(self.temp_val, str) and self.temp_val.isdigit():
+                self.temp_val = int(self.temp_val)
+
             self.data[self.temp_key] = self.temp_val
             self.values_reset()
 
@@ -234,14 +238,19 @@ class Parser:
         self.base_line = None
         self.stack = []
 
-    def parse(self, str):
-        self.base_line = str
+    def parse(self, line):
+        self.base_line = line
         self.stack = [StackBase()]
 
         for c in self.base_line:
             self.base_switch(c)
 
-        return self.stack[-1].data
+        # case the value is a number, make it a number
+        finaldata = self.stack[-1].data
+        if isinstance(finaldata, str) and finaldata.isdigit():
+            finaldata = int(finaldata)
+
+        return finaldata
 
     def base_switch(self, c):
         current_struct = self.stack[-1]
