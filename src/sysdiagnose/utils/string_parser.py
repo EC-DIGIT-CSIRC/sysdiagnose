@@ -47,11 +47,17 @@ class StringSingle(String):
     start_char = "'"
     end_char = "'"
 
+    def post_treatment(self):
+        pass
+
 
 class StringDouble(String):
     type = Type.STRING_DOUBLE
     start_char = '"'
     end_char = '"'
+
+    def post_treatment(self):
+        pass
 
 
 class StringHook(String):
@@ -105,10 +111,18 @@ class XmlDict:
 
     def end_chunk(self):
         if self.temp_key.strip():
+            self.temp_key = self.temp_key.strip()
             if isinstance(self.temp_val, str):
                 self.temp_val = self.temp_val.strip()
 
-            self.data[self.temp_key.strip()] = self.temp_val
+            # special case, key without val -> true/false value
+            if not self.temp_val:
+                if self.temp_key[0] == '!':
+                    self.temp_val = False
+                else:
+                    self.temp_val = True
+
+            self.data[self.temp_key] = self.temp_val
             self.values_reset()
 
     def add_struct(self, struct):
@@ -133,7 +147,7 @@ class XmlDict:
 
     def post_treatment(self):
         # case its not a dict but a string like <this_a_str>
-        if list(self.data.values()) == [""]:
+        if list(self.data.values()) in ([""], [True], [False]):
             self.data = "<" + next(iter(self.data)) + ">"
             self.type = Type.MUTATED_STRING
 
