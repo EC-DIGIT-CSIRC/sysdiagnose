@@ -13,6 +13,23 @@ class Type(Enum):
     HOOK_LIST = 7
 
 
+"""
+The structure classes all follow the same format with these mandatory methods and attributes :
+
+    Attributes
+        type       : The type of the struct (Type enum)
+        start_char : The character that opens the structure
+        end_char   : The character that closes the structure
+
+    Methods
+        handle_char(c)     : handles the characters found inside the structure
+        add_struct(struct) : embeds another struct inside the current struct
+        accepted_struct()  : returns a list of structs that can be embed (ex: a dict cannot be embed in a string)
+        end_chunk()        : end of a section in the struct, for ex. each list separator ',' calls this
+        post_treatment()   : treatment at the very end of the structure.
+                             some structs can change form at the end, for ex. '<hello world>'
+                             will be changed from XML_DICT to a string (MUTATED_STRING)
+"""
 class String:
     type = Type.NONE
     start_char = "'", '"'
@@ -22,13 +39,11 @@ class String:
         self.data = ""
 
     def handle_char(self, c):
-        match c:
-            case _:
-                if isinstance(self.data, str):
-                    self.data += c
-                else:
-                    logger.error('ERROR : malformed data, random character found next to a structure')
-                    raise ValueError('malformed data, random character found next to a structure')
+        if isinstance(self.data, str):
+            self.data += c
+        else:
+            logger.error('ERROR : malformed data, random character found next to a structure')
+            raise ValueError('malformed data, random character found next to a structure')
 
     def add_struct(self, struct):
         logger.error("ERROR : This function should never be called, if you see this there is a coding mistake")
@@ -243,62 +258,68 @@ class Parser:
         for c in self.base_line:
             self.base_switch(c)
 
-        # case the value is a number, make it a number
-        finaldata = self.stack[-1].data
-        if isinstance(finaldata, str) and finaldata.isdigit():
-            finaldata = int(finaldata)
-
-        return finaldata
+        return self.treat_final_value()
 
     def base_switch(self, c):
         current_struct = self.stack[-1]
-        possible = current_struct.accepted_struct()
+        possible = current_struct.accepted_struct()     # list of types that the current struct can accept
         match c:
 
+            # XML Dict : <k1 v1, k2 v2>
             case XmlDict.start_char if Type.XML_DICT in possible:
                 self.stack.append(XmlDict())
 
             case XmlDict.end_char if current_struct.type is Type.XML_DICT:
                 self.end_struct()
 
+            # Curly Dict : {k1=v1, k2=v2}
             case CurlyDict.start_char if Type.CURLY_DICT in possible:
                 self.stack.append(CurlyDict())
 
             case CurlyDict.end_char if current_struct.type is Type.CURLY_DICT:
                 self.end_struct()
 
+            # String Single quote : 'hello world'
             case StringSingle.start_char if Type.STRING_SINGLE in possible:
                 self.stack.append(StringSingle())
 
             case StringSingle.end_char if current_struct.type is Type.STRING_SINGLE:
                 self.end_struct()
 
+            # String Double quotes : "hello world"
             case StringDouble.start_char if Type.STRING_DOUBLE in possible:
                 self.stack.append(StringDouble())
 
             case StringDouble.end_char if current_struct.type is Type.STRING_DOUBLE:
                 self.end_struct()
 
+            # Hook List : [v1, v2, v3]
             case HookList.start_char if Type.HOOK_LIST in possible:
                 self.stack.append(HookList())
 
             case HookList.end_char if current_struct.type is Type.HOOK_LIST:
                 self.end_struct()
 
+            # Bracket List : (v1, v2, v3)
             case List.start_char if Type.LIST in possible:
                 self.stack.append(List())
 
             case List.end_char if current_struct.type is Type.LIST:
                 self.end_struct()
 
+            # Default just handle the char inside the current struct
             case _:
                 self.stack[-1].handle_char(c)
-
-    def current_type_is(self, type):
-        return self.stack[-1].type == type
 
     def end_struct(self):
         struct = self.stack.pop()
         struct.end_chunk()
         struct.post_treatment()
         self.stack[-1].add_struct(struct)
+
+    def treat_final_value(self):
+        # case the value is a number, make it a number
+        finaldata = self.stack[-1].data
+        if isinstance(finaldata, str) and finaldata.isdigit():
+            finaldata = int(finaldata)
+        return finaldata
