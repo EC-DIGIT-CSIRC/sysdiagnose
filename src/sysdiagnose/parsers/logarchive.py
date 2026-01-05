@@ -246,9 +246,7 @@ class LogarchiveParser(BaseParserInterface):
             '--mode', 'log-archive',
             '--input', input_folder,
             '--output', output_file,
-            '--format', 'jsonl',
-            '--output-format', 'event',
-            '--threads', '10'
+            '--format', 'jsonl'
         ]
 
         logger.info(f'Running: {" ".join(cmd_array)}')
@@ -272,9 +270,7 @@ class LogarchiveParser(BaseParserInterface):
             'unifiedlog_iterator',
             '--mode', 'log-archive',
             '--input', input_folder,
-            '--format', 'jsonl',
-            '--output-format', 'event',
-            '--threads', '10'
+            '--format', 'jsonl'
         ]
 
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
