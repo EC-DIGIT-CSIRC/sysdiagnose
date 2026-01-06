@@ -14,6 +14,22 @@
             "cwd": "${workspaceFolder}/"
         },
         {
+            "name": "Python Debugger: timesketch_importer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--host_uri", "http://localhost",
+                "--username", "chri",
+                "--password", "Password1234",
+                "-d",
+                "--timeline_name", "CASE_ID_CAPTURE_DATE",
+                "--sketch_name", "DEVICE_ID",
+                "/home/chri/Projects/sysdiagnose/sysdiagnose/cases/public/parsed_data/wifiscan.jsonl"
+            ]
+        },
+        {
             "name": "Python Debugger: cases",
             "type": "debugpy",
             "request": "launch",
