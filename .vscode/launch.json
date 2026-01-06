@@ -340,6 +340,14 @@
             "module": "sysdiagnose.__main__",
             "args": "-c public parse swcutil",
             "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse ioservice",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public -l DEBUG parse ioservice",
+            "cwd": "${workspaceFolder}/"
         }
     ]
 }
