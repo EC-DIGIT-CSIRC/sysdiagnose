@@ -235,17 +235,16 @@ class LogarchiveParser(BaseParserInterface):
 
     def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
         """
-        Let Rust write the file directly - ZERO Python overhead!
-        Rust binary outputs Event format and writes to file in one pass.
-        Maximum performance: 320K+ lines/sec
+        Let Rust write the file directly, then convert to Event format.
+        unifiedlog_iterator outputs raw unifiedlog format, so we need to convert it.
         """
-        # Let Rust do EVERYTHING: parse, convert, and write
-        # Python just waits for it to finish
+        # Use a temporary file for unifiedlog_iterator output
+        temp_output = output_file + '.tmp'
         cmd_array = [
             'unifiedlog_iterator',
             '--mode', 'log-archive',
             '--input', input_folder,
-            '--output', output_file,
+            '--output', temp_output,
             '--format', 'jsonl'
         ]
 
@@ -258,12 +257,30 @@ class LogarchiveParser(BaseParserInterface):
             logger.error(f'stderr: {result.stderr}')
             raise RuntimeError(f'unifiedlog_iterator failed: {result.stderr}')
 
+        # Convert unifiedlog format to Event format
+        logger.info(f'Converting unifiedlog format to Event format')
+        try:
+            with open(temp_output, 'rb') as f_in, open(output_file, 'wb') as f_out:
+                for line in f_in:
+                    try:
+                        entry = orjson.loads(line)
+                        if 'event_type' in entry and 'data' not in entry:
+                            converted_entry = LogarchiveParser.convert_entry_to_unifiedlog_format(entry)
+                            f_out.write(orjson.dumps(converted_entry))
+                            f_out.write(b'\n')
+                        else:
+                            f_out.write(line)
+                    except orjson.JSONDecodeError:
+                        continue
+        finally:
+            if os.path.exists(temp_output):
+                os.remove(temp_output)
         logger.info(f'Successfully wrote {output_file}')
         return []
 
     def __convert_using_unifiedlogparser_generator(input_folder: str):
         """
-        Generator that streams Event format directly from Rust binary.
+        Generator that streams entries from Rust binary and converts to Event format.
         Used for cases where we need to process entries one by one.
         """
         cmd_array = [
@@ -276,6 +293,9 @@ class LogarchiveParser(BaseParserInterface):
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
             try:
                 entry_json = orjson.loads(line)
+                # Convert unifiedlog format to Event format if needed
+                if 'event_type' in entry_json and 'data' not in entry_json:
+                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(entry_json)
                 yield entry_json
             except orjson.JSONDecodeError:
                 pass
