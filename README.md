@@ -209,10 +209,14 @@ Below you can find an example of traces within the log file.
 
 ```
 
+# Training material 
+During the [hack.lu](https://hack.lu) conference a workshop training session was given.
+You may find the training materials here: https://tinyurl.com/hacklu2025ios
+
+
 # Supported iOS versions
 
 Tested on:
-
 - python 3.11
 - iOS13 (to be confirmed)
 - iOS14 (to be confirmed)
@@ -220,6 +224,7 @@ Tested on:
 - iOS16
 - iOS17
 - iOS18
+- iOS26
 
 # Contributors
 
