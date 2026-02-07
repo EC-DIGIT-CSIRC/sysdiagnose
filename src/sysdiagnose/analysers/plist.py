@@ -134,8 +134,8 @@ class PListAnalyzer(BaseAnalyserInterface):
 
                     yield mdm_entry.to_dict()
 
-        except FileNotFoundError as e:
-            logger.warning(f'{entity_type} not found for {self.case_id}. {e}')
+        except FileNotFoundError:
+            logger.debug(f'{entity_type} not found for {self.case_id} (device not MDM-enrolled)')
         except Exception as e:
             logger.exception(f'ERROR while extracting {entity_type} file. {e}')
 
@@ -196,7 +196,159 @@ class PListAnalyzer(BaseAnalyserInterface):
 
                     yield profile_event.to_dict()
 
-        except FileNotFoundError as e:
-            logger.warning(f'{entity_type} not found for {self.case_id}. {e}')
+        except FileNotFoundError:
+            logger.debug(f'{entity_type} not found for {self.case_id}')
+        except Exception as e:
+            logger.exception(f'ERROR while extracting {entity_type} file. {e}')
+
+    def __extract_plist_vpn_profiles(self) -> Generator[dict, None, None]:
+        """
+        Extracts VPN and network extension profile configurations from the
+        NetworkExtension plist.
+
+        Parses each NEConfiguration entry from com.apple.networkextension.plist,
+        extracting VPN tunnel details such as provider bundle identifiers, server
+        addresses, on-demand rules, and tunnel settings. Non-VPN network extension
+        entries (content filters, DNS settings) are also captured.
+
+        Uses the sysdiagnose creation timestamp since VPN configs are a point-in-time
+        snapshot with no individual timestamps.
+
+        :yield: A dictionary containing VPN profile details.
+        """
+        entity_type: str = 'logs_Networking_com.apple.networkextension.plist.json'
+        file_path: str = f'{self.parser.output_folder}/{entity_type}'
+
+        # Map numeric tunnel types to human-readable names
+        tunnel_type_map = {
+            1: 'PacketTunnel',
+            2: 'AppProxy',
+            3: 'IPSec',
+            4: 'IKEv2',
+        }
+
+        # Map numeric on-demand action values to names
+        on_demand_action_map = {
+            1: 'Connect',
+            2: 'Disconnect',
+            3: 'EvaluateConnection',
+            4: 'Ignore',
+        }
+
+        # Map numeric interface type match values
+        interface_type_map = {
+            0: 'Any',
+            1: 'Ethernet',
+            2: 'WiFi',
+            3: 'Cellular',
+        }
+
+        snapshot_time = self.sysdiagnose_creation_datetime
+
+        try:
+            with open(file_path, 'r') as f:
+                data = json.loads(f.read())
+
+            for config_uuid, config_entry in data.items():
+                if not isinstance(config_entry, dict):
+                    continue
+
+                # Skip metadata keys (Version, Generation, Index, etc.)
+                if 'VPN' not in config_entry and 'ContentFilter' not in config_entry and 'DNSSettings' not in config_entry:
+                    continue
+
+                name = config_entry.get('Name', '')
+                application = config_entry.get('Application', '')
+                application_name = config_entry.get('ApplicationName', '')
+
+                vpn_config = config_entry.get('VPN')
+                content_filter = config_entry.get('ContentFilter')
+                dns_settings = config_entry.get('DNSSettings')
+
+                # Determine the extension type
+                if isinstance(vpn_config, dict) and vpn_config:
+                    extension_type = 'VPN'
+                elif isinstance(content_filter, dict) and content_filter:
+                    extension_type = 'ContentFilter'
+                elif isinstance(dns_settings, dict) and dns_settings:
+                    extension_type = 'DNSSettings'
+                else:
+                    extension_type = 'Other'
+
+                event_data = {
+                    'source': entity_type,
+                    'ConfigUUID': config_uuid,
+                    'Name': name,
+                    'Application': application,
+                    'ApplicationName': application_name,
+                    'ExtensionType': extension_type,
+                    'Grade': config_entry.get('Grade'),
+                    'AlwaysOnVPN': config_entry.get('AlwaysOnVPN'),
+                }
+
+                # Extract VPN-specific fields
+                if extension_type == 'VPN' and isinstance(vpn_config, dict):
+                    raw_tunnel_type = vpn_config.get('TunnelType')
+                    event_data['TunnelType'] = tunnel_type_map.get(raw_tunnel_type, raw_tunnel_type)
+                    event_data['Enabled'] = vpn_config.get('Enabled', False)
+                    event_data['OnDemandEnabled'] = vpn_config.get('OnDemandEnabled', False)
+                    event_data['DisconnectOnDemandEnabled'] = vpn_config.get('DisconnectOnDemandEnabled', False)
+
+                    # Resolve on-demand rules with human-readable values
+                    raw_rules = vpn_config.get('OnDemandRules', [])
+                    if isinstance(raw_rules, list) and raw_rules:
+                        resolved_rules = []
+                        for rule in raw_rules:
+                            if isinstance(rule, dict):
+                                resolved_rule = {}
+                                raw_action = rule.get('Action')
+                                resolved_rule['Action'] = on_demand_action_map.get(raw_action, raw_action)
+                                raw_iface = rule.get('InterfaceTypeMatch')
+                                resolved_rule['InterfaceTypeMatch'] = interface_type_map.get(raw_iface, raw_iface)
+                                # Include non-empty match criteria
+                                for match_key in ('SSIDMatch', 'DNSSearchDomainMatch', 'DNSServerAddressMatch', 'ProbeURL'):
+                                    val = rule.get(match_key)
+                                    if val:
+                                        resolved_rule[match_key] = val
+                                resolved_rules.append(resolved_rule)
+                        event_data['OnDemandRules'] = resolved_rules
+
+                    # Extract protocol details
+                    protocol = vpn_config.get('Protocol')
+                    if isinstance(protocol, dict):
+                        event_data['ServerAddress'] = protocol.get('ServerAddress', '')
+                        event_data['NEProviderBundleIdentifier'] = protocol.get('NEProviderBundleIdentifier', '')
+                        event_data['IncludeAllNetworks'] = protocol.get('IncludeAllNetworks', False)
+                        event_data['ExcludeLocalNetworks'] = protocol.get('ExcludeLocalNetworks', False)
+                        event_data['EnforceRoutes'] = protocol.get('EnforceRoutes', False)
+                        event_data['DisconnectOnSleep'] = protocol.get('DisconnectOnSleep', False)
+
+                        vendor_config = protocol.get('VendorConfiguration')
+                        if isinstance(vendor_config, dict) and vendor_config:
+                            event_data['VendorConfiguration'] = vendor_config
+
+                # Build message
+                status_parts = []
+                if event_data.get('Enabled'):
+                    status_parts.append('enabled')
+                if event_data.get('OnDemandEnabled'):
+                    status_parts.append('on-demand')
+                status_str = f" ({', '.join(status_parts)})" if status_parts else ''
+
+                display_name = application_name or name or application or config_uuid
+                message = f"NetworkExtension {extension_type}: {display_name}{status_str}"
+
+                vpn_event = Event(
+                    datetime=snapshot_time,
+                    message=message,
+                    timestamp_desc='Sysdiagnose Creation',
+                    module=self.module_name,
+                    data=event_data
+                )
+
+                yield vpn_event.to_dict()
+
+        except FileNotFoundError:
+            logger.debug(f'{entity_type} not found for {self.case_id}')
         except Exception as e:
             logger.exception(f'ERROR while extracting {entity_type} file. {e}')

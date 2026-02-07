@@ -35,6 +35,12 @@ class McStateSharedProfileParser(BaseParserInterface):
             entry = misc.load_plist_file_as_json(log_file)
             timestamp = datetime.strptime(entry['InstallDate'], '%Y-%m-%dT%H:%M:%S.%f')
             timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
+
+            # Extract the SHA-256 hash from the stub filename (profile-{hash}.stub)
+            stub_filename = os.path.basename(log_file)
+            if stub_filename.startswith('profile-') and stub_filename.endswith('.stub'):
+                entry['ProfileStubHash'] = stub_filename[len('profile-'):-len('.stub')]
+
             event = Event(
                 datetime=timestamp,
                 message='# '.join([entry.get('PayloadDescription', ''), entry.get('PayloadDisplayName', ''), entry.get('PayloadOrganization', '')]),
