@@ -14,6 +14,7 @@ from sysdiagnose.parsers.logdata_statistics_txt import LogDataStatisticsTxtParse
 from sysdiagnose.parsers.uuid2path import UUID2PathParser
 from sysdiagnose.parsers.taskinfo import TaskinfoParser
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
+from sysdiagnose.parsers.crashlogs import CrashLogsParser
 
 
 class PsEverywhereAnalyser(BaseAnalyserInterface):
@@ -121,6 +122,18 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         self.pid_to_name[pid] = self._strip_flags(name)
         except Exception as e:
             logger.debug(f"Could not build PID mapping from taskinfo: {e}")
+
+        # Build from crashlogs (JetsamEvent process lists)
+        try:
+            for event in CrashLogsParser(self.config, self.case_id).get_result():
+                report = event.get('data', {}).get('report', {})
+                for proc in report.get('processes', []):
+                    pid = proc.get('pid')
+                    name = proc.get('name')
+                    if pid and name:
+                        self.pid_to_name[pid] = name
+        except Exception as e:
+            logger.debug(f"Could not build PID mapping from crashlogs: {e}")
 
         logger.info(f"Built PID mapping with {len(self.pid_to_name)} entries")
 
@@ -499,6 +512,65 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             timestamp_desc="Existing service at sysdiagnose creation time",
                             module=self.module_name,
                             data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
+                        ).to_dict()
+        except Exception as e:
+            logger.exception(f"ERROR while extracting {entity_type}. {e}")
+
+    def __extract_ps_crashlogs(self) -> Generator[dict, None, None]:
+        """
+        Extracts process data from crash logs.
+
+        JetsamEvent crash logs contain a full list of running processes at the time of the event.
+        Other crash types contain the crashing process name and path.
+
+        :return: A generator yielding dictionaries containing process details from crash logs.
+        """
+        entity_type = 'crashlogs'
+        try:
+            for event in CrashLogsParser(self.config, self.case_id).get_result():
+                report = event.get('data', {}).get('report', {})
+                event_datetime = datetime.fromisoformat(event['datetime'])
+
+                # JetsamEvent: extract all processes from the process list
+                processes = report.get('processes', [])
+                for proc in processes:
+                    name = proc.get('name')
+                    if not name:
+                        continue
+                    pid = proc.get('pid')
+                    if self.add_if_full_path_is_not_in_set(name, event_datetime, None):
+                        yield Event(
+                            datetime=event_datetime,
+                            message=name,
+                            timestamp_desc='Process seen in JetsamEvent',
+                            module=self.module_name,
+                            data={'source': entity_type, 'uid': None, 'pid': pid, 'ppid': None, 'ppname': None}
+                        ).to_dict()
+
+                # Non-JetsamEvent: extract crashing process path/name with uid/ppid
+                proc_path = report.get('procPath')
+                proc_name = report.get('procName')
+                uid = self._sanitize_uid(report.get('userID'))
+                pid = report.get('pid')
+                ppid = report.get('parentPid')
+                ppname = report.get('parentProc')
+                if proc_path:
+                    if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path), event_datetime, uid):
+                        yield Event(
+                            datetime=event_datetime,
+                            message=self._strip_flags(proc_path),
+                            timestamp_desc='Crashing process from crashlog',
+                            module=self.module_name,
+                            data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
+                        ).to_dict()
+                elif proc_name:
+                    if self.add_if_full_path_is_not_in_set(proc_name, event_datetime, uid):
+                        yield Event(
+                            datetime=event_datetime,
+                            message=proc_name,
+                            timestamp_desc='Crashing process from crashlog',
+                            module=self.module_name,
+                            data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
                         ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
