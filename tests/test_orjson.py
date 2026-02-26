@@ -10,7 +10,7 @@ from tests import SysdiagnoseTestCase
 
 
 class TestOrjson(SysdiagnoseTestCase):
-    # @unittest.skip("Benchmarking only, not a real test")
+    @unittest.skip("Benchmarking only, not a real test")
     def test_orjson(self):
         for case in self.sd.cases():
             fname = Path(self.sd.config.get_case_parsed_data_folder(case_id=case)) / "logarchive.jsonl"
