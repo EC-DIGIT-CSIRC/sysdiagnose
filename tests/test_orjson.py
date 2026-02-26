@@ -1,18 +1,19 @@
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils.base import Event
+import timeit
 import unittest
+from pathlib import Path
+
 import orjson
 import orjsonl
-import timeit
-import json
-from pathlib import Path
+
+from sysdiagnose.utils.base import Event
+from tests import SysdiagnoseTestCase
 
 
 class TestOrjson(SysdiagnoseTestCase):
-
+    # @unittest.skip("Benchmarking only, not a real test")
     def test_orjson(self):
         for case in self.sd.cases():
-            fname = Path(self.sd.config.get_case_parsed_data_folder(case_id=case)) / 'logarchive.jsonl'
+            fname = Path(self.sd.config.get_case_parsed_data_folder(case_id=case)) / "logarchive.jsonl"
 
             print(f"Benchmarking {fname}...")
             # print("load_orjsonl_dict: ", end=" ")
@@ -68,7 +69,7 @@ class TestOrjson(SysdiagnoseTestCase):
 
     def load_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, 'r', encoding='utf-8') as f:
+        with open(fname, "r", encoding="utf-8") as f:
             for line in f:
                 item = orjson.loads(line)
                 # self.assertIsInstance(item, dict)
@@ -79,23 +80,21 @@ class TestOrjson(SysdiagnoseTestCase):
 
     def load_save_dumps_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, 'r', encoding='utf-8') as f_in:
-            with open('/tmp/logarchive.jsonl', 'wb') as f_out:
-                for line in f_in:
-                    item = orjson.loads(line)
-                    e = Event.from_dict(item)
-                    f_out.write(orjson.dumps(e))
-                    i += 1
+        with open(fname, "r", encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
+            for line in f_in:
+                item = orjson.loads(line)
+                e = Event.from_dict(item)
+                f_out.write(orjson.dumps(e))
+                i += 1
 
     def load_save_dumpstodict_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, 'r', encoding='utf-8') as f_in:
-            with open('/tmp/logarchive.jsonl', 'wb') as f_out:
-                for line in f_in:
-                    item = orjson.loads(line)
-                    e = Event.from_dict(item)
-                    f_out.write(orjson.dumps(e.to_dict()))
-                    i += 1
+        with open(fname, "r", encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
+            for line in f_in:
+                item = orjson.loads(line)
+                e = Event.from_dict(item)
+                f_out.write(orjson.dumps(e.to_dict()))
+                i += 1
 
     # def load_plist_dict(self, fname: Path):
     #     i = 0
@@ -131,5 +130,5 @@ class TestOrjson(SysdiagnoseTestCase):
     #     self.assertGreater(i, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
