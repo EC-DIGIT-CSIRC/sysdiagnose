@@ -551,7 +551,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 proc_path = report.get('procPath')
                 proc_name = report.get('procName')
                 uid = self._sanitize_uid(report.get('userID'))
-                pid = report.get('pid')
+                crash_pid = report.get('pid')
                 ppid = report.get('parentPid')
                 ppname = report.get('parentProc')
                 if proc_path:
@@ -561,7 +561,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             message=self._strip_flags(proc_path),
                             timestamp_desc='Crashing process from crashlog',
                             module=self.module_name,
-                            data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
+                            data={'source': entity_type, 'uid': uid, 'pid': crash_pid, 'ppid': ppid, 'ppname': ppname}
                         ).to_dict()
                 elif proc_name:
                     if self.add_if_full_path_is_not_in_set(proc_name, event_datetime, uid):
@@ -570,7 +570,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                             message=proc_name,
                             timestamp_desc='Crashing process from crashlog',
                             module=self.module_name,
-                            data={'source': entity_type, 'uid': uid, 'pid': pid, 'ppid': ppid, 'ppname': ppname}
+                            data={'source': entity_type, 'uid': uid, 'pid': crash_pid, 'ppid': ppid, 'ppname': ppname}
                         ).to_dict()
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
