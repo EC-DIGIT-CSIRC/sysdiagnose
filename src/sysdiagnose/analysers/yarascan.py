@@ -203,6 +203,9 @@ class YaraAnalyser(BaseAnalyserInterface):
                                                  f"Invalid JSON in {file_path} at offset {instance.offset}. Setting default datetime.",
                                                  extra={'yara_target_file': file_path})
 
+                            except KeyError:
+                                logger.exception("Error while extracting the datetime.")
+
                         # match details
                         match_details.append(
                             f"Id: '{string_match.identifier}', "

@@ -23,13 +23,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up unifiedlog_iterator
+      - name: Set up unifiedlog_iterator (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cargo
           git clone https://github.com/mandiant/macos-UnifiedLogs
           cd macos-UnifiedLogs/examples/unifiedlog_iterator/
           cargo build --release
-          sudo cp ../target/release/unifiedlog_iterator /usr/local/bin/
+          if [ -f target/release/unifiedlog_iterator ]; then
+            sudo cp target/release/unifiedlog_iterator /usr/local/bin/
+          elif [ -f ../target/release/unifiedlog_iterator ]; then
+            sudo cp ../target/release/unifiedlog_iterator /usr/local/bin/
+          else
+            echo "Error: unifiedlog_iterator binary not found"
+            find . -name unifiedlog_iterator -type f
+            exit 1
+          fi
+      - name: Set up unifiedlog_iterator (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install rust
+          git clone https://github.com/mandiant/macos-UnifiedLogs
+          cd macos-UnifiedLogs/examples/unifiedlog_iterator/
+          cargo build --release
+          # Try both possible paths (workspace vs local target directory)
+          if [ -f target/release/unifiedlog_iterator ]; then
+            sudo cp target/release/unifiedlog_iterator /usr/local/bin/
+          elif [ -f ../target/release/unifiedlog_iterator ]; then
+            sudo cp ../target/release/unifiedlog_iterator /usr/local/bin/
+          else
+            echo "Error: unifiedlog_iterator binary not found"
+            find . -name unifiedlog_iterator -type f
+            exit 1
+          fi
+          # Verify installation
+          unifiedlog_iterator --help
+          which unifiedlog_iterator
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
