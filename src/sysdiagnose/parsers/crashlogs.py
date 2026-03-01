@@ -104,6 +104,7 @@ class CrashLogsParser(BaseParserInterface):
                 timestamp = datetime.strptime(result['timestamp'], '%Y-%m-%d %H:%M:%S.%f %z')
 
             result['name'] = CrashLogsParser.metadata_from_filename(path)[0]
+            result['filename'] = os.path.basename(path)
             try:
                 message = f"Crashlog: {result['report']['reason']}"
             except KeyError:
