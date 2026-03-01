@@ -40,7 +40,7 @@ class CrashLogsParser(BaseParserInterface):
             log_files.extend(glob.glob(os.path.join(self.case_data_folder, log_files_glob), recursive=True))
 
         # exclude some files
-        exclusion_strings = ['WiFiLQMMetrics', 'OTAUpdate']
+        exclusion_strings = ['WiFiLQMMetrics', 'OTAUpdate', 'ProxiedDevice']
         for exclusion_string in exclusion_strings:
             log_files = [x for x in log_files if exclusion_string not in x]
 
