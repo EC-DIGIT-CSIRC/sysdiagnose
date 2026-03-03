@@ -172,7 +172,7 @@ class Apollo():
                         item['apollo_module'] = module_query['name']
                         event = Event(
                             datetime=timestamp,
-                            message=module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k]),
+                            message=module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'table id' not in k]),
                             module=self.saf_module,
                             timestamp_desc=module_query['activity'],
                             data=item
