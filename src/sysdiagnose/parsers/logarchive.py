@@ -156,21 +156,58 @@ class LogarchiveParser(BaseParserInterface):
                 i += 1
 
     def get_first_and_last_entries(output_file: str) -> tuple:
+        first_entry = None
+        last_entry = None
+
         with open(output_file, 'rb') as f:
-            first_entry = orjson.loads(f.readline())
-            # discover last line efficiently
-            f.seek(-2, os.SEEK_END)  # Move the pointer to the second-to-last byte in the file
-            # Move backwards until a newline character is found, or we hit the start of the file
+            # Find first entry that has a 'time' field.
+            # The first line is usually a valid entry, but guard defensively.
+            for raw_line in f:
+                try:
+                    entry = orjson.loads(raw_line)
+                    if 'time' in entry:
+                        first_entry = entry
+                        break
+                except orjson.JSONDecodeError:
+                    continue
+
+            if first_entry is None:
+                raise ValueError(f'No entry with time field found in {output_file}')
+
+            # Find last entry with a 'time' field.
+            # The Rust unifiedlog_iterator appends a summary footer like
+            # {'count': N, 'finished': 1} which has no 'time' key.
+            # Use efficient backward seek for the last line, then fall back
+            # to a linear scan if that line turns out to be the footer.
+            f.seek(-2, os.SEEK_END)
             while f.tell() > 0:
                 char = f.read(1)
                 if char == b'\n':
                     break
-                f.seek(-2, os.SEEK_CUR)  # Move backwards
+                f.seek(-2, os.SEEK_CUR)
 
-            # Read the last line
-            last_entry = orjson.loads(f.readline())
+            try:
+                entry = orjson.loads(f.readline())
+                if 'time' in entry:
+                    last_entry = entry
+            except orjson.JSONDecodeError:
+                pass
 
-            return (first_entry, last_entry)
+            if last_entry is None:
+                # Footer detected — do a full linear scan to find the last valid entry
+                f.seek(0)
+                for raw_line in f:
+                    try:
+                        entry = orjson.loads(raw_line)
+                        if 'time' in entry:
+                            last_entry = entry
+                    except orjson.JSONDecodeError:
+                        continue
+
+            if last_entry is None:
+                raise ValueError(f'No entry with time field found in {output_file}')
+
+        return (first_entry, last_entry)
 
     def parse_all_to_file(folders: list, output_file: str):
         # no caching
