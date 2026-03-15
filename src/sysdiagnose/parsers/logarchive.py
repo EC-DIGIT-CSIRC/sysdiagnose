@@ -58,8 +58,12 @@ class LogarchiveParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_folder_glob = '**/system_logs.logarchive/'
-        return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
+        results = []
+        for pattern in ['**/system_logs.logarchive/', '**/collect_system_logs.logarchive/']:
+            results.extend(
+                glob.glob(os.path.join(self.case_data_folder, pattern), recursive=True)
+            )
+        return results
 
     @DeprecationWarning
     def execute(self) -> list | dict:
