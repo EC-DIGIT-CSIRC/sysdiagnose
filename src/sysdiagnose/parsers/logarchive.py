@@ -192,9 +192,25 @@ class LogarchiveParser(BaseParserInterface):
             for folder in folders:
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
-                temp_files.append({
-                    'file': temp_file,
-                })
+                # Only include the temp file if it produced non-empty output.
+                # An empty file means parsing failed (e.g. unifiedlog couldn't read
+                # the logarchive); including it would crash merge_files on orjson.loads.
+                if os.path.getsize(temp_file.name) > 0:
+                    temp_files.append({
+                        'file': temp_file,
+                    })
+                else:
+                    logger.warning(f'Skipping empty logarchive parse result for: {folder}')
+                    os.remove(temp_file.name)
+
+            if not temp_files:
+                logger.warning('No logarchive folders produced output, skipping merge')
+                return
+
+            # If only one file survived, skip merge and copy directly
+            if len(temp_files) == 1:
+                shutil.copyfile(temp_files[0]['file'].name, output_file)
+                return
 
             # merge files to the output file
             LogarchiveParser.merge_files(temp_files, output_file)
