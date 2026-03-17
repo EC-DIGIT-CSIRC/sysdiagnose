@@ -60,9 +60,11 @@ class LogarchiveParser(BaseParserInterface):
     def get_log_files(self) -> list:
         results = []
         for pattern in ['**/system_logs.logarchive/', '**/collect_system_logs.logarchive/']:
-            results.extend(
-                glob.glob(os.path.join(self.case_data_folder, pattern), recursive=True)
-            )
+            matches = glob.glob(os.path.join(self.case_data_folder, pattern), recursive=True)
+            results.extend(matches)
+            if matches:
+                logger.info(f'get_log_files: pattern {pattern} matched {len(matches)} folder(s)')
+        logger.info(f'get_log_files: total {len(results)} logarchive folder(s) found')
         return results
 
     @DeprecationWarning
@@ -210,29 +212,27 @@ class LogarchiveParser(BaseParserInterface):
         return (first_entry, last_entry)
 
     def parse_all_to_file(folders: list, output_file: str):
-        # no caching
+        logger.info(f'parse_all_to_file called with {len(folders)} folder(s): {folders}')
+
         # simple mode: only one folder
         if len(folders) == 1:
             LogarchiveParser.parse_folder_to_file(folders[0], output_file)
             return
 
         # complex mode: multiple folders, need to merge multiple files
-        # for each of the log folders
-        # - parse it to a temporary file, keep track of the file reference or name
-        # - keep track of the first and last timestamp of each file
-        # - order the files, and if a file contains a subset of another one, skip it.
-        #   this is a though one, as we may have partially overlapping timeframes, so we may need to re-assemble in a smart way.
-        # - once we know the order, bring the files together to the final single output file
-
         temp_files = []
         try:
             for folder in folders:
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
-                LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
-                # Only include the temp file if it produced non-empty output.
-                # An empty file means parsing failed (e.g. unifiedlog couldn't read
-                # the logarchive); including it would crash merge_files on orjson.loads.
-                if os.path.getsize(temp_file.name) > 0:
+                try:
+                    LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
+                except Exception as e:
+                    logger.error(f'parse_folder_to_file failed for {folder}: {e}')
+                    os.remove(temp_file.name)
+                    continue
+                file_size = os.path.getsize(temp_file.name)
+                logger.info(f'Parsed {folder} -> {file_size} bytes')
+                if file_size > 0:
                     temp_files.append({
                         'file': temp_file,
                     })
@@ -259,8 +259,6 @@ class LogarchiveParser(BaseParserInterface):
 
     def parse_folder_to_file(input_folder: str, output_file: str) -> bool:
         try:
-            # ALWAYS use unifiedlog_iterator (fast Rust binary) instead of native macOS log parser
-            # The Rust binary is 10x faster and produces consistent output across platforms
             LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
             return True
         except IndexError:
@@ -268,6 +266,9 @@ class LogarchiveParser(BaseParserInterface):
             return False
         except FileNotFoundError:
             logger.exception('Error: unifiedlogs command not found, please refer to the README for further instructions')
+            return False
+        except RuntimeError:
+            logger.exception(f'unifiedlog_iterator failed for folder: {input_folder}')
             return False
 
     def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
