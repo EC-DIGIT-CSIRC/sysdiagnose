@@ -16,7 +16,8 @@ class PlistParser(BaseParserInterface):
 
     def get_log_files(self) -> list:
         log_files_globs = [
-            '**/*.plist'
+            '**/*.plist',
+            '**/*.stub',
         ]
         log_files = []
         for log_files_glob in log_files_globs:
