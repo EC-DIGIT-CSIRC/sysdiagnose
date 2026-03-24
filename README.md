@@ -1,4 +1,4 @@
-# Sysdiagnose analysis framework
+# Sysdiagnose Analysis Framework (SAF)
 
 ![sysdiagnose-512x512](https://github.com/EC-DIGIT-CSIRC/sysdiagnose/assets/750019/2742ca75-758e-4393-a2d1-5c94d09b0eb3)
 
