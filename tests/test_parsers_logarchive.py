@@ -2,7 +2,7 @@ from sysdiagnose.parsers.logarchive import LogarchiveParser
 from tests import SysdiagnoseTestCase
 import os
 import unittest
-import json
+import orjson
 import tempfile
 
 
@@ -20,9 +20,9 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             # we don't test getting result in memory, but check one line in the output.
-            with open(p.output_file, 'r') as f:
+            with open(p.output_file, 'rb') as f:
                 line = f.readline()
-                item = json.loads(line)
+                item = orjson.loads(line)
                 self.assertTrue('subsystem' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
 
@@ -158,7 +158,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                     'file': temp_file,
                 })
                 for entry in file:
-                    temp_file.write(json.dumps(entry).encode())
+                    temp_file.write(orjson.dumps(entry))
                     temp_file.write(b'\n')
                 temp_file.close()
             # merge the files
@@ -168,9 +168,9 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
 
             # read the output file
             result = []
-            with open(output_file.name, 'r') as f:
+            with open(output_file.name, 'rb') as f:
                 for line in f:
-                    result.append(json.loads(line))
+                    result.append(orjson.loads(line))
 
         finally:
             for temp_file in temp_files:

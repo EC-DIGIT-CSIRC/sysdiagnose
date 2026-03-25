@@ -44,7 +44,11 @@ class YaraAnalyser(BaseAnalyserInterface):
                 self.output_file,         # don't match on ourselves
             ],
             ignore_folders=[
-                glob.glob(os.path.join(self.case_data_subfolder, 'system_logs.logarchive')).pop(),  # irrelevant for YARA rules
+                p for pattern in [
+                    'system_logs.logarchive',
+                    'collect_system_logs.logarchive',
+                ]
+                for p in glob.glob(os.path.join(self.case_data_subfolder, pattern))
             ]
         )
 
