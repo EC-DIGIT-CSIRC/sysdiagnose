@@ -9,10 +9,11 @@
 #   ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
 #   ./logs/Accessibility/TCC.db
 #   ./logs/appinstallation/appstored.sqlitedb
-import sys
+import argparse
 import json
 import sqlite3
-import argparse
+import sys
+
 from sysdiagnose.utils.logger import logger
 
 version_string = "sqlite2json.py v2020-02-18 Version 1.0"
@@ -22,8 +23,8 @@ version_string = "sqlite2json.py v2020-02-18 Version 1.0"
 
 def sqlite2struct(dbpath) -> dict:
     """
-        Transform a SQLite DB to a Python struct.
-        If any exception, return None
+    Transform a SQLite DB to a Python struct.
+    If any exception, return None
     """
     try:
         dbstruct = {}
@@ -32,7 +33,7 @@ def sqlite2struct(dbpath) -> dict:
             content = table2struct(dbfd, table)
             dbstruct[table] = content
         return dbstruct
-    except Exception as e:
+    except Exception:
         logger.exception(f"Could not parse {dbpath}.")
     return None
 
@@ -48,7 +49,9 @@ def gettables(dbfd):
 
 def getcolumnsfromtable(dbfd, tablename):
     cursor = dbfd.cursor()
-    cursor.execute(f"SELECT * FROM '{tablename}'")
+    # prepared statements do not support column names, only data
+    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    cursor.execute(f"SELECT * FROM `{tablename}`")
     col_name_list = [tuple[0] for tuple in cursor.description]
     return col_name_list
 
@@ -57,7 +60,9 @@ def table2struct(dbfd, tablename):
     table = []
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
-    for row in cursor.execute(f"SELECT * FROM '{tablename}'"):
+    # prepared statements do not support column names, only data
+    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    for row in cursor.execute(f"SELECT * FROM `{tablename}`"):
         line = {}
         ptr = 0
         for element in row:
@@ -74,9 +79,10 @@ def dump2json(dbstruct, jsonpath="./db.json"):
     try:
         with open(jsonpath, "w") as fd:
             fd.write(jsontxt)
-    except Exception as e:
+    except Exception:
         logger.exception(f"Impossible to dump the UUID to Path to {jsonpath}.")
     return jsontxt
+
 
 # --------------------------------------------------------------------------- #
 
@@ -98,14 +104,12 @@ def main():
     else:
         parser.print_help()
         sys.exit(-1)
-    return
 
 
 """
    Call main function
 """
 if __name__ == "__main__":
-
     # Create an instance of the Analysis class (called "base") and run main
     main()
 
