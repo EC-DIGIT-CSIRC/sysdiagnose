@@ -1,4 +1,4 @@
-'''
+"""
 --------------------------------------------------------------------------------
       Copyright (c) 2018-2020 Sarah Edwards (Station X Labs, LLC,
       @iamevltwin, mac4n6.com). All rights reserved.
@@ -57,22 +57,26 @@
       You should have received a copy of the GNU General Public License
       along with APOLLO.  If not, see <https://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
-'''
-import sqlite3
-import os
+"""
+
 import configparser
-import re
-from datetime import datetime, timezone
-from typing import Optional
-from sysdiagnose.utils.base import Event
 import glob
 import logging
+import os
+import re
+import sqlite3
+from datetime import datetime, timezone
+from typing import Optional
 
-default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apollo_modules')
+from sysdiagnose.utils.base import Event
+
+default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apollo_modules")
 
 
-class Apollo():
-    def __init__(self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = 'yolo'):
+class Apollo:
+    def __init__(
+        self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo"
+    ):
         """
         Initialize the Apollo class for parsing databases
 
@@ -92,36 +96,38 @@ class Apollo():
 
     def parse_module_definition(self, mod_dir, os_version):
         # Parse all module data and build our own list
-        mod_files = glob.glob(os.path.join(mod_dir, '*.txt'))
+        mod_files = glob.glob(os.path.join(mod_dir, "*.txt"))
         for mod_file in mod_files:
             parser = configparser.ConfigParser()
             parser.read(mod_file)
 
-            query_name = parser['Query Metadata']['QUERY_NAME']
-            activity = parser['Query Metadata']['ACTIVITY']
-            key_timestamp = parser['Query Metadata']['KEY_TIMESTAMP']
-            databases = parser['Database Metadata']['DATABASE']
-            database_name = databases.split(',')
+            query_name = parser["Query Metadata"]["QUERY_NAME"]
+            activity = parser["Query Metadata"]["ACTIVITY"]
+            key_timestamp = parser["Query Metadata"]["KEY_TIMESTAMP"]
+            databases = parser["Database Metadata"]["DATABASE"]
+            database_name = databases.split(",")
 
             for db in database_name:
                 # old code
                 self.supported_database_names.add(db)  # keep track of supported databases
 
                 for section in parser.sections():
-                    if 'SQL Query' not in section:
+                    if "SQL Query" not in section:
                         continue
-                    if os_version == 'yolo' or os_version in re.split('[ ,]', section):
-                        sql_query = parser.items(section, 'QUERY')[0][1]
+                    if os_version == "yolo" or os_version in re.split("[ ,]", section):
+                        sql_query = parser.items(section, "QUERY")[0][1]
                         if db not in self.modules:
                             self.modules[db] = []
 
-                        self.modules[db].append({
-                            'name': query_name,
-                            'db': db,
-                            'activity': activity,
-                            'key_timestamp': key_timestamp,
-                            'sql': sql_query
-                        })
+                        self.modules[db].append(
+                            {
+                                "name": query_name,
+                                "db": db,
+                                "activity": activity,
+                                "key_timestamp": key_timestamp,
+                                "sql": sql_query,
+                            }
+                        )
 
     def parse_db(self, db_fname: str, db_type: Optional[str] = None) -> list:
         results = []
@@ -142,46 +148,59 @@ class Apollo():
 
             # now do all the queries for this db
             for module_query in module_queries:
-                self.logger.info(f"Executing module on: {db_fname}",
-                                 extra={"apollo_module": module_query['name'], "table": db_fname})
+                self.logger.info(
+                    f"Executing module on: {db_fname}", extra={"apollo_module": module_query["name"], "table": db_fname}
+                )
 
                 try:
-                    cur.execute(module_query['sql'])
+                    # queries come from our own module definitions, so we can safely execute them without sanitization
+                    cur.execute(module_query["sql"])
                     rows = cur.fetchall()
                 except Exception as ex:
                     self.logger.exception(
                         f"WARNING: Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
-                        extra={"apollo_module": module_query['name']})
+                        extra={"apollo_module": module_query["name"]},
+                    )
                     continue
 
                 if not rows:
-                    self.logger.info(f"No Records Found for {module_query['name']}.",
-                                     extra={"apollo_module": module_query['name']})
+                    self.logger.info(
+                        f"No Records Found for {module_query['name']}.", extra={"apollo_module": module_query["name"]}
+                    )
                     continue
 
                 headers = []
                 for x in cur.description:
                     headers.append(x[0].lower())
 
-                key_timestamp = module_query['key_timestamp'].lower()
+                key_timestamp = module_query["key_timestamp"].lower()
                 for row in rows:
                     item = dict(list(zip(headers, row)))
                     try:
                         timestamp = datetime.fromisoformat(item[key_timestamp])
                         timestamp = timestamp.replace(tzinfo=timezone.utc)
-                        item['apollo_module'] = module_query['name']
+                        item["apollo_module"] = module_query["name"]
                         event = Event(
                             datetime=timestamp,
-                            message=module_query['activity'] + ': ' + ', '.join([f"{k}={v}" for k, v in list(zip(headers, row)) if k != key_timestamp and 'time' not in k and 'id' not in k]),
+                            message=module_query["activity"]
+                            + ": "
+                            + ", ".join(
+                                [
+                                    f"{k}={v}"
+                                    for k, v in list(zip(headers, row))
+                                    if k != key_timestamp and "time" not in k and "id" not in k
+                                ]
+                            ),
                             module=self.saf_module,
-                            timestamp_desc=module_query['activity'],
-                            data=item
+                            timestamp_desc=module_query["activity"],
+                            data=item,
                         )
                         results.append(event.to_dict())
                     except TypeError:
                         # problem with timestamp parsing
-                        self.logger.exception(f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
-                                              extra={"apollo_module": module_query['name'],
-                                                     "table": db_fname, "row": list(row)})
+                        self.logger.exception(
+                            f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
+                            extra={"apollo_module": module_query["name"], "table": db_fname, "row": list(row)},
+                        )
 
         return results
