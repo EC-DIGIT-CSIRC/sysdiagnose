@@ -133,7 +133,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
 
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')
-        coverage_df.index = [str(Path(p).relative_to(*Path(p).parts[:3])) if len(Path(p).parts) > 3 else Path(p).name for p in coverage_df.index]
+        coverage_df.index = [str(Path(p).relative_to(Path(self.case_data_subfolder))) for p in coverage_df.index]
 
         # Calculate statistics for parsed vs. not parsed files
         parsed_count = coverage_df['parser'].notna().sum()
