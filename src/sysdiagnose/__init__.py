@@ -22,65 +22,13 @@ class Sysdiagnose:
         self._cases = False   # will be populated through cases() method
         self.config: SysdiagnoseConfig = SysdiagnoseConfig(cases_path)
 
-    def cases(self, force: bool = False) -> dict:
+    def cases(self, force: bool = False) -> SysdiagnoseCaseLibrary:
         # kinda caching, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
-            lock = FileLock(self.config.cases_file)
-            try:
-                lock.acquire()
-                with open(self.config.cases_file, 'r+') as f:
-                    self._cases = json.load(f)
-                    if 'cases' in self._cases:  # conversion is needed
-                        new_format = {}
-                        for case in self._cases['cases']:
-                            case['case_id'] = str(case['case_id'])
-                            new_format[case['case_id']] = case
-
-                        cases = new_format
-                        f.seek(0)
-                        json.dump(cases, f, indent=4)
-                        f.truncate()
-            except FileNotFoundError:
-                self._cases = {}
-                with open(self.config.cases_file, 'w') as f:
-                    json.dump(self._cases, f, indent=4)
-            finally:
-                lock.release()
-
+            self._cases = SysdiagnoseCaseLibrary(self.config)
         return self._cases
 
-    def delete_case(self, case_id: str) -> None:
-        '''
-        Deletes a case from the sysdiagnose cases.
-
-        Parameters:
-            case_id (str): The case ID to delete.
-        '''
-        # check if case_id is valid
-        if case_id not in self.cases():
-            raise ValueError(f"Case ID {case_id} does not exist.")
-
-        # delete case folder
-        case_folder = os.path.join(self.config.cases_root_folder, case_id)
-        if os.path.isdir(case_folder):
-            try:
-                shutil.rmtree(case_folder)
-            except Exception as e:
-                raise Exception(f"Error while deleting case folder: {str(e)}")
-
-        # delete case from the cases
-        lock = FileLock(self.config.cases_file)
-        try:
-            lock.acquire()
-            with open(self.config.cases_file, 'r+') as f:
-                self._cases = json.load(f)           # load latest version
-                self._cases.pop(case_id, None)       # delete case
-                f.seek(0)                            # go back to the beginning of the file
-                json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()                         # truncate the rest of the file ensuring no old data is left
-        finally:
-            lock.release()
 
     def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
         '''
