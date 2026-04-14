@@ -45,10 +45,12 @@ class SystemVersionParser(BaseParserInterface):
             logger.warning('No SystemVersion.plist file present')
             return []
 
-    def parse_file(path: str) -> list | dict:
+    @staticmethod
+    def parse_file(path: str) -> dict:
         return misc.load_plist_file_as_json(path)
 
-    def parse_file_content(data: str) -> list | dict:
+    @staticmethod
+    def parse_file_content(data: str) -> dict:
         """
         This function is used to parse the content of the file
         :param data: The content of the file

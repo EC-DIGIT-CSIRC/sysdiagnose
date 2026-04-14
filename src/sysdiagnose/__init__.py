@@ -1,5 +1,8 @@
 from curses import meta
+import io
+from operator import ior
 import shutil
+from typing import Text
 from tabulate import tabulate
 import hashlib
 import importlib.util
@@ -81,7 +84,7 @@ class Sysdiagnose:
         finally:
             lock.release()
 
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
+    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> dict:
         '''
         Extracts the sysdiagnose file and creates a new case.
 
@@ -152,6 +155,7 @@ class Sysdiagnose:
                 'serial_number': metadata['serial_number'],
                 'unique_device_id': metadata['unique_device_id'],
                 'ios_version': metadata['ios_version'],
+                'model': metadata['model'],
                 'tags': []
             }
 
@@ -193,10 +197,12 @@ class Sysdiagnose:
         """
         from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
         from sysdiagnose.parsers.sys import SystemVersionParser
+        from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
         if os.path.isfile(source_file):
             remotectl_dumpstate_json = None
             sysdiagnose_log_file = None
+            ioreg_devicetree_json = None
 
             # workaround for incompatible filesystem such as SMB
             targz_file = source_file
@@ -208,7 +214,9 @@ class Sysdiagnose:
                 # incompatible filesystem, copy file locally instead
                 import shutil
                 import tempfile
-                targz_file = tempfile.mktemp(suffix='.tar.gz')
+                temp_file = tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False)
+                temp_file.close()
+                targz_file = temp_file.name
                 shutil.copyfile(source_file, targz_file)
 
             try:
@@ -226,22 +234,39 @@ class Sysdiagnose:
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
+                        # elif member_path.name == 'IOService.txt':
+                        #     ioreg_service_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
+                        #     p = IORegStructParser()
+                        #     ioreg_service_json = p.parse(ioreg_service_file, from_start=True)
+                        elif member_path.name == 'IODeviceTree.txt':
+                            ioreg_devicetree_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
+                            p = IORegStructParser()
+                            ioreg_devicetree_json = p.parse(ioreg_devicetree_file, from_start=True)
 
             except Exception as e:
-                logger.error(f"File 'remotectl_dumpstate.txt' or 'sysdiagnose.log' not found in the archive {source_file}: {e}", exc_info=True)
+                logger.error("Problem ocurred while processing the archive {source_file}: {e}", exc_info=True)
             finally:
                 if targz_file != source_file:
                     # remove the temporary file if we copied it
                     os.remove(targz_file)
 
         elif os.path.isdir(source_file):
-            sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
-            remotectl_dumpstate_file = os.path.join(source_file, 'remotectl_dumpstate.txt')
-            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
-            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
-
+            try:
+                sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
+                sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+                remotectl_dumpstate_file = os.path.join(source_file, 'remotectl_dumpstate.txt')
+                remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
+                sys_json_file = os.path.join(source_file, 'logs', 'SystemVersion', 'SystemVersion.plist')
+                sys_json = SystemVersionParser.parse_file(sys_json_file)
+                p = IORegStructParser()
+                # ioreg_service_file = os.path.join(source_file, 'ioreg', 'IOService.txt')
+                # ioreg_service_json = p.parse(ioreg_service_file)
+                ioreg_devicetree_file = os.path.join(source_file, 'ioreg', 'IODeviceTree.txt')
+                ioreg_devicetree_json = p.parse(ioreg_devicetree_file)
+            except Exception as e:
+                logger.error("Problem while processsing folder {source_file}: {e}", exc_info=True)
         else:
-            logger.error(f"File {source_file} is not a valid sysdiagnose file or folder.")
+            logger.error(f"File {source_file} is not a valid sysdiagnose folder.")
             return None
 
         # Time to obtain the metadata
@@ -268,40 +293,26 @@ class Sysdiagnose:
                     logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
-        else:
+        elif ioreg_devicetree_json and sys_json:
+            # elif ioreg_devicetree_json and sys_json:
+            # FIXME also write tests...
             try:
-                from  sysdiagnose.parsers.iodevicetree import  IODeviceTreeParser
-                from  sysdiagnose.parsers.ioservice import  IOServiceParser
-                iodevicetree = IODeviceTreeParser.parse_file(os.path.join(source_file, 'ioreg/IODeviceTree.txt'))
-                ioservicetree = IOServiceParser.parse_file(os.path.join(source_file, 'ioreg/IOService.txt'))
-
-                serial_number = iodevicetree['IOKitDiagnostics']['Classes']['device-tree']['IOPlatformSerialNumber']
-                unique_device_id = iodevicetree['IOKitDiagnostics']['Classes']['device-tree']['IOPlatformUUID']
-
-                # NOTE: there are many reference of the actual model in IOService.txt file
-                model = ioservicetree["IOKitDiagnostics"]["model"]
-                model = model.replace("<", "").replace(">", "").strip()
+                serial_number = ioreg_devicetree_json['device-tree']['IOPlatformSerialNumber']
                 metadata = {
                     'serial_number': serial_number,
-                    'unique_device_id': unique_device_id,
+                    'unique_device_id': 'unknown',  # It is not the same than the one from remotectl_dumpstate
                     'ios_version': sys_json['ProductVersion'],
-                    'model': model,
+                    'model': ioreg_devicetree_json['device-tree']['model'].strip('<>'),
                     'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
                     'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
                     'source_file': source_file,
                     'source_sha256': ''
                 }
-
-
-                # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
-                # FIXME also write tests...
+                metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
 
                 return metadata
             except Exception:
-                logger.error("Could not parse IODeviceTree or IOService, and therefore extract missing information.", exc_info=True)
-                return None
-
-
+                logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
 
         return None
 

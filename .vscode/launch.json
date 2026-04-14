@@ -38,19 +38,19 @@
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: init ios15",
+            "name": "Python Debugger: create ios15",
             "type": "debugpy",
             "request": "launch",
             "module": "sysdiagnose.__main__",
-            "args": "init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
+            "args": "create 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz' --force",
             "cwd": "${workspaceFolder}/"
         },
         {
-            "name": "Python Debugger: -c 1234-345-1345 init ios15",
+            "name": "Python Debugger: -c 1234-345-1345 create ios15",
             "type": "debugpy",
             "request": "launch",
             "module": "sysdiagnose.__main__",
-            "args": "-c 1234-345-1345 init 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
+            "args": "-c 1234-345-1345 create 'tests/testdata/iOS15/sysdiagnose_2023.05.24_13-29-15-0700_iPhone-OS_iPhone_19H349.tar.gz'",
             "cwd": "${workspaceFolder}/"
         },
         {
@@ -347,6 +347,22 @@
             "request": "launch",
             "module": "sysdiagnose.__main__",
             "args": "-c public -l DEBUG parse ioservice",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse iodevicetree",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public -l DEBUG parse iodevicetree",
+            "cwd": "${workspaceFolder}/"
+        },
+        {
+            "name": "Python Debugger: parse remotectl_dumpstate",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sysdiagnose.__main__",
+            "args": "-c public -l DEBUG parse remotectl_dumpstate",
             "cwd": "${workspaceFolder}/"
         }
     ]
