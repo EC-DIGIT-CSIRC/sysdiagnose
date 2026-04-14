@@ -294,13 +294,13 @@ class Sysdiagnose:
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
         elif ioreg_devicetree_json and sys_json:
-        # elif ioreg_devicetree_json and sys_json:
+            # elif ioreg_devicetree_json and sys_json:
             # FIXME also write tests...
             try:
                 serial_number = ioreg_devicetree_json['device-tree']['IOPlatformSerialNumber']
                 metadata = {
                     'serial_number': serial_number,
-                    'unique_device_id': 'unknown', # It is not the same than the one from remotectl_dumpstate
+                    'unique_device_id': 'unknown',  # It is not the same than the one from remotectl_dumpstate
                     'ios_version': sys_json['ProductVersion'],
                     'model': ioreg_devicetree_json['device-tree']['model'].strip('<>'),
                     'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
@@ -313,8 +313,6 @@ class Sysdiagnose:
                 return metadata
             except Exception:
                 logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
-
-
 
         return None
 
