@@ -27,6 +27,15 @@ class IOServiceParser(BaseParserInterface):
 
             So we know that the data doesn't contain the node identifier ('+-o')
 
+            File contains IOKit object where each entry has the following format:
+            +-o AppleACPIPlatformExpert  <class AppleACPIPlatformExpert, id 0x100000100, registered, matched, active, busy 0 (0 ms), retain 12>
+            {
+            "IOInterruptControllers" = ("io-apic-0")
+            "clock-frequency" = <00000000 3b9aca00>
+            "IOName" = "AppleACPIPlatformExpert"
+            }
+
+            Tree depth is determined by the the number of | in front of the entry.  Root has none.
         """  # noqa: W605
 
         log_files = self.get_log_files()
