@@ -1,3 +1,4 @@
+from curses import meta
 import shutil
 from tabulate import tabulate
 import hashlib
@@ -8,6 +9,7 @@ import re
 import tarfile
 from pathlib import Path
 from datetime import timezone
+from sysdiagnose.parsers import iodevicetree, ioservice
 from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.logger import set_json_logging, logger
 from io import TextIOWrapper
@@ -267,19 +269,39 @@ class Sysdiagnose:
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
         else:
-            # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
-            # FIXME also write tests...
-            serial_number = 'unknown'
-            metadata = {
-                'serial_number': serial_number,
-                'unique_device_id': 'unknown',
-                'ios_version': sys_json['ProductVersion'],
-                'model': 'unknown',  # FIXME figure out a way to get the model from sysdiagnose
-                'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
-                'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                'source_file': source_file,
-                'source_sha256': ''
-            }
+            try:
+                from  sysdiagnose.parsers.iodevicetree import  IODeviceTreeParser
+                from  sysdiagnose.parsers.ioservice import  IOServiceParser
+                iodevicetree = IODeviceTreeParser.parse_file(os.path.join(source_file, 'ioreg/IODeviceTree.txt'))
+                ioservicetree = IOServiceParser.parse_file(os.path.join(source_file, 'ioreg/IOService.txt'))
+
+                serial_number = iodevicetree['IOKitDiagnostics']['Classes']['device-tree']['IOPlatformSerialNumber']
+                unique_device_id = iodevicetree['IOKitDiagnostics']['Classes']['device-tree']['IOPlatformUUID']
+
+                # NOTE: there are many reference of the actual model in IOService.txt file
+                model = ioservicetree["IOKitDiagnostics"]["model"]
+                model = model.replace("<", "").replace(">", "").strip()
+                metadata = {
+                    'serial_number': serial_number,
+                    'unique_device_id': unique_device_id,
+                    'ios_version': sys_json['ProductVersion'],
+                    'model': model,
+                    'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
+                    'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
+                    'source_file': source_file,
+                    'source_sha256': ''
+                }
+
+
+                # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
+                # FIXME also write tests...
+
+                return metadata
+            except Exception:
+                logger.error("Could not parse IODeviceTree or IOService, and therefore extract missing information.", exc_info=True)
+                return None
+
+
 
         return None
 
