@@ -11,7 +11,7 @@ class IORegStructParser:
     def __init__(self):
         pass
 
-    def parse(self, file_path: str | PathLike[str] | TextIOBase, from_start: bool = False):
+    def parse(self, file_path: str | PathLike[str] | TextIOBase, from_start: bool = False) -> dict:
         """ This function is the main entry point of the class, it takes a file path or a
             file object and returns a json representation of the data.
             if from_start is true, the file object will be read from the start,
