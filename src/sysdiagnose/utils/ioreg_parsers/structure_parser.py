@@ -1,5 +1,7 @@
 from sysdiagnose.utils.base import logger
 from sysdiagnose.utils import string_parser
+from io import TextIOBase
+from os import PathLike
 import re
 
 class IORegStructParser:
@@ -9,12 +11,31 @@ class IORegStructParser:
     def __init__(self):
         pass
 
-    def parse(self, file_path):
+    def parse(self, file_path: str | PathLike[str] | TextIOBase, from_start: bool = False):
+        """ This function is the main entry point of the class, it takes a file path or a
+            file object and returns a json representation of the data.
+            if from_start is true, the file object will be read from the start,
+            otherwise it will be read from the current position.
+
+            Arguments:
+                file_path : str | PathLike[str] | TextIOBase
+                from_start : bool
+
+            Returns:
+                dict : json representation of the data
+
+        """
         data_tree = {}
 
-        with open(file_path, 'r', errors='backslashreplace') as f:
-            self.open_file = f
+        if isinstance(file_path, TextIOBase):
+            if from_start:
+                file_path.seek(0)
+            self.open_file = file_path
             self.recursive_loop(data_tree)
+        else:
+            with open(file_path, 'r', errors='backslashreplace') as f:
+                self.open_file = f
+                self.recursive_loop(data_tree)
 
         return data_tree
 
