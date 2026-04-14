@@ -206,7 +206,9 @@ class Sysdiagnose:
                 # incompatible filesystem, copy file locally instead
                 import shutil
                 import tempfile
-                targz_file = tempfile.mktemp(suffix='.tar.gz')
+                temp_file = tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False)
+                temp_file.close()
+                targz_file = temp_file.name
                 shutil.copyfile(source_file, targz_file)
 
             try:
