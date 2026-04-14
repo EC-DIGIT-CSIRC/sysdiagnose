@@ -14,6 +14,7 @@ from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnaly
 from sysdiagnose.utils.logger import set_json_logging, logger
 from io import TextIOWrapper
 from sysdiagnose.utils.lock import FileLock
+from sysdiagnose.utils.case import SysdiagnoseCase, SysdiagnoseCaseLibrary
 
 
 class Sysdiagnose:
