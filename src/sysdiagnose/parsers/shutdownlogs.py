@@ -25,7 +25,7 @@ class ShutdownLogsParser(BaseParserInterface):
 
     def get_log_files(self) -> list:
         log_files_globs = [
-            'system_logs.logarchive/Extra/shutdown.log'
+            'system_logs.logarchive/Extra/shutdown*.log'
         ]
         log_files = []
         for log_files_glob in log_files_globs:
