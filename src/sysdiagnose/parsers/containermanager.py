@@ -6,6 +6,7 @@
 
 import glob
 import os
+
 from sysdiagnose.utils import multilinelog
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 

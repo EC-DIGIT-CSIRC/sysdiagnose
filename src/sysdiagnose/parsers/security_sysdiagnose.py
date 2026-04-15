@@ -1,8 +1,9 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
@@ -105,7 +106,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
 
                         event.data['timestamp_info'] = 'sysdiagnose creation time'
                         event.data['section'] = root_key
-                        event.data['attributes'] = items[key]
+                        event.data['attributes'] = item
                         json_result['events'].append(event.to_dict())
 
         return json_result['events']

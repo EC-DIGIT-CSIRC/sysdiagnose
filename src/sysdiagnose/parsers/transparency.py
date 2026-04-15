@@ -1,9 +1,10 @@
-import json
 import glob
+import json
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
-from datetime import datetime
 import re
+from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class TransparencyParser(BaseParserInterface):
@@ -47,7 +48,7 @@ class TransparencyParser(BaseParserInterface):
     def extract_events(self, json_data: dict) -> list:
         events = []
         for item in json_data.get('registration', []):
-            for key in item.keys():
+            for key in item:
                 if 'At' in key:
                     # parse the time in this format "2023-04-11 09:38:27 +0000"
                     timestamp = datetime.strptime(item[key], "%Y-%m-%d %H:%M:%S %z")
@@ -134,7 +135,7 @@ class TransparencyParser(BaseParserInterface):
             except KeyError:
                 pass
 
-            for key, val in sm.get('ops', {}).items():
+            for _key, val in sm.get('ops', {}).items():
                 try:
                     time_str = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})', val).group(0)
                     timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S %z")

@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.iousb import IOUSBParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersIOUSB(SysdiagnoseTestCase):

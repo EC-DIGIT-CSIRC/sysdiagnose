@@ -7,8 +7,9 @@
 #
 import glob
 import os
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 from sysdiagnose.utils.misc import load_plist_file_as_json
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 
 
 class OldDscParser(BaseParserInterface):

@@ -1,9 +1,9 @@
-from datetime import datetime
 import json
+from datetime import datetime
 from typing import Generator
 
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger, Event
 from sysdiagnose.parsers.plists import PlistParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
 
 
 class PListAnalyzer(BaseAnalyserInterface):

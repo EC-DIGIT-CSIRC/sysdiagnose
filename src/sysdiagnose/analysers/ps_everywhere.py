@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
 
 from datetime import datetime, timedelta
-from typing import Generator, Set, Optional, Dict
-from sysdiagnose.parsers import ps
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger, Event
-from sysdiagnose.parsers.ps import PsParser
-from sysdiagnose.parsers.psthread import PsThreadParser
-from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
-from sysdiagnose.parsers.shutdownlogs import ShutdownLogsParser
+from typing import Dict, Generator, Optional, Set
+
 from sysdiagnose.parsers.logarchive import LogarchiveParser
 from sysdiagnose.parsers.logdata_statistics import LogDataStatisticsParser
 from sysdiagnose.parsers.logdata_statistics_txt import LogDataStatisticsTxtParser
-from sysdiagnose.parsers.uuid2path import UUID2PathParser
-from sysdiagnose.parsers.taskinfo import TaskinfoParser
+from sysdiagnose.parsers.ps import PsParser
+from sysdiagnose.parsers.psthread import PsThreadParser
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
+from sysdiagnose.parsers.shutdownlogs import ShutdownLogsParser
+from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
+from sysdiagnose.parsers.taskinfo import TaskinfoParser
+from sysdiagnose.parsers.uuid2path import UUID2PathParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
 
 
 class PsEverywhereAnalyser(BaseAnalyserInterface):
@@ -399,16 +399,15 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                     module=self.module_name,
                                     data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
                                 ).to_dict()
-                    else:
-                        # Handle the case where it's a single string
-                        if self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None, None, None):
-                            yield Event(
-                                datetime=p_datetime,
-                                message=self._strip_flags(extracted_process),
-                                timestamp_desc=p['timestamp_desc'],
-                                module=self.module_name,
-                                data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
-                            ).to_dict()
+                    # Handle the case where it's a single string
+                    elif self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None, None, None):
+                        yield Event(
+                            datetime=p_datetime,
+                            message=self._strip_flags(extracted_process),
+                            timestamp_desc=p['timestamp_desc'],
+                            module=self.module_name,
+                            data={'source': entity_type, 'uid': None, 'pid': None, 'ppid': None, 'ppname': None}
+                        ).to_dict()
 
                 # Process the original process name
                 if self.add_if_full_command_is_not_in_set(self._strip_flags(p['data']['process']), p_datetime, euid, pid, None):

@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
-from datetime import datetime
 import re
+from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class LockdowndParser(BaseParserInterface):

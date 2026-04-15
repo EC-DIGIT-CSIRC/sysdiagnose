@@ -1,22 +1,24 @@
-from curses import meta
-import io
-from operator import ior
-import shutil
-from typing import Text
-from tabulate import tabulate
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import re
+import shutil
 import tarfile
-from pathlib import Path
+from curses import meta
 from datetime import timezone
-from sysdiagnose.parsers import iodevicetree, ioservice
-from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
-from sysdiagnose.utils.logger import set_json_logging, logger
 from io import TextIOWrapper
+from operator import ior
+from pathlib import Path
+from typing import Text
+
+from tabulate import tabulate
+
+from sysdiagnose.parsers import iodevicetree, ioservice
+from sysdiagnose.utils.base import BaseAnalyserInterface, BaseInterface, BaseParserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.lock import FileLock
+from sysdiagnose.utils.logger import logger, set_json_logging
 
 
 class Sysdiagnose:
@@ -69,7 +71,7 @@ class Sysdiagnose:
             try:
                 shutil.rmtree(case_folder)
             except Exception as e:
-                raise Exception(f"Error while deleting case folder: {str(e)}")
+                raise Exception(f"Error while deleting case folder: {e!s}")
 
         # delete case from the cases
         lock = FileLock(self.config.cases_file)
@@ -244,7 +246,7 @@ class Sysdiagnose:
                             ioreg_devicetree_json = p.parse(ioreg_devicetree_file, from_start=True)
 
             except Exception as e:
-                logger.error("Problem ocurred while processing the archive {source_file}: {e}", exc_info=True)
+                logger.error(f"Problem ocurred while processing the archive {source_file}: {e!s}", exc_info=True)
             finally:
                 if targz_file != source_file:
                     # remove the temporary file if we copied it
@@ -264,7 +266,7 @@ class Sysdiagnose:
                 ioreg_devicetree_file = os.path.join(source_file, 'ioreg', 'IODeviceTree.txt')
                 ioreg_devicetree_json = p.parse(ioreg_devicetree_file)
             except Exception as e:
-                logger.error("Problem while processsing folder {source_file}: {e}", exc_info=True)
+                logger.error(f"Problem while processsing folder {source_file}: {e!s}", exc_info=True)
         else:
             logger.error(f"File {source_file} is not a valid sysdiagnose folder.")
             return None
@@ -353,15 +355,15 @@ class Sysdiagnose:
                     with tarfile.open(sysdiagnose_file) as tf:
                         tf.extractall(path=destination_folder)
                 except Exception as e:
-                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
+                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}')
             except Exception as e:
-                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
+                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}')
 
         elif os.path.isdir(sysdiagnose_file):
             try:
                 shutil.copytree(sysdiagnose_file, os.path.join(destination_folder, 'sysdiagnose'), dirs_exist_ok=True)
             except Exception as e:
-                raise Exception(f'Error while copying sysdiagnose folder. Reason: {str(e)}')
+                raise Exception(f'Error while copying sysdiagnose folder. Reason: {e!s}')
 
     def init_case_logging(self, mode: str, case_id: str) -> None:
         ''' Initialises the file handler '''

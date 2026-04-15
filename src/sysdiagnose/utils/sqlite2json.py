@@ -66,9 +66,7 @@ def table2struct(dbfd, tablename):
         line = {}
         ptr = 0
         for element in row:
-            if not isinstance(element, (str, int, float, bool)):
-                element = str(element)
-            line[column_names[ptr]] = element
+            line[column_names[ptr]] = element if isinstance(element, (str, int, float, bool)) else str(element)
             ptr = ptr + 1
         table.append(line)
     return table

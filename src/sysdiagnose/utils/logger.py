@@ -1,6 +1,7 @@
 import logging
-from pythonjsonlogger import json
 from datetime import datetime
+
+from pythonjsonlogger import json
 
 logger = logging.getLogger('sysdiagnose')
 # By default, we want to have the possibility to log everything.
@@ -10,7 +11,7 @@ logger.setLevel(logging.DEBUG)
 class SysdiagnoseJsonFormatter(json.JsonFormatter):
     '''Custom JSON logger formatter '''
     # https://stackoverflow.com/questions/50873446/python-logger-output-dates-in-is8601-format
-    def formatTime(self, record, datefmt=None):
+    def formatTime(self, record, datefmt=None): # noqa: N802, ARG002
         return datetime.fromtimestamp(record.created).astimezone().isoformat(timespec='microseconds')
 
 

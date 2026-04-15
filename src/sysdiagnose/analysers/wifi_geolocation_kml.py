@@ -95,4 +95,3 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
         # Convert the ElementTree to a string and save it to a file
         tree = ET.ElementTree(kml)
         tree.write(output_file)
-

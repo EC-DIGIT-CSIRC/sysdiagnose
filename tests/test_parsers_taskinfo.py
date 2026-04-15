@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.taskinfo import TaskinfoParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersTaskinfo(SysdiagnoseTestCase):
 
     def test_get_tasks(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = TaskinfoParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)

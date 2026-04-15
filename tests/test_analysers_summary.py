@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.summary import SummaryAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestAnalysersSummary(SysdiagnoseTestCase):

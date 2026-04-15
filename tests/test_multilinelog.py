@@ -1,7 +1,8 @@
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils import multilinelog
-from datetime import timezone, timedelta
 import unittest
+from datetime import timedelta, timezone
+
+from sysdiagnose.utils import multilinelog
+from tests import SysdiagnoseTestCase
 
 
 class TestMultiline(SysdiagnoseTestCase):

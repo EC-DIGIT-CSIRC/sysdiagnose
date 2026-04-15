@@ -6,10 +6,11 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
-from sysdiagnose.utils.misc import snake_case
-from datetime import datetime
 import re
+from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import snake_case
 
 
 class SwcutilParser(BaseParserInterface):

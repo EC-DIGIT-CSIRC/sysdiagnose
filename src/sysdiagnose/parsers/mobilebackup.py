@@ -2,10 +2,11 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
-from sysdiagnose.utils import misc
-from datetime import datetime, timezone
 import re
+from datetime import datetime, timezone
+
+from sysdiagnose.utils import misc
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class MobileBackupParser(BaseParserInterface):

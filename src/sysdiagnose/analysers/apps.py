@@ -4,11 +4,12 @@
 # Author: Emiliern Le Jamtel
 
 import re
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
+
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 
 
 class AppsAnalyser(BaseAnalyserInterface):

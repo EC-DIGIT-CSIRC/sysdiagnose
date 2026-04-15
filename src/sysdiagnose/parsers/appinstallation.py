@@ -8,12 +8,12 @@
 # PID: encoded in Litlle Endian??
 
 
-from sysdiagnose.utils import sqlite2json
 import glob
 import os
-import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime, timezone
+
+from sysdiagnose.utils import misc, sqlite2json
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class AppInstallationParser(BaseParserInterface):

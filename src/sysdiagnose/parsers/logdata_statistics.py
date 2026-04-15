@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class LogDataStatisticsParser(BaseParserInterface):

@@ -29,7 +29,7 @@ class DemoAnalyser(BaseAnalyserInterface):
                 # logger.error("This will log an error")
 
             # json_data = p_fooparser.get_result()
-        except Exception as e:
+        except Exception:
             logger.exception("This will log an error with the exception information")
             # logger.warning("This will log a warning with the exception information", exc_info=True)
 

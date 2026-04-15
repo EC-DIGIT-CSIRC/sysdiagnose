@@ -4,7 +4,7 @@ import glob
 import os
 import re
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class WifiScanParser(BaseParserInterface):
@@ -33,8 +33,8 @@ class WifiScanParser(BaseParserInterface):
     def parse_file(self, path: str) -> list | dict:
         output = []
         with open(path, 'r') as f:
-            for line in f:
-                line = line.strip()
+            for l in f:
+                line = l.strip()
                 # skip empty lines
                 if not line:
                     continue
@@ -64,6 +64,7 @@ class WifiScanParser(BaseParserInterface):
                 output.append(event.to_dict())
         return output
 
+    @staticmethod
     def parse_summary(line: str) -> dict:
         parsed = {}
         items = line.split(',')
@@ -72,6 +73,7 @@ class WifiScanParser(BaseParserInterface):
             parsed[key.strip()] = value.strip()
         return parsed
 
+    @staticmethod
     def parse_line(line: str) -> dict:
         parsed = {}
         # first ssid and ssid_hex, but need to detect the type first
@@ -93,7 +95,7 @@ class WifiScanParser(BaseParserInterface):
                 break
         if 'ssid' not in parsed:
             parsed['ssid'] = '<unknown>'
-            # logger.warning(f"Failed to parse ssid from line: {line}")
+
         # key = first place with =
         #  check what is after =, if normal char then value is until next ,
         #                         if [ then value is until ]

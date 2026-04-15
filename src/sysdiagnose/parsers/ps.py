@@ -5,11 +5,12 @@
 # Author: david@autopsit.org
 #
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
-from sysdiagnose.utils.misc import snake_case
 import glob
 import os
 import re
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import snake_case
 
 
 class PsParser(BaseParserInterface):

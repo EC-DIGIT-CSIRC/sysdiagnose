@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 

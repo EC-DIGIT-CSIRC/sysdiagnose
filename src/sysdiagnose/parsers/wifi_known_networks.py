@@ -6,9 +6,10 @@
 #
 # Change log: Aaron Kaplan, initial version.
 
-import os
 import glob
-import sysdiagnose.utils.misc as misc
+import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
@@ -36,6 +37,7 @@ class WifiKnownNetworksParser(BaseParserInterface):
             return {}
         return WifiKnownNetworksParser.parse_file(self.get_log_files()[0])
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)
 

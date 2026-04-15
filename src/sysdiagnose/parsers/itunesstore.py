@@ -4,10 +4,10 @@
 # Script to print from iTunes Store
 # Author: david@autopsit.org
 
-from sysdiagnose.utils import sqlite2json
 import glob
 import os
-import sysdiagnose.utils.misc as misc
+
+from sysdiagnose.utils import misc, sqlite2json
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 

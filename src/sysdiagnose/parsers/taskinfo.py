@@ -5,13 +5,13 @@
 # Author: david@autopsit.org
 #
 
-import re
 import glob
 import os
+import re
+from datetime import timedelta
 
 from sysdiagnose.utils import tabbasedhierarchy
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
-from datetime import timedelta
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class TaskinfoParser(BaseParserInterface):

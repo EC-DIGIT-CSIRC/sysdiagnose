@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import sys
-from sysdiagnose import Sysdiagnose
 import os
+import sys
+
+from sysdiagnose import Sysdiagnose
 from sysdiagnose.utils.logger import logger, set_console_logging
 
 
@@ -105,7 +106,7 @@ def main():
             sd.delete_case(args.case_id)
             print(f"Case '{args.case_id}' deleted successfully.")
         except Exception as e:
-            print(f"Error deleting case: {str(e)}")
+            print(f"Error deleting case: {e!s}")
             exit(1)
 
     elif args.mode == 'cases':
@@ -137,7 +138,7 @@ def main():
                 case_id = sd.create_case(filename, force)['case_id']
                 print(f"Case '{case_id}' created successfully from '{filename}'")
         except Exception as e:
-            exit(f"Error creating case: {str(e)}")
+            exit(f"Error creating case: {e!s}")
 
     elif args.mode == 'parse':
         # Handle parse mode

@@ -1,14 +1,15 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.transparency import TransparencyParser
 from sysdiagnose.parsers.transparency_json import TransparencyJsonParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersTransparency(SysdiagnoseTestCase):
 
     def test_transparency(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = TransparencyParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
 
@@ -24,7 +25,7 @@ class TestParsersTransparency(SysdiagnoseTestCase):
                 self.assert_has_required_fields_jsonl(item)
 
     def test_transparency_json(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = TransparencyJsonParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
 

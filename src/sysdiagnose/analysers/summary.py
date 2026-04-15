@@ -1,11 +1,11 @@
-from sysdiagnose.analysers import plist
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
+import os
+
+from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
+from sysdiagnose.parsers.plists import PlistParser
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from sysdiagnose.parsers.transparency_json import TransparencyJsonParser
-from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
-from sysdiagnose.parsers.plists import PlistParser
-import os
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 
 
 class SummaryAnalyser(BaseAnalyserInterface):

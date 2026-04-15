@@ -26,10 +26,7 @@ def parse_block(lines: list) -> list | dict:
         if next_depth > current_depth:
             # subsection
             # extract key
-            if '=>' in line:
-                key = line.split('=>')[0].strip()
-            else:
-                key = line.replace(':', '').replace('{', '').strip()
+            key = line.split('=>')[0].strip() if '=>' in line else line.replace(':', '').replace('{', '').strip()
             # identify end of subsection and call recursive parsing function with that block
             extracted_block = []
             while next_depth > current_depth:

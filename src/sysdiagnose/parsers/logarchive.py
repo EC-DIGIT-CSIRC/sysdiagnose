@@ -289,6 +289,7 @@ class LogarchiveParser(BaseParserInterface):
                     # last line looks like {'count':xyz, 'finished':1}
                     logger.info(f"End of the file: {line}", extra=json.loads(line))
                     break
+
     @staticmethod
     def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> None:
         with open(output_file, 'w') as f:
@@ -366,7 +367,6 @@ class LogarchiveParser(BaseParserInterface):
                     result = f'Output written to {outputfile}'
 
         return result
-
 
     @staticmethod
     def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
@@ -452,7 +452,6 @@ class LogarchiveParser(BaseParserInterface):
     def convert_native_time_to_unifiedlog_format(time: str) -> int:
         timestamp = datetime.fromisoformat(time)
         return int(timestamp.timestamp() * 1000000000)
-
 
     @staticmethod
     def convert_unifiedlog_time_to_datetime(time: int) -> datetime:

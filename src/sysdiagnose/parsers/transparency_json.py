@@ -1,6 +1,7 @@
-import json
 import glob
+import json
 import os
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 

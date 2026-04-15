@@ -1,8 +1,10 @@
-from sysdiagnose.utils.base import logger
-from sysdiagnose.utils import string_parser
+import re
 from io import TextIOBase
 from os import PathLike
-import re
+
+from sysdiagnose.utils import string_parser
+from sysdiagnose.utils.base import logger
+
 
 class IORegStructParser:
     __rollback_addr = None
@@ -76,8 +78,7 @@ class IORegStructParser:
         return res
 
     def parse_values(self, data_dict: dict):
-        for key in data_dict:
-            value = data_dict[key]
+        for key, value in data_dict.items():
             constructed = string_parser.Parser().parse(value)
             if constructed:
                 data_dict[key] = constructed
@@ -85,14 +86,14 @@ class IORegStructParser:
     def dict_update(self, main_dict: dict, data_dict: dict):
         """ Redefining the dict.update function to handle key collisions """
 
-        for key in data_dict:
+        for key, value in data_dict.items():
             if main_dict.get(key):
                 if isinstance(main_dict[key], list):
-                    main_dict[key].append(data_dict[key])
+                    main_dict[key].append(value)
                 else:
-                    main_dict[key] = [main_dict[key], data_dict[key]]
+                    main_dict[key] = [main_dict[key], value]
             else:
-                main_dict[key] = data_dict[key]
+                main_dict[key] = value
 
     def parse_title(self) -> tuple:
         if "+-o" not in self.__curr_line:

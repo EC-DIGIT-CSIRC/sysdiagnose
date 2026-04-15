@@ -2,9 +2,10 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
-import sysdiagnose.utils.misc as misc
 from datetime import datetime, timezone
+
+from sysdiagnose.utils import misc
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class McSettingsEventsParser(BaseParserInterface):

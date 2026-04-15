@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.appinstallation import AppInstallationParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersAppinstallation(SysdiagnoseTestCase):
 
     def test_get_appinstallation(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = AppInstallationParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
 

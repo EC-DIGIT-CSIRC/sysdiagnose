@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
 
-    def test_parsespindumpNS(self):
-        for case_id, case in self.sd.cases().items():
+    def test_parse_spindump_ns(self):
+        for case_id, _case in self.sd.cases().items():
             p = SpindumpNoSymbolsParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)

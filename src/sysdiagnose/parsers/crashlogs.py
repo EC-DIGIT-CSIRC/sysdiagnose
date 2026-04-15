@@ -1,11 +1,11 @@
 import glob
-import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
-import re
 import json
+import os
+import re
 from datetime import datetime, timezone
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 from sysdiagnose.utils.misc import load_plist_string_as_json
-# from pycrashreport.crash_report import get_crash_report_from_file
 
 
 class CrashLogsParser(BaseParserInterface):
@@ -81,6 +81,7 @@ class CrashLogsParser(BaseParserInterface):
 
         return result
 
+    @staticmethod
     def parse_ips_file(path: str) -> Event:
         # identify the type of file
         with open(path, 'r') as f:
@@ -122,6 +123,7 @@ class CrashLogsParser(BaseParserInterface):
 
             return event
 
+    @staticmethod
     def process_ips_lines(lines: list) -> dict:
         '''
         There are multiple main models of crashlogs:
@@ -208,11 +210,10 @@ class CrashLogsParser(BaseParserInterface):
                                 result['Powerstats'][powerstats_key][key].append(CrashLogsParser.split_thread(line))
                             else:
                                 result[key].append(CrashLogsParser.split_thread(line))
+                        elif powerstats_key:
+                            result['Powerstats'][powerstats_key][key].append(line)
                         else:
-                            if powerstats_key:
-                                result['Powerstats'][powerstats_key][key].append(line)
-                            else:
-                                result[key].append(line)
+                            result[key].append(line)
                         n += 1
             elif powerstats_key:
                 if 'extra_data' not in result['Powerstats'][powerstats_key]:
@@ -221,9 +222,6 @@ class CrashLogsParser(BaseParserInterface):
 
             elif line == 'EOF':
                 break
-            # elif re.match(r'[0-9]+\s+\?\?\?\s+\(', line):
-            #         current_entry['unknown'] = line
-
             else:
                 raise Exception(f"Parser bug: Unexpected line in crashlogs at line {n}. Line: {line}")
 
@@ -263,6 +261,7 @@ class CrashLogsParser(BaseParserInterface):
 
         return result
 
+    @staticmethod
     def split_thread_crashes_with_arm_thread_state(line) -> dict:
         elements = line.split()
         result = {}
@@ -273,6 +272,7 @@ class CrashLogsParser(BaseParserInterface):
             result[elements[i][:-1]] = elements[i + 1]
         return result
 
+    @staticmethod
     def split_thread(line) -> dict:
         elements = line.split()
         result = {
@@ -284,6 +284,7 @@ class CrashLogsParser(BaseParserInterface):
         }
         return result
 
+    @staticmethod
     def split_binary_images(line) -> dict:
         # need to be regexp based
         # option 1: image_offset_start image_offset_end image_name uuid path
@@ -298,6 +299,7 @@ class CrashLogsParser(BaseParserInterface):
         }
         return result
 
+    @staticmethod
     def metadata_from_filename(filename: str, tzinfo=None) -> tuple[str, datetime]:
         while True:
             # option 1: YYYY-MM-DD-HHMMSS

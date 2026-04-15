@@ -66,13 +66,8 @@ packages = ["src/sysdiagnose"]
 
 
 [tool.ruff]
-line-length = 120
-target-version = "py39"
-select = ["E", "F", "I", "W", "N", "B", "C4", "ARG", "SIM", "ERA", "PL", "RUF"]
-ignore = [
-  "PLR0913",
-  "E221","E225","E251","E501",
-]
+line-length = 128
+target-version = "py311"
 exclude = [
     ".git",
     ".ruff_cache",
@@ -81,6 +76,19 @@ exclude = [
     "build",
     "dist",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "N", "B", "C4", "ARG", "SIM", "ERA", "PL", "RUF"]
+ignore = [
+  "PLR0913",
+  "E221", "E225", "E251", "E501",  # Match pycodestyle
+  "E302", "E266",                   # Add missing ones
+]
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

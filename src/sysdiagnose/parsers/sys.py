@@ -6,10 +6,11 @@
 #
 # Change log: David DURVAUX - add function are more granular approach
 
-import os
 import glob
-import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
+import os
+
+from sysdiagnose.utils import misc
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class SystemVersionParser(BaseParserInterface):

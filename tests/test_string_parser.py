@@ -1,6 +1,7 @@
-from tests import SysdiagnoseTestCase
 import unittest
+
 import sysdiagnose.utils.string_parser as sp
+from tests import SysdiagnoseTestCase
 
 
 class TestStringParser(SysdiagnoseTestCase):

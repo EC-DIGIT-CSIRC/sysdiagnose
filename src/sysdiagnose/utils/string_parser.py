@@ -1,4 +1,5 @@
 from enum import Enum
+
 from sysdiagnose.utils.base import logger
 
 
@@ -45,7 +46,7 @@ class String:
             logger.error('ERROR : malformed data, random character found next to a structure')
             raise ValueError('malformed data, random character found next to a structure')
 
-    def add_struct(self, struct):
+    def add_struct(self, _struct):
         logger.error("ERROR : This function should never be called, if you see this there is a coding mistake")
         raise Exception("Code that shouldn't be called was called")
 
@@ -155,11 +156,10 @@ class XmlDict:
                 logger.error("ERROR : Non-string found as key to a dict. Using str(struct) instead")
                 self.temp_key += str(struct.data)
 
+        elif isinstance(struct.data, str):
+            self.temp_val += struct.data
         else:
-            if isinstance(struct.data, str):
-                self.temp_val += struct.data
-            else:
-                self.temp_val = struct.data
+            self.temp_val = struct.data
 
     def accepted_struct(self):
         if self.currently_key:

@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# noqa: ERA001 --- IGNORE ---
 
 # For Python3
 # Script to print WIFI info from ./WiFi/security.txt
@@ -6,8 +7,9 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class WifiSecurityParser(BaseParserInterface):
@@ -35,6 +37,7 @@ class WifiSecurityParser(BaseParserInterface):
             return WifiSecurityParser.parse_file(log_file)
         return {'error': ['No WiFi/security.txt file present']}
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         """
             Parse ./WiFi/security.txt and extract block of interest:
@@ -92,5 +95,5 @@ class WifiSecurityParser(BaseParserInterface):
             return {'error': 'No WiFi/security.txt file present'}
         except Exception as e:
             logger.exception(f"Could not parse: {path}")
-            return {'error': f'Could not parse: {path}. Reason: {str(e)}'}
+            return {'error': f'Could not parse: {path}. Reason: {e!s}'}
         return entries

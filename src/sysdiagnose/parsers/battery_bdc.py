@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
+import csv
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime, timezone
-import csv
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class BatteryBDCParser(BaseParserInterface):

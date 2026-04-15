@@ -6,8 +6,9 @@
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
+
 from sysdiagnose.utils.apollo import Apollo
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class AccessibilityTccParser(BaseParserInterface):

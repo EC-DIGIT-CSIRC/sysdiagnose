@@ -7,9 +7,10 @@
 #
 # Change log: David DURVAUX - add function are more granular approach
 
-import os
 import glob
-import sysdiagnose.utils.misc as misc
+import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
@@ -35,18 +36,19 @@ class UUID2PathParser(BaseParserInterface):
         except IndexError:
             return {'error': 'No UUIDToBinaryLocations file present'}
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         try:
             return misc.load_plist_file_as_json(path)
         except IndexError:
             return {'error': 'No UUIDToBinaryLocations file present'}
 
+    @staticmethod
     def printResult(data):
         """
             Print the hashtable produced by getUUID2Path to console as UUID, path
         """
         if data:
-            for uuid in data.keys():
-                print(f"{str(uuid)}, {str(data[uuid])}")
-        print(f"\n {str(len(data.keys()))} GUIDs found\n")
-        return
+            for uuid in data:
+                print(f"{uuid!s}, {data[uuid]!s}")
+        print(f"\n {len(data.keys())!s} GUIDs found\n")

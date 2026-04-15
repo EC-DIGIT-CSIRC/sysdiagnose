@@ -4,11 +4,12 @@
 # Sysdiagnose Shutdown logs
 # Author: Benoit Roussile
 
-from datetime import datetime, timezone
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
+from datetime import datetime, timezone
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 CLIENTS_ARE_STILL_HERE_LINE = "these clients are still here"
 REMAINING_CLIENT_PID_LINE = "remaining client pid"
@@ -54,7 +55,7 @@ class ShutdownLogsParser(BaseParserInterface):
                 if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
                     running_processes = {}
                     time_waiting = 0
-                    while not (SIGTERM_LINE in log_lines[index]):
+                    while SIGTERM_LINE not in log_lines[index]:
                         if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
                             time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
                         if (REMAINING_CLIENT_PID_LINE in log_lines[index]):

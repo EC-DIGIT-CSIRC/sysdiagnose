@@ -4,10 +4,11 @@
 # Script to parse the swcutil_show.txt file
 # Author: Emilien Le Jamtel
 
-import json
 import glob
-import sysdiagnose.utils.misc as misc
+import json
 import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
@@ -37,6 +38,7 @@ class WifiNetworksParser(BaseParserInterface):
             result[end_of_path] = WifiNetworksParser.parse_file(logfile)
         return result
 
+    @staticmethod
     def parse_file(fname: str) -> dict | list:
         if fname.endswith('.json'):
             with open(fname, 'r') as f:

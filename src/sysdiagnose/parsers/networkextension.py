@@ -5,9 +5,10 @@
 # Author: Emilien Le Jamtel
 
 
-import sysdiagnose.utils.misc as misc
-import os
 import glob
+import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 

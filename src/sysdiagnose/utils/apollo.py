@@ -175,7 +175,7 @@ class Apollo:
 
                 key_timestamp = module_query["key_timestamp"].lower()
                 for row in rows:
-                    item = dict(list(zip(headers, row)))
+                    item = dict(list(zip(headers, row, strict=False)))
                     try:
                         timestamp = datetime.fromisoformat(item[key_timestamp])
                         timestamp = timestamp.replace(tzinfo=timezone.utc)
@@ -187,7 +187,7 @@ class Apollo:
                             + ", ".join(
                                 [
                                     f"{k}={v}"
-                                    for k, v in list(zip(headers, row))
+                                    for k, v in list(zip(headers, row, strict=False))
                                     if k != key_timestamp and "time" not in k and "id" not in k
                                 ]
                             ),

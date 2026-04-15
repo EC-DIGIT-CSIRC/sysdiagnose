@@ -1,9 +1,9 @@
-import re
 import io
-
-import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import Event
+import re
 from datetime import datetime
+
+from sysdiagnose.utils import misc
+from sysdiagnose.utils.base import Event
 
 
 def extract_from_file(fname, tzinfo, module):
@@ -27,7 +27,7 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
         timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
         if '_____' in line and re.search(r": _{10,25} [^_]+ _{10,25}", line):
             kv_section = 'start'
-        if timeregex and (not kv_section or kv_section == 'start' or kv_section == 'end'):
+        if timeregex and (not kv_section or kv_section in {'start', 'end'}):
             # new entry, process the previous entry
             if kv_section == 'start':
                 kv_section = True
@@ -86,8 +86,8 @@ def build_from_logentry(line, tzinfo, module) -> Event:
         entry['loglevel'] = loglevelregex.group(1)
 
         # hex_ID
-        hexIDregex = re.search(r"\(0x(.*?)\)", line)
-        entry['hexID'] = '0x' + hexIDregex.group(1)
+        hex_id_regex = re.search(r"\(0x(.*?)\)", line)
+        entry['hexID'] = '0x' + hex_id_regex.group(1)
 
         # event_type
         eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)

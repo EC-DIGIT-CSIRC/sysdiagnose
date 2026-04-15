@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersMcSettingsEvents(SysdiagnoseTestCase):
 
     def test_parse_mcsettingsevents(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = McStateSharedProfileParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()  # noqa F841
 

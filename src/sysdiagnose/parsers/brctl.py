@@ -4,8 +4,9 @@
 # Script to parse the brctl-container-list.txt and brctl-dump.txt files
 # Author: Emilien Le Jamtel
 import json
-import re
 import os
+import re
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
@@ -28,14 +29,15 @@ class BrctlParser(BaseParserInterface):
         except IndexError:
             return {'error': 'No brctl folder found'}
 
+    @staticmethod
     def parselistfile(container_list_file):
         containers = {"containers": []}
         result = []
         # print(container_list_file)
         with open(container_list_file[0], 'r') as f:
             keys = ['id', 'localizedName', 'documents', 'Public', 'clients']
-            for line in f:
-                line = line.strip()
+            for l in f:
+                line = l.strip()
                 line = line.replace('Mobile Documents', 'Mobile_Documents')
                 keys = ['id', 'localizedName', 'documents', 'Public', 'Private', 'clients']
                 values = re.findall(rf"({'|'.join(keys)}):\s*([^ \[]+|\[[^\]]*\])", line)
@@ -45,6 +47,7 @@ class BrctlParser(BaseParserInterface):
                     containers['containers'].append(result)
             return containers
 
+    @staticmethod
     def parsedumpfile(container_dump_file):
         with open(container_dump_file[0], 'r') as f:
             dump = {}
@@ -61,7 +64,6 @@ class BrctlParser(BaseParserInterface):
                     current_section += line
             if current_section != "":
                 dump[section] = current_section
-        # print(dump.keys())
 
         # parsing different sections
         # header
@@ -70,7 +72,7 @@ class BrctlParser(BaseParserInterface):
         # boot_history
         # finding key value
         # loop through the keys of the dictionary
-        for key in dump.keys():
+        for key in dump:
             # check if the key starts with "boot_history"
             if key.startswith("boot_history"):
                 # print the key and its value
@@ -150,6 +152,7 @@ class BrctlParser(BaseParserInterface):
 
         return result
 
+    @staticmethod
     def parse_header(header):
         # Define a regular expression to match the key-value pairs
         pattern = r"(\w+):\s+(.+)(?:\n|$)"
@@ -161,7 +164,8 @@ class BrctlParser(BaseParserInterface):
         output = {}
 
         # Loop through the matches and add them to the output dictionary
-        for key, value in matches:
+        for k, v in matches:
+            value = v
             # If the value contains a comma, split it into a list
             if "," in value:
                 value = value.split(", ")
@@ -169,7 +173,7 @@ class BrctlParser(BaseParserInterface):
             if value.startswith("<") and value.endswith(">"):
                 value = value[1:-1]
             # Add the key-value pair to the output dictionary
-            output[key] = value
+            output[k] = value
 
         pattern = r"dump taken at (\d{2}/\d{2}/\d{4}, \d{2}:\d{2}:\d{2}) \[account=(\d+)\] \[inCarry=(\w+)\] \[home=(.+)\]"
 
@@ -190,6 +194,7 @@ class BrctlParser(BaseParserInterface):
         # Print the output JSON string
         return output_json
 
+    @staticmethod
     def parse_boot_history(boot_history):
         # split the section by newline characters
         lines = boot_history.split("\n")
@@ -204,6 +209,7 @@ class BrctlParser(BaseParserInterface):
         # return the result list
         return result
 
+    @staticmethod
     def parse_line_boot_history(line):
         # use regular expressions to extract the fields
         match = re.search(r"\[(.+?)\] OS:(.+?) CloudDocs:(.+?) BirdSchema:(.+?) DBSchema:(.+)", line)
@@ -220,6 +226,7 @@ class BrctlParser(BaseParserInterface):
             # return None if the line does not match the pattern
             return None
 
+    @staticmethod
     def parse_server_state(server_state):
         # Define the regex pattern to match the fields and their values
         pattern = r"(last-sync|nextRank|minUsedTime):(.+?)(?=\s|$)"
@@ -245,6 +252,7 @@ class BrctlParser(BaseParserInterface):
         # Print the output dictionary
         return output_dict
 
+    @staticmethod
     def parse_client_state(data: str) -> dict:
         # Split the data into lines
         lines = data.split('\n')
@@ -273,12 +281,13 @@ class BrctlParser(BaseParserInterface):
 
         return parsed_data
 
+    @staticmethod
     def parse_system_scheduler(input):
         data = {}
         lines = input.split('\n')
-        for line in lines:
+        for l in lines:
             # removing ANSI escape codes
-            line = re.sub(r'\x1b\[[0-9;]*m', '', line)
+            line = re.sub(r'\x1b\[[0-9;]*m', '', l)
             line = line.strip()
             if line.startswith('+'):
                 key, value = line.split(':', 1)
@@ -287,6 +296,7 @@ class BrctlParser(BaseParserInterface):
                 data[key] = value
         return data
 
+    @staticmethod
     def parse_app_library(data):
         lines = data.splitlines()
         matching_lines = [line for line in lines if "+ app library" in line]
@@ -305,6 +315,7 @@ class BrctlParser(BaseParserInterface):
 
         return result
 
+    @staticmethod
     def parse_server_items(data):
         lines = data.splitlines()
         matching_lines = [line for line in lines if "----------------------" in line]
@@ -322,6 +333,7 @@ class BrctlParser(BaseParserInterface):
 
         return app_list
 
+    @staticmethod
     def parse_apps_monitor(data):
         # Split the text into two parts
         parts = data.split("=======================")
@@ -336,6 +348,7 @@ class BrctlParser(BaseParserInterface):
 
         return json1, json2
 
+    @staticmethod
     def __parse_apps_monitor2json(data):
         # replace = by :
         json_str = data.replace("=", ":")
@@ -358,6 +371,7 @@ class BrctlParser(BaseParserInterface):
 
         return json_str
 
+    @staticmethod
     def parse_folder(brctl_folder):
         container_list_file = [os.path.join(brctl_folder, 'brctl-container-list.txt')]
         container_dump_file = [os.path.join(brctl_folder, 'brctl-dump.txt')]

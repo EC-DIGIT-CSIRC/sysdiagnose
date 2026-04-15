@@ -1,15 +1,17 @@
 """Miscelanneous helper functions."""
 
-from datetime import datetime
-from functools import singledispatch
-from pathlib import Path
 import base64
 import binascii
 import json
-import nska_deserialize
 import os
 import re
+import sys
 from collections.abc import MutableMapping
+from datetime import datetime
+from functools import singledispatch
+from pathlib import Path
+
+import nska_deserialize
 
 
 def merge_dicts(a: dict, b: dict) -> dict:
@@ -36,7 +38,7 @@ def get_version(filename="VERSION.txt"):
             version = data["version"]
             return version
     except Exception as e:
-        exit(f"Could not read version info, bailing out. Something is wrong: {str(e)}")
+        sys.exit(f"Could not read version info, bailing out. Something is wrong: {e!s}")
 
 
 def load_plist_file_as_json(fname: str) -> dict:
@@ -65,7 +67,7 @@ _cant_serialize = object()
 
 
 @singledispatch
-def json_serializable(object, skip_underscore=False):
+def json_serializable(object, skip_underscore=False): # noqa: ARG002
     """Filter a Python object to only include serializable object types
 
     In dictionaries, keys are converted to strings; if skip_underscore is true
@@ -98,12 +100,12 @@ def _handle_sequence(seq, skip_underscore=False):
 @json_serializable.register(str)
 @json_serializable.register(bool)  # redudant, supported as int subclass
 @json_serializable.register(type(None))
-def _handle_default_scalar_types(value, skip_underscore=False):
+def _handle_default_scalar_types(value, skip_underscore=False): # noqa: ARG002
     return value
 
 
 @json_serializable.register(bytes)
-def _handle_bytes(value, skip_underscore=False):
+def _handle_bytes(value, skip_underscore=False): # noqa: ARG002
     try:
         return value.decode(errors='strict')
     except Exception:
@@ -111,7 +113,7 @@ def _handle_bytes(value, skip_underscore=False):
 
 
 @json_serializable.register(datetime)
-def _handle_datetime(value, skip_underscore=False):
+def _handle_datetime(value, skip_underscore=False): # noqa: ARG002
     return value.isoformat(timespec='microseconds')
 
 

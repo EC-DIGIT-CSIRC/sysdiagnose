@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.itunesstore import iTunesStoreParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersIntunesstore(SysdiagnoseTestCase):
 
     def test_get_itunesstore(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = iTunesStoreParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if not files:

@@ -7,7 +7,8 @@
 
 import glob
 import os
-import sysdiagnose.utils.misc as misc
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 

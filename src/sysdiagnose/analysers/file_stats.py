@@ -1,5 +1,7 @@
 import os
+
 import magic
+
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 

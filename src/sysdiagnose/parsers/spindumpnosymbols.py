@@ -7,8 +7,9 @@
 import glob
 import os
 import re
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime, timedelta
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 from sysdiagnose.utils.misc import snake_case
 
 
@@ -37,6 +38,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             logger.info('No spindump-nosymbols.txt file present.')
             return []
 
+    @staticmethod
     def parse_file(path: str) -> list:
         try:
             with open(path, 'r') as f_in:
@@ -81,6 +83,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         except IndexError:
             return []
 
+    @staticmethod
     def parse_basic(data: list) -> dict:
         output = {}
         for line in data:
@@ -105,6 +108,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
         return output
 
+    @staticmethod
     def parse_processes(data: list, start_timestamp: str) -> list[dict]:
         # init
         start_time = datetime.fromisoformat(start_timestamp)
@@ -147,6 +151,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         processes.append(event.to_dict())
         return processes
 
+    @staticmethod
     def parse_process(data):
         # init
         status = 'infos'
@@ -188,6 +193,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
         return process
 
+    @staticmethod
     def parse_threads(data):
         # init
         init = True
@@ -206,12 +212,13 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         threads.append(SpindumpNoSymbolsParser.parse_thread(thread))
         return threads
 
+    @staticmethod
     def parse_thread(data):
         output = {}
         # parse first line
         # Thread Hex value
-        threadHEXregex = re.search(r"Thread 0x..", data[0])
-        output['thread'] = threadHEXregex.group(0).split(" ", 1)[1]
+        threadhexregex = re.search(r"Thread 0x..", data[0])
+        output['thread'] = threadhexregex.group(0).split(" ", 1)[1]
         # Thread Name / DispatchQueue
         if "DispatchQueue \"" in data[0]:
             dispacthregex = re.search(r"DispatchQueue(.*)\"\(", data[0])
@@ -243,6 +250,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
             output["loaded"].append(loaded)
         return output
 
+    @staticmethod
     def parse_images(data):
         images = []
         for line in data:

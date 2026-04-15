@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 from datetime import datetime
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
 
 class DemoParser(BaseParserInterface):
@@ -37,9 +38,10 @@ class DemoParser(BaseParserInterface):
 
                 result.append(event.to_dict())
                 logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
-                logger.debug(f"Entry details {str(entry)}", extra={'entry': str(entry)})
+                logger.debug(f"Entry details {entry!s}", extra={'entry': str(entry)})
                 if not entry:
                     logger.warning("Empty entry.")
+                    # ruff: noqa
                     # logger.error("Empty entry.")
             except Exception:
                 logger.exception("This will log an error with the exception information")

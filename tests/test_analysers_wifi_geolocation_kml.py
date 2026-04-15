@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.wifi_geolocation_kml import WifiGeolocationKmlAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestAnalysersWifiGeolocationKml(SysdiagnoseTestCase):

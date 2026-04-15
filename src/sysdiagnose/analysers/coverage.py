@@ -1,11 +1,13 @@
 #! /usr/bin/env python3
 
+import glob
 import importlib
 import os
+
 import magic
-from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
+
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
-import glob
+from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class CoverageAnalyser(BaseAnalyserInterface):
@@ -124,12 +126,13 @@ class CoverageAnalyser(BaseAnalyserInterface):
         3. Parsers Information (a table with parser details).
         4. Details (a collapsible section with a table of coverage data).
         """
-        import pandas as pd
-        import matplotlib.pyplot as plt
         import base64
         from io import BytesIO
-        from jinja2 import Template
         from pathlib import Path
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        from jinja2 import Template
 
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')

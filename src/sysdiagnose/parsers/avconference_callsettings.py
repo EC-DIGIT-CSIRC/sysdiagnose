@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 
 import glob
-import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
-from datetime import datetime, timezone
 import gzip
+import os
 import re
+from datetime import datetime, timezone
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class AvConferenceCallSettingsParser(BaseParserInterface):

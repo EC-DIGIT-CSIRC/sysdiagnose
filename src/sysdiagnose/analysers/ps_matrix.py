@@ -4,11 +4,12 @@
 
 import pandas as pd
 from tabulate import tabulate
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
+
 from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.parsers.psthread import PsThreadParser
-from sysdiagnose.parsers.taskinfo import TaskinfoParser
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
+from sysdiagnose.parsers.taskinfo import TaskinfoParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 
 
 class PsMatrixAnalyser(BaseAnalyserInterface):

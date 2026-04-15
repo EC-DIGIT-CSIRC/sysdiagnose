@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.tabbasedhierarchy import parse_tab_based_hierarchal_file, parse_block
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hierarchal_file
 
 
 class RemotectlDumpstateParser(BaseParserInterface):
