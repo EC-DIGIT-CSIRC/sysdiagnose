@@ -56,28 +56,32 @@ class YaraAnalyser(BaseAnalyserInterface):
         return results
 
     def get_valid_yara_rule_files(self) -> dict:
+        return YaraAnalyser.load_valid_yara_rule_files(self.yara_rules_path, externals)
+
+    @staticmethod
+    def load_valid_yara_rule_files(rules_path: str, yara_externals: dict) -> dict:
         """
-        Scans the YARA rules directory for valid .yar files and compiles them to ensure
-        they are valid YARA rules. Returns a dictionary of rule file paths indexed by their namespace
+        Scans a YARA rules directory for valid .yar files and compiles them to ensure
+        they are valid YARA rules. Returns a dictionary of rule file paths indexed by their namespace.
 
+        :param rules_path: Path to the directory containing YARA rule files
+        :param yara_externals: Dictionary of external variables for YARA compilation
         :raises FileNotFoundError: If the YARA rules directory does not exist
-        :raises yara.Error: If there is an error compiling a YARA rule
-
+        :raises ValueError: If no valid YARA rules are found
         :return: Dictionary of valid YARA rule file paths
         """
-        if not os.path.isdir(self.yara_rules_path):
-            raise FileNotFoundError(f"YARA rules folder not found: {self.yara_rules_path}")
+        if not os.path.isdir(rules_path):
+            raise FileNotFoundError(f"YARA rules folder not found: {rules_path}")
 
         rule_filepaths = {}
-        rule_files_to_test = glob.glob(os.path.join(self.yara_rules_path, '**', '*.yar'), recursive=True)
+        rule_files_to_test = glob.glob(os.path.join(rules_path, '**', '*.yar'), recursive=True)
         for rule_file in rule_files_to_test:
             if not os.path.isfile(rule_file):
                 continue
             logger.info(f"Loading YARA rule: {rule_file}", extra={'yara_rule_file': rule_file})
             try:
-                yara.compile(filepath=rule_file, externals=externals)
-                # Valid rule, add it to the rule_filepaths
-                namespace = rule_file[len(self.yara_rules_path):].strip(os.path.sep)
+                yara.compile(filepath=rule_file, externals=yara_externals)
+                namespace = rule_file[len(rules_path):].strip(os.path.sep)
                 rule_filepaths[namespace] = rule_file
             except yara.SyntaxError:
                 logger.exception(f"Error compiling rule {rule_file}", extra={'yara_rule_file': rule_file})
@@ -89,7 +93,7 @@ class YaraAnalyser(BaseAnalyserInterface):
         if rule_filepaths:
             return rule_filepaths
         else:
-            raise ValueError(f"No valid YARA rules (.yar) were found in the YARA rules folder: {self.yara_rules_path}")
+            raise ValueError(f"No valid YARA rules (.yar) were found in the YARA rules folder: {rules_path}")
 
     @staticmethod
     def get_target_files(directories: list, ignore_files: list, ignore_folders: list) -> queue.Queue:
