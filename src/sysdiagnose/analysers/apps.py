@@ -7,7 +7,7 @@ import re
 
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser
 from sysdiagnose.parsers.brctl import BrctlParser
-from sysdiagnose.parsers.itunesstore import iTunesStoreParser
+from sysdiagnose.parsers.itunesstore import ITunesStoreParser
 from sysdiagnose.parsers.logarchive import LogarchiveParser
 from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 
@@ -44,7 +44,7 @@ class AppsAnalyser(BaseAnalyserInterface):
                 except (KeyError, TypeError):
                     apps[entry] = {'found': ['brctl'], 'libraries': json_data['app_library_id'][entry]}
 
-        json_data = iTunesStoreParser(self.config, self.case_id).get_result()
+        json_data = ITunesStoreParser(self.config, self.case_id).get_result()
         if json_data and not json_data.get('error'):
             # directly going to the list of apps
             for entry in json_data['application_id']:
