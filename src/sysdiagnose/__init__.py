@@ -29,8 +29,7 @@ class Sysdiagnose:
             self._cases = SysdiagnoseCaseLibrary(self.config)
         return self._cases
 
-
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> int:
+    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> str:
         '''
         Extracts the sysdiagnose file and creates a new case.
 
@@ -41,94 +40,38 @@ class Sysdiagnose:
             tags (list): List of tags to add to the case.
 
         Returns:
-            int: The case ID of the new case.
+            str: The case ID of the new case.
         '''
         metadata = Sysdiagnose.get_case_metadata(sysdiagnose_file)
 
         if not metadata:
             raise ValueError(f"Invalid sysdiagnose file: {sysdiagnose_file}. Case could not be created!")
 
-        # only allow specific chars for case_id
-        if case_id:
-            if not re.match(r'^[a-zA-Z0-9-_\.]+$', case_id):
-                raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
-
-        # check if sysdiagnise file is already in a case
-        case = None
-        for c in self.cases().values():
-            # TODO: this breaks backward compatibility of sha256 calculation from old cases
-            if c['source_sha256'] == metadata['source_sha256']:
-                if force:
-                    if case_id and c['case_id'] != case_id:
-                        raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}")
-                    # all is well
-                    case_id = c['case_id']
-                    case = c
-                    break
-                else:
-                    raise ValueError(f"This sysdiagnose has already been extracted for case ID: {c['case_id']}")
-
-        # incoherent caseID and file
-        if case_id and case_id in self.cases():
-            # TODO: again, the sha256 calculation is not the same as the one in the old cases
-            if self.cases()[case_id]['source_sha256'] != metadata['source_sha256']:
-                raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
-
-        # find next incremental case_id, if needed
+        # Generate case_id if not provided
         if not case_id:
             # Default suggestion for case_id is the serial number + date
             case_id = metadata['case_id']
-            if case_id in self.cases():
-                # if the case_id already exists, we need to find a new one
-                # find the highest case_id in the cases
-                case_id = 0
-                for k in self.cases().keys():
-                    try:
-                        case_id = max(case_id, int(k))
-                    except ValueError:
-                        pass
-                # add one to the new found case_id
-                case_id += 1
-                case_id = str(case_id)
+            if self.cases().case_exists(case_id):
+                # if the case_id already exists, generate incremental one
+                case_id = self.cases().get_next_case_id()
 
-        if not case:
-            # if sysdiagnose file is new and legit, create new case and extract files
-            case = {
-                'date': metadata['date'],
-                'case_id': case_id,
-                'source_file': sysdiagnose_file,
-                'source_sha256': metadata['source_sha256'],
-                'serial_number': metadata['serial_number'],
-                'unique_device_id': metadata['unique_device_id'],
-                'ios_version': metadata['ios_version'],
-                'tags': []
-            }
+        # Create SysdiagnoseCase object
+        case = SysdiagnoseCase(
+            case_id=str(case_id),
+            tags=tags if tags else [],
+            case_metadata=metadata
+        )
 
-        if tags:
-            case['tags'].extend(tags)
+        # Add case to library (this handles duplicate checking)
+        self.cases().add_case(case, force=force)
 
-        # create case folder
-        case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
+        # create case folder and extract files
+        case_data_folder = self.config.get_case_data_folder(str(case_id))
         os.makedirs(case_data_folder, exist_ok=True)
-
-        # extract sysdiagnose files
         self.extract_sysdiagnose_files(sysdiagnose_file, case_data_folder)
 
-        # update case with new data
-        lock = FileLock(self.config.cases_file)
-        try:
-            lock.acquire()
-            with open(self.config.cases_file, 'r+') as f:
-                self._cases = json.load(f)           # load latest version
-                self._cases[case['case_id']] = case  # update own case
-                f.seek(0)                            # go back to the beginning of the file
-                json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()                         # truncate the rest of the file ensuring no old data is left
-        finally:
-            lock.release()
-
         print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
-        return case
+        return str(case_id)
 
     @staticmethod
     def get_case_metadata(source_file: str) -> dict | None:
@@ -207,8 +150,7 @@ class Sysdiagnose:
                         'model': remotectl_dumpstate_json['Local device']['Properties']['ProductType'],
                         'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
                         'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                        'source_file': source_file,
-                        'source_sha256': ''
+                        'source_file': source_file
                     }
                     metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
 
@@ -237,9 +179,9 @@ class Sysdiagnose:
                     'model': model,
                     'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
                     'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                    'source_file': source_file,
-                    'source_sha256': ''
+                    'source_file': source_file
                 }
+                metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
 
 
                 # FIXME use the IOService or IODeviceTree parser to get the data if remotectl_dumpstate is not available
@@ -344,28 +286,28 @@ class Sysdiagnose:
         if verbose:
             headers.append('Source file')
         lines = []
-        for case in self.cases().values():
+        for case in self.cases().get_cases().values():
             line = [
-                case['case_id'],
-                case.get('date', '<unknown>'),
-                case.get('serial_number', '<unknown>'),
-                case.get('unique_device_id', '<unknown>'),
-                case.get('ios_version', '<unknown>'),
-                ','.join(case.get('tags', []))
+                case.case_id,
+                case.case_metadata.get('date', '<unknown>'),
+                case.case_metadata.get('serial_number', '<unknown>'),
+                case.case_metadata.get('unique_device_id', '<unknown>'),
+                case.case_metadata.get('ios_version', '<unknown>'),
+                ','.join(case.tags)
             ]
             if verbose:
-                line.append(case['source_file'])
+                line.append(case.case_metadata.get('source_file', '<unknown>'))
             lines.append(line)
 
         print(tabulate(lines, headers=headers))
 
     def get_case_ids(self):
-        case_ids = list(self.cases().keys())
+        case_ids = list(self.cases().get_cases().keys())
         case_ids.sort()
         return case_ids
 
     def is_valid_case_id(self, case_id):
-        return case_id in self.cases()
+        return self.cases().case_exists(case_id)
 
     def is_valid_parser_name(self, name):
         if name == '__init__':
