@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-# For Python3
-# Script to parse logdata_statistics_*.txt to ease parsing
-# Author: roman@envoid.com
-#
-
+"""
+For Python3
+Script to parse logdata_statistics_*.txt to ease parsing
+Author: roman@envoid.com
+"""
 import glob
 import json
 import os

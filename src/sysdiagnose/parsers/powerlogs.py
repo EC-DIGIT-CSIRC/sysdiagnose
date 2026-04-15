@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to print from powerlogs (last 3 days of logs)
-# Author: david@autopsit.org
-
+"""
+For Python3
+Script to print from powerlogs (last 3 days of logs)
+Author: david@autopsit.org
+"""
 import glob
 import os
 

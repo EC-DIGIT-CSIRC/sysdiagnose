@@ -67,7 +67,7 @@ _cant_serialize = object()
 
 
 @singledispatch
-def json_serializable(object, _skip_underscore=False):
+def json_serializable(_object, _skip_underscore=False):
     """Filter a Python object to only include serializable object types
 
     In dictionaries, keys are converted to strings; if skip_underscore is true

@@ -1,11 +1,13 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse the brctl-container-list.txt and brctl-dump.txt files
-# Author: Emilien Le Jamtel
+"""
+For Python3
+Script to parse the brctl-container-list.txt and brctl-dump.txt files
+Author: Emilien Le Jamtel
+"""
 import json
 import os
 import re
+from contextlib import suppress
 
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
@@ -271,10 +273,8 @@ class BrctlParser(BaseParserInterface):
                 try:
                     value = int(value)
                 except ValueError:
-                    try:
+                    with suppress(Exception):
                         value = float(value)
-                    except ValueError:
-                        pass
                 # Add the key-value pair to the dictionary
                 parsed_data[key] = value
 

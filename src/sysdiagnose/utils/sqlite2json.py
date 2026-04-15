@@ -1,14 +1,16 @@
 #! /usr/bin/env python
-#
-# For Python3
-# Script to parse sqlite database and export to JSON (generic)
-# Author: david@autopsit.org
-#
-# iOS13: 4 SQLite DB
-#   ./logs/itunesstored/downloads.28.sqlitedb
-#   ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
-#   ./logs/Accessibility/TCC.db
-#   ./logs/appinstallation/appstored.sqlitedb
+"""
+For Python3
+Script to parse sqlite database and export to JSON (generic)
+Author: david@autopsit.org
+
+iOS13: 4 SQLite DB
+  ./logs/itunesstored/downloads.28.sqlitedb
+  ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
+  ./logs/Accessibility/TCC.db
+  ./logs/appinstallation/appstored.sqlitedb
+"""
+
 import argparse
 import json
 import sqlite3

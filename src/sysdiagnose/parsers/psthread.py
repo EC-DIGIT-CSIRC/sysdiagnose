@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse ps.txt to ease parsing
-# Author: david@autopsit.org
-#
-
+"""
+For Python3
+Script to parse ps.txt to ease parsing
+Author: david@autopsit.org
+"""
 import glob
 import os
 import re

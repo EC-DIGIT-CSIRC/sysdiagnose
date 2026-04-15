@@ -506,7 +506,6 @@ class Event():
 
     timestamp_desc: str = ''   # description of the timestamp (e.g. "sysdiagnose creation time")
     data: dict = field(default_factory=dict)         # dict with the data of the event
-    # extra: dict = field(default_factory=dict)  # LATER more fields at the root, but this is a bit more complex and needs to be implemented everywhere, so we leave it out for now
 
     # allows access to the attributes as if they were dictionary keys
     def __getitem__(self, key):
@@ -555,11 +554,6 @@ class Event():
         """
 
         output = {}
-
-        # add extra fields if they exist
-        # if self.extra:
-        #     output.update(self.extra)
-
         # keep this last as this ensures the mandatory fields have precedence
         output.update({
             'datetime': self.datetime.isoformat(timespec='microseconds'),
@@ -593,5 +587,4 @@ class Event():
         event = cls(datetime=datetime, message=message, module=module)
         event.timestamp_desc = data.get('timestamp_desc', '')
         event.data = data.get('data', {})
-        # event.extra = # LATER also load the other fields that exist
         return event

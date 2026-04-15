@@ -46,7 +46,7 @@ class PlistParser(BaseParserInterface):
         except Exception as e:
             return {"error": str(e)}
 
-    def save_result(self, force: bool = False, indent=None):
+    def save_result(self, force: bool = False, _indent=None):
         """
         Saves the result of the parsing operation to many files in the parser output folder
 

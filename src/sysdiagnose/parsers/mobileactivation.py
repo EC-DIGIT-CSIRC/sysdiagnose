@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse the swcutil_show.txt file
-# Author: Emilien Le Jamtel
-
+"""
+For Python3
+Script to parse the swcutil_show.txt file
+Author: Emilien Le Jamtel
+"""
 import glob
 import os
 

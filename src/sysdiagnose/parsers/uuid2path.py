@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to print the values from logs/tailspindb/UUIDToBinaryLocations (XML plist)
+Uses Python3's plistlib
+Author: cheeky4n6monkey@gmail.com
 
-# For Python3
-# Script to print the values from logs/tailspindb/UUIDToBinaryLocations (XML plist)
-# Uses Python3's plistlib
-# Author: cheeky4n6monkey@gmail.com
-#
-# Change log: David DURVAUX - add function are more granular approach
-
+Change log: David DURVAUX - add function are more granular approach
+"""
 import glob
 import os
 
@@ -44,7 +44,7 @@ class UUID2PathParser(BaseParserInterface):
             return {'error': 'No UUIDToBinaryLocations file present'}
 
     @staticmethod
-    def printResult(data):
+    def print_result(data):
         """
             Print the hashtable produced by getUUID2Path to console as UUID, path
         """

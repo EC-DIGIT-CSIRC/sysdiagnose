@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 from sysdiagnose.parsers.plists import PlistParser
@@ -33,10 +34,8 @@ class SummaryAnalyser(BaseAnalyserInterface):
 
         plist_parser = PlistParser(self.config, self.case_id)
         plist_result = plist_parser.parse_file(os.path.join(plist_parser.case_data_subfolder, 'logs', 'MCState', 'User', 'EffectiveUserSettings.plist'))
-        try:
+        with suppress(Exception):
             result.append(f"- Lockdown mode: {plist_result['restrictedBool']['allowLockdownMode']['value']}")
-        except KeyError:
-            pass
 
         trans_parser = TransparencyJsonParser(self.config, self.case_id)
         trans_result = trans_parser.get_result()
@@ -46,7 +45,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
             result.append('No transparency.log file found or it is empty.')
         else:
             try:
-                for account, val in trans_result['stateMachine']['selfVerification']['server'].items():
+                for account in trans_result['stateMachine']['selfVerification']['server']:
                     result.append(f"- {account}")
             except KeyError:
                 # result.append('Issue extracting stateMachine selfVerification account info')
@@ -77,7 +76,6 @@ class SummaryAnalyser(BaseAnalyserInterface):
             for owner in mobilecal_result['OwnerEmailAddress']:
                 result.append(f"- {owner}")
         except KeyError:
-            # result.append('Issue extracting mobilecal owner email')
             pass
 
         # extract known devices
@@ -88,12 +86,8 @@ class SummaryAnalyser(BaseAnalyserInterface):
             try:
                 result.append("| Serial       | Model            | OS        | Name                 |")
                 result.append("|--------------|------------------|-----------|----------------------|")
-                for key, device in trans_result['stateMachine']['devices'].items():
+                for _key, device in trans_result['stateMachine']['devices'].items():
                     result.append(f"| {device['serial']} | {device['model']:16} | {device['osVersion']:9} | {device['name']:20} |")
-                    # result.append(f"Name: {device['name']}")
-                    # result.append(f"- Model: {device['model']}")
-                    # result.append(f"- OS: {device['osVersion']}")
-                    # result.append(f"- Serial: {device['serial']}")
             except KeyError:
                 result.append('Issue extracting known devices')
                 pass
@@ -105,10 +99,9 @@ class SummaryAnalyser(BaseAnalyserInterface):
         else:
             # FIXME this code is not touched - use metadata section
             for item in sec_result:
-                if item['data']['section'] == 'metadata':
-                    if 'circle' in item['data']:
-                        result.append('\n## Circle')
-                        result.extend(item['data']['circle'])
+                if item['data']['section'] == 'metadata' and 'circle' in item['data']:
+                    result.append('\n## Circle')
+                    result.extend(item['data']['circle'])
 
         mcstatesharedprofile_parser = McStateSharedProfileParser(self.config, self.case_id)
         mcstate_result = mcstatesharedprofile_parser.get_result()
@@ -153,7 +146,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     result.append(f"\tURL: {profile['OTAProfileStub']['PayloadContent']['URL']}")
                     result.append(f"\tUUID: {profile['OTAProfileStub']['PayloadUUID']}")
 
-                for key in profile.keys():
+                for key in profile:
                     if 'URL' in key:
                         result.append(f"\t{key}: {profile[key]}")
 
@@ -170,10 +163,8 @@ class SummaryAnalyser(BaseAnalyserInterface):
                         result.append(f"\tSubject: {payloadcontent_item['CertSubject']}")
                     if 'PayloadType' in payloadcontent_item:
                         result.append(f"\tType: {payloadcontent_item['PayloadType']}")
-                    # if 'ServerURL' in payloadcontent_item:
-                    #     result.append(f"\tURL: {payloadcontent_item['ServerURL']}")
 
-                    for key in payloadcontent_item.keys():
+                    for key in payloadcontent_item:
                         if 'URL' in key:
                             result.append(f"\t{key}: {payloadcontent_item[key]}")
 

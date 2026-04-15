@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to print the values from WiFi/com.apple.wifi.known-networks.plist
+Author: aaron@lo-res.org, modeles after sysdiagnose-networkextension.py and mobileactivation.py
 
-# For Python3
-# Script to print the values from WiFi/com.apple.wifi.known-networks.plist
-# Author: aaron@lo-res.org, modeles after sysdiagnose-networkextension.py and mobileactivation.py
-#
-# Change log: Aaron Kaplan, initial version.
-
+Change log: Aaron Kaplan, initial version.
+"""
 import glob
 import os
 

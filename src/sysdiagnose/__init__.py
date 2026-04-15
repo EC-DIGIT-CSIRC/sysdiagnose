@@ -1,21 +1,17 @@
 import hashlib
 import importlib.util
-import io
 import json
 import os
 import re
 import shutil
 import tarfile
-from curses import meta
 from datetime import timezone
 from io import TextIOWrapper
 from operator import ior
 from pathlib import Path
-from typing import Text
 
 from tabulate import tabulate
 
-from sysdiagnose.parsers import iodevicetree, ioservice
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseInterface, BaseParserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.lock import FileLock
 from sysdiagnose.utils.logger import logger, set_json_logging
@@ -71,7 +67,7 @@ class Sysdiagnose:
             try:
                 shutil.rmtree(case_folder)
             except Exception as e:
-                raise Exception(f"Error while deleting case folder: {e!s}")
+                raise Exception(f"Error while deleting case folder: {e!s}") from e
 
         # delete case from the cases
         lock = FileLock(self.config.cases_file)

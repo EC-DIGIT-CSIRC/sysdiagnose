@@ -61,6 +61,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
                 'cmd': ps_dict.get(pid, {}).get('command'),
             }
 
+            # ruff: noqa: ERA001
             # '%CPU', '%MEM', 'F', 'NI',
             # 'PRI', 'RSS',
             # 'STARTED', 'STAT', 'TIME', 'TT', 'USER', 'VSZ'

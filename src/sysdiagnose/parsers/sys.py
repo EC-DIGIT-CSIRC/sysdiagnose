@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to print the values from /logs/SystemVersion/SystemVersion.plist
+Author: cheeky4n6monkey@gmail.com
 
-# For Python3
-# Script to print the values from /logs/SystemVersion/SystemVersion.plist
-# Author: cheeky4n6monkey@gmail.com
-#
-# Change log: David DURVAUX - add function are more granular approach
-
+Change log: David DURVAUX - add function are more granular approach
+"""
 import glob
 import os
 

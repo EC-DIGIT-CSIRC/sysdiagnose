@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
-# For Python3
-# Script to print connection info from logs/appinstallation/AppUpdates.sqlite.db (iOS12)
-# New version of iOS store data into logs/appinstallation/appstored.sqlitedb
-# Author: david@autopsit.org
+"""
+For Python3
+Script to print connection info from logs/appinstallation/AppUpdates.sqlite.db (iOS12)
+New version of iOS store data into logs/appinstallation/appstored.sqlitedb
+PID: encoded in Litlle Endian??
 
-# PID: encoded in Litlle Endian??
-
-
+Author: david@autopsit.org
+"""
 import glob
 import os
 from datetime import datetime, timezone

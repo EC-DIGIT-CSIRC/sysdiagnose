@@ -3,6 +3,7 @@
 import glob
 import os
 import re
+from contextlib import suppress
 from datetime import datetime, timezone
 
 from sysdiagnose.utils import misc
@@ -31,16 +32,14 @@ class MobileBackupParser(BaseParserInterface):
         for logfile in self.get_log_files():
             json_data = misc.load_plist_file_as_json(logfile)
 
+            # ruff: noqa: ERA001 - do we want to keep all this commented code? @cvandeplas
             # add LastOnConditionEvents that contain errors
             # for i, event in enumerate(json_data.get('LastOnConditionEvents', [])):
             #     # "2023-02-22T10:24:49.051-08:00|158966.533|1|1|0|1|1|0|120|73683|15023|0|MBErrorDomain|209|2|0|0|0|0"
             #     parts = event.split('|')
             #     timestamp = datetime.fromisoformat(parts[0])
-
             #     item = {
-
             #     }
-
             #     # FIXME below correlation is WRONG. The index of the BackupStateInfo error is not the same as the index of the LastOnConditionEvents
             #     try:
             #         backupstateinfo = json_data['BackupStateInfo']['errors'][i]
@@ -48,7 +47,6 @@ class MobileBackupParser(BaseParserInterface):
             #     except IndexError:
             #         # could not find a correlating BackupStateInfo
             #         pass
-
             #     event = Event(
             #         datetime=timestamp,
             #         message=f"MobileBackup: {item.get('localizedDescription', '')} in {item['domain']} ",
@@ -90,16 +88,12 @@ class MobileBackupParser(BaseParserInterface):
                     'key': key,
                     'size': value
                 }
-                try:
+                # not a bundle id?
+                with suppress(Exception):
                     item['bundle_id'] = re.search(r'[^-]+Domain[^-]*-(.+)$', key).group(1)
-                except Exception:
-                    # not a bundle id
-                    pass
-                try:
+                # not a domain?
+                with suppress(Exception):
                     item['domain'] = re.search(r'([^-]+Domain[^-]*)', key).group(1)
-                except Exception:
-                    # not a domain
-                    pass
 
                 event = Event(
                     datetime=timestamp,

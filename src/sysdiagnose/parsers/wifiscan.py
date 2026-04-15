@@ -33,8 +33,8 @@ class WifiScanParser(BaseParserInterface):
     def parse_file(self, path: str) -> list | dict:
         output = []
         with open(path, 'r') as f:
-            for l in f:
-                line = l.strip()
+            for l_line in f:
+                line = l_line.strip()
                 # skip empty lines
                 if not line:
                     continue

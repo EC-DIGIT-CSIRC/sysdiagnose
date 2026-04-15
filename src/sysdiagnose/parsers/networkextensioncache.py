@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to extract the values from logs/Networking/com.apple.networkextension.plist
-# Author: Emilien Le Jamtel
-
-
+"""
+For Python3
+Script to extract the values from logs/Networking/com.apple.networkextension.plist
+Author: Emilien Le Jamtel
+"""
 import glob
 import os
 

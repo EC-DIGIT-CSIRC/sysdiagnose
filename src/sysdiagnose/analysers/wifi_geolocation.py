@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Author: Aaron Kaplan <aaron@lo-res.org>
-
+"""
+For Python3
+Author: Aaron Kaplan <aaron@lo-res.org>
+"""
 import dateutil.parser
 import gpxpy
 import gpxpy.gpx
@@ -18,10 +18,10 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
-    def get_result(self, force: bool = False):
+    def get_result(self, _force: bool = False):
         raise NotImplementedError("This function is not compatible with this module.")
 
-    def save_result(self, force: bool = False, indent=None):
+    def save_result(self, _force: bool = False, _indent=None):
         self._result = self.execute_with_result_summary()
         self.save_result_summary()
 

@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
-# For Python3
-# Parser for disks.txt (df-like output) to extract per-mount capacity/usage
-# Author: envoid helpers
-
+"""
+For Python3
+Parser for disks.txt (df-like output) to extract per-mount capacity/usage
+Author: envoid helpers
+"""
 import glob
 import os
 import re

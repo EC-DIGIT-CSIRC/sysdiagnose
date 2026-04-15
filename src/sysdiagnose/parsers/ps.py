@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse ps.txt to ease parsing
-# Author: david@autopsit.org
-#
-
+"""
+For Python3
+Script to parse ps.txt to ease parsing
+Author: david@autopsit.org
+"""
 import glob
 import os
 import re
@@ -42,7 +41,6 @@ class PsParser(BaseParserInterface):
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
 
-                # print(f"Found header: {header}")
                 for line in f:
                     patterns = line.strip().split(None, header_length - 1)
                     entry = {}
@@ -73,6 +71,7 @@ class PsParser(BaseParserInterface):
             logger.exception("Could not parse ps.txt")
             return []
 
+    @staticmethod
     def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
         """
         Exclude known good processes from the given list of processes.

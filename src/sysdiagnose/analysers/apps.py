@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Author: Emiliern Le Jamtel
-
+"""
+For Python3
+Author: Emiliern Le Jamtel
+"""
 import re
 
 from sysdiagnose.parsers.accessibility_tcc import AccessibilityTccParser

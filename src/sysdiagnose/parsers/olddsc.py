@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse ./logs/olddsc files
-# Author: david@autopsit.org
-#
-#
+"""
+For Python3
+Script to parse ./logs/olddsc files
+Author: david@autopsit.org
+"""
 import glob
 import os
 
@@ -56,6 +55,7 @@ class OldDscParser(BaseParserInterface):
             logger.warning('No olddsc files present')
         return entries
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         try:
             return load_plist_file_as_json(path)

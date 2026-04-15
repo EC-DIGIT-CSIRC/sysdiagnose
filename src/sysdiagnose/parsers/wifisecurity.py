@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
-# For Python3
-# Script to print WIFI info from ./WiFi/security.txt
-# Author: david@autopsit.org
-
+"""
+For Python3
+Script to print WIFI info from ./WiFi/security.txt
+Author: david@autopsit.org
+"""
 import glob
 import os
 from datetime import datetime

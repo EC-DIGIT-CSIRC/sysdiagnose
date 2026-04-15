@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Sysdiagnose Shutdown logs
-# Author: Benoit Roussile
-
+"""
+For Python3
+Sysdiagnose Shutdown logs
+Author: Benoit Roussile
+"""
 import glob
 import os
 import re
@@ -40,6 +40,7 @@ class ShutdownLogsParser(BaseParserInterface):
             logger.info('No shutdown.log file present in system_logs.logarchive/Extra/ directory')
             return []
 
+    @staticmethod
     def parse_file(path: str) -> list:
         # read log file content
         log_lines = ""
