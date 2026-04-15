@@ -555,6 +555,7 @@ class Event():
         """
 
         output = {}
+
         # add extra fields if they exist
         # if self.extra:
         #     output.update(self.extra)

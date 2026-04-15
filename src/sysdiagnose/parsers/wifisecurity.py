@@ -1,6 +1,4 @@
 #! /usr/bin/env python3
-# noqa: ERA001 --- IGNORE ---
-
 # For Python3
 # Script to print WIFI info from ./WiFi/security.txt
 # Author: david@autopsit.org

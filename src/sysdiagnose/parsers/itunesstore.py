@@ -11,7 +11,7 @@ from sysdiagnose.utils import misc, sqlite2json
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
-class iTunesStoreParser(BaseParserInterface):
+class ITunesStoreParser(BaseParserInterface):
     description = "Parsing iTunes store logs"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
@@ -30,9 +30,10 @@ class iTunesStoreParser(BaseParserInterface):
     def execute(self) -> list | dict:
         # there's only one file to parse
         try:
-            return iTunesStoreParser.parse_file(self.get_log_files()[0])
+            return ITunesStoreParser.parse_file(self.get_log_files()[0])
         except IndexError:
             return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         return misc.json_serializable(sqlite2json.sqlite2struct(path))

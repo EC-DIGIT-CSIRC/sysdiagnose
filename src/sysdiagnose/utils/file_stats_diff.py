@@ -33,7 +33,7 @@ def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict,
 
 
 def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
-                                       exclusions: list[str] = None) -> tuple[list, list, list]:
+                                       exclusions: list[str] | None = None) -> tuple[list, list, list]:
     """
         Efficiently compare two arrays of dictionaries using a unique key, with exclusions.
 

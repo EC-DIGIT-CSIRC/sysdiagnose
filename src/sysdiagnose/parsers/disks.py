@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 # For Python3
 # Parser for disks.txt (df-like output) to extract per-mount capacity/usage
 # Author: envoid helpers
@@ -7,6 +6,7 @@
 import glob
 import os
 import re
+from contextlib import suppress
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 from sysdiagnose.utils.misc import snake_case
@@ -21,7 +21,7 @@ def _parse_size_to_bytes(size_str: str) -> int:
     if size_str is None:
         return 0
     s = str(size_str).strip()
-    if s == '' or s == '-':
+    if s in {'', '-'}:
         return 0
     try:
         # raw bytes
@@ -44,7 +44,7 @@ def _parse_size_to_bytes(size_str: str) -> int:
         return 0
 
     factor = 1
-    if unit == 'B' or unit == '':
+    if unit in {'B', ''}:
         factor = 1
     elif unit == 'K':
         factor = 1024
@@ -106,13 +106,13 @@ class DisksParser(BaseParserInterface):
                 # Normalize header names
                 normalized_header = [snake_case(h) for h in header]
 
-                for line in f:
-                    line = line.rstrip('\n')
-                    if not line.strip():
+                for l_line in f:
+                    line = l_line.rstrip('\n').strip()
+                    if not line:
                         continue
 
                     # Split into header_length fields, last field may contain spaces (mount path)
-                    fields = line.strip().split(None, header_length - 1)
+                    fields = line.split(None, header_length - 1)
                     if len(fields) < header_length:
                         # skip malformed line
                         continue
@@ -130,15 +130,11 @@ class DisksParser(BaseParserInterface):
 
                     # Normalize percentage fields
                     if 'capacity' in entry and isinstance(entry['capacity'], str) and entry['capacity'].endswith('%'):
-                        try:
+                        with suppress(ValueError):
                             entry['capacity_percent'] = float(entry['capacity'].rstrip('%'))
-                        except ValueError:
-                            pass
                     if 'use%' in entry:
-                        try:
+                        with suppress(ValueError):
                             entry['use_percent'] = float(str(entry['use%']).rstrip('%'))
-                        except ValueError:
-                            pass
 
                     # Craft message and event
                     mount_point = entry.get('mounted_on') or entry.get('mount_point') or entry.get('mounted') or ''

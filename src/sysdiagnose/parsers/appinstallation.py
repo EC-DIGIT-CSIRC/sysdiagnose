@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 # For Python3
 # Script to print connection info from logs/appinstallation/AppUpdates.sqlite.db (iOS12)
 # New version of iOS store data into logs/appinstallation/appstored.sqlitedb

@@ -67,8 +67,8 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                 record_tpl = {}
                 timestamp = None
 
-                for line in f:
-                    line = line.strip()
+                for l_line in f:
+                    line = l_line.strip()
 
                     if line.startswith('--- !logd statistics record'):
                         inside_statistics_record = True

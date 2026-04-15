@@ -39,6 +39,7 @@ class McSettingsEventsParser(BaseParserInterface):
 
         return result
 
+    @staticmethod
     def traverse_and_collect(data, module, path=""):
         '''
         recursively traverse json_data and search for dicts that contain the 'timestamp' key.

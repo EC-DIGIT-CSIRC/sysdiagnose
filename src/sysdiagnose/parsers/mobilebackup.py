@@ -30,6 +30,7 @@ class MobileBackupParser(BaseParserInterface):
         result = []
         for logfile in self.get_log_files():
             json_data = misc.load_plist_file_as_json(logfile)
+
             # add LastOnConditionEvents that contain errors
             # for i, event in enumerate(json_data.get('LastOnConditionEvents', [])):
             #     # "2023-02-22T10:24:49.051-08:00|158966.533|1|1|0|1|1|0|120|73683|15023|0|MBErrorDomain|209|2|0|0|0|0"

@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 # For Python3
 # Script to print from Accessibility TCC logs
 # Author: david@autopsit.org

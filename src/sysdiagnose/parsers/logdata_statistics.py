@@ -64,8 +64,8 @@ class LogDataStatisticsParser(BaseParserInterface):
 
         try:
             with open(path, 'r') as f:
-                for line in f:
-                    line = line.strip()
+                for l_line in f:
+                    line = l_line.strip()
                     if not line:
                         continue
                     try:

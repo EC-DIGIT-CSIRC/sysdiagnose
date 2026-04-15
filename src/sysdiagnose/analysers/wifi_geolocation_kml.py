@@ -29,6 +29,7 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
         return WifiGeolocationKmlAnalyser.generate_kml_from_known_networks_json(json_data=json_data, output_file=self.output_file)
 
     # LATER merge this and wifi_geolocation.py to share as much common code as possible
+    @staticmethod
     def generate_kml_from_known_networks_json(json_data: str, output_file: str):
         # Create new KML root
         kml = ET.Element('kml', xmlns='http://www.opengis.net/kml/2.2')
@@ -47,14 +48,7 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
                 timestamp_str = network_data.get('JoinedByUserAt', '')      # second best attempt
             if not timestamp_str:
                 timestamp_str = network_data.get('UpdatedAt', '')           # third best attempt
-            # Convert ISO 8601 format to datetime
             add_reason = network_data.get("AddReason", '')
-
-            # try:
-            #     timestamp = dateutil.parser.parse(timestamp_str)
-            # except Exception as e:
-            #     print(f"Error converting timestamp. Reason: {str(e)}. Timestamp was: {str(timestamp_str)}. Assuming Jan 1st 1970.")
-            #     timestamp = dateutil.parser.parse('1970-01-01')     # begin of epoch
 
             bssid = network_data.get('__OSSpecific__', {}).get('BSSID', '')
             channel = network_data.get('__OSSpecific__', {}).get('CHANNEL', '')

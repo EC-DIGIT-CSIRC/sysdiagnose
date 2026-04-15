@@ -67,7 +67,7 @@ _cant_serialize = object()
 
 
 @singledispatch
-def json_serializable(object, skip_underscore=False): # noqa: ARG002
+def json_serializable(object, _skip_underscore=False):
     """Filter a Python object to only include serializable object types
 
     In dictionaries, keys are converted to strings; if skip_underscore is true
@@ -100,12 +100,12 @@ def _handle_sequence(seq, skip_underscore=False):
 @json_serializable.register(str)
 @json_serializable.register(bool)  # redudant, supported as int subclass
 @json_serializable.register(type(None))
-def _handle_default_scalar_types(value, skip_underscore=False): # noqa: ARG002
+def _handle_default_scalar_types(value, _skip_underscore=False):
     return value
 
 
 @json_serializable.register(bytes)
-def _handle_bytes(value, skip_underscore=False): # noqa: ARG002
+def _handle_bytes(value, _skip_underscore=False):
     try:
         return value.decode(errors='strict')
     except Exception:
@@ -113,7 +113,7 @@ def _handle_bytes(value, skip_underscore=False): # noqa: ARG002
 
 
 @json_serializable.register(datetime)
-def _handle_datetime(value, skip_underscore=False): # noqa: ARG002
+def _handle_datetime(value, _skip_underscore=False):
     return value.isoformat(timespec='microseconds')
 
 

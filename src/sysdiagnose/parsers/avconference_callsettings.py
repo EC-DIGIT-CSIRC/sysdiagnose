@@ -53,10 +53,7 @@ class AvConferenceCallSettingsParser(BaseParserInterface):
         # parse the rest of the
         lines = file_content.decode().split('\n')
         for line in lines:
-            if re.match(r'^[0-9]{6}\.[0-9]{6} ', line):
-                message = line[13:].strip()
-            else:
-                message = line.strip()
+            message = line[13:].strip() if re.match(r'^[0-9]{6}\.[0-9]{6} ', line) else line.strip()
             event = Event(
                 datetime=timestamp,
                 message=message,

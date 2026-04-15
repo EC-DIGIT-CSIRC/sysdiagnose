@@ -31,6 +31,7 @@ class LockdowndParser(BaseParserInterface):
                 return result
         return []
 
+    @staticmethod
     def extract_from_list(lines: list, tzinfo, module) -> list:
         result = []
         i = 0

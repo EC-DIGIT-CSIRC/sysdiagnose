@@ -33,11 +33,10 @@ class BrctlParser(BaseParserInterface):
     def parselistfile(container_list_file):
         containers = {"containers": []}
         result = []
-        # print(container_list_file)
         with open(container_list_file[0], 'r') as f:
             keys = ['id', 'localizedName', 'documents', 'Public', 'clients']
-            for l in f:
-                line = l.strip()
+            for l_line in f:
+                line = l_line.strip()
                 line = line.replace('Mobile Documents', 'Mobile_Documents')
                 keys = ['id', 'localizedName', 'documents', 'Public', 'Private', 'clients']
                 values = re.findall(rf"({'|'.join(keys)}):\s*([^ \[]+|\[[^\]]*\])", line)
@@ -285,9 +284,9 @@ class BrctlParser(BaseParserInterface):
     def parse_system_scheduler(input):
         data = {}
         lines = input.split('\n')
-        for l in lines:
+        for l_line in lines:
             # removing ANSI escape codes
-            line = re.sub(r'\x1b\[[0-9;]*m', '', l)
+            line = re.sub(r'\x1b\[[0-9;]*m', '', l_line)
             line = line.strip()
             if line.startswith('+'):
                 key, value = line.split(':', 1)
