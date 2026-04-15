@@ -45,6 +45,11 @@ dependencies = [
 dev = [
   "ruff>=0.11.0,<0.16.0",
 ]
+jupyter = [
+  "jupyter>=1.0.0",
+  "ipython>=8.0.0",
+  "folium>=0.14.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/EC-DIGIT-CSIRC/sysdiagnose"
