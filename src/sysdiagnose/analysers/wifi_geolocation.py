@@ -6,8 +6,9 @@
 import dateutil.parser
 import gpxpy
 import gpxpy.gpx
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
+
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, logger
 
 
 class WifiGeolocationAnalyser(BaseAnalyserInterface):
@@ -21,12 +22,14 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
         raise NotImplementedError("This function is not compatible with this module.")
 
     def save_result(self, force: bool = False, indent=None):
-        self.execute()
+        self._result = self.execute_with_result_summary()
+        self.save_result_summary()
 
     def execute(self):
         json_data = WifiKnownNetworksParser(self.config, self.case_id).get_result()
         return WifiGeolocationAnalyser.generate_gpx_from_known_networks_json(json_data=json_data, output_file=self.output_file)
 
+    @staticmethod
     def generate_gpx_from_known_networks_json(json_data: str, output_file: str):
         # Create new GPX object
         gpx = gpxpy.gpx.GPX()
@@ -44,8 +47,8 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
 
             try:
                 timestamp = dateutil.parser.parse(timestamp_str)
-            except Exception as e:
-                logger.exception(f"Error converting timestamp. Timestamp was: {str(timestamp_str)}. Assuming Jan 1st 1970.")
+            except Exception:
+                logger.exception(f"Error converting timestamp. Timestamp was: {timestamp_str!s}. Assuming Jan 1st 1970.")
                 timestamp = dateutil.parser.parse('1970-01-01')     # begin of epoch
 
             bssid = network_data.get('__OSSpecific__', {}).get('BSSID', '')
@@ -74,4 +77,3 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
             # Save gpx file
             with open(output_file, 'w') as f:
                 f.write(gpx.to_xml())
-        return

@@ -4,8 +4,9 @@
 # Author: Aaron Kaplan <aaron@lo-res.org>
 
 import xml.etree.ElementTree as ET
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
+
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 
 
 class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
@@ -19,7 +20,8 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
         raise NotImplementedError("This function is not compatible with this module.")
 
     def save_result(self, force: bool = False, indent=None):
-        self.execute()
+        self._result = self.execute_with_result_summary()
+        self.save_result_summary()
 
     def execute(self):
         json_data = WifiKnownNetworksParser(self.config, self.case_id).get_result()
@@ -94,4 +96,3 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
         tree = ET.ElementTree(kml)
         tree.write(output_file)
 
-        return

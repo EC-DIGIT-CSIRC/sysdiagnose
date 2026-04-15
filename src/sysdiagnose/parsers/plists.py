@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 
 import glob
-import sysdiagnose.utils.misc as misc
-import os
 import json
+import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
@@ -52,20 +53,14 @@ class PlistParser(BaseParserInterface):
         This function overrides the default save_result function to save each file in a different json file
         """
         os.makedirs(self.output_folder, exist_ok=True)
-        if not force and self._result is not None:
-            # the result was already computed
-            for end_of_path, json_data in self._result.items():
-                output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
-                with open(os.path.join(self.output_folder, output_filename), 'w') as f:
-                    f.write(json.dumps(json_data, ensure_ascii=False))
-        else:
-            # no caching
-            for logfile in self.get_log_files():
-                try:
-                    json_data = misc.load_plist_file_as_json(logfile)
-                except Exception as e:
-                    json_data = {"error": str(e)}
-                end_of_path = logfile[len(self.case_data_subfolder):].lstrip(os.path.sep)   # take the path after the root path
-                output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
-                with open(os.path.join(self.output_folder, output_filename), 'w') as f:
-                    f.write(json.dumps(json_data, ensure_ascii=False))
+        if force or self._result is None:
+            self._result = self.execute_with_result_summary()
+        elif self._result_summary is None:
+            self._result_summary = self.load_result_summary()
+
+        for end_of_path, json_data in self._result.items():
+            output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
+            with open(os.path.join(self.output_folder, output_filename), 'w') as f:
+                f.write(json.dumps(json_data, ensure_ascii=False))
+
+        self.save_result_summary()

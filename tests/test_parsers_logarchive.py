@@ -1,15 +1,16 @@
+import json
+import os
+import tempfile
+import unittest
+
 from sysdiagnose.parsers.logarchive import LogarchiveParser
 from tests import SysdiagnoseTestCase
-import os
-import unittest
-import json
-import tempfile
 
 
 class TestParsersLogarchive(SysdiagnoseTestCase):
 
     def test_parse_logarchive(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             print(f'Parsing logarchive for {case_id}')
             p = LogarchiveParser(self.sd.config, case_id=case_id)
 
@@ -18,6 +19,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
+            self.assertTrue(os.path.isfile(p.summary_file))
 
             # we don't test getting result in memory, but check one line in the output.
             with open(p.output_file, 'r') as f:
@@ -25,6 +27,11 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                 item = json.loads(line)
                 self.assertTrue('subsystem' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
+
+            summary = p.get_result_summary()
+            self.assertGreater(summary.num_events, 0)
+            self.assertIsNotNone(summary.start_time)
+            self.assertIsNotNone(summary.duration)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = '2023-05-24 13:03:28.908085-0700'

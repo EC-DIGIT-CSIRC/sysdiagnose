@@ -1,7 +1,8 @@
-from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
+import csv
+
 from sysdiagnose.parsers.mcstate_shared_profile import McStateSharedProfileParser
 from sysdiagnose.utils import misc
-import csv
+from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig
 
 
 # Temmporary analyser - for testing
@@ -39,14 +40,18 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
         Args:
             force (bool, optional): If True, forces the parsing operation even if the output cache or file exists. Defaults to False.
         """
-        # save to file
+        if force or self._result is None or not self.output_exists():
+            self._result = self.execute_with_result_summary()
+        else:
+            self._result_summary = self.load_result_summary()
 
-        result = self.get_result(force)
         result_keys = set()
-        for entry in result:
+        for entry in self._result:
             result_keys.update(entry.keys())
 
         with open(self.output_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=list(result_keys))
             writer.writeheader()
-            writer.writerows(result)
+            writer.writerows(self._result)
+
+        self.save_result_summary()
