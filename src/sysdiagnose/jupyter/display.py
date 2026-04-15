@@ -1,14 +1,22 @@
+#! /usr/bin/env python3
+
+# Sysdiagnose Jupyter display helpers
+# Author: EC-DIGIT-CSIRC
+
 """
 Display helpers for sysdiagnose Jupyter integration.
 
 Converts sysdiagnose data structures to pandas DataFrames for rich
 rendering in Jupyter notebooks.
 """
+import glob
 import json
 import os
-import glob
+
 import pandas as pd
+
 from sysdiagnose import Sysdiagnose
+from sysdiagnose.utils.logger import logger
 
 
 def cases_to_df(sd: Sysdiagnose) -> pd.DataFrame:
@@ -24,7 +32,9 @@ def cases_to_df(sd: Sysdiagnose) -> pd.DataFrame:
             'model': case.case_metadata.get('model', ''),
             'tags': ','.join(case.tags),
         })
-    return pd.DataFrame(rows) if rows else pd.DataFrame(columns=['case_id', 'date', 'serial_number', 'ios_version', 'model', 'tags'])
+    if rows:
+        return pd.DataFrame(rows)
+    return pd.DataFrame(columns=['case_id', 'date', 'serial_number', 'ios_version', 'model', 'tags'])
 
 
 def parsers_to_df(sd: Sysdiagnose) -> pd.DataFrame:
@@ -59,13 +69,11 @@ def result_to_df(parsed_folder: str, name: str) -> pd.DataFrame | None:
 
     Searches for json/jsonl files matching the name in the parsed_data folder.
     """
-    # Try jsonl first (event-based), then json
     for ext in ['jsonl', 'json']:
         filepath = os.path.join(parsed_folder, f'{name}.{ext}')
         if os.path.isfile(filepath):
             return load_result_file(filepath, ext)
 
-    # Try glob for partial matches
     matches = glob.glob(os.path.join(parsed_folder, f'{name}*'))
     if matches:
         filepath = matches[0]
@@ -73,7 +81,7 @@ def result_to_df(parsed_folder: str, name: str) -> pd.DataFrame | None:
         if ext in ('json', 'jsonl'):
             return load_result_file(filepath, ext)
 
-    print(f"No result file found for '{name}' in {parsed_folder}")
+    logger.warning(f"No result file found for '{name}' in {parsed_folder}")
     return None
 
 
@@ -90,10 +98,10 @@ def _load_jsonl(filepath: str) -> pd.DataFrame:
     """Load a JSONL file, flattening nested 'data' dicts into columns."""
     records = []
     with open(filepath, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                record = json.loads(line)
+        for raw_line in f:
+            stripped = raw_line.strip()
+            if stripped:
+                record = json.loads(stripped)
                 records.append(_flatten_event(record))
     df = pd.DataFrame(records)
     if 'datetime' in df.columns:

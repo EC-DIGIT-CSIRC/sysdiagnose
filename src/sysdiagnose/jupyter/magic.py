@@ -1,18 +1,26 @@
+#! /usr/bin/env python3
+
+# Sysdiagnose Jupyter magic commands
+# Author: EC-DIGIT-CSIRC
+
 """
 IPython magic commands for sysdiagnose.
 
 Provides %sd magic for interactive case management, parsing, and analysis.
 """
 import os
-from IPython.core.magic import Magics, magics_class, line_magic
-from IPython import get_ipython
+
+from IPython.core.magic import Magics, line_magic, magics_class
+
 from sysdiagnose import Sysdiagnose
 from sysdiagnose.jupyter.display import (
-    cases_to_df, parsers_to_df, analysers_to_df,
-    case_info_to_df, result_to_df,
+    analysers_to_df,
+    case_info_to_df,
+    cases_to_df,
+    parsers_to_df,
+    result_to_df,
 )
-
-_instance = None
+from sysdiagnose.utils.logger import logger
 
 
 @magics_class
@@ -32,17 +40,18 @@ class SysdiagnoseMagic(Magics):
         %sd help                   - Show this help
     """
 
+    _instance = None
+
     def __init__(self, shell):
         super().__init__(shell)
         cases_path = os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')
         self.sd = Sysdiagnose(cases_path=cases_path)
         self.case_id = None
-        global _instance
-        _instance = self
+        SysdiagnoseMagic._instance = self
 
     @classmethod
     def instance(cls):
-        return _instance
+        return cls._instance
 
     @line_magic
     def sd(self, line):
@@ -71,35 +80,35 @@ class SysdiagnoseMagic(Magics):
             return False
         return True
 
-    def _cmd_cases(self, args):
+    def _cmd_cases(self, _args):
         return cases_to_df(self.sd)
 
     def _cmd_use(self, args):
         if not args:
             print("Usage: %sd use <case_id>")
-            return
+            return None
         case_id = args[0]
         if not self.sd.is_valid_case_id(case_id):
             print(f"Case '{case_id}' not found. Use %sd cases to list available cases.")
-            return
+            return None
         self.case_id = case_id
         print(f"Active case: {case_id}")
         return case_info_to_df(self.sd, case_id)
 
-    def _cmd_info(self, args):
+    def _cmd_info(self, _args):
         if not self._require_case():
-            return
+            return None
         return case_info_to_df(self.sd, self.case_id)
 
-    def _cmd_parsers(self, args):
+    def _cmd_parsers(self, _args):
         return parsers_to_df(self.sd)
 
-    def _cmd_analysers(self, args):
+    def _cmd_analysers(self, _args):
         return analysers_to_df(self.sd)
 
     def _cmd_parse(self, args):
         if not self._require_case():
-            return
+            return None
         if not args:
             print("Usage: %sd parse <parser_name>")
             return self._cmd_parsers([])
@@ -109,10 +118,10 @@ class SysdiagnoseMagic(Magics):
                 print(f"  Parsing: {parser_name}...")
                 try:
                     self.sd.parse(parser_name, self.case_id)
-                except Exception as e:
-                    print(f"    Error: {e}")
+                except Exception:
+                    logger.exception(f"Error running parser '{parser_name}'")
             print("Done.")
-            return
+            return None
         if not self.sd.is_valid_parser_name(name):
             print(f"Parser '{name}' not found.")
             return self._cmd_parsers([])
@@ -123,7 +132,7 @@ class SysdiagnoseMagic(Magics):
 
     def _cmd_analyse(self, args):
         if not self._require_case():
-            return
+            return None
         if not args:
             print("Usage: %sd analyse <analyser_name>")
             return self._cmd_analysers([])
@@ -133,10 +142,10 @@ class SysdiagnoseMagic(Magics):
                 print(f"  Analysing: {analyser_name}...")
                 try:
                     self.sd.analyse(analyser_name, self.case_id)
-                except Exception as e:
-                    print(f"    Error: {e}")
+                except Exception:
+                    logger.exception(f"Error running analyser '{analyser_name}'")
             print("Done.")
-            return
+            return None
         if not self.sd.is_valid_analyser_name(name):
             print(f"Analyser '{name}' not found.")
             return self._cmd_analysers([])
@@ -148,20 +157,19 @@ class SysdiagnoseMagic(Magics):
     def _cmd_load(self, args):
         """Load a parsed/analysed result as a DataFrame."""
         if not self._require_case():
-            return
+            return None
         if not args:
             print("Usage: %sd load <parser_or_analyser_name>")
-            return
+            return None
         name = args[0]
         parsed_folder = self.sd.config.get_case_parsed_data_folder(self.case_id)
         df = result_to_df(parsed_folder, name)
         if df is not None:
-            # Store in user namespace for further use
             var_name = f"sd_{name}"
             self.shell.user_ns[var_name] = df
             self.shell.user_ns['_sd_result'] = df
             print(f"Result loaded into '{var_name}' and '_sd_result' ({len(df)} rows)")
         return df
 
-    def _cmd_help(self, args=None):
+    def _cmd_help(self, _args=None):
         print(self.__class__.__doc__)
