@@ -91,8 +91,13 @@ def main():
 
     elif args.mode == 'delete':
         force = args.force
-        if not args.case_id and args.case_id not in sd.get_case_ids():
-            exit("No valid case ID given, use --case_id to specify a case ID")
+        if not args.case_id or args.case_id == 'all':
+            print("No valid case ID given, use -c to specify a case ID")
+            exit(1)
+        
+        if args.case_id not in sd.get_case_ids():
+            print(f"Case ID '{args.case_id}' does not exist")
+            exit(1)
 
         if not force:
             # Ask for confirmation
@@ -130,14 +135,15 @@ def main():
         try:
             if args.case_id and args.case_id != 'all':
                 case_id = args.case_id
-                sd.create_case(filename, force, case_id)
-                print(f"Case '{case_id}' created successfully from '{filename}'")
+                result_case_id = sd.create_case(filename, force, case_id)
+                print(f"Case '{result_case_id}' created successfully from '{filename}'")
             else:
                 # ignore the given case_id and let the function generate one
-                case_id = sd.create_case(filename, force)['case_id']
+                case_id = sd.create_case(filename, force)
                 print(f"Case '{case_id}' created successfully from '{filename}'")
         except Exception as e:
-            exit(f"Error creating case: {str(e)}")
+            print(f"Error creating case: {str(e)}")
+            exit(1)
 
     elif args.mode == 'parse':
         # Handle parse mode

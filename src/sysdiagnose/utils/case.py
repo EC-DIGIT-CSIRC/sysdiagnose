@@ -33,26 +33,22 @@ class SysdiagnoseCaseLibrary:
     """
     def __init__(self, config: SysdiagnoseConfig):
         self.config = config
-        self.cases = self.load_from_disk()
-        return
+        self._cases = {}
+        self.load_from_disk()
     
     def add_case(self, case: SysdiagnoseCase, force: bool = False) -> None:
-        # check case was not alredy added (based on sha256)
-        for c in self.cases().values():
-            if c['source_sha256'] == case.case_metadata['source_sha256']:
-                raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c.case_id}, given = {case.case_id}")
-        self.cases[case.case_metadata['case_id']] = case
-
-        # check if sysadiganose file is not already in a case
-        for c in self.cases().values():
-            if c['source_sha256'] == case.case_metadata['source_sha256']:
+        # check if sysdiagnose file is not already in a case
+        for existing_case in self._cases.values():
+            if existing_case.case_metadata.get('source_sha256') == case.case_metadata.get('source_sha256'):
                 if force:
-                    if c.case_id and case.case_id != c.case_id:
-                        raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case.case_id}")
-                    self.cases.push(case.case_id, case)
-                    break
+                    if existing_case.case_id != case.case_id:
+                        raise ValueError(f"This sysdiagnose has already been extracted with different case ID: existing = {existing_case.case_id}, given = {case.case_id}")
+                    # Update existing case
+                    self._cases[case.case_id] = case
+                    self.save_to_disk()
+                    return
                 else:
-                    raise ValueError(f"This sysdiagnose has already been extracted for case ID: {c['case_id']}")
+                    raise ValueError(f"This sysdiagnose has already been extracted for case ID: {existing_case.case_id}")
         
         # check if case_id already exists with different file
         if case.case_id in self._cases:
@@ -127,10 +123,11 @@ class SysdiagnoseCaseLibrary:
             lock.release()
         return False
 
-    def load_from_disk(self) -> bool:
+    def load_from_disk(self) -> None:
         """Load cases from disk, converting dict format to SysdiagnoseCase objects"""
         if not os.path.exists(self.config.cases_file):
-            return True  # No cases file yet, start with empty library
+            self._cases = {}
+            return  # No cases file yet, start with empty library
             
         lock = FileLock(self.config.cases_file)
         try:
@@ -145,10 +142,8 @@ class SysdiagnoseCaseLibrary:
                 case_metadata = case_data.copy()
                 case = SysdiagnoseCase(case_id=case_id, tags=tags, case_metadata=case_metadata)
                 self._cases[case_id] = case
-            return True
         except Exception as e:
             raise Exception(f"Error while loading case library from disk: {str(e)}")
         finally:
             lock.release()
-        return False
                     

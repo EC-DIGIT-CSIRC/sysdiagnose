@@ -19,13 +19,13 @@ from sysdiagnose.utils.case import SysdiagnoseCase, SysdiagnoseCaseLibrary
 
 class Sysdiagnose:
     def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
-        self._cases = False   # will be populated through cases() method
+        self._cases = None   # will be populated through cases() method
         self.config: SysdiagnoseConfig = SysdiagnoseConfig(cases_path)
 
     def cases(self, force: bool = False) -> SysdiagnoseCaseLibrary:
         # kinda caching, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
-        if not self._cases or force:
+        if self._cases is None or force:
             self._cases = SysdiagnoseCaseLibrary(self.config)
         return self._cases
 
@@ -305,6 +305,50 @@ class Sysdiagnose:
         case_ids = list(self.cases().get_cases().keys())
         case_ids.sort()
         return case_ids
+
+    def delete_case(self, case_id: str) -> None:
+        """
+        Delete a case and its associated data folder.
+        
+        Parameters:
+            case_id (str): The case ID to delete.
+        """
+        self.cases().delete_case(case_id)
+        # Force reload to ensure consistency
+        self._cases = None
+
+    def update_case_tags(self, case_id: str, tags: list[str]) -> None:
+        """
+        Update tags for a specific case.
+        
+        Parameters:
+            case_id (str): The case ID to update.
+            tags (list): New list of tags.
+        """
+        case = self.cases().get_case(case_id)
+        if case:
+            case.tags = tags
+            self.cases().save_to_disk()
+        else:
+            raise ValueError(f"Case ID {case_id} not found")
+
+    def get_case_info(self, case_id: str) -> dict:
+        """
+        Get detailed information about a specific case.
+        
+        Parameters:
+            case_id (str): The case ID to get info for.
+            
+        Returns:
+            dict: Case information or None if not found.
+        """
+        case = self.cases().get_case(case_id)
+        if case:
+            info = case.case_metadata.copy()
+            info['case_id'] = case.case_id
+            info['tags'] = case.tags
+            return info
+        return None
 
     def is_valid_case_id(self, case_id):
         return self.cases().case_exists(case_id)
