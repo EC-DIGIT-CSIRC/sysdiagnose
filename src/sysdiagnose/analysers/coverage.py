@@ -52,7 +52,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
         """
         # get all files and folders
         coverage = {}
-        for root, dirs, files in os.walk(path):
+        for root, _dirs, files in os.walk(path):
             for file in files:
                 # skip files that start with a .
                 if os.path.basename(file).startswith('.'):

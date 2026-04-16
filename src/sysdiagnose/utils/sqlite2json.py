@@ -68,7 +68,7 @@ def table2struct(dbfd, tablename):
         line = {}
         ptr = 0
         for element in row:
-            line[column_names[ptr]] = element if isinstance(element, (str, int, float, bool)) else str(element)
+            line[column_names[ptr]] = element if isinstance(element, str | int | float | bool) else str(element)
             ptr = ptr + 1
         table.append(line)
     return table
@@ -88,10 +88,6 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 
 
 def main():
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...", file=sys.stderr)
-        sys.exit(-1)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", dest="inputfile", type=str, help="SQlite DB To Be Printed")
 

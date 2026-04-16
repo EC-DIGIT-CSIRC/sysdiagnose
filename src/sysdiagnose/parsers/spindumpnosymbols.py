@@ -7,6 +7,7 @@ Author: Emilien Le Jamtel
 import glob
 import os
 import re
+from contextlib import suppress
 from datetime import datetime, timedelta
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
@@ -261,9 +262,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                 image['end'] = clean[2]
                 image['image'] = clean[3]
                 image['uuid'] = clean[4][1:-1]
-                try:
+                with suppress(Exception):
                     image['path'] = clean[5]
-                except:     # noqa E722
-                    pass
                 images.append(image)
         return images

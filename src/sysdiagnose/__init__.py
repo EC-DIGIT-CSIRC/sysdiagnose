@@ -133,7 +133,7 @@ class Sysdiagnose:
                 # find the highest case_id in the cases
                 case_id = 0
                 for k in self.cases():
-                    with suppress(ValueError)
+                    with suppress(ValueError):
                         case_id = max(case_id, int(k))
                 # add one to the new found case_id
                 case_id += 1

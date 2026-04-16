@@ -215,7 +215,7 @@ class ResultSummaryFactory:
     def has_error_value(value) -> bool:
         if value is None:
             return False
-        if isinstance(value, (list, tuple, set, dict, str)):
+        if isinstance(value, list | tuple | set | dict | str):
             return len(value) > 0
         return bool(value)
 
@@ -223,7 +223,7 @@ class ResultSummaryFactory:
     def count_error_value(value) -> int:
         if isinstance(value, dict):
             return len(value)
-        if isinstance(value, (list, tuple, set)):
+        if isinstance(value, list | tuple | set):
             return len(value)
         if value:
             return 1
