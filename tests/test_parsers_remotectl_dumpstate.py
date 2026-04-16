@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
 
     def test_get_remotectldumpstate(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = RemotectlDumpstateParser(self.sd.config, case_id=case_id)
 
             files = p.get_log_files()

@@ -1,12 +1,13 @@
-from tests import SysdiagnoseTestCase
-from sysdiagnose.parsers.uuid2path import UUID2PathParser
-import unittest
 import os
+import unittest
+
+from sysdiagnose.parsers.uuid2path import UUID2PathParser
+from tests import SysdiagnoseTestCase
 
 
 class TestParsersUuid2path(SysdiagnoseTestCase):
     def test_uuid2path(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = UUID2PathParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if not files:

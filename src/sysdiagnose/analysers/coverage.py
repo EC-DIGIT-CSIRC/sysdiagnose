@@ -1,11 +1,18 @@
 #! /usr/bin/env python3
-
+import base64
+import glob
 import importlib
 import os
+from io import BytesIO
+from pathlib import Path
+
 import magic
-from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
+import matplotlib.pyplot as plt
+import pandas as pd
+from jinja2 import Template
+
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
-import glob
+from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class CoverageAnalyser(BaseAnalyserInterface):
@@ -23,10 +30,10 @@ class CoverageAnalyser(BaseAnalyserInterface):
         device_info = {}
         try:
             device_info = {
-                "os_version": rctl_result['Local device']['Properties']['OSVersion'],
-                "build": rctl_result['Local device']['Properties']['BuildVersion'],
-                "product_name": rctl_result['Local device']['Properties']['ProductName'],
-                "product_type": rctl_result['Local device']['Properties']['ProductType']
+                "os_version": rctl_result["Local device"]["Properties"]["OSVersion"],
+                "build": rctl_result["Local device"]["Properties"]["BuildVersion"],
+                "product_name": rctl_result["Local device"]["Properties"]["ProductName"],
+                "product_type": rctl_result["Local device"]["Properties"]["ProductType"],
             }
         except KeyError:
             logger.exception("Issue extracting device info")
@@ -35,7 +42,6 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # Calculate parser coverage
         result.append(self.get_parser_coverage(self.case_data_subfolder))
 
-        # return result
         return self.generate_html_report(result[0], result[1])
 
     def get_parser_coverage(self, path: str) -> dict:
@@ -46,18 +52,18 @@ class CoverageAnalyser(BaseAnalyserInterface):
         """
         # get all files and folders
         coverage = {}
-        for root, dirs, files in os.walk(path):
+        for root, _dirs, files in os.walk(path):
             for file in files:
                 # skip files that start with a .
-                if os.path.basename(file).startswith('.'):
+                if os.path.basename(file).startswith("."):
                     continue
 
                 coverage[os.path.join(root, file)] = {
-                    'file_type': self.get_file_type(os.path.join(root, file)),
-                    'file_size': os.path.getsize(os.path.join(root, file)),
-                    'folder_name': os.path.relpath(root, start=path),
-                    'parser': None,
-                    'parser_format': None
+                    "file_type": self.get_file_type(os.path.join(root, file)),
+                    "file_size": os.path.getsize(os.path.join(root, file)),
+                    "folder_name": os.path.relpath(root, start=path),
+                    "parser": None,
+                    "parser_format": None,
                 }
 
         for parser_name in self.config.get_parsers():
@@ -65,27 +71,26 @@ class CoverageAnalyser(BaseAnalyserInterface):
             if parser:
                 parser_files = parser.get_log_files()
                 # ugly hack to compensate for parsers that return folders
-                if parser.module_name == 'logarchive':
-
+                if parser.module_name == "logarchive":
                     # all files below the logarchive folder, excluding Extra
-                    os.path.join(parser.get_log_files().pop(), '**')
-                    extra_files = glob.glob(os.path.join(parser.get_log_files().pop(), '**'), recursive=True)
+                    os.path.join(parser.get_log_files().pop(), "**")
+                    extra_files = glob.glob(os.path.join(parser.get_log_files().pop(), "**"), recursive=True)
                     # exclude all files in the Extra folder
-                    extra_files = [f for f in extra_files if '/Extra/' not in f]
+                    extra_files = [f for f in extra_files if "/Extra/" not in f]
                     parser_files.extend(extra_files)
 
                 for file in parser_files:
                     if file in coverage:
-                        coverage[file]['parser'] = parser_name
-                        coverage[file]['parser_format'] = parser.format
+                        coverage[file]["parser"] = parser_name
+                        coverage[file]["parser_format"] = parser.format
                     # We are assuming the parser always returns files, not just folders
                     elif not os.path.isdir(file):
                         coverage[file] = {
-                            'file_type': 'unknown',
-                            'file_size': os.path.getsize(file) if os.path.exists(file) else 0,
-                            'folder_name': os.path.relpath(file, start=path),
-                            'parser': parser_name,
-                            'parser_format': parser.format
+                            "file_type": "unknown",
+                            "file_size": os.path.getsize(file) if os.path.exists(file) else 0,
+                            "folder_name": os.path.relpath(file, start=path),
+                            "parser": parser_name,
+                            "parser_format": parser.format,
                         }
 
         return coverage
@@ -96,7 +101,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
         :param parser_name: The name of the parser.
         :return: An instance of the parser class.
         """
-        module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
+        module = importlib.import_module(f"sysdiagnose.parsers.{parser_name}")
         # figure out the class name
         obj = None
         obj_instance = None
@@ -124,125 +129,111 @@ class CoverageAnalyser(BaseAnalyserInterface):
         3. Parsers Information (a table with parser details).
         4. Details (a collapsible section with a table of coverage data).
         """
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import base64
-        from io import BytesIO
-        from jinja2 import Template
-        from pathlib import Path
 
         # Convert coverage dictionary to a Pandas DataFrame
-        coverage_df = pd.DataFrame.from_dict(coverage, orient='index')
+        coverage_df = pd.DataFrame.from_dict(coverage, orient="index")
         coverage_df.index = [str(Path(p).relative_to(Path(self.case_data_subfolder))) for p in coverage_df.index]
 
         # Calculate statistics for parsed vs. not parsed files
-        parsed_count = coverage_df['parser'].notna().sum()
-        not_parsed_count = coverage_df['parser'].isna().sum()
+        parsed_count = coverage_df["parser"].notna().sum()
+        not_parsed_count = coverage_df["parser"].isna().sum()
 
         # Generate a pie chart for parsed vs. not parsed files
-        labels = ['Parsed Files', 'Not Parsed Files']
+        labels = ["Parsed Files", "Not Parsed Files"]
         sizes = [parsed_count, not_parsed_count]
-        colours = ['#4caf50', '#f44336']
+        colours = ["#4caf50", "#f44336"]
         explode = (0.1, 0)  # Slightly "explode" the first slice (Parsed Files)
 
         plt.figure(figsize=(6, 6))
-        plt.pie(sizes, labels=labels, colors=colours, autopct='%1.1f%%', startangle=140, explode=explode)
-        plt.title('Coverage')
+        plt.pie(sizes, labels=labels, colors=colours, autopct="%1.1f%%", startangle=140, explode=explode)
+        plt.title("Coverage")
 
         # Save the pie chart to a base64-encoded string
         buffer = BytesIO()
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format="png")
         buffer.seek(0)
-        parsed_chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        parsed_chart_base64 = base64.b64encode(buffer.read()).decode("utf-8")
         buffer.close()
         plt.close()
 
         # Generate data for the tables
-        folder_counts = coverage_df[coverage_df['parser'].isna()]['folder_name'].value_counts()
+        folder_counts = coverage_df[coverage_df["parser"].isna()]["folder_name"].value_counts()
 
         # Data for the least parsed folders (folders with the fewest files having parser=None)
         least_parsed_folders = folder_counts.nsmallest(10).reset_index()
-        least_parsed_folders.columns = ['Folder', 'Count']
+        least_parsed_folders.columns = ["Folder", "Count"]
 
         # Data for the top folders with the most files having parser=None
         top_folders_with_no_parser = folder_counts.nlargest(10).reset_index()
-        top_folders_with_no_parser.columns = ['Folder', 'Count']
+        top_folders_with_no_parser.columns = ["Folder", "Count"]
 
         # Calculate statistics for parser coverage ratio
-        parser_counts = coverage_df['parser'].value_counts()
-        parser_counts['Not Parsed'] = not_parsed_count  # Add non-parsed files as a separate category
+        parser_counts = coverage_df["parser"].value_counts()
+        parser_counts["Not Parsed"] = not_parsed_count  # Add non-parsed files as a separate category
 
         # Generate a histogram for parser coverage ratio with a logarithmic y-axis
         plt.figure(figsize=(10, 6))
         parser_counts.sort_values(ascending=False).plot(
-            kind='bar',
-            color=['#f44336' if parser == 'Not Parsed' else '#4caf50' for parser in parser_counts.index]
+            kind="bar", color=["#f44336" if parser == "Not Parsed" else "#4caf50" for parser in parser_counts.index]
         )
-        plt.title('Parser Coverage Ratio')
-        plt.xlabel('Parser')
-        plt.ylabel('File Count (Log Scale)')
-        plt.yscale('log')  # Set y-axis to logarithmic scale
-        plt.xticks(rotation=45, ha='right')
+        plt.title("Parser Coverage Ratio")
+        plt.xlabel("Parser")
+        plt.ylabel("File Count (Log Scale)")
+        plt.yscale("log")  # Set y-axis to logarithmic scale
+        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
 
         # Save the histogram to a base64-encoded string
         buffer = BytesIO()
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format="png")
         buffer.seek(0)
-        histogram_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        histogram_base64 = base64.b64encode(buffer.read()).decode("utf-8")
         buffer.close()
         plt.close()
 
         # Calculate distinct parser statistics
-        distinct_parsers_df = coverage_df.drop_duplicates(subset=['parser'])
-        total_parsers = distinct_parsers_df['parser'].notna().sum()
+        distinct_parsers_df = coverage_df.drop_duplicates(subset=["parser"])
+        total_parsers = distinct_parsers_df["parser"].notna().sum()
 
         # Calculate distinct parser format statistics
-        parser_format_counts = distinct_parsers_df['parser_format'].value_counts()
+        parser_format_counts = distinct_parsers_df["parser_format"].value_counts()
 
         # Generate a pie chart for parser formats
         plt.figure(figsize=(6, 6))
         parser_format_counts.plot(
-            kind='pie',
-            autopct='%1.1f%%',
-            startangle=140,
-            colors=plt.cm.tab20.colors[:len(parser_format_counts)],
-            legend=False
+            kind="pie", autopct="%1.1f%%", startangle=140, colors=plt.cm.tab20.colors[: len(parser_format_counts)], legend=False
         )
-        plt.title('Parsers by Format')
+        plt.title("Parsers by Format")
 
         # Save the parser format pie chart to a base64-encoded string
         buffer = BytesIO()
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format="png")
         buffer.seek(0)
-        parser_format_chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        parser_format_chart_base64 = base64.b64encode(buffer.read()).decode("utf-8")
         buffer.close()
         plt.close()
 
         # Generate Parsers Information Table
         parsers_info = []
-        for parser_name, group in coverage_df.groupby('parser'):
+        for parser_name, group in coverage_df.groupby("parser"):
             if parser_name is not None:
                 # Total files parsed by this parser
                 total_files_parsed = len(group)
                 # Files with a known file_type (not 'unknown')
-                known_file_type_count = len(group[group['file_type'] != 'unknown'])
+                known_file_type_count = len(group[group["file_type"] != "unknown"])
                 # Calculate coverage as a percentage
                 coverage = round((known_file_type_count / total_files_parsed) * 100) if total_files_parsed > 0 else 0
-                parsers_info.append({
-                    'parser_name': parser_name,
-                    'format': group['parser_format'].iloc[0],
-                    'coverage': f"{coverage}%"  # Format as a percentage
-                })
+                parsers_info.append(
+                    {
+                        "parser_name": parser_name,
+                        "format": group["parser_format"].iloc[0],
+                        "coverage": f"{coverage}%",  # Format as a percentage
+                    }
+                )
 
         # Convert DataFrame to HTML table for the Details section
-        coverage_table_html = coverage_df.drop(columns=['folder_name']).to_html(
-            classes='coverage-table',
-            border=0,
-            index=True,
-            index_names=False,
-            justify='left',
-            escape=False
+        coverage_table_html = coverage_df.drop(columns=["folder_name"]).to_html(
+            classes="coverage-table", border=0, index=True, index_names=False, justify="left", escape=False
         )
 
         # Jinja2 template
@@ -397,13 +388,13 @@ class CoverageAnalyser(BaseAnalyserInterface):
             device_info=device_info,
             parsed_chart_base64=parsed_chart_base64,
             histogram_base64=histogram_base64,
-            least_parsed_folders=least_parsed_folders.to_dict(orient='records'),
-            top_folders_with_no_parser=top_folders_with_no_parser.to_dict(orient='records'),
+            least_parsed_folders=least_parsed_folders.to_dict(orient="records"),
+            top_folders_with_no_parser=top_folders_with_no_parser.to_dict(orient="records"),
             parser_format_chart_base64=parser_format_chart_base64,
             total_parsers=total_parsers,
             parsers_info=parsers_info,
             coverage_table_html=coverage_table_html,
-            get_coverage_color=get_coverage_color  # Pass the function to the template
+            get_coverage_color=get_coverage_color,  # Pass the function to the template
         )
         return rendered_html
 
@@ -415,7 +406,7 @@ def get_coverage_color(coverage: str) -> str:
     :return: A CSS colour string.
     """
     # Convert coverage to a float
-    coverage_value = float(coverage.strip('%'))
+    coverage_value = float(coverage.strip("%"))
 
     # Define colour ranges
     if 80 <= coverage_value <= 100:

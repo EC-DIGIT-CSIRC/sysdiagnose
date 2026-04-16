@@ -1,7 +1,8 @@
+import io
+import unittest
+
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 from tests import SysdiagnoseTestCase
-import unittest
-import io
 
 
 class TestIORegStruct(SysdiagnoseTestCase):

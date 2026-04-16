@@ -1,14 +1,16 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to print the values from WiFi/com.apple.wifi.known-networks.plist
+Author: aaron@lo-res.org, modeles after sysdiagnose-networkextension.py and mobileactivation.py
 
-# For Python3
-# Script to print the values from WiFi/com.apple.wifi.known-networks.plist
-# Author: aaron@lo-res.org, modeles after sysdiagnose-networkextension.py and mobileactivation.py
-#
-# Change log: Aaron Kaplan, initial version.
+Change log: Aaron Kaplan, initial version.
+"""
 
-import os
 import glob
-import sysdiagnose.utils.misc as misc
+import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
@@ -20,9 +22,7 @@ class WifiKnownNetworksParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'WiFi/com.apple.wifi.known-networks.plist'
-        ]
+        log_files_globs = ["WiFi/com.apple.wifi.known-networks.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -36,10 +36,11 @@ class WifiKnownNetworksParser(BaseParserInterface):
             return {}
         return WifiKnownNetworksParser.parse_file(self.get_log_files()[0])
 
+    @staticmethod
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)
 
-    '''
+    """
     code usefull for future printing function
 
     class CustomEncoder(json.JSONEncoder):
@@ -51,4 +52,4 @@ class WifiKnownNetworksParser(BaseParserInterface):
 
             pl = getKnownWifiNetworks(options.inputfile)
             print(json.dumps(pl, indent=4, cls=CustomEncoder), file=sys.stderr)
-    '''
+    """

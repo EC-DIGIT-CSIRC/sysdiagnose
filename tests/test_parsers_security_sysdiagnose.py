@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.security_sysdiagnose import SecuritySysdiagnoseParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersSecuritySysdiagnose(SysdiagnoseTestCase):
 
     def test_get_security_sysdiagnose(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = SecuritySysdiagnoseParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertEqual(len(files), 1)

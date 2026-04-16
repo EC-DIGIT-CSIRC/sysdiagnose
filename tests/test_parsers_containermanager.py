@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.containermanager import ContainerManagerParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersContainermanager(SysdiagnoseTestCase):
 
     def test_parsecontainermanager(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = ContainerManagerParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if len(files) == 0:  # not all seem to have the containermanager

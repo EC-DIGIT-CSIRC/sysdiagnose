@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.networkextension import NetworkExtensionParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersNetworkExtension(SysdiagnoseTestCase):
 
     def test_networkextension(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = NetworkExtensionParser(self.sd.config, case_id=case_id)
 
             files = p.get_log_files()

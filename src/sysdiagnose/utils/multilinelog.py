@@ -1,13 +1,13 @@
-import re
 import io
-
-import sysdiagnose.utils.misc as misc
-from sysdiagnose.utils.base import Event
+import re
 from datetime import datetime
+
+from sysdiagnose.utils import misc
+from sysdiagnose.utils.base import Event
 
 
 def extract_from_file(fname, tzinfo, module):
-    with open(fname, 'r', encoding="utf-8") as f:
+    with open(fname, encoding="utf-8") as f:
         return extract_from_iowrapper(f, tzinfo=tzinfo, module=module)
 
 
@@ -25,20 +25,20 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
     kv_section = False  # key-value section separated by a semicolon
     for line in f:
         timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
-        if '_____' in line and re.search(r": _{10,25} [^_]+ _{10,25}", line):
-            kv_section = 'start'
-        if timeregex and (not kv_section or kv_section == 'start' or kv_section == 'end'):
+        if "_____" in line and re.search(r": _{10,25} [^_]+ _{10,25}", line):
+            kv_section = "start"
+        if timeregex and (not kv_section or kv_section in {"start", "end"}):
             # new entry, process the previous entry
-            if kv_section == 'start':
+            if kv_section == "start":
                 kv_section = True
-            if kv_section == 'end':
+            if kv_section == "end":
                 kv_section = False
                 event = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
                 events.append(event.to_dict())
                 prev_lines = []
                 continue  # go to next line as current line is just the closure of the section
             elif prev_lines:
-                event = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
+                event = build_from_logentry(line="".join(prev_lines), tzinfo=tzinfo, module=module)
                 events.append(event.to_dict())
             # build the new entry
             prev_lines = []
@@ -48,13 +48,13 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
             prev_lines.append(line)
         else:
             pass
-        if kv_section and '_____' in line and re.search(r": _{40,80}$", line):  # only end if kv_section was started
-            kv_section = 'end'
+        if kv_section and "_____" in line and re.search(r": _{40,80}$", line):  # only end if kv_section was started
+            kv_section = "end"
     # process the last entry
     if kv_section and len(prev_lines) > 1:
         event = build_from_kv_section(lines=prev_lines, tzinfo=tzinfo, module=module)
     else:
-        event = build_from_logentry(line=''.join(prev_lines), tzinfo=tzinfo, module=module)
+        event = build_from_logentry(line="".join(prev_lines), tzinfo=tzinfo, module=module)
     if event:
         events.append(event.to_dict())
     return events
@@ -62,7 +62,7 @@ def extract_from_iowrapper(f: io.TextIOWrapper, tzinfo, module):
 
 def build_from_kv_section(lines, tzinfo, module) -> Event:
     event = build_from_logentry(line=lines.pop(0), tzinfo=tzinfo, module=module)  # first line is a normal line
-    if '_____' in lines[-1]:
+    if "_____" in lines[-1]:
         lines.pop()  # drop last line as it's just the closing line
     # complement with key-value section
     for line in lines:
@@ -83,29 +83,29 @@ def build_from_logentry(line, tzinfo, module) -> Event:
 
         # log level
         loglevelregex = re.search(r"\<(.*?)\>", line)
-        entry['loglevel'] = loglevelregex.group(1)
+        entry["loglevel"] = loglevelregex.group(1)
 
         # hex_ID
-        hexIDregex = re.search(r"\(0x(.*?)\)", line)
-        entry['hexID'] = '0x' + hexIDregex.group(1)
+        hex_id_regex = re.search(r"\(0x(.*?)\)", line)
+        entry["hexID"] = "0x" + hex_id_regex.group(1)
 
         # event_type
         eventyperegex = re.search(r"\-\[(.*)(\]\:)", line)
         if eventyperegex:
-            entry['event_type'] = eventyperegex.group(1)
+            entry["event_type"] = eventyperegex.group(1)
 
         # msg
-        if 'event_type' in entry:
+        if "event_type" in entry:
             msgregex = re.search(r"\]\:(.*)", line, re.MULTILINE | re.DOTALL)
         else:
             msgregex = re.search(r"\)\ (.*)", line, re.MULTILINE | re.DOTALL)
         line = msgregex.group(1).strip()
         # plist parsing
-        if line.endswith('</plist>'):
-            plist_start = line.index('<?xml version')
+        if line.endswith("</plist>"):
+            plist_start = line.index("<?xml version")
             message = line[:plist_start].strip()
             plist_data = line[plist_start:]
-            entry['plist'] = misc.load_plist_string_as_json(plist_data)
+            entry["plist"] = misc.load_plist_string_as_json(plist_data)
             # LATER parse the plist content
             # - extract the recursive plist
             # - decode the certificates into nice JSON
@@ -113,13 +113,7 @@ def build_from_logentry(line, tzinfo, module) -> Event:
         else:
             message = msgregex.group(1).strip()
 
-        event = Event(
-            datetime=timestamp,
-            message=message,
-            module=module,
-            timestamp_desc=f'{module} event',
-            data=entry
-        )
+        event = Event(datetime=timestamp, message=message, module=module, timestamp_desc=f"{module} event", data=entry)
         return event
     return entry
 
@@ -130,11 +124,10 @@ def build_from_logentry(line, tzinfo, module) -> Event:
 
 
 def month_converter(month):
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     month = months.index(month) + 1
-    if (month < 10):
-        month = f"{month:02d}"
-    return month
+    return f"{month:02d}"
+
 
 # Day with leading zero if day < 10 function
 # Functtion call: day = day_converter(day)
@@ -142,7 +135,7 @@ def month_converter(month):
 
 def day_converter(day):
     day = int(day)
-    if (day < 10):
-        day = f"{day:02d}"
-    return day
+    return f"{day:02d}"
+
+
 ##

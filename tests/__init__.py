@@ -1,6 +1,7 @@
-import unittest
-import os
 import glob
+import os
+import unittest
+
 from sysdiagnose import Sysdiagnose
 
 

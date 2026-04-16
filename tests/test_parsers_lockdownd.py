@@ -1,8 +1,9 @@
+import os
+import unittest
+from datetime import timedelta, timezone
+
 from sysdiagnose.parsers.lockdownd import LockdowndParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
-from datetime import timezone, timedelta
 
 
 class TestParsersLockdownd(SysdiagnoseTestCase):
@@ -10,7 +11,7 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
     tzinfo = timezone(timedelta(hours=1))
 
     def test_parse_lockdownd(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
 
             p = LockdowndParser(self.sd.config, case_id=case_id)
 

@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.ps_matrix import PsMatrixAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestAnalysersPsMatrix(SysdiagnoseTestCase):

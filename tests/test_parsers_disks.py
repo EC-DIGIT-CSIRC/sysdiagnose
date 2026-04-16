@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.disks import DisksParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersDisks(SysdiagnoseTestCase):
 
     def test_parse_disks(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = DisksParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if not files:  # we may not have disks.txt

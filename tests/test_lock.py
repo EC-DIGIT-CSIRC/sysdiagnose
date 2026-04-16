@@ -1,7 +1,8 @@
 
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils.lock import FileLock
 import unittest
+
+from sysdiagnose.utils.lock import FileLock
+from tests import SysdiagnoseTestCase
 
 
 class TestLock(SysdiagnoseTestCase):

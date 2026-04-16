@@ -1,7 +1,8 @@
-from tests import SysdiagnoseTestCase
-import unittest
 import importlib.util
+import unittest
+
 from sysdiagnose.utils.base import BaseAnalyserInterface
+from tests import SysdiagnoseTestCase
 
 '''
 Test file structure of analysers

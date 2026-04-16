@@ -1,13 +1,14 @@
+import os
+import unittest
+from datetime import datetime, timezone
+
 from sysdiagnose.parsers.swcutil import SwcutilParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
-from datetime import datetime, timezone
 
 
 class TestParsersSwcutil(SysdiagnoseTestCase):
     def test_parseswcutil(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = SwcutilParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)

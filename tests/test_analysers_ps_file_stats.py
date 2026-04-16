@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.file_stats import FileStatisticsAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestFileStatisticsAnalyser(SysdiagnoseTestCase):

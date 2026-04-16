@@ -1,23 +1,34 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to parse system_logs.logarchive
+Author: david@autopsit.org
+"""
 
-# For Python3
-# Script to parse system_logs.logarchive
-# Author: david@autopsit.org
-#
-#
-from collections.abc import Generator
-from datetime import datetime, timezone
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
 import glob
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tempfile
-import shutil
 import threading
+from collections.abc import Generator
+from datetime import UTC, datetime, timezone
 
+from sysdiagnose.utils.base import (
+    BaseParserInterface,
+    Event,
+    ExecutionStatus,
+    ResultSummary,
+    ResultSummaryFactory,
+    ResultSummaryLogHandler,
+    SysdiagnoseConfig,
+    logger,
+)
+
+# ruff: noqa
 # --------------------------------------------#
 
 # On 2023-04-13: using ndjson instead of json to avoid parsing issues.
@@ -36,29 +47,40 @@ import threading
 #       https://github.com/mandiant/macos-UnifiedLogs
 # Follow instruction in the README.md in order to install it.
 # TODO unifiedlog_parser is single threaded, either patch their code for multithreading support or do the magic here by parsing each file in a separate thread
-cmd_parsing_linux_test = ['unifiedlog_iterator', '--help']
 # --------------------------------------------------------------------------- #
-
-# LATER consider refactoring using yield to lower memory consumption
 
 
 def log_stderr(process, logger):
     """
     Reads the stderr of a subprocess and logs it line by line.
     """
-    for line in iter(process.stderr.readline, ''):
-        logger.debug(line.strip())
+    for line in iter(process.stderr.readline, ""):
+        message = line.strip()
+        info = message.find("[INFO]")
+        warning = message.find("[WARN]")
+        error = message.find("[ERROR]")
+        # Log the warning message
+        if info != -1:
+            logger.info(message[info + len("[INFO]") :].strip())
+        # Log the warning message
+        elif warning != -1:
+            logger.warning(message[warning + len("[WARN]") :].strip())
+        # Log the error message
+        elif error != -1:
+            logger.error(message[error + len("[ERROR]") :].strip())
+        else:
+            logger.debug(message)
 
 
 class LogarchiveParser(BaseParserInterface):
-    description = 'Parsing system_logs.logarchive folder'
-    format = 'jsonl'
+    description = "Parsing system_logs.logarchive folder"
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_folder_glob = '**/system_logs.logarchive/'
+        log_folder_glob = "**/system_logs.logarchive/"
         return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
 
     @DeprecationWarning
@@ -67,25 +89,25 @@ class LogarchiveParser(BaseParserInterface):
         # but who cares, nobody uses this function anyway...
         try:
             with tempfile.TemporaryDirectory() as tmp_outpath:
-                tmp_output_file = os.path.join(tmp_outpath.name, 'logarchive.tmp')
+                tmp_output_file = os.path.join(tmp_outpath.name, "logarchive.tmp")
                 LogarchiveParser.parse_all_to_file(self.get_log_files(), tmp_output_file)
-                with open(tmp_output_file, 'r') as f:
+                with open(tmp_output_file, "r") as f:
                     return [json.loads(line) for line in f]
         except IndexError:
-            return {'error': 'No system_logs.logarchive/ folder found in logs/ directory'}
+            return {"error": "No system_logs.logarchive/ folder found in logs/ directory"}
 
     def get_result(self, force: bool = False):
         if force:
-            # force parsing
-            self.save_result(force)
+            self.save_result(force=True)
 
         if not self._result:
             if not self.output_exists():
                 self.save_result()
 
             if self.output_exists():
+                self._result_summary = self.load_result_summary()
                 # load existing output
-                with open(self.output_file, 'r') as f:
+                with open(self.output_file, "r") as f:
                     for line in f:
                         try:
                             yield json.loads(line)
@@ -97,23 +119,54 @@ class LogarchiveParser(BaseParserInterface):
                 yield entry
 
     def save_result(self, force: bool = False, indent=None):
-        '''
-            Save the result of the parsing operation to a file in the parser output folder
-        '''
+        """
+        Save the result of the parsing operation to a file in the parser output folder
+        """
         if not force and self._result is not None:
             # the result was already computed, just save it now
             super().save_result(force, indent)
         else:
-            LogarchiveParser.parse_all_to_file(self.get_log_files(), self.output_file)
+            self.execute_with_result_summary()
+            self.save_result_summary()
 
+    def execute_with_result_summary(self):
+        log_handler = ResultSummaryLogHandler()
+        start_time = datetime.now(UTC)
+        logger.addHandler(log_handler)
+        try:
+            LogarchiveParser.parse_all_to_file(self.get_log_files(), self.output_file)
+        except Exception:
+            duration = (datetime.now(UTC) - start_time).total_seconds()
+            self._result_summary = ResultSummary(
+                status=ExecutionStatus.ERROR,
+                start_time=start_time.isoformat(timespec="microseconds"),
+                duration=duration,
+                num_errors=max(1, log_handler.num_errors),
+                num_warnings=log_handler.num_warnings,
+                num_events=0,
+            )
+            raise
+        finally:
+            logger.removeHandler(log_handler)
+
+        summary = ResultSummaryFactory.from_output(self.output_file, self.format)
+        summary.start_time = start_time.isoformat(timespec="microseconds")
+        summary.duration = (datetime.now(UTC) - start_time).total_seconds()
+        summary.num_errors += log_handler.num_errors
+        summary.num_warnings += log_handler.num_warnings
+        summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
+        self._result_summary = summary
+        self._result = None
+
+    @staticmethod
     def merge_files(temp_files: list, output_file: str):
         for temp_file in temp_files:
-            first_entry, last_entry = LogarchiveParser.get_first_and_last_entries(temp_file['file'].name)
-            temp_file['first_timestamp'] = first_entry['time']
-            temp_file['last_timestamp'] = last_entry['time']
+            first_entry, last_entry = LogarchiveParser.get_first_and_last_entries(temp_file["file"].name)
+            temp_file["first_timestamp"] = first_entry["time"]
+            temp_file["last_timestamp"] = last_entry["time"]
 
         # lowest first timestamp, second key highest last timestamp
-        temp_files.sort(key=lambda x: (x['first_timestamp'], -x['last_timestamp']))
+        temp_files.sort(key=lambda x: (x["first_timestamp"], -x["last_timestamp"]))
 
         # do the merging magic here
         # Open output file, with r+,
@@ -124,42 +177,43 @@ class LogarchiveParser(BaseParserInterface):
         # Continue with other files with the same logic.
         prev_temp_file = temp_files[0]
         # first copy over first file to self.output_file
-        shutil.copyfile(prev_temp_file['file'].name, output_file)
-        with open(output_file, 'a') as f_out:
+        shutil.copyfile(prev_temp_file["file"].name, output_file)
+        with open(output_file, "a") as f_out:
             i = 1
             while i < len(temp_files):
                 current_temp_file = temp_files[i]
-                if current_temp_file['last_timestamp'] < prev_temp_file['last_timestamp']:
+                if current_temp_file["last_timestamp"] < prev_temp_file["last_timestamp"]:
                     # skip file as we already have all the data
                     # no need to update the prev_temp_file variable
                     pass
-                elif current_temp_file['first_timestamp'] > prev_temp_file['last_timestamp']:
+                elif current_temp_file["first_timestamp"] > prev_temp_file["last_timestamp"]:
                     # copy over the full file
-                    with open(current_temp_file['file'].name, 'r') as f_in:
+                    with open(current_temp_file["file"].name, "r") as f_in:
                         for line in f_in:
                             f_out.write(line)
                     prev_temp_file = current_temp_file
                 else:
                     # need to seek to prev_last and copy over new data
-                    with open(current_temp_file['file'].name, 'r') as f_in:
-                        copy_over = False   # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
+                    with open(current_temp_file["file"].name, "r") as f_in:
+                        copy_over = False  # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
                         for line in f_in:
-                            if not copy_over and json.loads(line)['time'] > prev_temp_file['last_timestamp']:
+                            if not copy_over and json.loads(line)["time"] > prev_temp_file["last_timestamp"]:
                                 copy_over = True
                             if copy_over:
                                 f_out.write(line)
                     prev_temp_file = current_temp_file
                 i += 1
 
+    @staticmethod
     def get_first_and_last_entries(output_file: str) -> tuple:
-        with open(output_file, 'rb') as f:
+        with open(output_file, "rb") as f:
             first_entry = json.loads(f.readline().decode())
             # discover last line efficiently
             f.seek(-2, os.SEEK_END)  # Move the pointer to the second-to-last byte in the file
             # Move backwards until a newline character is found, or we hit the start of the file
             while f.tell() > 0:
                 char = f.read(1)
-                if char == b'\n':
+                if char == b"\n":
                     break
                 f.seek(-2, os.SEEK_CUR)  # Move backwards
 
@@ -168,6 +222,7 @@ class LogarchiveParser(BaseParserInterface):
 
             return (first_entry, last_entry)
 
+    @staticmethod
     def parse_all_to_file(folders: list, output_file: str):
         # no caching
         # simple mode: only one folder
@@ -188,9 +243,11 @@ class LogarchiveParser(BaseParserInterface):
             for folder in folders:
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
-                temp_files.append({
-                    'file': temp_file,
-                })
+                temp_files.append(
+                    {
+                        "file": temp_file,
+                    }
+                )
 
             # merge files to the output file
             LogarchiveParser.merge_files(temp_files, output_file)
@@ -198,61 +255,76 @@ class LogarchiveParser(BaseParserInterface):
         finally:
             # close all temp files, ensuring they are deleted
             for temp_file in temp_files:
-                os.remove(temp_file['file'].name)
+                os.remove(temp_file["file"].name)
 
+    @staticmethod
     def parse_folder_to_file(input_folder: str, output_file: str) -> bool:
         try:
-            if (platform.system() == 'Darwin'):
+            if platform.system() == "Darwin":
                 LogarchiveParser.__convert_using_native_logparser(input_folder, output_file)
             else:
                 LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
             return True
         except IndexError:
-            logger.exception('Error: No system_logs.logarchive/ folder found in logs/ directory')
+            logger.exception("Error: No system_logs.logarchive/ folder found in logs/ directory")
             return False
         except FileNotFoundError:
-            logger.exception('Error: unifiedlogs command not found, please refer to the README for further instructions')
+            logger.exception("Error: unifiedlogs command not found, please refer to the README for further instructions")
             return False
 
-    def __convert_using_native_logparser(input_folder: str, output_file: str) -> list:
-        with open(output_file, 'w') as f_out:
+    @staticmethod
+    def __convert_using_native_logparser(input_folder: str, output_file: str) -> None:
+        with open(output_file, "w") as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
-            cmd_array = ['/usr/bin/log', 'show', input_folder, '--style', 'ndjson', '--info', '--debug', '--signpost']
+            cmd_array = ["/usr/bin/log", "show", input_folder, "--style", "ndjson", "--info", "--debug", "--signpost"]
             # read each line, convert line by line and write the output directly to the new file
             # this approach limits memory consumption
             for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
                 try:
                     entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
-                    f_out.write(json.dumps(entry_json) + '\n')
+                    f_out.write(json.dumps(entry_json) + "\n")
                 except json.JSONDecodeError as e:
                     logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
                 except KeyError:
                     # last line of log does not contain 'time' field, nor the rest of the data.
                     # so just ignore it and all the rest.
                     # last line looks like {'count':xyz, 'finished':1}
-                    logger.debug(f"Looks like we arrive to the end of the file: {line}")
+                    logger.info(f"End of the file: {line}", extra=json.loads(line))
                     break
 
-    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> list:
-        with open(output_file, 'w') as f:
+    @staticmethod
+    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> None:
+        with open(output_file, "w") as f:
             for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
                 json.dump(entry, f)
-                f.write('\n')
+                f.write("\n")
 
     @DeprecationWarning
+    @staticmethod
     def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
-        logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+        logger.warning("Using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X")
         # output to stdout and not to a file as we need to convert the output to a unified format
-        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--output', output_file, '--format', 'jsonl']
+        cmd_array = [
+            "unifiedlog_iterator",
+            "--mode",
+            "log-archive",
+            "--input",
+            input_folder,
+            "--output",
+            output_file,
+            "--format",
+            "jsonl",
+        ]
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
         result = LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
         return result
 
+    @staticmethod
     def __convert_using_unifiedlogparser_generator(input_folder: str):
-        logger.warning('WARNING: using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X')
+        logger.warning("Using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X")
         # output to stdout and not to a file as we need to convert the output to a unified format
-        cmd_array = ['unifiedlog_iterator', '--mode', 'log-archive', '--input', input_folder, '--format', 'jsonl']
+        cmd_array = ["unifiedlog_iterator", "--mode", "log-archive", "--input", input_folder, "--format", "jsonl"]
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
         for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
@@ -264,120 +336,114 @@ class LogarchiveParser(BaseParserInterface):
             except KeyError:
                 pass
 
-    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[dict, None, None]:
-        '''
-            Return None if it failed or the result otherwise.
+    @staticmethod
+    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[str, None, None]:
+        """
+        Return None if it failed or the result otherwise.
 
-        '''
+        """
         with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as process:
             # start a thread to log stderr
             stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
             stderr_thread.start()
 
-            for line in iter(process.stdout.readline, ''):
+            for line in iter(process.stdout.readline, ""):
                 yield line
 
+    @staticmethod
     def __execute_cmd_and_get_result(cmd_array: list, outputfile=None):
-        '''
-            Return None if it failed or the result otherwise.
+        """
+        Return None if it failed or the result otherwise.
 
-            Outfile can have 3 values:
-                - None: no output except return value
-                - sys.stdout: print to stdout
-                - path to a file to write to
-        '''
+        Outfile can have 3 values:
+            - None: no output except return value
+            - sys.stdout: print to stdout
+            - path to a file to write to
+        """
         result = []
 
         with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
             if outputfile is None:
-                for line in iter(process.stdout.readline, ''):
+                for line in iter(process.stdout.readline, ""):
                     try:
                         result.append(json.loads(line))
                     except Exception:
                         result.append(line)
             elif outputfile == sys.stdout:
-                for line in iter(process.stdout.readline, ''):
+                for line in iter(process.stdout.readline, ""):
                     print(line)
             else:
-                with open(outputfile, 'w') as outfd:
-                    for line in iter(process.stdout.readline, ''):
+                with open(outputfile, "w") as outfd:
+                    for line in iter(process.stdout.readline, ""):
                         outfd.write(line)
-                    result = f'Output written to {outputfile}'
+                    result = f"Output written to {outputfile}"
 
         return result
 
+    @staticmethod
     def convert_entry_to_unifiedlog_format(entry: dict) -> dict:
-        '''
-            Convert the entry to unifiedlog format
-        '''
+        """
+        Convert the entry to unifiedlog format
+        """
 
-        timestamp_desc = 'logarchive'
-        module = 'logarchive'
+        timestamp_desc = "logarchive"
+        module = "logarchive"
 
         # already in the Mandiant unifiedlog format
-        if 'event_type' in entry:
-            timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry['time'])
-            entry['datetime'] = timestamp.isoformat(timespec='microseconds')
-            entry['timestamp'] = timestamp.timestamp()
+        if "event_type" in entry:
+            timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry["time"])
+            entry["datetime"] = timestamp.isoformat(timespec="microseconds")
+            entry["timestamp"] = timestamp.timestamp()
             event = Event(
-                datetime=timestamp,
-                message=entry.get('message', ''),
-                module=module,
-                timestamp_desc=timestamp_desc,
-                data=entry
+                datetime=timestamp, message=entry.get("message", ""), module=module, timestamp_desc=timestamp_desc, data=entry
             )
             return event.to_dict()
-        '''
+        """
         jq '. |= keys' logarchive-native.json > native_keys.txt
         sort native_keys.txt | uniq -c | sort -n > native_keys_sort_unique.txt
-        '''
+        """
 
         mapper = {
             # our own fields
-            'timestamp_desc': 'timestamp_desc',
-            'module': 'module',
+            "timestamp_desc": "timestamp_desc",
+            "module": "module",
             # logarchive fields
-            'creatorActivityID': 'activity_id',
-            'messageType': 'log_type',
+            "creatorActivityID": "activity_id",
+            "messageType": "log_type",
             # 'source': '',   # not present in the Mandiant format
             # 'backtrace': '',  # sub-dictionary
-            'activityIdentifier': 'activity_id',
-            'bootUUID': 'boot_uuid',   # remove - in the UUID
-            'category': 'category',
-            'eventMessage': 'message',
-            'eventType': 'event_type',
-            'formatString': 'raw_message',
+            "activityIdentifier": "activity_id",
+            "bootUUID": "boot_uuid",  # remove - in the UUID
+            "category": "category",
+            "eventMessage": "message",
+            "eventType": "event_type",
+            "formatString": "raw_message",
             # 'machTimestamp': '',   # not present in the Mandiant format
             # 'parentActivityIdentifier': '',  # not present in the Mandiant format
-            'processID': 'pid',
-            'processImagePath': 'process',
-            'processImageUUID': 'process_uuid',  # remove - in the UUID
-            'senderImagePath': 'library',
-            'senderImageUUID': 'library_uuid',   # remove - in the UUID
+            "processID": "pid",
+            "processImagePath": "process",
+            "processImageUUID": "process_uuid",  # remove - in the UUID
+            "senderImagePath": "library",
+            "senderImageUUID": "library_uuid",  # remove - in the UUID
             # 'senderProgramCounter': '',  # not present in the Mandiant format
-            'subsystem': 'subsystem',
-            'threadID': 'thread_id',
-            'timestamp': 'time',  # requires conversion
-            'timezoneName': 'timezone_name',  # ignore timezone as time and timestamp are correct
+            "subsystem": "subsystem",
+            "threadID": "thread_id",
+            "timestamp": "time",  # requires conversion
+            "timezoneName": "timezone_name",  # ignore timezone as time and timestamp are correct
             # 'traceID': '',  # not present in the Mandiant format
-            'userID': 'euid'
+            "userID": "euid",
         }
         # convert time
-        timestamp = datetime.fromisoformat(entry['timestamp'])
-        event = Event(
-            datetime=timestamp,
-            message=entry.get('eventMessage', ''),
-            module=module,
-            timestamp_desc=timestamp_desc
-        )
-        entry.pop('eventMessage')
-        entry.pop('timestamp')
+        timestamp = datetime.fromisoformat(entry["timestamp"])
+        event = Event(datetime=timestamp, message=entry.get("eventMessage", ""), module=module, timestamp_desc=timestamp_desc)
+        entry.pop("eventMessage")
+        entry.pop("timestamp")
 
         for key, value in entry.items():
             if key in mapper:
                 new_key = mapper[key]
-                if 'uuid' in new_key:  # remove - in UUID
-                    event.data[new_key] = value.replace('-', '')
+                if "uuid" in new_key:  # remove - in UUID
+                    event.data[new_key] = value.replace("-", "")
                 else:
                     event.data[new_key] = value
             else:
@@ -385,10 +451,12 @@ class LogarchiveParser(BaseParserInterface):
                 event.data[key] = value
         return event.to_dict()
 
+    @staticmethod
     def convert_native_time_to_unifiedlog_format(time: str) -> int:
         timestamp = datetime.fromisoformat(time)
         return int(timestamp.timestamp() * 1000000000)
 
+    @staticmethod
     def convert_unifiedlog_time_to_datetime(time: int) -> datetime:
         # convert time to datetime object
         timestamp = datetime.fromtimestamp(time / 1000000000, tz=timezone.utc)

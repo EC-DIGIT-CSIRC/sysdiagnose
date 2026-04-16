@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
@@ -21,7 +22,7 @@ class IOACPIPlaneParser(BaseParserInterface):
         data_tree = {}
 
         try:
-            logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
+            logger.info(f"Processing file {log_file}, new entry added", extra={"log_file": log_file})
             p = IORegStructParser()
             data_tree = p.parse(log_file)
 

@@ -1,26 +1,26 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to print from Accessibility TCC logs
-# Author: david@autopsit.org
+"""
+For Python3
+Script to print from Accessibility TCC logs
+Author: david@autopsit.org
+"""
 
 import glob
 import os
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
+
 from sysdiagnose.utils.apollo import Apollo
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class AccessibilityTccParser(BaseParserInterface):
-    description = 'Parsing Accessibility TCC logs'
-    format = 'jsonl'
+    description = "Parsing Accessibility TCC logs"
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/Accessibility/TCC.db'
-        ]
+        log_files_globs = ["logs/Accessibility/TCC.db"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -31,9 +31,11 @@ class AccessibilityTccParser(BaseParserInterface):
         # only one file to parse
         try:
             result = []
-            apollo = Apollo(logger=logger, saf_module=self.module_name, os_version='yolo')  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
+            apollo = Apollo(
+                logger=logger, saf_module=self.module_name, os_version="yolo"
+            )  # FIXME get right OS version, but also update the Apollo modules to be aware of the latest OS versions
             for logfile in self.get_log_files():
-                result.extend(apollo.parse_db(db_fname=logfile, db_type='TCC.db'))
+                result.extend(apollo.parse_db(db_fname=logfile, db_type="TCC.db"))
             return result
 
         except IndexError:

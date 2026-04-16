@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.wifi_known_networks import WifiKnownNetworksParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
 
-    def test_getKnownWifiNetworks(self):
-        for case_id, case in self.sd.cases().items():
+    def test_get_known_wifi_networks(self):
+        for case_id, _case in self.sd.cases().items():
             p = WifiKnownNetworksParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if not files:

@@ -4,7 +4,7 @@ import glob
 import os
 import re
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, Event
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 
 class WifiScanParser(BaseParserInterface):
@@ -15,9 +15,7 @@ class WifiScanParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'WiFi/wifi_scan*.txt'
-        ]
+        log_files_globs = ["WiFi/wifi_scan*.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -32,25 +30,25 @@ class WifiScanParser(BaseParserInterface):
 
     def parse_file(self, path: str) -> list | dict:
         output = []
-        with open(path, 'r') as f:
-            for line in f:
-                line = line.strip()
+        with open(path) as f:
+            for l_line in f:
+                line = l_line.strip()
                 # skip empty lines
                 if not line:
                     continue
                 parsed_data = {}
                 # process header
-                if line.startswith('total='):
+                if line.startswith("total="):
                     parsed_data.update(WifiScanParser.parse_summary(line))
                 else:
                     # extract key-value by string
                     parsed_data.update(WifiScanParser.parse_line(line))
 
-                if 'ssid' in parsed_data:
+                if "ssid" in parsed_data:
                     message = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
                 else:
                     # join key-value pairs
-                    concatenated = ', '.join(f"{k}={v}" for k, v in parsed_data.items())
+                    concatenated = ", ".join(f"{k}={v}" for k, v in parsed_data.items())
                     message = f"Wifi scan: {concatenated}"
                 timestamp = self.sysdiagnose_creation_datetime
 
@@ -58,20 +56,22 @@ class WifiScanParser(BaseParserInterface):
                     datetime=timestamp,
                     message=message,
                     module=self.module_name,
-                    timestamp_desc='wifi scan at sysdiagnose creation',
-                    data=parsed_data
+                    timestamp_desc="wifi scan at sysdiagnose creation",
+                    data=parsed_data,
                 )
                 output.append(event.to_dict())
         return output
 
+    @staticmethod
     def parse_summary(line: str) -> dict:
         parsed = {}
-        items = line.split(',')
+        items = line.split(",")
         for item in items:
-            key, value = item.split('=')
+            key, value = item.split("=")
             parsed[key.strip()] = value.strip()
         return parsed
 
+    @staticmethod
     def parse_line(line: str) -> dict:
         parsed = {}
         # first ssid and ssid_hex, but need to detect the type first
@@ -88,33 +88,33 @@ class WifiScanParser(BaseParserInterface):
         for regex in regexes:
             m = re.match(regex, line)
             if m:
-                parsed['ssid'] = m.group('ssid')
-                parsed['ssid_hex'] = m.group('ssid_hex').replace(' ', '')
+                parsed["ssid"] = m.group("ssid")
+                parsed["ssid_hex"] = m.group("ssid_hex").replace(" ", "")
                 break
-        if 'ssid' not in parsed:
-            parsed['ssid'] = '<unknown>'
-            # logger.warning(f"Failed to parse ssid from line: {line}")
+        if "ssid" not in parsed:
+            parsed["ssid"] = "<unknown>"
+
         # key = first place with =
         #  check what is after =, if normal char then value is until next ,
         #                         if [ then value is until ]
         #                         if { then value is until }
-        index_now = line.index(',') + 1
+        index_now = line.index(",") + 1
         # now the rest of the line
         while index_now < len(line):
-            index_equals = line.index('=', index_now)
+            index_equals = line.index("=", index_now)
             key = line[index_now:index_equals].strip()
-            if line[index_equals + 1] in ['[']:
+            if line[index_equals + 1] in ["["]:
                 try:
-                    index_close = line.index(']', index_now)
+                    index_close = line.index("]", index_now)
                 except Exception:
                     index_close = len(line)  # no ending found
-                value = line[index_equals + 2:index_close].strip()
+                value = line[index_equals + 2 : index_close].strip()
             else:
                 try:
-                    index_close = line.index(',', index_now)
+                    index_close = line.index(",", index_now)
                 except ValueError:  # catch end of line
                     index_close = len(line)
-                value = line[index_equals + 1:index_close].strip()
+                value = line[index_equals + 1 : index_close].strip()
             index_now = index_close + 2
             parsed[key] = value
 
