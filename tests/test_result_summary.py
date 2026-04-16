@@ -64,8 +64,8 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertTrue(os.path.isfile(analyser.summary_file))
 
         summary = analyser.get_result_summary()
-        self.assertEqual(summary.status, ExecutionStatus.WARNING)
-        self.assertEqual(summary.num_errors, 0)
+        self.assertEqual(summary.status, ExecutionStatus.ERROR)
+        self.assertEqual(summary.num_errors, 1)
         self.assertEqual(summary.num_warnings, 1)
         self.assertEqual(summary.num_events, 1)
         self.assertIsNotNone(summary.start_time)
@@ -76,7 +76,8 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertEqual(result, {'foo': 'bar'})
 
         cached_summary = cached_analyser.get_result_summary()
-        self.assertEqual(cached_summary.status, ExecutionStatus.WARNING)
+        self.assertEqual(cached_summary.status, ExecutionStatus.ERROR)
+        self.assertEqual(cached_summary.num_errors, 1)
         self.assertEqual(cached_summary.num_warnings, 1)
         self.assertIsNotNone(cached_summary.start_time)
         self.assertIsNotNone(cached_summary.duration)
