@@ -33,7 +33,7 @@ class KbdebugParser(BaseParserInterface):
         result = []
         log_files = self.get_log_files()
         for log_file in log_files:
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 lines = f.read()
                 for tokens, _start, _end in fmt_line.scanString(lines):
                     try:

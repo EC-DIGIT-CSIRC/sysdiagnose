@@ -36,7 +36,7 @@ class PsThreadParser(BaseParserInterface):
 
         result = []
         try:
-            with open(self.get_log_files()[0], "r") as f:
+            with open(self.get_log_files()[0]) as f:
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
                 event = None

@@ -36,7 +36,7 @@ class TransparencyParser(BaseParserInterface):
             return result
 
         for file in files:
-            with open(file, 'r') as f:
+            with open(file) as f:
                 try:
                     json_data = json.load(f)
                     result.extend(self.extract_events(json_data))

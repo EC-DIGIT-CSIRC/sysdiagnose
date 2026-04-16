@@ -3,7 +3,7 @@ import re
 
 def parse_tab_based_hierarchal_file(path: str) -> list | dict:
     result = {}
-    with open(path, 'r') as f:
+    with open(path) as f:
         lines = f.readlines()
         result = parse_block(lines)
     return result

@@ -26,12 +26,14 @@ class DemoAnalyser(BaseAnalyserInterface):
             logger.debug("log something for debugging purposes", extra={'field1': 'field1_debug_details'})
             if True:
                 logger.warning("This will log a warning")
-                # logger.error("This will log an error")
+                logger.error("This will log an error")
 
             # json_data = p_fooparser.get_result()
         except Exception:
+            # Logs an error with exception context.
             logger.exception("This will log an error with the exception information")
-            # logger.warning("This will log a warning with the exception information", exc_info=True)
+            # Or maybe it is a warning.
+            logger.warning("This will log a warning with the exception information", exc_info=True)
 
         result = {'foo': 'bar'}
         return result

@@ -26,7 +26,7 @@ class LockdowndParser(BaseParserInterface):
 
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
-            with open(log_file, 'r') as f:
+            with open(log_file) as f:
                 result = LockdowndParser.extract_from_list(f.readlines(), tzinfo=self.sysdiagnose_creation_datetime.tzinfo, module=self.module_name)
                 return result
         return []

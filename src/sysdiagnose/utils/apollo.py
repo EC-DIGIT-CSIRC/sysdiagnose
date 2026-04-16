@@ -65,8 +65,7 @@ import logging
 import os
 import re
 import sqlite3
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import Event
 
@@ -129,7 +128,7 @@ class Apollo:
                             }
                         )
 
-    def parse_db(self, db_fname: str, db_type: Optional[str] = None) -> list:
+    def parse_db(self, db_fname: str, db_type: str | None = None) -> list:
         results = []
         if not db_type:
             db_type = os.path.basename(db_fname)
@@ -178,7 +177,7 @@ class Apollo:
                     item = dict(list(zip(headers, row, strict=False)))
                     try:
                         timestamp = datetime.fromisoformat(item[key_timestamp])
-                        timestamp = timestamp.replace(tzinfo=timezone.utc)
+                        timestamp = timestamp.replace(tzinfo=UTC)
                         item["apollo_module"] = module_query["name"]
                         event = Event(
                             datetime=timestamp,

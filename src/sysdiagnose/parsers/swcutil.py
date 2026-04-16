@@ -41,7 +41,7 @@ class SwcutilParser(BaseParserInterface):
     def parse_file(self, path: str) -> list:
         try:
             entries = []
-            with open(path, 'r') as f_in:
+            with open(path) as f_in:
                 # init section
                 headers = []
                 db = []

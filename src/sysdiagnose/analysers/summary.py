@@ -48,7 +48,6 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 for account in trans_result['stateMachine']['selfVerification']['server']:
                     result.append(f"- {account}")
             except KeyError:
-                # result.append('Issue extracting stateMachine selfVerification account info')
                 pass
 
             try:

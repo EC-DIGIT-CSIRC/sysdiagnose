@@ -7,7 +7,7 @@ Author: roman@envoid.com
 import glob
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
@@ -63,7 +63,7 @@ class LogDataStatisticsParser(BaseParserInterface):
         output = []
 
         try:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 for l_line in f:
                     line = l_line.strip()
                     if not line:
@@ -75,7 +75,7 @@ class LogDataStatisticsParser(BaseParserInterface):
                         continue
 
                     try:
-                        timestamp = datetime.fromtimestamp(record.get('unixTime'), tz=timezone.utc)
+                        timestamp = datetime.fromtimestamp(record.get('unixTime'), tz=UTC)
                     except Exception:
                         logger.warning(f'No unixTime found in record in file {path}')
                         continue

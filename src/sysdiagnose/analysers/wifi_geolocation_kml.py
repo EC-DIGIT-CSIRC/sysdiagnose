@@ -16,10 +16,10 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
-    def get_result(self, _force: bool = False):
+    def get_result(self, force: bool = False):
         raise NotImplementedError("This function is not compatible with this module.")
 
-    def save_result(self, _force: bool = False, _indent=None):
+    def save_result(self, force: bool = False, indent=None):
         self._result = self.execute_with_result_summary()
         self.save_result_summary()
 

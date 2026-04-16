@@ -94,7 +94,7 @@ class DisksParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
 
         try:
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 header_line = f.readline()
                 if not header_line:
                     return events

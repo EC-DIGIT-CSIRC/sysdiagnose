@@ -58,7 +58,7 @@ class WifiSecurityParser(BaseParserInterface):
         entries = []
         element = {}
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 for line in f:
                     if ' : ' in line:
                         key, value = line.split(" : ")

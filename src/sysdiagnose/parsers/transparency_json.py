@@ -30,7 +30,7 @@ class TransparencyJsonParser(BaseParserInterface):
             logger.info("No known transparency.log file found.")
             return {}
         for file in files:
-            with open(file, 'r') as f:
+            with open(file) as f:
                 try:
                     return json.load(f)
                 except json.decoder.JSONDecodeError:

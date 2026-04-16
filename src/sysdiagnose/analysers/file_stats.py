@@ -18,7 +18,7 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
 
     def traverse_directory(self, directory: str) -> dict:
         sysdiagnose_stats = []
-        for root, dirs, files in os.walk(directory):
+        for root, _dirs, files in os.walk(directory):
             directory_info = {
                 "folder_name": os.path.relpath(root, start=directory),
                 "file_count": len(files),

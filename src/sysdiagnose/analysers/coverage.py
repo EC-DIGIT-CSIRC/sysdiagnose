@@ -1,10 +1,15 @@
 #! /usr/bin/env python3
-
+import base64
 import glob
 import importlib
 import os
+from io import BytesIO
+from pathlib import Path
 
 import magic
+import matplotlib.pyplot as plt
+import pandas as pd
+from jinja2 import Template
 
 from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseParserInterface, SysdiagnoseConfig, logger
@@ -37,7 +42,6 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # Calculate parser coverage
         result.append(self.get_parser_coverage(self.case_data_subfolder))
 
-        # return result
         return self.generate_html_report(result[0], result[1])
 
     def get_parser_coverage(self, path: str) -> dict:
@@ -126,13 +130,6 @@ class CoverageAnalyser(BaseAnalyserInterface):
         3. Parsers Information (a table with parser details).
         4. Details (a collapsible section with a table of coverage data).
         """
-        import base64
-        from io import BytesIO
-        from pathlib import Path
-
-        import matplotlib.pyplot as plt
-        import pandas as pd
-        from jinja2 import Template
 
         # Convert coverage dictionary to a Pandas DataFrame
         coverage_df = pd.DataFrame.from_dict(coverage, orient='index')

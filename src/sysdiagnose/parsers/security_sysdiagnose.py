@@ -31,7 +31,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             return {}
 
         json_result = {'events': [], 'meta': {}}
-        with open(log_files[0], "r") as f:
+        with open(log_files[0]) as f:
             buffer = []
             buffer_section = None
 

@@ -35,7 +35,7 @@ class BrctlParser(BaseParserInterface):
     def parselistfile(container_list_file):
         containers = {"containers": []}
         result = []
-        with open(container_list_file[0], 'r') as f:
+        with open(container_list_file[0]) as f:
             keys = ['id', 'localizedName', 'documents', 'Public', 'clients']
             for l_line in f:
                 line = l_line.strip()
@@ -50,7 +50,7 @@ class BrctlParser(BaseParserInterface):
 
     @staticmethod
     def parsedumpfile(container_dump_file):
-        with open(container_dump_file[0], 'r') as f:
+        with open(container_dump_file[0]) as f:
             dump = {}
             section = "header"
             previous_line = ""

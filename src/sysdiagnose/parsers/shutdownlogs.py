@@ -7,7 +7,7 @@ Author: Benoit Roussile
 import glob
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
@@ -44,7 +44,7 @@ class ShutdownLogsParser(BaseParserInterface):
     def parse_file(path: str) -> list:
         # read log file content
         log_lines = ""
-        with open(path, "r") as f:
+        with open(path) as f:
             log_lines = f.readlines()
 
         events = []
@@ -78,7 +78,7 @@ class ShutdownLogsParser(BaseParserInterface):
                         index += 1
                     # compute timestamp from SIGTERM line
                     result = re.search(r".*\[(\d+)\].*", log_lines[index])
-                    timestamp = datetime.fromtimestamp(int(result.groups()[0]), tz=timezone.utc)
+                    timestamp = datetime.fromtimestamp(int(result.groups()[0]), tz=UTC)
 
                     # add entries
                     for item in running_processes.values():

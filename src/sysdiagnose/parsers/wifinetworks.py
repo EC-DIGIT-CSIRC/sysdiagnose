@@ -41,7 +41,7 @@ class WifiNetworksParser(BaseParserInterface):
     @staticmethod
     def parse_file(fname: str) -> dict | list:
         if fname.endswith('.json'):
-            with open(fname, 'r') as f:
+            with open(fname) as f:
                 return json.load(f)
         if fname.endswith('.plist'):
             return misc.load_plist_file_as_json(fname)

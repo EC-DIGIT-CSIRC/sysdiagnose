@@ -9,7 +9,7 @@ Author: david@autopsit.org
 """
 import glob
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils import misc, sqlite2json
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
@@ -48,7 +48,7 @@ class AppInstallationParser(BaseParserInterface):
                             continue
 
                         try:
-                            timestamp = datetime.fromtimestamp(item['timestamp'], tz=timezone.utc)
+                            timestamp = datetime.fromtimestamp(item['timestamp'], tz=UTC)
                             item['db_table'] = key
                             event = Event(
                                 datetime=timestamp,

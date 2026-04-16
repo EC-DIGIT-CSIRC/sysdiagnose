@@ -3,7 +3,7 @@
 import csv
 import glob
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
@@ -43,7 +43,7 @@ class BatteryBDCParser(BaseParserInterface):
             # add a field that refers to the first part of the filename (before the timestamp)
             # add the usual fields: timestamp, datetime
             # add the entry to the results list
-            with open(log_file, 'r') as f:
+            with open(log_file) as f:
                 reader = csv.DictReader(f)
                 entry_type = os.path.basename(log_file).rsplit('_', maxsplit=2)[0]
                 for row in reader:
@@ -51,7 +51,7 @@ class BatteryBDCParser(BaseParserInterface):
                     row['type'] = entry_type
                     if 'TimeStamp' in row:
                         timestamp = datetime.strptime(row['TimeStamp'], '%Y-%m-%d %H:%M:%S')
-                        timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
+                        timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
                         del row['TimeStamp']
                     elif 'set_system_time' in row:
                         timestamp = datetime.strptime(row['set_system_time'], '%Y-%m-%d %H:%M:%S %z')

@@ -34,7 +34,7 @@ class TaskinfoParser(BaseParserInterface):
         events = []
         try:
             path = self.get_log_files()[0]
-            with open(path, "r") as f:
+            with open(path) as f:
                 lines = f.readlines()
 
                 result = re.search(r'(num tasks: )(\d+)', lines[0])

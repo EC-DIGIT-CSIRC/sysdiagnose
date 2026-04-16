@@ -41,7 +41,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
     @staticmethod
     def parse_file(path: str) -> list:
         try:
-            with open(path, 'r') as f_in:
+            with open(path) as f_in:
                 # init section
                 headers = []
                 processes_raw = []

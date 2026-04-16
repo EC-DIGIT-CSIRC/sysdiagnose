@@ -2,7 +2,7 @@ import glob
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 from sysdiagnose.utils.misc import load_plist_string_as_json
@@ -84,7 +84,7 @@ class CrashLogsParser(BaseParserInterface):
     @staticmethod
     def parse_ips_file(path: str) -> Event:
         # identify the type of file
-        with open(path, 'r') as f:
+        with open(path) as f:
             result = json.loads(f.readline())  # first line
             lines = f.readlines()
 
@@ -233,7 +233,7 @@ class CrashLogsParser(BaseParserInterface):
         logger.info(f"Parsing summary file: {path}")
         result = []
         seen = set()  # to ensure unique entries
-        with open(path, 'r') as f:
+        with open(path) as f:
             for line in f:
                 if not line.startswith('/'):
                     continue
@@ -314,7 +314,7 @@ class CrashLogsParser(BaseParserInterface):
                 break
             # fallback, basename
             app = os.path.basename(filename)
-            return app, datetime.fromtimestamp(0, tz=timezone.utc)
+            return app, datetime.fromtimestamp(0, tz=UTC)
 
         app = m.group(1)
         # FIXME timezone is from local phone time at file creation. Not the TZ while creating the sysdiagnose image

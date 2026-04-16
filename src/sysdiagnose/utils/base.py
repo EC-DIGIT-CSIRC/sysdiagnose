@@ -167,14 +167,14 @@ class ResultSummaryFactory:
     @staticmethod
     def from_output(output_file: str, format_name: str, result: list | dict | str | None = None) -> ResultSummary:
         if format_name == 'jsonl' and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-            with open(output_file, 'r') as f:
+            with open(output_file) as f:
                 num_events = sum(1 for line in f if line.strip())
             return ResultSummary(status=ExecutionStatus.OK, num_events=num_events)
 
         if result is not None:
             return ResultSummaryFactory.from_result(result)
 
-        with open(output_file, 'r') as f:
+        with open(output_file) as f:
             if format_name == 'json':
                 loaded_result = json.load(f)
             elif format_name == 'jsonl':
@@ -288,7 +288,7 @@ class BaseInterface(ABC):
         """
         need_to_close = False
         if isinstance(file, str):
-            f = open(file, 'r')
+            f = open(file)
             need_to_close = True
         else:
             f = file
@@ -369,7 +369,7 @@ class BaseInterface(ABC):
 
     def load_result_summary(self) -> ResultSummary:
         if os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0:
-            with open(self.summary_file, 'r') as f:
+            with open(self.summary_file) as f:
                 return ResultSummary.from_dict(json.load(f))
 
         if self.output_exists():
@@ -450,7 +450,7 @@ class BaseInterface(ABC):
         return result
 
     def _load_output(self) -> list | dict | str | None:
-        with open(self.output_file, 'r') as f:
+        with open(self.output_file) as f:
             if self.format == 'json':
                 return json.load(f)
             if self.format == 'jsonl':
@@ -499,7 +499,7 @@ class BaseAnalyserInterface(BaseInterface):
 
 
 @dataclass(order=True)
-class Event():
+class Event:
     datetime: datetime_datetime  # timestamp of the event
     message: str    # human-readable message
     module: str     # module name (e.g. "crashlogs")

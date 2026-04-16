@@ -35,7 +35,7 @@ class IORegStructParser:
             self.open_file = file_path
             self.recursive_loop(data_tree)
         else:
-            with open(file_path, 'r', errors='backslashreplace') as f:
+            with open(file_path, errors='backslashreplace') as f:
                 self.open_file = f
                 self.recursive_loop(data_tree)
 

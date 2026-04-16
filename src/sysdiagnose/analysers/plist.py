@@ -1,6 +1,6 @@
 import json
+from collections.abc import Generator
 from datetime import datetime
-from typing import Generator
 
 from sysdiagnose.parsers.plists import PlistParser
 from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
@@ -50,7 +50,7 @@ class PListAnalyzer(BaseAnalyserInterface):
         file_path: str = f'{self.parser.output_folder}/{entity_type}'
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 for line in f:
                     entry = json.loads(line)
 

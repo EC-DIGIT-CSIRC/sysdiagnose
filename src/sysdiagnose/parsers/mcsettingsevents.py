@@ -2,7 +2,7 @@
 
 import glob
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
@@ -51,7 +51,7 @@ class McSettingsEventsParser(BaseParserInterface):
             if 'timestamp' in value:
                 try:
                     timestamp = datetime.strptime(value['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
-                    timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
+                    timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
                     value.pop('timestamp')  # remove timestamp from value to avoid duplication
                     event = Event(
                         datetime=timestamp,

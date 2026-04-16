@@ -7,7 +7,7 @@ from jinja2 import Template
 
 def load_json(file_path):
     """Load JSON data from a file."""
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         return json.load(file)
 
 

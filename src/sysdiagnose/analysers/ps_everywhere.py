@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
+from collections.abc import Generator
 from datetime import datetime, timedelta
-from typing import Dict, Generator, Optional, Set
 
 from sysdiagnose.parsers.logarchive import LogarchiveParser
 from sysdiagnose.parsers.logdata_statistics import LogDataStatisticsParser
@@ -32,11 +32,11 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
-        self.all_ps: Set[str] = set()
+        self.all_ps: set[str] = set()
         # Track last seen timestamp for each process (for time-based deduplication)
-        self.process_last_seen: Dict[str, datetime] = {}
+        self.process_last_seen: dict[str, datetime] = {}
         # PID to process name mapping for parent name resolution
-        self.pid_to_name: Dict[int, str] = {}
+        self.pid_to_name: dict[int, str] = {}
 
     @staticmethod
     def _strip_flags(process: str) -> str:
@@ -50,7 +50,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         return process
 
     @staticmethod
-    def _sanitize_uid(uid: Optional[int]) -> Optional[int]:
+    def _sanitize_uid(uid: int | None) -> int | None:
         """
         Sanitizes UID values by filtering out invalid/placeholder values.
 
@@ -63,7 +63,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             return None
         return uid
 
-    def _resolve_ppname(self, ppid: Optional[int]) -> Optional[str]:
+    def _resolve_ppname(self, ppid: int | None) -> str | None:
         """
         Resolves parent process ID to parent process name using the PID mapping.
 
@@ -125,7 +125,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         logger.info(f"Built PID mapping with {len(self.pid_to_name)} entries")
 
     @staticmethod
-    def message_extract_binary(process: str, message: str) -> Optional[str | list[str]]:
+    def message_extract_binary(process: str, message: str) -> str | list[str] | None:
         """
         Extracts process_name from special messages:
         1. backboardd Signpost messages with process_name
@@ -219,8 +219,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 # Process the list of connected clients from configd
                 process_paths = []
                 lines = message.split('\n')
-                for line in lines:
-                    line = line.strip()
+                for l_line in lines:
+                    line = l_line.strip()
                     if line.startswith('"') and '=' in line:
                         # Extract the client path from lines like ""/usr/sbin/mDNSResponder:null" = 1;"
                         client_path = line.split('"')[1]  # Get the part between the first pair of quotes
@@ -546,7 +546,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         except Exception as e:
             logger.exception(f"ERROR while extracting {entity_type}. {e}")
 
-    def add_if_full_path_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None, pid: Optional[int] = None, ppid: Optional[int] = None) -> bool:
+    def add_if_full_path_is_not_in_set(self, name: str, timestamp: datetime | None = None, uid: int | None = None, pid: int | None = None, ppid: int | None = None) -> bool:
         """
         Ensures that a process path is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.
@@ -586,7 +586,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         self.process_last_seen[unique_key] = timestamp
         return True
 
-    def add_if_full_command_is_not_in_set(self, name: str, timestamp: Optional[datetime] = None, uid: Optional[int] = None, pid: Optional[int] = None, ppid: Optional[int] = None) -> bool:
+    def add_if_full_command_is_not_in_set(self, name: str, timestamp: datetime | None = None, uid: int | None = None, pid: int | None = None, ppid: int | None = None) -> bool:
         """
         Ensures that a process command is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.

@@ -33,7 +33,7 @@ def get_version(filename="VERSION.txt"):
     try:
         script_dir = Path(__file__).parent.parent
         version_file = os.path.join(script_dir, filename)
-        with open(version_file, "r") as file:
+        with open(version_file) as file:
             data = json.load(file)
             version = data["version"]
             return version

@@ -77,8 +77,19 @@ exclude = [
     "dist",
 ]
 
+# E = Style errors from pycodestyle (PEP8)
+# F = Logic and syntax errors from pyflakes
+# B = flake8-bugbear - find bugs and design problems
+# I = import sort order
+# W = Warnings (pycodestyle) > kept for compatibility with Github action
+# N = pep8-naming
+# UP = pyupgrade - use latest python syntax
+# C4 = comprehensions
+# ANN = require type annotations
+# SIM = flake8-simplify - make code more concise and readable
+# T20 = flake8-print - disallow print statements (use logging instead)
 [tool.ruff.lint]
-select = ["E", "F", "I", "W", "N", "B", "C4", "ARG", "SIM", "ERA", "PL", "RUF"]
+select = ["E", "F", "B", "I", "W", "N", "UP", "C4", "SIM", "T20"]
 ignore = [
   "PLR0913",
   "E221", "E225", "E251", "E501",  # Match pycodestyle
@@ -87,6 +98,10 @@ ignore = [
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["T201"]
+"src/sysdiagnose/__main__.py" = ["T201"]
 
 [tool.ruff.format]
 quote-style = "double"

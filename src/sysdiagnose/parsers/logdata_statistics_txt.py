@@ -7,7 +7,7 @@ Author: roman@envoid.com
 import glob
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
 
@@ -62,7 +62,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
         output = []
 
         try:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 inside_statistics_record = False
                 record_tpl = {}
                 timestamp = None
@@ -126,7 +126,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
         :return: A timezone-aware datetime object in UTC, or None if parsing fails.
         """
         try:
-            return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S%z').astimezone(timezone.utc)
+            return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S%z').astimezone(UTC)
         except ValueError as e:
             logger.error(f'Failed to parse timestamp: {time_str} - {e}')
             return None

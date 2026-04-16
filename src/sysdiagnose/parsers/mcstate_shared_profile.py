@@ -2,7 +2,7 @@
 
 import glob
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
@@ -35,7 +35,7 @@ class McStateSharedProfileParser(BaseParserInterface):
         for log_file in log_files:
             entry = misc.load_plist_file_as_json(log_file)
             timestamp = datetime.strptime(entry['InstallDate'], '%Y-%m-%dT%H:%M:%S.%f')
-            timestamp = timestamp.replace(tzinfo=timezone.utc)  # ensure timezone is UTC
+            timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
             event = Event(
                 datetime=timestamp,
                 message='# '.join([entry.get('PayloadDescription', ''), entry.get('PayloadDisplayName', ''), entry.get('PayloadOrganization', '')]),

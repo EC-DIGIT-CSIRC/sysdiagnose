@@ -37,7 +37,7 @@ class PsParser(BaseParserInterface):
     def parse_file(self, filename):
         result = []
         try:
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
 

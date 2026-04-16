@@ -93,21 +93,21 @@ def main():
     elif args.mode == 'delete':
         force = args.force
         if not args.case_id and args.case_id not in sd.get_case_ids():
-            exit("No valid case ID given, use --case_id to specify a case ID")
+            sys.exit("No valid case ID given, use --case_id to specify a case ID")
 
         if not force:
             # Ask for confirmation
             confirm = input(f"Are you sure you want to delete case '{args.case_id}'? (y/n): ")
             if confirm.lower() != 'y':
                 print("Aborting deletion.")
-                exit(0)
+                sys.exit(0)
         # Delete the case
         try:
             sd.delete_case(args.case_id)
             print(f"Case '{args.case_id}' deleted successfully.")
         except Exception as e:
             print(f"Error deleting case: {e!s}")
-            exit(1)
+            sys.exit(1)
 
     elif args.mode == 'cases':
         sd.print_list_cases(verbose=args.verbose)
@@ -118,7 +118,7 @@ def main():
     elif args.mode == 'analysers':
         sd.print_analysers_list()
 
-    elif args.mode == 'init' or args.mode == 'create':
+    elif args.mode in {'init', 'create'}:
         if args.mode == 'init':
             print("The 'init' command is deprecated, use 'create' instead")
         # Handle init mode
@@ -126,7 +126,7 @@ def main():
         force = args.force
 
         if not os.path.isfile(filename) and filename.endswith('.tar.gz'):
-            exit(f"File {filename} does not exist or is not a tar.gz file")
+            sys.exit(f"File {filename} does not exist or is not a tar.gz file")
         # create the case
         try:
             if args.case_id and args.case_id != 'all':
@@ -138,13 +138,13 @@ def main():
                 case_id = sd.create_case(filename, force)['case_id']
                 print(f"Case '{case_id}' created successfully from '{filename}'")
         except Exception as e:
-            exit(f"Error creating case: {e!s}")
+            sys.exit(f"Error creating case: {e!s}")
 
     elif args.mode == 'parse':
         # Handle parse mode
         if args.parser == 'list':
             sd.print_parsers_list()
-            exit("")
+            sys.exit("")
         elif args.parser == 'all':
             parsers_list = list(sd.config.get_parsers().keys())
             if args.exclude:
@@ -153,7 +153,7 @@ def main():
         elif not sd.is_valid_parser_name(args.parser):
             sd.print_parsers_list()
             print("")
-            exit(f"Parser '{args.parser}' does not exist, possible options are listed above.")
+            sys.exit(f"Parser '{args.parser}' does not exist, possible options are listed above.")
         else:
             parsers_list = [args.parser]
 
@@ -183,7 +183,7 @@ def main():
         # Handle analyse mode
         if args.analyser == 'list':
             sd.print_analysers_list()
-            exit("")
+            sys.exit("")
         elif args.analyser == 'all':
             analysers_list = list(sd.config.get_analysers().keys())
             if args.exclude:
@@ -192,7 +192,7 @@ def main():
         elif not sd.is_valid_analyser_name(args.analyser):
             sd.print_analysers_list()
             print("")
-            exit(f"Analyser '{args.analyser}' does not exist, possible options are listed above.")
+            sys.exit(f"Analyser '{args.analyser}' does not exist, possible options are listed above.")
         else:
             analysers_list = [args.analyser]
 
@@ -234,7 +234,7 @@ def case_csv_to_case_ids(case_csv: str, sd: Sysdiagnose) -> list:
     if len(case_ids_set) == 0:
         sd.print_list_cases()
         print("")
-        exit("No valid case IDs given, possible options are listed above.")
+        sys.exit("No valid case IDs given, possible options are listed above.")
     return list(case_ids_set)
 
 

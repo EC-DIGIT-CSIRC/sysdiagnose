@@ -7,7 +7,7 @@ from sysdiagnose.utils.base import Event
 
 
 def extract_from_file(fname, tzinfo, module):
-    with open(fname, 'r', encoding="utf-8") as f:
+    with open(fname, encoding="utf-8") as f:
         return extract_from_iowrapper(f, tzinfo=tzinfo, module=module)
 
 

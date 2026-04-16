@@ -5,9 +5,9 @@ import os
 import re
 import shutil
 import tarfile
-from datetime import timezone
+from contextlib import suppress
+from datetime import UTC
 from io import TextIOWrapper
-from operator import ior
 from pathlib import Path
 
 from tabulate import tabulate
@@ -101,9 +101,8 @@ class Sysdiagnose:
             raise ValueError(f"Invalid sysdiagnose file: {sysdiagnose_file}. Case could not be created!")
 
         # only allow specific chars for case_id
-        if case_id:
-            if not re.match(r'^[a-zA-Z0-9-_\.]+$', case_id):
-                raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
+        if case_id and not re.match(r'^[a-zA-Z0-9-_\.]+$', case_id):
+            raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
 
         # check if sysdiagnise file is already in a case
         case = None
@@ -121,10 +120,9 @@ class Sysdiagnose:
                     raise ValueError(f"This sysdiagnose has already been extracted for case ID: {c['case_id']}")
 
         # incoherent caseID and file
-        if case_id and case_id in self.cases():
-            # TODO: again, the sha256 calculation is not the same as the one in the old cases
-            if self.cases()[case_id]['source_sha256'] != metadata['source_sha256']:
-                raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
+        # TODO: again, the sha256 calculation is not the same as the one in the old cases
+        if case_id and case_id in self.cases() and self.cases()[case_id]['source_sha256'] != metadata['source_sha256']:
+            raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
 
         # find next incremental case_id, if needed
         if not case_id:
@@ -134,11 +132,9 @@ class Sysdiagnose:
                 # if the case_id already exists, we need to find a new one
                 # find the highest case_id in the cases
                 case_id = 0
-                for k in self.cases().keys():
-                    try:
+                for k in self.cases():
+                    with suppress(ValueError)
                         case_id = max(case_id, int(k))
-                    except ValueError:
-                        pass
                 # add one to the new found case_id
                 case_id += 1
                 case_id = str(case_id)
@@ -232,10 +228,6 @@ class Sysdiagnose:
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
-                        # elif member_path.name == 'IOService.txt':
-                        #     ioreg_service_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
-                        #     p = IORegStructParser()
-                        #     ioreg_service_json = p.parse(ioreg_service_file, from_start=True)
                         elif member_path.name == 'IODeviceTree.txt':
                             ioreg_devicetree_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
                             p = IORegStructParser()
@@ -257,8 +249,6 @@ class Sysdiagnose:
                 sys_json_file = os.path.join(source_file, 'logs', 'SystemVersion', 'SystemVersion.plist')
                 sys_json = SystemVersionParser.parse_file(sys_json_file)
                 p = IORegStructParser()
-                # ioreg_service_file = os.path.join(source_file, 'ioreg', 'IOService.txt')
-                # ioreg_service_json = p.parse(ioreg_service_file)
                 ioreg_devicetree_file = os.path.join(source_file, 'ioreg', 'IODeviceTree.txt')
                 ioreg_devicetree_json = p.parse(ioreg_devicetree_file)
             except Exception as e:
@@ -269,7 +259,7 @@ class Sysdiagnose:
 
         # Time to obtain the metadata
         # Turn the sysdiagnose date into UTC
-        sysdiagnose_date_utc = sysdiagnose_date.astimezone(timezone.utc)
+        sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
         if remotectl_dumpstate_json and 'error' not in remotectl_dumpstate_json:
             if 'Local device' in remotectl_dumpstate_json:
                 try:
@@ -292,7 +282,6 @@ class Sysdiagnose:
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
         elif ioreg_devicetree_json and sys_json:
-            # elif ioreg_devicetree_json and sys_json:
             # FIXME also write tests...
             try:
                 serial_number = ioreg_devicetree_json['device-tree']['IOPlatformSerialNumber']
@@ -351,15 +340,15 @@ class Sysdiagnose:
                     with tarfile.open(sysdiagnose_file) as tf:
                         tf.extractall(path=destination_folder)
                 except Exception as e:
-                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}')
+                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}') from e
             except Exception as e:
-                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}')
+                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}') from e
 
         elif os.path.isdir(sysdiagnose_file):
             try:
                 shutil.copytree(sysdiagnose_file, os.path.join(destination_folder, 'sysdiagnose'), dirs_exist_ok=True)
             except Exception as e:
-                raise Exception(f'Error while copying sysdiagnose folder. Reason: {e!s}')
+                raise Exception(f'Error while copying sysdiagnose folder. Reason: {e!s}') from e
 
     def init_case_logging(self, mode: str, case_id: str) -> None:
         ''' Initialises the file handler '''
