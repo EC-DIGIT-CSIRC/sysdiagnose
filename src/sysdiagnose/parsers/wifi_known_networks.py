@@ -6,6 +6,7 @@ Author: aaron@lo-res.org, modeles after sysdiagnose-networkextension.py and mobi
 
 Change log: Aaron Kaplan, initial version.
 """
+
 import glob
 import os
 
@@ -21,9 +22,7 @@ class WifiKnownNetworksParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'WiFi/com.apple.wifi.known-networks.plist'
-        ]
+        log_files_globs = ["WiFi/com.apple.wifi.known-networks.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -41,7 +40,7 @@ class WifiKnownNetworksParser(BaseParserInterface):
     def parse_file(path: str) -> list | dict:
         return misc.load_plist_file_as_json(path)
 
-    '''
+    """
     code usefull for future printing function
 
     class CustomEncoder(json.JSONEncoder):
@@ -53,4 +52,4 @@ class WifiKnownNetworksParser(BaseParserInterface):
 
             pl = getKnownWifiNetworks(options.inputfile)
             print(json.dumps(pl, indent=4, cls=CustomEncoder), file=sys.stderr)
-    '''
+    """

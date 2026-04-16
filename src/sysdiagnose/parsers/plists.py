@@ -16,9 +16,7 @@ class PlistParser(BaseParserInterface):
         self.output_folder = os.path.join(self.case_parsed_data_folder, self.module_name)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            '**/*.plist'
-        ]
+        log_files_globs = ["**/*.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob), recursive=True))
@@ -32,7 +30,7 @@ class PlistParser(BaseParserInterface):
                 json_data = misc.load_plist_file_as_json(logfile)
             except Exception as e:
                 json_data = {"error": str(e)}
-            end_of_path = logfile[len(self.case_data_subfolder):].lstrip(os.path.sep)  # take the path after the root path
+            end_of_path = logfile[len(self.case_data_subfolder) :].lstrip(os.path.sep)  # take the path after the root path
             result[end_of_path] = json_data
         return result
 
@@ -59,8 +57,8 @@ class PlistParser(BaseParserInterface):
             self._result_summary = self.load_result_summary()
 
         for end_of_path, json_data in self._result.items():
-            output_filename = end_of_path.replace(os.path.sep, '_') + '.json'  # replace / with _ in the path
-            with open(os.path.join(self.output_folder, output_filename), 'w') as f:
+            output_filename = end_of_path.replace(os.path.sep, "_") + ".json"  # replace / with _ in the path
+            with open(os.path.join(self.output_folder, output_filename), "w") as f:
                 f.write(json.dumps(json_data, ensure_ascii=False))
 
         self.save_result_summary()

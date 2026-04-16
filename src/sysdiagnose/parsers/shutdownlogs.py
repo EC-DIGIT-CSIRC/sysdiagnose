@@ -4,6 +4,7 @@ For Python3
 Sysdiagnose Shutdown logs
 Author: Benoit Roussile
 """
+
 import glob
 import os
 import re
@@ -17,16 +18,14 @@ SIGTERM_LINE = "SIGTERM"
 
 
 class ShutdownLogsParser(BaseParserInterface):
-    description = 'Parsing shutdown.log file'
-    format = 'jsonl'
+    description = "Parsing shutdown.log file"
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'system_logs.logarchive/Extra/shutdown*.log'
-        ]
+        log_files_globs = ["system_logs.logarchive/Extra/shutdown*.log"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -37,7 +36,7 @@ class ShutdownLogsParser(BaseParserInterface):
         try:
             return ShutdownLogsParser.parse_file(self.get_log_files()[0])
         except IndexError:
-            logger.info('No shutdown.log file present in system_logs.logarchive/Extra/ directory')
+            logger.info("No shutdown.log file present in system_logs.logarchive/Extra/ directory")
             return []
 
     @staticmethod
@@ -58,8 +57,8 @@ class ShutdownLogsParser(BaseParserInterface):
                     time_waiting = 0
                     while SIGTERM_LINE not in log_lines[index]:
                         if CLIENTS_ARE_STILL_HERE_LINE in log_lines[index]:
-                            time_waiting = re.search(r'After ([\d\.]+)s,', log_lines[index]).group(1)
-                        if (REMAINING_CLIENT_PID_LINE in log_lines[index]):
+                            time_waiting = re.search(r"After ([\d\.]+)s,", log_lines[index]).group(1)
+                        if REMAINING_CLIENT_PID_LINE in log_lines[index]:
                             result = re.search(r".*: (\b\d+) \((.*)\).*", log_lines[index])
                             pid = result.groups()[0]
                             binary_path = result.groups()[1]
@@ -67,10 +66,10 @@ class ShutdownLogsParser(BaseParserInterface):
                                 running_processes[pid] = {
                                     "pid": int(pid),
                                     "path": binary_path,
-                                    "command": '/'.join(binary_path.split('/')[:-1]),
-                                    'uuid': binary_path.split('/')[-1],
+                                    "command": "/".join(binary_path.split("/")[:-1]),
+                                    "uuid": binary_path.split("/")[-1],
                                     "time_waiting": float(time_waiting),
-                                    "times_waiting": 1
+                                    "times_waiting": 1,
                                 }
                             else:
                                 running_processes[pid]["time_waiting"] = float(time_waiting)
@@ -85,9 +84,9 @@ class ShutdownLogsParser(BaseParserInterface):
                         event = Event(
                             datetime=timestamp,
                             message=f"{item['command']} is still there during shutdown after {item['time_waiting']}s",
-                            module='shutdownlogs',
-                            timestamp_desc='process running at shutdown',
-                            data=item
+                            module="shutdownlogs",
+                            timestamp_desc="process running at shutdown",
+                            data=item,
                         )
                         events.append(event.to_dict())
                 index += 1

@@ -13,11 +13,11 @@ def load_json(file_path):
 
 def compare_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict]:
     """
-        Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
+    Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
 
-        :param obj1: First JSON object (dictionary).
-        :param obj2: Second JSON object (dictionary).
-        :return: A dictionary with added, removed, and modified fields.
+    :param obj1: First JSON object (dictionary).
+    :param obj2: Second JSON object (dictionary).
+    :return: A dictionary with added, removed, and modified fields.
     """
     # Identify added and removed keys
     added = {key: obj2[key] for key in obj2 if key not in obj1}
@@ -49,33 +49,31 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
         :param data: Dictionary containing file details.
         :return: A DataFrame with parser names as the index and coverage details as columns.
         """
-        df = pd.DataFrame.from_dict(data, orient='index')
+        df = pd.DataFrame.from_dict(data, orient="index")
 
         # Assign "no-parser" to files without a parser
-        df['parser'] = df['parser'].fillna('no-parser')
+        df["parser"] = df["parser"].fillna("no-parser")
 
         # Calculate the total number of files
         total_files = len(df)
 
         # Group by parser and calculate coverage
         def calculate_group_coverage(group):
-            parsed_files = (group['file_type'] != 'unknown').sum()
+            parsed_files = (group["file_type"] != "unknown").sum()
             total_group_files = len(group)
             # For "no-parser", divide by the total number of files
-            if group.name == 'no-parser':
+            if group.name == "no-parser":
                 coverage = parsed_files / total_files if total_files > 0 else 0
             else:
                 coverage = parsed_files / total_group_files if total_group_files > 0 else 0
-            return {
-                'parsed_files': parsed_files,
-                'total_files': total_group_files,
-                'coverage': coverage
-            }
+            return {"parsed_files": parsed_files, "total_files": total_group_files, "coverage": coverage}
 
-        coverage = df.groupby('parser').apply(calculate_group_coverage,
-                                              # Deprecation warning:
-                                              # https://stackoverflow.com/questions/77969964/deprecation-warning-with-groupby-apply
-                                              include_groups=False)
+        coverage = df.groupby("parser").apply(
+            calculate_group_coverage,
+            # Deprecation warning:
+            # https://stackoverflow.com/questions/77969964/deprecation-warning-with-groupby-apply
+            include_groups=False,
+        )
 
         return pd.DataFrame(coverage.tolist(), index=coverage.index)
 
@@ -85,19 +83,16 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
 
     # Merge the two coverage DataFrames for comparison
     comparison = pd.merge(
-        coverage1, coverage2,
-        how='outer',
-        left_index=True,
-        right_index=True,
-        suffixes=('_old', '_new')
+        coverage1, coverage2, how="outer", left_index=True, right_index=True, suffixes=("_old", "_new")
     ).fillna(0)  # Fill NaN values with 0 for parsers missing in one of the objects
 
     # Convert the comparison DataFrame to a list of dictionaries
-    return comparison.reset_index().to_dict(orient='records')
+    return comparison.reset_index().to_dict(orient="records")
 
 
-def generate_html_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict,
-                         modified_properties: dict, output_file: str) -> None:
+def generate_html_report(
+    comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str
+) -> None:
     """
     Generate an HTML report for parser coverage comparison and sysdiag properties using Jinja2.
 
@@ -248,15 +243,16 @@ def generate_html_report(comparison_data: list[dict], added_properties: dict, re
         comparison_data=comparison_data,
         added_properties=added_properties,
         removed_properties=removed_properties,
-        modified_properties=modified_properties
+        modified_properties=modified_properties,
     )
 
-    with open(output_file, 'w') as file:
+    with open(output_file, "w") as file:
         file.write(rendered_html)
 
 
-def generate_markdown_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict,
-                             modified_properties: dict, output_file: str) -> None:
+def generate_markdown_report(
+    comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str
+) -> None:
     """
     Generate a Markdown report for parser coverage comparison and sysdiag properties.
 
@@ -266,7 +262,7 @@ def generate_markdown_report(comparison_data: list[dict], added_properties: dict
     :param modified_properties: Dictionary of modified properties.
     :param output_file: Output Markdown file path.
     """
-    with open(output_file, 'w') as file:
+    with open(output_file, "w") as file:
         # Title
         file.write("# Parser Coverage and Sysdiag Properties Comparison\n\n")
 
@@ -322,15 +318,14 @@ def generate_markdown_report(comparison_data: list[dict], added_properties: dict
     print(f"Markdown report generated: {output_file}")
 
 
-def compare_coverage_json_files(file1: str, file2: str,
-                                output_file: str, format: str = 'html') -> None:
+def compare_coverage_json_files(file1: str, file2: str, output_file: str, format: str = "html") -> None:
     """
-        Compare two file_stats JSON files and generate a report.
+    Compare two file_stats JSON files and generate a report.
 
-        :param file1: Path to the first JSON file.
-        :param file2: Path to the second JSON file.
-        :param output_file: Path to the output file.
-        :param format: Output format (default: html).
+    :param file1: Path to the first JSON file.
+    :param file2: Path to the second JSON file.
+    :param output_file: Path to the output file.
+    :param format: Output format (default: html).
     """
     json1 = load_json(file1)
     json2 = load_json(file2)
@@ -341,29 +336,23 @@ def compare_coverage_json_files(file1: str, file2: str,
     # Compare nested arrays
     comparison_data = compare_coverage_details(json1[1], json2[1])
 
-    if format.lower() == 'html':
+    if format.lower() == "html":
         # Generate HTML report
-        generate_html_report(
-            comparison_data, added_properties, removed_properties, modified_properties, output_file
-        )
-    elif format.lower() == 'markdown':
+        generate_html_report(comparison_data, added_properties, removed_properties, modified_properties, output_file)
+    elif format.lower() == "markdown":
         # Generate Markdown report
-        generate_markdown_report(
-            comparison_data, added_properties, removed_properties, modified_properties, output_file
-        )
+        generate_markdown_report(comparison_data, added_properties, removed_properties, modified_properties, output_file)
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(
-        prog='file_stats_diff',
-        description='file_stats JSON files comparer'
-    )
+    parser = argparse.ArgumentParser(prog="file_stats_diff", description="file_stats JSON files comparer")
     # available for all
-    parser.add_argument('file1', help='File path to the first JSON file')
-    parser.add_argument('file2', help='File path to the second JSON file')
-    parser.add_argument('-o', '--output', required=True, help='Output file path')
-    parser.add_argument('-fmt', '--format', required=False, default='html', choices=['html', 'markdown'], help='Output format (default: html)')
+    parser.add_argument("file1", help="File path to the first JSON file")
+    parser.add_argument("file2", help="File path to the second JSON file")
+    parser.add_argument("-o", "--output", required=True, help="Output file path")
+    parser.add_argument(
+        "-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)"
+    )
 
     args = parser.parse_args()
 

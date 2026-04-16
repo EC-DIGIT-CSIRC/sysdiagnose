@@ -19,18 +19,14 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
     def traverse_directory(self, directory: str) -> dict:
         sysdiagnose_stats = []
         for root, _dirs, files in os.walk(directory):
-            directory_info = {
-                "folder_name": os.path.relpath(root, start=directory),
-                "file_count": len(files),
-                "files": []
-            }
+            directory_info = {"folder_name": os.path.relpath(root, start=directory), "file_count": len(files), "files": []}
 
             for file in files:
                 file_path = os.path.join(root, file)
                 file_info = {
                     "filename": file,
                     "extension": os.path.splitext(file)[1],
-                    "file_type": self.get_file_type(file_path)
+                    "file_type": self.get_file_type(file_path),
                 }
                 directory_info["files"].append(file_info)
 
@@ -46,10 +42,10 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
         device_info = {}
         try:
             device_info = {
-                "os_version": rctl_result['Local device']['Properties']['OSVersion'],
-                "build": rctl_result['Local device']['Properties']['BuildVersion'],
-                "product_name": rctl_result['Local device']['Properties']['ProductName'],
-                "product_type": rctl_result['Local device']['Properties']['ProductType']
+                "os_version": rctl_result["Local device"]["Properties"]["OSVersion"],
+                "build": rctl_result["Local device"]["Properties"]["BuildVersion"],
+                "product_name": rctl_result["Local device"]["Properties"]["ProductName"],
+                "product_type": rctl_result["Local device"]["Properties"]["ProductType"],
             }
         except KeyError:
             logger.exception("Issue extracting device info")

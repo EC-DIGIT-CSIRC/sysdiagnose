@@ -19,16 +19,16 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
         mcstate_result = mcstatesharedprofile.get_result()
 
         for entry in mcstate_result:
-            for key in ['SignerCerts', 'datetime', 'timestamp']:
-                entry['data'].pop(key, None)
+            for key in ["SignerCerts", "datetime", "timestamp"]:
+                entry["data"].pop(key, None)
 
-            payload_contents = entry['data'].pop('PayloadContent', None)
+            payload_contents = entry["data"].pop("PayloadContent", None)
 
-            entry_tpl = misc.flatten_dict(entry['data'])
+            entry_tpl = misc.flatten_dict(entry["data"])
 
             for payload_content in payload_contents:
                 item = entry_tpl.copy()
-                item.update(misc.flatten_dict({'PayloadContent': payload_content}))
+                item.update(misc.flatten_dict({"PayloadContent": payload_content}))
                 result.append(item)
 
         return result
@@ -49,7 +49,7 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
         for entry in self._result:
             result_keys.update(entry.keys())
 
-        with open(self.output_file, 'w', newline='') as f:
+        with open(self.output_file, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=list(result_keys))
             writer.writeheader()
             writer.writerows(self._result)

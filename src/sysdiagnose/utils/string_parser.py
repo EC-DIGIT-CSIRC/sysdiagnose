@@ -31,6 +31,8 @@ The structure classes all follow the same format with these mandatory methods an
                              some structs can change form at the end, for ex. '<hello world>'
                              will be changed from XML_DICT to a string (MUTATED_STRING)
 """
+
+
 class String:
     type = Type.NONE
     start_char = "'", '"'
@@ -43,15 +45,15 @@ class String:
         if isinstance(self.data, str):
             self.data += c
         else:
-            logger.error('ERROR : malformed data, random character found next to a structure')
-            raise ValueError('malformed data, random character found next to a structure')
+            logger.error("ERROR : malformed data, random character found next to a structure")
+            raise ValueError("malformed data, random character found next to a structure")
 
     def add_struct(self, _struct):
         logger.error("ERROR : This function should never be called, if you see this there is a coding mistake")
         raise Exception("Code that shouldn't be called was called")
 
     def accepted_struct(self):
-        return Type.NONE,
+        return (Type.NONE,)
 
     def end_chunk(self):
         pass
@@ -134,7 +136,7 @@ class XmlDict:
 
             # special case, key without val -> true/false value
             if not self.temp_val and self.currently_key and not self.flag_key_is_string:
-                if self.temp_key[0] == '!':
+                if self.temp_key[0] == "!":
                     self.temp_key = self.temp_key[1:]
                     self.temp_val = False
                 else:
@@ -176,7 +178,7 @@ class XmlDict:
         # case it has multiple keys, without values its a list
         elif self.data and all(v == "" for v in self.data.values()):
             self.data = list(self.data.keys())
-            self.type = Type.LIST   # might be unacurate since its a mutated list but shouldn't matter
+            self.type = Type.LIST  # might be unacurate since its a mutated list but shouldn't matter
 
 
 class CurlyDict(XmlDict):
@@ -262,9 +264,8 @@ class Parser:
 
     def base_switch(self, c):
         current_struct = self.stack[-1]
-        possible = current_struct.accepted_struct()     # list of types that the current struct can accept
+        possible = current_struct.accepted_struct()  # list of types that the current struct can accept
         match c:
-
             # XML Dict : <k1 v1, k2 v2>
             case XmlDict.start_char if Type.XML_DICT in possible:
                 self.stack.append(XmlDict())

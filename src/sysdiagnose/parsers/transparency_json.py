@@ -6,7 +6,6 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logge
 
 
 class TransparencyJsonParser(BaseParserInterface):
-
     description = "Parsing transparency.log json file as json"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
@@ -14,7 +13,7 @@ class TransparencyJsonParser(BaseParserInterface):
 
     def get_log_files(self) -> list:
         log_files_globs = [
-            'transparency.log',
+            "transparency.log",
         ]
         log_files = []
         for log_files_glob in log_files_globs:

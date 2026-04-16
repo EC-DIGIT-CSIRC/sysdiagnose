@@ -4,6 +4,7 @@ For Python3
 Script to print from iTunes Store
 Author: david@autopsit.org
 """
+
 import glob
 import os
 
@@ -18,9 +19,7 @@ class ITunesStoreParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/itunesstored/downloads.*.sqlitedb'
-        ]
+        log_files_globs = ["logs/itunesstored/downloads.*.sqlitedb"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -32,7 +31,7 @@ class ITunesStoreParser(BaseParserInterface):
         try:
             return ITunesStoreParser.parse_file(self.get_log_files()[0])
         except IndexError:
-            return {'error': 'No downloads.*.sqlitedb file found in logs/itunesstored/ directory'}
+            return {"error": "No downloads.*.sqlitedb file found in logs/itunesstored/ directory"}
 
     @staticmethod
     def parse_file(path: str) -> list | dict:

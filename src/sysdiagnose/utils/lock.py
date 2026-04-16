@@ -1,11 +1,9 @@
-
-
 import time
 from pathlib import Path
 
 
 class FileLock:
-    '''
+    """
     A simple lock implementation using a file-based approach.
 
     It creases a file {filename}.lock in the same directory as the file
@@ -23,7 +21,8 @@ class FileLock:
         print(f"Could not acquire lock: {e}")
     finally:
         lock.release()
-    '''
+    """
+
     def __init__(self, filename: str, timeout: int = 5):
         self.filename = filename
         self.timeout = timeout

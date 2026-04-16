@@ -16,9 +16,7 @@ class McSettingsEventsParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            "logs/MCState/Shared/MCSettingsEvents.plist"
-        ]
+        log_files_globs = ["logs/MCState/Shared/MCSettingsEvents.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
@@ -27,9 +25,9 @@ class McSettingsEventsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        '''
+        """
         this is the function that will be called
-        '''
+        """
         result = []
         log_files = self.get_log_files()
         for log_file in log_files:
@@ -41,26 +39,26 @@ class McSettingsEventsParser(BaseParserInterface):
 
     @staticmethod
     def traverse_and_collect(data, module, path=""):
-        '''
+        """
         recursively traverse json_data and search for dicts that contain the 'timestamp' key.
         when found, convert the value of the 'timestamp' key to a datetime object and add it to the entry dict.
         also add a field 'setting' with the path of the dict in the json_data where the 'timestamp' key was found. (each depth joined by a dot)
-        '''
+        """
         for key, value in data.items():
             current_path = f"{path}.{key}" if path else key
-            if 'timestamp' in value:
+            if "timestamp" in value:
                 try:
-                    timestamp = datetime.strptime(value['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
+                    timestamp = datetime.strptime(value["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
                     timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
-                    value.pop('timestamp')  # remove timestamp from value to avoid duplication
+                    value.pop("timestamp")  # remove timestamp from value to avoid duplication
                     event = Event(
                         datetime=timestamp,
                         message=f"setting {current_path} {value['event']} by {value['process']}",
                         module=module,
                         timestamp_desc=f"{module} {value['event']}",
-                        data=value
+                        data=value,
                     )
-                    event.data['setting'] = current_path
+                    event.data["setting"] = current_path
 
                     yield event.to_dict()
                 except ValueError:

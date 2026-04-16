@@ -12,8 +12,8 @@ class PListAnalyzer(BaseAnalyserInterface):
     converting relevant entries into a structured JSONL format for further analysis.
     """
 
-    description = 'Gathers information from a plist file.'
-    format = 'jsonl'
+    description = "Gathers information from a plist file."
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
@@ -32,7 +32,7 @@ class PListAnalyzer(BaseAnalyserInterface):
         self.parser.save_result()
 
         for func in dir(self):
-            if func.startswith(f'_{self.__class__.__name__}__extract_plist'):
+            if func.startswith(f"_{self.__class__.__name__}__extract_plist"):
                 yield from getattr(self, func)()
 
     def __extract_plist_mdm_data(self) -> Generator[dict, None, None]:
@@ -46,8 +46,8 @@ class PListAnalyzer(BaseAnalyserInterface):
 
         :yield: A dictionary containing extracted MDM details.
         """
-        entity_type: str = 'logs_MCState_Shared_MDM.plist.json'
-        file_path: str = f'{self.parser.output_folder}/{entity_type}'
+        entity_type: str = "logs_MCState_Shared_MDM.plist.json"
+        file_path: str = f"{self.parser.output_folder}/{entity_type}"
 
         try:
             with open(file_path) as f:
@@ -55,16 +55,16 @@ class PListAnalyzer(BaseAnalyserInterface):
                     entry = json.loads(line)
 
                     mdm_entry = Event(
-                        datetime=datetime.fromisoformat(entry.get('LastPollingAttempt')),
-                        message= f"MDM Profile: {entry.get('ManagingProfileIdentifier')} with access rights {entry.get('AccessRights')}",
-                        timestamp_desc='Last Polling Attempt',
+                        datetime=datetime.fromisoformat(entry.get("LastPollingAttempt")),
+                        message=f"MDM Profile: {entry.get('ManagingProfileIdentifier')} with access rights {entry.get('AccessRights')}",
+                        timestamp_desc="Last Polling Attempt",
                         module=self.module_name,
-                        data={'source': entity_type}
+                        data={"source": entity_type},
                     )
 
                     yield mdm_entry.to_dict()
 
         except FileNotFoundError as e:
-            logger.warning(f'{entity_type} not found for {self.case_id}. {e}')
+            logger.warning(f"{entity_type} not found for {self.case_id}. {e}")
         except Exception as e:
-            logger.exception(f'ERROR while extracting {entity_type} file. {e}')
+            logger.exception(f"ERROR while extracting {entity_type} file. {e}")

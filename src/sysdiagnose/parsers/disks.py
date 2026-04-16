@@ -4,6 +4,7 @@ For Python3
 Parser for disks.txt (df-like output) to extract per-mount capacity/usage
 Author: envoid helpers
 """
+
 import glob
 import os
 import re
@@ -22,7 +23,7 @@ def _parse_size_to_bytes(size_str: str) -> int:
     if size_str is None:
         return 0
     s = str(size_str).strip()
-    if s in {'', '-'}:
+    if s in {"", "-"}:
         return 0
     try:
         # raw bytes
@@ -30,31 +31,31 @@ def _parse_size_to_bytes(size_str: str) -> int:
     except ValueError:
         pass
 
-    match = re.fullmatch(r"(?i)([0-9]+)([bkmg t])?", s.replace(' ', ''))
+    match = re.fullmatch(r"(?i)([0-9]+)([bkmg t])?", s.replace(" ", ""))
     if not match:
         # could be in blocks like "324k" (inodes), still handle the suffix scale
-        match = re.fullmatch(r"(?i)([0-9]+\.?[0-9]*)([bkmg t%])?", s.replace(' ', ''))
+        match = re.fullmatch(r"(?i)([0-9]+\.?[0-9]*)([bkmg t%])?", s.replace(" ", ""))
     if not match:
         return 0
 
     num_str = match.group(1)
-    unit = (match.group(2) or '').strip().upper()
+    unit = (match.group(2) or "").strip().upper()
     try:
         value = float(num_str)
     except ValueError:
         return 0
 
     factor = 1
-    if unit in {'B', ''}:
+    if unit in {"B", ""}:
         factor = 1
-    elif unit == 'K':
+    elif unit == "K":
         factor = 1024
-    elif unit == 'M':
-        factor = 1024 ** 2
-    elif unit == 'G':
-        factor = 1024 ** 3
-    elif unit == 'T':
-        factor = 1024 ** 4
+    elif unit == "M":
+        factor = 1024**2
+    elif unit == "G":
+        factor = 1024**3
+    elif unit == "T":
+        factor = 1024**4
     else:
         # unknown suffix (%, etc.)
         factor = 1
@@ -70,9 +71,7 @@ class DisksParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'disks.txt'
-        ]
+        log_files_globs = ["disks.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
@@ -83,7 +82,7 @@ class DisksParser(BaseParserInterface):
     def execute(self) -> list | dict:
         files = self.get_log_files()
         if not files:
-            return {'error': ['No disks.txt file present']}
+            return {"error": ["No disks.txt file present"]}
         result: list = []
         for file_path in files:
             result.extend(self.parse_file(file_path))
@@ -100,7 +99,7 @@ class DisksParser(BaseParserInterface):
                     return events
                 # Split header by runs of whitespace
                 # Merge common multi-word header 'Mounted on' into a single token
-                header_sane = header_line.replace('Mounted on', 'Mounted_on')
+                header_sane = header_line.replace("Mounted on", "Mounted_on")
                 header = re.split(r"\s+", header_sane.strip())
                 header_length = len(header)
 
@@ -108,7 +107,7 @@ class DisksParser(BaseParserInterface):
                 normalized_header = [snake_case(h) for h in header]
 
                 for l_line in f:
-                    line = l_line.rstrip('\n').strip()
+                    line = l_line.rstrip("\n").strip()
                     if not line:
                         continue
 
@@ -125,29 +124,29 @@ class DisksParser(BaseParserInterface):
                         entry[col_name] = value
 
                     # Add derived bytes fields when possible
-                    for size_key in ('size', 'used', 'avail'):
+                    for size_key in ("size", "used", "avail"):
                         if size_key in entry:
-                            entry[f'{size_key}_bytes'] = _parse_size_to_bytes(entry[size_key])
+                            entry[f"{size_key}_bytes"] = _parse_size_to_bytes(entry[size_key])
 
                     # Normalize percentage fields
-                    if 'capacity' in entry and isinstance(entry['capacity'], str) and entry['capacity'].endswith('%'):
+                    if "capacity" in entry and isinstance(entry["capacity"], str) and entry["capacity"].endswith("%"):
                         with suppress(ValueError):
-                            entry['capacity_percent'] = float(entry['capacity'].rstrip('%'))
-                    if 'use%' in entry:
+                            entry["capacity_percent"] = float(entry["capacity"].rstrip("%"))
+                    if "use%" in entry:
                         with suppress(ValueError):
-                            entry['use_percent'] = float(str(entry['use%']).rstrip('%'))
+                            entry["use_percent"] = float(str(entry["use%"]).rstrip("%"))
 
                     # Craft message and event
-                    mount_point = entry.get('mounted_on') or entry.get('mount_point') or entry.get('mounted') or ''
-                    filesystem = entry.get('filesystem', '')
+                    mount_point = entry.get("mounted_on") or entry.get("mount_point") or entry.get("mounted") or ""
+                    filesystem = entry.get("filesystem", "")
                     msg = f"Disk usage on {mount_point} ({filesystem})"
 
                     event = Event(
                         datetime=timestamp,
                         message=msg,
                         module=self.module_name,
-                        timestamp_desc='sysdiagnose creation time',
-                        data=entry
+                        timestamp_desc="sysdiagnose creation time",
+                        data=entry,
                     )
                     events.append(event.to_dict())
         except Exception:

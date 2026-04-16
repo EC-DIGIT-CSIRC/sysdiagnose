@@ -14,17 +14,18 @@ class IORegStructParser:
         pass
 
     def parse(self, file_path: str | PathLike[str] | TextIOBase, from_start: bool = False) -> dict:
-        """ This function is the main entry point of the class, it takes a file path or a
-            file object and returns a json representation of the data.
-            if from_start is true, the file object will be read from the start,
-            otherwise it will be read from the current position.
+        """
+        This function is the main entry point of the class, it takes a file path or a
+        file object and returns a json representation of the data.
+        if from_start is true, the file object will be read from the start,
+        otherwise it will be read from the current position.
 
-            Arguments:
-                file_path : str | PathLike[str] | TextIOBase
-                from_start : bool
+        Arguments:
+            file_path : str | PathLike[str] | TextIOBase
+            from_start : bool
 
-            Returns:
-                dict : json representation of the data
+        Returns:
+            dict : json representation of the data
 
         """
         data_tree = {}
@@ -35,7 +36,7 @@ class IORegStructParser:
             self.open_file = file_path
             self.recursive_loop(data_tree)
         else:
-            with open(file_path, errors='backslashreplace') as f:
+            with open(file_path, errors="backslashreplace") as f:
                 self.open_file = f
                 self.recursive_loop(data_tree)
 
@@ -44,27 +45,27 @@ class IORegStructParser:
     def get_line(self):
         self.__rollback_addr = self.open_file.tell()
         self.__curr_line = self.open_file.readline()
-        self.__curr_line = self.__curr_line.replace('\n', '')
+        self.__curr_line = self.__curr_line.replace("\n", "")
 
     def recursive_call(self, data_tree: dict):
         self.open_file.seek(self.__rollback_addr)
         self.recursive_loop(data_tree)
 
     def check_start_node(self):
-        if '+-o' not in self.__curr_line:
-            logger.error('This is not normal. Recursive function called on random line.')
+        if "+-o" not in self.__curr_line:
+            logger.error("This is not normal. Recursive function called on random line.")
             raise Exception("File has an invalid structure, '+-o' tag was not found in first line")
 
     def check_key_uniqueness(self, dictio: dict, key: str):
         if dictio.get(key):
-            logger.warning('Key is already in dictionary, data may be lost\n\tKey : ' + key)
+            logger.warning("Key is already in dictionary, data may be lost\n\tKey : " + key)
 
     def fetch_node_data(self, data_tree: dict) -> bool:
         node_data = []  # array of lines, to be transformed in json
         res = True
 
-        while '+-o' not in self.__curr_line:
-            if not self.__curr_line:   # end of file
+        while "+-o" not in self.__curr_line:
+            if not self.__curr_line:  # end of file
                 res = False
                 break
 
@@ -84,7 +85,7 @@ class IORegStructParser:
                 data_dict[key] = constructed
 
     def dict_update(self, main_dict: dict, data_dict: dict):
-        """ Redefining the dict.update function to handle key collisions """
+        """Redefining the dict.update function to handle key collisions"""
 
         for key, value in data_dict.items():
             if main_dict.get(key):
@@ -102,11 +103,11 @@ class IORegStructParser:
 
         whole_title = self.__curr_line.split("+-o", 1)[1].strip()
 
-        if "<class" not in whole_title or whole_title[-1] != '>':
+        if "<class" not in whole_title or whole_title[-1] != ">":
             logger.warning("Title doesnt respect the usual <class ... > format, to invesstigate")
 
-        name = whole_title.split('<class', 1)[0].strip()
-        data = '<class ' + "".join(whole_title.split('<class', 1)[1:]).strip()
+        name = whole_title.split("<class", 1)[0].strip()
+        data = "<class " + "".join(whole_title.split("<class", 1)[1:]).strip()
 
         return name, data
 
@@ -116,18 +117,18 @@ class IORegStructParser:
 
     def handle_anomalies(self, dictio: dict, data: str, key: str) -> bool:
         """
-            some values overflow on the few next lines
-            this condition assumes there is no '=' in the exceeding data
-            (which was the case up to what I saw)
+        some values overflow on the few next lines
+        this condition assumes there is no '=' in the exceeding data
+        (which was the case up to what I saw)
 
-            p.s. :  if you wonder why cond4 is necessary, it is only for
-                    the last leaf, which has no '|' symbols. without cond4,
-                    these lines would be seen as anomalies
+        p.s. :  if you wonder why cond4 is necessary, it is only for
+                the last leaf, which has no '|' symbols. without cond4,
+                these lines would be seen as anomalies
         """
-        cond1 = not re.search(r'^\s*\|+', data)
+        cond1 = not re.search(r"^\s*\|+", data)
         cond2 = len(data.strip()) > 0
-        cond3 = data.strip() not in ('{', '}')
-        cond4 = '=' not in data
+        cond3 = data.strip() not in ("{", "}")
+        cond4 = "=" not in data
 
         if cond1 and cond2 and cond3 and cond4:
             dictio[key] += data.strip()
@@ -142,17 +143,17 @@ class IORegStructParser:
             self.handle_anomalies(res, data, key)
 
             # remove spaces and pipes at start
-            clean_line = re.sub(r'^(\s|\|)*', '', data)
+            clean_line = re.sub(r"^(\s|\|)*", "", data)
 
-            if '=' not in clean_line:
+            if "=" not in clean_line:
                 continue
 
             # split at the first equal only
-            key, value = clean_line.split('=', 1)
+            key, value = clean_line.split("=", 1)
 
             # remove first and last " (in case the key has more quotes inside)
-            key = key.replace('"', '', 1)
-            key = key[::-1].replace('"', '', 1)[::-1]
+            key = key.replace('"', "", 1)
+            key = key[::-1].replace('"', "", 1)[::-1]
             key = key.strip()
 
             self.check_key_uniqueness(res, key)
@@ -161,8 +162,8 @@ class IORegStructParser:
         return res
 
     def iterate_children(self, depth: int, data_tree: dict):
-        while self.__curr_line and (self.__curr_line[depth] == '|' or self.__curr_line[depth: depth + 3] == '+-o'):
-            if self.__curr_line[depth: depth + 3] == '+-o':
+        while self.__curr_line and (self.__curr_line[depth] == "|" or self.__curr_line[depth : depth + 3] == "+-o"):
+            if self.__curr_line[depth : depth + 3] == "+-o":
                 name = self.parse_title()[0]
                 new_child = self.setup_new_child(data_tree, name)
                 self.recursive_call(new_child)
@@ -171,8 +172,8 @@ class IORegStructParser:
                 self.get_line()
 
     def setup_new_child(self, data_tree: dict, key: str) -> dict:
-        """ This function is dedicated to iterate_children, it handles the special cases
-            where a node name is already present for the same parent """
+        """This function is dedicated to iterate_children, it handles the special cases
+        where a node name is already present for the same parent"""
 
         if data_tree.get(key):
             if isinstance(data_tree[key], list):
@@ -202,11 +203,11 @@ class IORegStructParser:
 
         self.dict_update(data_tree, additional_data)
 
-        depth = self.__curr_line.index('o')  # to identify the other nodes that have the same parent
+        depth = self.__curr_line.index("o")  # to identify the other nodes that have the same parent
         self.get_line()
 
         # check if its a leaf
-        if self.__curr_line[depth] != '|':
+        if self.__curr_line[depth] != "|":
             is_leaf = True
 
         # Fetch the data of the node

@@ -4,6 +4,7 @@ For Python3
 Script to parse logdata_statistics_*.txt to ease parsing
 Author: roman@envoid.com
 """
+
 import glob
 import os
 import re
@@ -20,21 +21,20 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
     - The `time` field (converted to timestamp and human-readable datetime).
     - The `procs` section containing process paths.
     """
-    description = 'Parsing logdata.statistics.txt files'
-    format = 'jsonl'
+
+    description = "Parsing logdata.statistics.txt files"
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
         """
-       Retrieves all `logdata.statistics.*.txt` log files in the archive.
+        Retrieves all `logdata.statistics.*.txt` log files in the archive.
 
-       :return: A list of file paths matching the pattern.
-       """
-        log_files_globs = [
-            'system_logs.logarchive/Extra/logdata.statistics.*.txt'
-        ]
+        :return: A list of file paths matching the pattern.
+        """
+        log_files_globs = ["system_logs.logarchive/Extra/logdata.statistics.*.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -70,34 +70,34 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                 for l_line in f:
                     line = l_line.strip()
 
-                    if line.startswith('--- !logd statistics record'):
+                    if line.startswith("--- !logd statistics record"):
                         inside_statistics_record = True
                         record_tpl = {}
                         timestamp = None  # Reset timestamp for each record
                         continue
 
                     # Detect end of record
-                    if line.startswith('--- !'):
+                    if line.startswith("--- !"):
                         inside_statistics_record = False
                         continue
 
                     if inside_statistics_record:
                         # Extract timestamp (datetime) from 'time' field
-                        if line.startswith('time  :'):
-                            time_str = line.split(':', 1)[1].strip()
+                        if line.startswith("time  :"):
+                            time_str = line.split(":", 1)[1].strip()
                             timestamp = self.parse_timestamp(time_str)
                             continue
 
-                        if line.startswith('file  :'):
-                            record_tpl['file'] = line.split(':', 1)[1].strip()
+                        if line.startswith("file  :"):
+                            record_tpl["file"] = line.split(":", 1)[1].strip()
 
-                        if line.startswith('type  :'):
-                            record_tpl['type'] = line.split(':', 1)[1].strip()
+                        if line.startswith("type  :"):
+                            record_tpl["type"] = line.split(":", 1)[1].strip()
                             continue
 
                         # Extract process data from 'procs' section
-                        if line.startswith('- ['):
-                            match = re.match(r'- \[\s*(\d+),\s*([\d.]+),\s*(.*)\s*\]', line)
+                        if line.startswith("- ["):
+                            match = re.match(r"- \[\s*(\d+),\s*([\d.]+),\s*(.*)\s*\]", line)
                             if match:
                                 process = match.group(3).strip()  # Process path
 
@@ -107,12 +107,12 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
                                         message=f"Logd {record_tpl['type']} while {process} is running",
                                         module=self.module_name,
                                         timestamp_desc=f"Logd {record_tpl['type']}",
-                                        data=record_tpl.copy()
+                                        data=record_tpl.copy(),
                                     )
-                                    event.data['process'] = process
+                                    event.data["process"] = process
                                     output.append(event.to_dict())
         except Exception as err:
-            logger.error(f'Error parsing file {path}: {err}')
+            logger.error(f"Error parsing file {path}: {err}")
 
         return output
 
@@ -126,7 +126,7 @@ class LogDataStatisticsTxtParser(BaseParserInterface):
         :return: A timezone-aware datetime object in UTC, or None if parsing fails.
         """
         try:
-            return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S%z').astimezone(UTC)
+            return datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S%z").astimezone(UTC)
         except ValueError as e:
-            logger.error(f'Failed to parse timestamp: {time_str} - {e}')
+            logger.error(f"Failed to parse timestamp: {time_str} - {e}")
             return None

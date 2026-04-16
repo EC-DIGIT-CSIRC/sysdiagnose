@@ -23,7 +23,7 @@ class IOFireWireParser(BaseParserInterface):
 
         for log_file in log_files:
             try:
-                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
+                logger.info(f"Processing file {log_file}, new entry added", extra={"log_file": log_file})
                 p = IORegStructParser()
                 data_tree = p.parse(log_file)
 

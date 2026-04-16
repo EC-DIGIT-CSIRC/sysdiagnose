@@ -3,6 +3,7 @@
 For Python3
 Author: Aaron Kaplan <aaron@lo-res.org>
 """
+
 import dateutil.parser
 import gpxpy
 import gpxpy.gpx
@@ -35,36 +36,36 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
         gpx = gpxpy.gpx.GPX()
 
         for network_name, network_data in json_data.items():
-            ssid = network_data.get('SSID', network_name)
+            ssid = network_data.get("SSID", network_name)
             # timestamps are always tricky
-            timestamp_str = network_data.get('AddedAt', '')
+            timestamp_str = network_data.get("AddedAt", "")
             if not timestamp_str:
-                timestamp_str = network_data.get('JoinedByUserAt', '')      # second best attempt
+                timestamp_str = network_data.get("JoinedByUserAt", "")  # second best attempt
             if not timestamp_str:
-                timestamp_str = network_data.get('UpdatedAt', '')           # third best attempt
+                timestamp_str = network_data.get("UpdatedAt", "")  # third best attempt
             # Convert ISO 8601 format to datetime
-            add_reason = network_data.get("AddReason", '')
+            add_reason = network_data.get("AddReason", "")
 
             try:
                 timestamp = dateutil.parser.parse(timestamp_str)
             except Exception:
                 logger.exception(f"Error converting timestamp. Timestamp was: {timestamp_str!s}. Assuming Jan 1st 1970.")
-                timestamp = dateutil.parser.parse('1970-01-01')     # begin of epoch
+                timestamp = dateutil.parser.parse("1970-01-01")  # begin of epoch
 
-            bssid = network_data.get('__OSSpecific__', {}).get('BSSID', '')
-            channel = network_data.get('__OSSpecific__', {}).get('CHANNEL', '')
-            for bss in network_data.get('BSSList', []):
-                lat = bss.get('LocationLatitude', '')
-                lon = bss.get('LocationLongitude', '')
-                location_accuracy = bss.get('LocationAccuracy', '')
+            bssid = network_data.get("__OSSpecific__", {}).get("BSSID", "")
+            channel = network_data.get("__OSSpecific__", {}).get("CHANNEL", "")
+            for bss in network_data.get("BSSList", []):
+                lat = bss.get("LocationLatitude", "")
+                lon = bss.get("LocationLongitude", "")
+                location_accuracy = bss.get("LocationAccuracy", "")
 
-                description = f'''BSSID: {bssid}
+                description = f"""BSSID: {bssid}
     Channel: {channel}
     Timestamp: {timestamp_str}
     LocationAccuracy: {location_accuracy}
     Latitude: {lat}
     Longitude: {lon}
-    Reason for Adding: {add_reason}'''
+    Reason for Adding: {add_reason}"""
 
                 # Create new waypoint
                 waypoint = gpxpy.gpx.GPXWaypoint(latitude=lat, longitude=lon, time=timestamp)
@@ -75,5 +76,5 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
                 gpx.waypoints.append(waypoint)
 
             # Save gpx file
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(gpx.to_xml())

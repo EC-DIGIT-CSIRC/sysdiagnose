@@ -7,6 +7,7 @@ PID: encoded in Litlle Endian??
 
 Author: david@autopsit.org
 """
+
 import glob
 import os
 from datetime import UTC, datetime
@@ -17,16 +18,13 @@ from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 class AppInstallationParser(BaseParserInterface):
     description = "Parsing app installation logs"
-    format = 'jsonl'
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/appinstallation/AppUpdates.sqlitedb',
-            'logs/appinstallation/appstored.sqlitedb'
-        ]
+        log_files_globs = ["logs/appinstallation/AppUpdates.sqlitedb", "logs/appinstallation/appstored.sqlitedb"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -40,22 +38,18 @@ class AppInstallationParser(BaseParserInterface):
                 db_json = misc.json_serializable(sqlite2json.sqlite2struct(filename))
                 skipped = set()
                 for key, items in db_json.items():
-                    if 'sqlite_sequence' in key:
+                    if "sqlite_sequence" in key:
                         continue
                     for item in items:
-                        if 'timestamp' not in item:
+                        if "timestamp" not in item:
                             skipped.add(key)
                             continue
 
                         try:
-                            timestamp = datetime.fromtimestamp(item['timestamp'], tz=UTC)
-                            item['db_table'] = key
+                            timestamp = datetime.fromtimestamp(item["timestamp"], tz=UTC)
+                            item["db_table"] = key
                             event = Event(
-                                datetime=timestamp,
-                                message='',
-                                module=self.module_name,
-                                timestamp_desc=key,
-                                data=item
+                                datetime=timestamp, message="", module=self.module_name, timestamp_desc=key, data=item
                             )
                             result.append(event.to_dict())
                         except TypeError:

@@ -9,15 +9,13 @@ from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 class LockdowndParser(BaseParserInterface):
     description = "Parsing lockdownd logs file"
-    format = 'jsonl'
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/MobileLockdown/lockdownd.log'
-        ]
+        log_files_globs = ["logs/MobileLockdown/lockdownd.log"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -27,7 +25,9 @@ class LockdowndParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             with open(log_file) as f:
-                result = LockdowndParser.extract_from_list(f.readlines(), tzinfo=self.sysdiagnose_creation_datetime.tzinfo, module=self.module_name)
+                result = LockdowndParser.extract_from_list(
+                    f.readlines(), tzinfo=self.sysdiagnose_creation_datetime.tzinfo, module=self.module_name
+                )
                 return result
         return []
 
@@ -40,7 +40,7 @@ class LockdowndParser(BaseParserInterface):
             current_line = lines[i]
             while True:
                 try:
-                    match = re.match(r'(^.{24}) pid=(\d+) ', lines[i + 1])
+                    match = re.match(r"(^.{24}) pid=(\d+) ", lines[i + 1])
                     if match:
                         # next line is a new entry, so proces current line
                         break
@@ -53,8 +53,8 @@ class LockdowndParser(BaseParserInterface):
                     break
 
             # process rebuild current_line
-            match = re.match(r'(^.{24}) pid=(\d+) ([^:]+): (.*)$', current_line, re.DOTALL)
-            timestamp = datetime.strptime(match.group(1), '%m/%d/%y %H:%M:%S.%f')
+            match = re.match(r"(^.{24}) pid=(\d+) ([^:]+): (.*)$", current_line, re.DOTALL)
+            timestamp = datetime.strptime(match.group(1), "%m/%d/%y %H:%M:%S.%f")
             timestamp = timestamp.replace(tzinfo=tzinfo)
 
             # LATER parse the json blob that can sometimes be in the message
@@ -62,11 +62,8 @@ class LockdowndParser(BaseParserInterface):
                 datetime=timestamp,
                 message=match.group(4).strip(),
                 module=module,
-                timestamp_desc=f'lockdownd {match.group(3)}',
-                data={
-                    'pid': int(match.group(2)),
-                    'event_type': match.group(3)
-                }
+                timestamp_desc=f"lockdownd {match.group(3)}",
+                data={"pid": int(match.group(2)), "event_type": match.group(3)},
             )
             result.append(event.to_dict())
 

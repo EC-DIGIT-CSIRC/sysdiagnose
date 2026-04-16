@@ -4,6 +4,7 @@ For Python3
 Script to parse logdata_statistics_*.txt to ease parsing
 Author: roman@envoid.com
 """
+
 import glob
 import json
 import os
@@ -20,21 +21,20 @@ class LogDataStatisticsParser(BaseParserInterface):
     - The `unixTime` field (converted to timestamp and human-readable datetime).
     - The `processList` containing process paths.
     """
-    description = 'Parsing logdata.statistics.jsonl files'
-    format = 'jsonl'
+
+    description = "Parsing logdata.statistics.jsonl files"
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
         """
-       Retrieves all `logdata.statistics.*.jsonl` log files in the archive.
+        Retrieves all `logdata.statistics.*.jsonl` log files in the archive.
 
-       :return: A list of file paths matching the pattern.
-       """
-        log_files_globs = [
-            'system_logs.logarchive/Extra/logdata.statistics.*.jsonl'
-        ]
+        :return: A list of file paths matching the pattern.
+        """
+        log_files_globs = ["system_logs.logarchive/Extra/logdata.statistics.*.jsonl"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -71,29 +71,26 @@ class LogDataStatisticsParser(BaseParserInterface):
                     try:
                         record = json.loads(line)
                     except json.JSONDecodeError as e:
-                        logger.error(f'Error parsing JSON in file {path}: {e}')
+                        logger.error(f"Error parsing JSON in file {path}: {e}")
                         continue
 
                     try:
-                        timestamp = datetime.fromtimestamp(record.get('unixTime'), tz=UTC)
+                        timestamp = datetime.fromtimestamp(record.get("unixTime"), tz=UTC)
                     except Exception:
-                        logger.warning(f'No unixTime found in record in file {path}')
+                        logger.warning(f"No unixTime found in record in file {path}")
                         continue
 
                     # Iterate over each process in processList and create an output record
-                    for proc in record.get('processList', []):
+                    for proc in record.get("processList", []):
                         event = Event(
                             datetime=timestamp,
                             message=f"Logd {record['type']} while {proc['process']} is running",
                             module=self.module_name,
                             timestamp_desc=f"Logd {record['type']}",
-                            data={
-                                'process': proc['process'],
-                                'file': record['file']
-                            }
+                            data={"process": proc["process"], "file": record["file"]},
                         )
                         output.append(event.to_dict())
         except Exception as err:
-            logger.error(f'Error parsing file {path}: {err}')
+            logger.error(f"Error parsing file {path}: {err}")
 
         return output

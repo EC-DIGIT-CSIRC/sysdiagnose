@@ -43,13 +43,13 @@ def get_version(filename="VERSION.txt"):
 
 def load_plist_file_as_json(fname: str) -> dict:
     if os.path.getsize(fname) == 0:
-        return {'error': ['Empty file']}
+        return {"error": ["Empty file"]}
     try:
-        with open(fname, 'rb') as f:
+        with open(fname, "rb") as f:
             plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True, format=dict)
             return json_serializable(plist)
     except Exception:
-        return {'error': ['Invalid plist file']}
+        return {"error": ["Invalid plist file"]}
 
 
 def load_plist_string_as_json(plist_string: str) -> dict:
@@ -67,7 +67,7 @@ _cant_serialize = object()
 
 
 @singledispatch
-def json_serializable(_object, _skip_underscore=False):
+def json_serializable(object, skip_underscore=False):
     """Filter a Python object to only include serializable object types
 
     In dictionaries, keys are converted to strings; if skip_underscore is true
@@ -81,10 +81,9 @@ def json_serializable(_object, _skip_underscore=False):
 
 @json_serializable.register(dict)
 def _handle_dict(d, skip_underscore=False):
-    converted = ((str(k), json_serializable(v, skip_underscore))
-                 for k, v in d.items())
+    converted = ((str(k), json_serializable(v, skip_underscore)) for k, v in d.items())
     if skip_underscore:
-        converted = ((k, v) for k, v in converted if k[:1] != '_')
+        converted = ((k, v) for k, v in converted if k[:1] != "_")
     return {k: v for k, v in converted if v is not _cant_serialize}
 
 
@@ -100,21 +99,21 @@ def _handle_sequence(seq, skip_underscore=False):
 @json_serializable.register(str)
 @json_serializable.register(bool)  # redudant, supported as int subclass
 @json_serializable.register(type(None))
-def _handle_default_scalar_types(value, _skip_underscore=False):
+def _handle_default_scalar_types(value, skip_underscore=False):
     return value
 
 
 @json_serializable.register(bytes)
-def _handle_bytes(value, _skip_underscore=False):
+def _handle_bytes(value, skip_underscore=False):
     try:
-        return value.decode(errors='strict')
+        return value.decode(errors="strict")
     except Exception:
-        return base64.b64encode(value).decode(errors='ignore')
+        return base64.b64encode(value).decode(errors="ignore")
 
 
 @json_serializable.register(datetime)
-def _handle_datetime(value, _skip_underscore=False):
-    return value.isoformat(timespec='microseconds')
+def _handle_datetime(value, skip_underscore=False):
+    return value.isoformat(timespec="microseconds")
 
 
 def find_datetime(d):
@@ -126,7 +125,7 @@ def find_datetime(d):
                 if isinstance(item, dict):
                     find_datetime(item)
         elif isinstance(v, datetime.datetime):
-            d[k] = v.isoformat(timespec='microseconds')
+            d[k] = v.isoformat(timespec="microseconds")
     return d
 
 
@@ -141,13 +140,13 @@ def find_bytes(d):
         elif isinstance(v, bytes):
             # not sure about that but it fixes the issue
             # encoding is not always utf-8
-            d[k] = binascii.hexlify(v).decode('utf-8')
+            d[k] = binascii.hexlify(v).decode("utf-8")
     return d
 
 
 def snake_case(s):
     # lowercase and replace non a-z characters as _
-    return re.sub(r'[^a-zA-Z0-9%]', '_', s.lower())
+    return re.sub(r"[^a-zA-Z0-9%]", "_", s.lower())
 
 
 # https://www.freecodecamp.org/news/how-to-flatten-a-dictionary-in-python-in-4-different-ways/
@@ -160,5 +159,5 @@ def _flatten_dict_gen(d, parent_key, sep):
             yield new_key, v
 
 
-def flatten_dict(d: MutableMapping, parent_key: str = '', sep: str = '.'):
+def flatten_dict(d: MutableMapping, parent_key: str = "", sep: str = "."):
     return dict(_flatten_dict_gen(d, parent_key, sep))

@@ -4,6 +4,7 @@ For Python3
 Script to extract the values from logs/Networking/com.apple.networkextension.plist
 Author: Emilien Le Jamtel
 """
+
 import glob
 import os
 
@@ -18,9 +19,7 @@ class NetworkExtensionParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/Networking/com.apple.networkextension.plist'
-        ]
+        log_files_globs = ["logs/Networking/com.apple.networkextension.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -30,11 +29,11 @@ class NetworkExtensionParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             return NetworkExtensionParser.parse_file(log_file)
-        return {'error': ['No com.apple.networkextension.plist file present']}
+        return {"error": ["No com.apple.networkextension.plist file present"]}
 
     @staticmethod
     def parse_file(path: str) -> list | dict:
         try:
             return misc.load_plist_file_as_json(path)
         except IndexError:
-            return {'error': 'No com.apple.networkextension.plist file present'}
+            return {"error": "No com.apple.networkextension.plist file present"}

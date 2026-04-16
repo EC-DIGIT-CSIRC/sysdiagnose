@@ -6,6 +6,7 @@ Author: cheeky4n6monkey@gmail.com
 
 Change log: David DURVAUX - add function are more granular approach
 """
+
 import glob
 import os
 
@@ -15,15 +16,13 @@ from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 
 class SystemVersionParser(BaseParserInterface):
     description = "Parsing SystemVersion plist file"
-    format = 'jsonl'
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/SystemVersion/SystemVersion.plist'
-        ]
+        log_files_globs = ["logs/SystemVersion/SystemVersion.plist"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -38,12 +37,12 @@ class SystemVersionParser(BaseParserInterface):
                 datetime=timestamp,
                 message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
                 module=self.module_name,
-                timestamp_desc='sys at sysdiagnose creation',
-                data=entry
+                timestamp_desc="sys at sysdiagnose creation",
+                data=entry,
             )
             return [event.to_dict()]
         except IndexError:
-            logger.warning('No SystemVersion.plist file present')
+            logger.warning("No SystemVersion.plist file present")
             return []
 
     @staticmethod

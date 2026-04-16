@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestAnalysersPList(SysdiagnoseTestCase):
     def test_analyse_list(self):
         for case_id, _case in self.sd.cases().items():
-            print(f"Running PsEverywhereAnalyser for {case_id}")
+            print(f"Running PListAnalyser for {case_id}")
             # run the analyser
             a = PListAnalyzer(self.sd.config, case_id=case_id)
             a.save_result(force=True)

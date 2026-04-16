@@ -4,6 +4,7 @@ For Python3
 Script to parse ps.txt to ease parsing
 Author: david@autopsit.org
 """
+
 import glob
 import os
 import re
@@ -14,15 +15,13 @@ from sysdiagnose.utils.misc import snake_case
 
 class PsThreadParser(BaseParserInterface):
     description = "Parsing ps_thread.txt file"
-    format = 'jsonl'
+    format = "jsonl"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'ps_thread.txt'
-        ]
+        log_files_globs = ["ps_thread.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -41,7 +40,7 @@ class PsThreadParser(BaseParserInterface):
                 header_length = len(header)
                 event = None
                 for line in f:
-                    if '??' in line:
+                    if "??" in line:
                         # append previous entry
                         if event:
                             event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
@@ -50,12 +49,10 @@ class PsThreadParser(BaseParserInterface):
                         patterns = line.strip().split(None, header_length - 1)
                         event = Event(
                             datetime=timestamp,
-                            message='',
+                            message="",
                             module=self.module_name,
-                            timestamp_desc='running process',
-                            data={
-                                'timestamp_info': 'sysdiagnose creation time',
-                                'threads': 1}
+                            timestamp_desc="running process",
+                            data={"timestamp_info": "sysdiagnose creation time", "threads": 1},
                         )
                         # merge last entries together, as last entry may contain spaces
                         for col in range(header_length):
@@ -70,12 +67,12 @@ class PsThreadParser(BaseParserInterface):
                                 except ValueError:
                                     event.data[col_name] = patterns[col]
                     else:
-                        event.data['threads'] += 1
+                        event.data["threads"] += 1
                 # append last entry
                 if event:
                     event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
                     result.append(event.to_dict())
                 return result
         except IndexError:
-            logger.warning('No ps_thread.txt file present')
+            logger.warning("No ps_thread.txt file present")
             return []
