@@ -3,9 +3,18 @@
 import glob
 import json
 import os
+from datetime import datetime, UTC
 
 from sysdiagnose.utils import misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import (
+    BaseParserInterface,
+    ExecutionStatus,
+    ResultSummary,
+    ResultSummaryFactory,
+    ResultSummaryLogHandler,
+    SysdiagnoseConfig,
+    logger,
+)
 
 
 class PlistParser(BaseParserInterface):
@@ -62,3 +71,34 @@ class PlistParser(BaseParserInterface):
                 f.write(json.dumps(json_data, ensure_ascii=False))
 
         self.save_result_summary()
+
+    def execute_with_result_summary(self) -> list | dict | str | None:
+        log_handler = ResultSummaryLogHandler()
+        start_time = datetime.now(UTC)
+        logger.addHandler(log_handler)
+        try:
+            result = self.execute()
+        except Exception:
+            duration = (datetime.now(UTC) - start_time).total_seconds()
+            self._result_summary = ResultSummary(
+                status=ExecutionStatus.ERROR,
+                start_time=start_time.isoformat(timespec="microseconds"),
+                duration=duration,
+                num_errors=max(1, log_handler.num_errors),
+                num_warnings=log_handler.num_warnings,
+                num_events=0,
+            )
+            raise
+        finally:
+            logger.removeHandler(log_handler)
+
+        summary = ResultSummaryFactory.from_result(result)
+        summary.start_time = start_time.isoformat(timespec="microseconds")
+        summary.duration = (datetime.now(UTC) - start_time).total_seconds()
+        summary.num_errors += log_handler.num_errors
+        summary.num_warnings += log_handler.num_warnings
+        # In this case, we are interested in the number of files parsed.
+        summary.num_events = len(result) if result else 0
+        summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
+        self._result_summary = summary
+        return result
