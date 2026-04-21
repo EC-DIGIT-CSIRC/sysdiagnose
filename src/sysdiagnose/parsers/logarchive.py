@@ -98,7 +98,7 @@ class LogarchiveParser(BaseParserInterface):
 
     def get_result(self, force: bool = False):
         if force:
-            self.save_result(force=True)
+            self.save_result(force)
 
         if not self._result:
             if not self.output_exists():
@@ -156,6 +156,7 @@ class LogarchiveParser(BaseParserInterface):
         summary.num_warnings += log_handler.num_warnings
         summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
         self._result_summary = summary
+        # we don't keep the result in memory, as it can be very large, so we set it to None to avoid confusion
         self._result = None
 
     @staticmethod
