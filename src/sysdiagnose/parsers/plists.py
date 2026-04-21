@@ -3,7 +3,7 @@
 import glob
 import json
 import os
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import (
@@ -43,8 +43,28 @@ class PlistParser(BaseParserInterface):
             result[end_of_path] = json_data
         return result
 
-    # LATER output_exists() now always returns False. This is because the output is saved in multiple files.
-    # we may want to change this behavior in the future, but that requires overwriting output_exists() and get_result() here
+    def output_exists(self) -> bool:
+        if not os.path.isdir(self.output_folder):
+            return False
+
+        return any(
+            filename.endswith(".json") and os.path.getsize(os.path.join(self.output_folder, filename)) > 0
+            for filename in os.listdir(self.output_folder)
+        )
+
+    def get_result(self, force: bool = False) -> dict:
+        if force:
+            self.save_result(force)
+            return self._result
+
+        if self._result is None:
+            if self.output_exists():
+                self._result = self._load_cached_result()
+                self._result_summary = self.load_result_summary()
+            else:
+                self.save_result()
+
+        return self._result
 
     @staticmethod
     def parse_file(file_path: str) -> dict:
@@ -60,10 +80,14 @@ class PlistParser(BaseParserInterface):
         This function overrides the default save_result function to save each file in a different json file
         """
         os.makedirs(self.output_folder, exist_ok=True)
-        if force or self._result is None:
+        if force or self._result is None or not self.output_exists():
             self._result = self.execute_with_result_summary()
         elif self._result_summary is None:
             self._result_summary = self.load_result_summary()
+
+        for filename in os.listdir(self.output_folder):
+            if filename.endswith(".json"):
+                os.remove(os.path.join(self.output_folder, filename))
 
         for end_of_path, json_data in self._result.items():
             output_filename = end_of_path.replace(os.path.sep, "_") + ".json"  # replace / with _ in the path
@@ -101,4 +125,18 @@ class PlistParser(BaseParserInterface):
         summary.num_events = len(result) if result else 0
         summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
         self._result_summary = summary
+        return result
+
+    def _load_cached_result(self) -> dict:
+        result = {}
+        for logfile in self.get_log_files():
+            end_of_path = logfile[len(self.case_data_subfolder) :].lstrip(os.path.sep)
+            output_filename = end_of_path.replace(os.path.sep, "_") + ".json"
+            output_path = os.path.join(self.output_folder, output_filename)
+            if not os.path.exists(output_path):
+                continue
+
+            with open(output_path) as f:
+                result[end_of_path] = json.load(f)
+
         return result

@@ -3,7 +3,7 @@
 # For Python3
 # Function to handle different types of times
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 
 def macepoch2time(macepoch):
