@@ -1,21 +1,22 @@
 import argparse
 import json
+
 from jinja2 import Template
 
 
 def load_json(file_path):
     """Load JSON data from a file."""
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         return json.load(file)
 
 
 def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict, dict, dict]:
     """
-        Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
+    Compare the properties section of the file_stats JSON files and return added, removed, and modified fields.
 
-        :param obj1: First JSON object (dictionary).
-        :param obj2: Second JSON object (dictionary).
-        :return: A dictionary with added, removed, and modified fields.
+    :param obj1: First JSON object (dictionary).
+    :param obj2: Second JSON object (dictionary).
+    :return: A dictionary with added, removed, and modified fields.
     """
     # Identify added and removed keys
     added = {key: obj2[key] for key in obj2 if key not in obj1}
@@ -31,16 +32,17 @@ def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict,
     return added, removed, modified
 
 
-def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
-                                       exclusions: list[str] = None) -> tuple[list, list, list]:
+def compare_file_stats_folders_details(
+    arr1: list[dict], arr2: list[dict], exclusions: list[str] | None = None
+) -> tuple[list, list, list]:
     """
-        Efficiently compare two arrays of dictionaries using a unique key, with exclusions.
+    Efficiently compare two arrays of dictionaries using a unique key, with exclusions.
 
-        :param arr1: First array of dictionaries.
-        :param arr2: Second array of dictionaries.
-        :param unique_key: The key used to uniquely identify each dictionary.
-        :param exclusions: A list of folder name substrings to exclude from the comparison.
-        :return: Added, removed, and modified items.
+    :param arr1: First array of dictionaries.
+    :param arr2: Second array of dictionaries.
+    :param unique_key: The key used to uniquely identify each dictionary.
+    :param exclusions: A list of folder name substrings to exclude from the comparison.
+    :return: Added, removed, and modified items.
     """
     unique_key = "folder_name"
     exclusions = exclusions or []  # Default to an empty list if no exclusions are provided
@@ -85,18 +87,26 @@ def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict],
     return added, removed, modified
 
 
-def generate_html_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
-                         added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
+def generate_html_report(
+    added_properties: dict,
+    removed_properties: dict,
+    modified_properties: dict,
+    added: list,
+    removed: list,
+    modified: list,
+    exclusions: list,
+    output_file: str,
+) -> None:
     """
-        Generate an HTML report using Jinja2.
-        :param added_properties: Added properties.
-        :param removed_properties: Removed properties.
-        :param modified_properties: Modified properties.
-        :param added: Added folders.
-        :param removed: Removed folders.
-        :param modified: Modified folders.
-        :param exclusions: List of excluded folder substrings.
-        :param output_file: Output HTML file path.
+    Generate an HTML report using Jinja2.
+    :param added_properties: Added properties.
+    :param removed_properties: Removed properties.
+    :param modified_properties: Modified properties.
+    :param added: Added folders.
+    :param removed: Removed folders.
+    :param modified: Modified folders.
+    :param exclusions: List of excluded folder substrings.
+    :param output_file: Output HTML file path.
     """
 
     html_template = """
@@ -384,25 +394,33 @@ def generate_html_report(added_properties: dict, removed_properties: dict, modif
         added=added,
         removed=removed,
         modified=modified,
-        exclusions=exclusions
+        exclusions=exclusions,
     )
 
-    with open(output_file, 'w') as file:
+    with open(output_file, "w") as file:
         file.write(rendered_html)
 
 
-def generate_markdown_report(added_properties: dict, removed_properties: dict, modified_properties: dict,
-                             added: list, removed: list, modified: list, exclusions: list, output_file: str) -> None:
+def generate_markdown_report(
+    added_properties: dict,
+    removed_properties: dict,
+    modified_properties: dict,
+    added: list,
+    removed: list,
+    modified: list,
+    exclusions: list,
+    output_file: str,
+) -> None:
     """
-        Generate a Markdown report.
-        :param added_properties: Added properties.
-        :param removed_properties: Removed properties.
-        :param modified_properties: Modified properties.
-        :param added: Added folders.
-        :param removed: Removed folders.
-        :param modified: Modified folders.
-        :param exclusions: List of excluded folder substrings.
-        :param output_file: Output Markdown file path.
+    Generate a Markdown report.
+    :param added_properties: Added properties.
+    :param removed_properties: Removed properties.
+    :param modified_properties: Modified properties.
+    :param added: Added folders.
+    :param removed: Removed folders.
+    :param modified: Modified folders.
+    :param exclusions: List of excluded folder substrings.
+    :param output_file: Output Markdown file path.
     """
     markdown_content = []
 
@@ -477,34 +495,39 @@ def generate_markdown_report(added_properties: dict, removed_properties: dict, m
         markdown_content.append("| Folder | Old Files | New Files |\n|--------|-----------|-----------|")
         modified = sorted(modified, key=lambda x: x["folder_name"].lower())
         for folder in modified:
-            markdown_content.append(f"| {folder['folder_name']} | {folder['file_count_diff'][0]} | {folder['file_count_diff'][1]} |")
+            markdown_content.append(
+                f"| {folder['folder_name']} | {folder['file_count_diff'][0]} | {folder['file_count_diff'][1]} |"
+            )
 
             # Detailed Section for Modified Files
             if folder["files_diff"]["modified"]:
                 markdown_modified_files.append(f"\n#### Folder: {folder['folder_name']}\n")
                 markdown_modified_files.append("| File | Old Type | New Type |\n|------|----------|----------|")
                 for file_pair in folder["files_diff"]["modified"]:
-                    markdown_modified_files.append(f"| {file_pair[0]['filename']} | {file_pair[0]['file_type']} | {file_pair[1]['file_type']} |")
+                    markdown_modified_files.append(
+                        f"| {file_pair[0]['filename']} | {file_pair[0]['file_type']} | {file_pair[1]['file_type']} |"
+                    )
 
         markdown_content.extend(markdown_modified_files)
     else:
         markdown_content.append("No modified folders.\n")
 
     # Write to file
-    with open(output_file, 'w') as file:
+    with open(output_file, "w") as file:
         file.write("\n".join(markdown_content))
 
 
-def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
-                                  output_file: str, format: str = 'html') -> None:
+def compare_file_stats_json_files(
+    file1: str, file2: str, exclusions: list[str], output_file: str, format: str = "html"
+) -> None:
     """
-        Compare two file_stats JSON files and generate a report.
+    Compare two file_stats JSON files and generate a report.
 
-        :param file1: Path to the first JSON file.
-        :param file2: Path to the second JSON file.
-        :param exclusions: List of folder name substrings to exclude from the comparison.
-        :param output_file: Path to the output file.
-        :param format: Output format (default: html).
+    :param file1: Path to the first JSON file.
+    :param file2: Path to the second JSON file.
+    :param exclusions: List of folder name substrings to exclude from the comparison.
+    :param output_file: Path to the output file.
+    :param format: Output format (default: html).
     """
     json1 = load_json(file1)
     json2 = load_json(file2)
@@ -515,34 +538,36 @@ def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str],
     # Compare nested arrays
     added, removed, modified = compare_file_stats_folders_details(json1[1], json2[1], exclusions=exclusions)
 
-    if format.lower() == 'html':
+    if format.lower() == "html":
         # Generate HTML report
         generate_html_report(
-            added_properties, removed_properties, modified_properties,
-            added, removed, modified, exclusions, output_file
+            added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file
         )
-    elif format.lower() == 'markdown':
+    elif format.lower() == "markdown":
         # Generate Markdown report
         generate_markdown_report(
-            added_properties, removed_properties, modified_properties,
-            added, removed, modified, exclusions, output_file
+            added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file
         )
     else:
         print("Unsupported format.")
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(
-        prog='file_stats_diff',
-        description='file_stats JSON files comparer'
-    )
+    parser = argparse.ArgumentParser(prog="file_stats_diff", description="file_stats JSON files comparer")
     # available for all
-    parser.add_argument('file1', help='File path to the first JSON file')
-    parser.add_argument('file2', help='File path to the second JSON file')
-    parser.add_argument('-o', '--output', required=True, help='Output file path')
-    parser.add_argument('-fmt', '--format', required=False, default='html', choices=['html', 'markdown'], help='Output format (default: html)')
-    parser.add_argument('-x', '--exclude', required=False, default="system_logs.logarchive", help='Exclude specific folders, comma-separated list of substrings (default: system_logs.logarchive)')
+    parser.add_argument("file1", help="File path to the first JSON file")
+    parser.add_argument("file2", help="File path to the second JSON file")
+    parser.add_argument("-o", "--output", required=True, help="Output file path")
+    parser.add_argument(
+        "-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)"
+    )
+    parser.add_argument(
+        "-x",
+        "--exclude",
+        required=False,
+        default="system_logs.logarchive",
+        help="Exclude specific folders, comma-separated list of substrings (default: system_logs.logarchive)",
+    )
 
     args = parser.parse_args()
 

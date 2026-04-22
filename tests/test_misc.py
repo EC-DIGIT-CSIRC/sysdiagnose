@@ -1,6 +1,7 @@
-from tests import SysdiagnoseTestCase
-import sysdiagnose.utils.misc as misc
 import unittest
+
+from sysdiagnose.utils import misc
+from tests import SysdiagnoseTestCase
 
 
 class TestMisc(SysdiagnoseTestCase):

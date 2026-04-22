@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.tabbasedhierarchy import parse_tab_based_hierarchal_file, parse_block
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hierarchal_file
 
 
 class RemotectlDumpstateParser(BaseParserInterface):
@@ -12,9 +13,7 @@ class RemotectlDumpstateParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'remotectl_dumpstate.txt'
-        ]
+        log_files_globs = ["remotectl_dumpstate.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
@@ -26,7 +25,7 @@ class RemotectlDumpstateParser(BaseParserInterface):
         try:
             return parse_tab_based_hierarchal_file(self.get_log_files()[0])
         except IndexError:
-            return {'error': 'No remotectl_dumpstate.txt file present'}
+            return {"error": "No remotectl_dumpstate.txt file present"}
 
     @staticmethod
     def parse_file(file_path: str) -> dict:

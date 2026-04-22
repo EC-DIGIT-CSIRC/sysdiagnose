@@ -1,6 +1,7 @@
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils import tabbasedhierarchy
 import unittest
+
+from sysdiagnose.utils import tabbasedhierarchy
+from tests import SysdiagnoseTestCase
 
 
 class TestTabbasedhierarchy(SysdiagnoseTestCase):

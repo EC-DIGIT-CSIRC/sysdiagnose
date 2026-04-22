@@ -1,29 +1,27 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to parse the swcutil_show.txt file
+Author: Emilien Le Jamtel
+"""
 
-# For Python3
-# Script to parse the swcutil_show.txt file
-# Author: Emilien Le Jamtel
-
-import json
 import glob
-import sysdiagnose.utils.misc as misc
+import json
 import os
+
+from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
 # FIXME convert to timeline
 class WifiNetworksParser(BaseParserInterface):
-
     description = "Parsing com.apple.wifi plist files"
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'WiFi/*.plist',
-            'WiFi/com.apple.wifi.recent-networks.json'
-        ]
+        log_files_globs = ["WiFi/*.plist", "WiFi/com.apple.wifi.recent-networks.json"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -37,9 +35,10 @@ class WifiNetworksParser(BaseParserInterface):
             result[end_of_path] = WifiNetworksParser.parse_file(logfile)
         return result
 
+    @staticmethod
     def parse_file(fname: str) -> dict | list:
-        if fname.endswith('.json'):
-            with open(fname, 'r') as f:
+        if fname.endswith(".json"):
+            with open(fname) as f:
                 return json.load(f)
-        if fname.endswith('.plist'):
+        if fname.endswith(".plist"):
             return misc.load_plist_file_as_json(fname)

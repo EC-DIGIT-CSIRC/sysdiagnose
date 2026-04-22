@@ -1,8 +1,9 @@
-from sysdiagnose.analysers.yarascan import YaraAnalyser
-from tests import SysdiagnoseTestCase
+import os
 import unittest
 from unittest.mock import patch
-import os
+
+from sysdiagnose.analysers.yarascan import YaraAnalyser
+from tests import SysdiagnoseTestCase
 
 
 class TestAnalysersYarascan(SysdiagnoseTestCase):

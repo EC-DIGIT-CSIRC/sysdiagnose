@@ -1,15 +1,16 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.sys import SystemVersionParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersSys(SysdiagnoseTestCase):
     productinfo_keys = ['ProductName', 'ProductBuildVersion', 'ProductVersion', 'BuildID', 'SystemImageID']
     productnames = ['iPhone OS', 'Watch OS', 'Apple TVOS']
 
-    def test_getProductInfo(self):
-        for case_id, case in self.sd.cases().items():
+    def test_get_product_info(self):
+        for case_id, _case in self.sd.cases().items():
             p = SystemVersionParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)

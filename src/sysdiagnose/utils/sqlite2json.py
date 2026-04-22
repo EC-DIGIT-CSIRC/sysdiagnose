@@ -1,14 +1,16 @@
 #! /usr/bin/env python
-#
-# For Python3
-# Script to parse sqlite database and export to JSON (generic)
-# Author: david@autopsit.org
-#
-# iOS13: 4 SQLite DB
-#   ./logs/itunesstored/downloads.28.sqlitedb
-#   ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
-#   ./logs/Accessibility/TCC.db
-#   ./logs/appinstallation/appstored.sqlitedb
+"""
+For Python3
+Script to parse sqlite database and export to JSON (generic)
+Author: david@autopsit.org
+
+iOS13: 4 SQLite DB
+  ./logs/itunesstored/downloads.28.sqlitedb
+  ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
+  ./logs/Accessibility/TCC.db
+  ./logs/appinstallation/appstored.sqlitedb
+"""
+
 import argparse
 import json
 import sqlite3
@@ -66,9 +68,7 @@ def table2struct(dbfd, tablename):
         line = {}
         ptr = 0
         for element in row:
-            if not isinstance(element, (str, int, float, bool)):
-                element = str(element)
-            line[column_names[ptr]] = element
+            line[column_names[ptr]] = element if isinstance(element, str | int | float | bool) else str(element)
             ptr = ptr + 1
         table.append(line)
     return table
@@ -88,10 +88,6 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 
 
 def main():
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...", file=sys.stderr)
-        sys.exit(-1)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", dest="inputfile", type=str, help="SQlite DB To Be Printed")
 

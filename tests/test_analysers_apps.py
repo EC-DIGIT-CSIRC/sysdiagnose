@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.apps import AppsAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestAnalysersApps(SysdiagnoseTestCase):

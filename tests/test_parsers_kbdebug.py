@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.kbdebug import KbdebugParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersSys(SysdiagnoseTestCase):
