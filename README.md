@@ -2,7 +2,24 @@
 
 ![sysdiagnose-512x512](docs/saf_logo.svg)
 
-The Sysdiagnose Analysis Framework (SAF) is a framework that can be used to convert the Apple sysdiagnose diagnostic archive data to a structured and machine readable format so it can be used for data and forensic analytics on iOS mobile
+The Sysdiagnose Analysis Framework (SAF) is a framework that can be used to convert the Apple sysdiagnose diagnostic archive data to a structured and machine readable format so it can be used for data and forensic analytics on iOS mobile.
+
+You may find this code on: 
+- https://github.com/ec-DIGIT-CSIRC/sysdiagnose
+- https://code.europa.eu/ec-digit-s2/mobilesecurity/sysdiagnose
+
+# Supported iOS versions
+
+Tested on:
+- python 3.11
+- iOS13 (to be confirmed)
+- iOS14 (to be confirmed)
+- iOS15
+- iOS16
+- iOS17
+- iOS18
+- iOS26
+  
 # Installation
 
 Note that you will need Python 3.11 or higher.
@@ -29,6 +46,10 @@ Create a virtual environment and install dependencies:
 On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser. See below for instructions how to do this.
 
 # Quickstart
+
+## Training material
+During the [hack.lu](https://hack.lu) conference a workshop training session was given.
+You may find the training materials here: https://tinyurl.com/hacklu2025ios
 
 ## Case management
 
@@ -210,22 +231,6 @@ Below you can find an example of traces within the log file.
 
 ```
 
-# Training material
-During the [hack.lu](https://hack.lu) conference a workshop training session was given.
-You may find the training materials here: https://tinyurl.com/hacklu2025ios
-
-
-# Supported iOS versions
-
-Tested on:
-- python 3.11
-- iOS13 (to be confirmed)
-- iOS14 (to be confirmed)
-- iOS15
-- iOS16
-- iOS17
-- iOS18
-- iOS26
 
 # Contributors
 
