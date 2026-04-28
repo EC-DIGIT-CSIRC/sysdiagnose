@@ -123,7 +123,6 @@ class ResultSummary:
             "status": self.status.value,
             "start_time": start_time,
             "duration": self.duration,
-            "duration": self.duration,
             "num_errors": self.num_errors,
             "num_warnings": self.num_warnings,
             "num_events": self.num_events,
