@@ -32,8 +32,8 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check src
+          ruff check .
 
       - name: Check formatting with ruff
         run: |
-          ruff format --check src
+          ruff format --check .
