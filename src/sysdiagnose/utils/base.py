@@ -109,16 +109,20 @@ class ResultSummary:
     """
 
     status: ExecutionStatus = ExecutionStatus.ERROR
-    start_time: str | None = None
+    start_time: datetime_datetime | None = None
     duration: float | None = None
     num_errors: int = 0
     num_warnings: int = 0
     num_events: int = 0
 
     def to_dict(self) -> dict:
+        start_time = None
+        if self.start_time is not None:
+            start_time = self.start_time.astimezone(UTC).isoformat(timespec="microseconds")
         return {
             "status": self.status.value,
-            "start_time": self.start_time,
+            "start_time": start_time,
+            "duration": self.duration,
             "duration": self.duration,
             "num_errors": self.num_errors,
             "num_warnings": self.num_warnings,
@@ -128,9 +132,12 @@ class ResultSummary:
     @classmethod
     def from_dict(cls, data: dict) -> "ResultSummary":
         status = data.get("status", ExecutionStatus.ERROR)
+        start_time = data.get("start_time")
+        if start_time is not None:
+            start_time = datetime_datetime.fromisoformat(start_time).astimezone(UTC)
         return cls(
             status=ExecutionStatus(status),
-            start_time=data.get("start_time"),
+            start_time=start_time,
             duration=data.get("duration"),
             num_errors=data.get("num_errors", 0),
             num_warnings=data.get("num_warnings", 0),
@@ -424,7 +431,7 @@ class BaseInterface(ABC):
             duration = (datetime_datetime.now(UTC) - start_time).total_seconds()
             self._result_summary = ResultSummary(
                 status=ExecutionStatus.ERROR,
-                start_time=start_time.isoformat(timespec="microseconds"),
+                start_time=start_time,
                 duration=duration,
                 num_errors=max(1, log_handler.num_errors),
                 num_warnings=log_handler.num_warnings,
@@ -439,7 +446,7 @@ class BaseInterface(ABC):
             if result is None and self.output_exists()
             else ResultSummaryFactory.from_result(result)
         )
-        summary.start_time = start_time.isoformat(timespec="microseconds")
+        summary.start_time = start_time
         summary.duration = (datetime_datetime.now(UTC) - start_time).total_seconds()
         summary.num_errors += log_handler.num_errors
         summary.num_warnings += log_handler.num_warnings

@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime
 
 from sysdiagnose.analysers.demo_analyser import DemoAnalyser
 from sysdiagnose.parsers.demo_parser import DemoParser
@@ -21,7 +22,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertEqual(summary.num_errors, 0)
         self.assertEqual(summary.num_warnings, 1)
         self.assertEqual(summary.num_events, 1)
-        self.assertIsNotNone(summary.start_time)
+        self.assertIsInstance(summary.start_time, datetime)
         self.assertIsNotNone(summary.duration)
         self.assertGreaterEqual(summary.duration, 0)
 
@@ -32,7 +33,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         cached_summary = cached_parser.get_result_summary()
         self.assertEqual(cached_summary.status, ExecutionStatus.WARNING)
         self.assertEqual(cached_summary.num_warnings, 1)
-        self.assertIsNotNone(cached_summary.start_time)
+        self.assertIsInstance(cached_summary.start_time, datetime)
         self.assertIsNotNone(cached_summary.duration)
 
     def test_demo_parser_summary_fallback_without_sidecar(self):
@@ -68,18 +69,18 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertEqual(summary.num_errors, 1)
         self.assertEqual(summary.num_warnings, 1)
         self.assertEqual(summary.num_events, 1)
-        self.assertIsNotNone(summary.start_time)
+        self.assertIsInstance(summary.start_time, datetime)
         self.assertIsNotNone(summary.duration)
 
         cached_analyser = DemoAnalyser(self.sd.config, case_id=case_id)
         result = cached_analyser.get_result()
-        self.assertEqual(result, {'foo': 'bar'})
+        self.assertEqual(result, {"foo": "bar"})
 
         cached_summary = cached_analyser.get_result_summary()
         self.assertEqual(cached_summary.status, ExecutionStatus.ERROR)
         self.assertEqual(cached_summary.num_errors, 1)
         self.assertEqual(cached_summary.num_warnings, 1)
-        self.assertIsNotNone(cached_summary.start_time)
+        self.assertIsInstance(cached_summary.start_time, datetime)
         self.assertIsNotNone(cached_summary.duration)
 
 

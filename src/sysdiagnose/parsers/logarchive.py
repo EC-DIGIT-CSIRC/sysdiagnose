@@ -139,7 +139,7 @@ class LogarchiveParser(BaseParserInterface):
             duration = (datetime.now(UTC) - start_time).total_seconds()
             self._result_summary = ResultSummary(
                 status=ExecutionStatus.ERROR,
-                start_time=start_time.isoformat(timespec="microseconds"),
+                start_time=start_time,
                 duration=duration,
                 num_errors=max(1, log_handler.num_errors),
                 num_warnings=log_handler.num_warnings,
@@ -150,7 +150,7 @@ class LogarchiveParser(BaseParserInterface):
             logger.removeHandler(log_handler)
 
         summary = ResultSummaryFactory.from_output(self.output_file, self.format)
-        summary.start_time = start_time.isoformat(timespec="microseconds")
+        summary.start_time = start_time
         summary.duration = (datetime.now(UTC) - start_time).total_seconds()
         summary.num_errors += log_handler.num_errors
         summary.num_warnings += log_handler.num_warnings
