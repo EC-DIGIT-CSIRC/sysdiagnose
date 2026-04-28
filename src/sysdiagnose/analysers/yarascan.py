@@ -6,7 +6,12 @@ import threading
 from datetime import datetime
 
 import yara
-from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.base import (
+    BaseAnalyserInterface,
+    Event,
+    SysdiagnoseConfig,
+    logger,
+)
 
 # These are the commonly used external variables that can be used in the YARA rules
 externals = {
