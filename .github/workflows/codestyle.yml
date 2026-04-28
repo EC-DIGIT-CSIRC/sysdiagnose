@@ -1,4 +1,4 @@
-name: Pycodestyle Lint
+name: Code Style Check
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  pycodestyle:
+  ruff:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,8 +28,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pylint pycodestyle
+          pip install ruff
 
-      - name: Analysing the code with pycodestyle
+      - name: Lint with ruff
         run: |
-          pycodestyle --exclude=venv --ignore=errors=E302,E221,E225,E251,E501,E266,E261,E302,W503 --max-line-length=128 $(git ls-files '*.py')
+          ruff check src
+
+      - name: Check formatting with ruff
+        run: |
+          ruff format --check src
