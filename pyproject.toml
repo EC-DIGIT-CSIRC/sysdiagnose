@@ -98,6 +98,9 @@ fixable = []
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
+[tool.ruff.lint.isort]
+known-third-party = ["yara"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["T201"]
 "src/sysdiagnose/*.py" = ["T201"]
