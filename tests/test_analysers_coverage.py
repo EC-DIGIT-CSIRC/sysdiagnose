@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.coverage import CoverageAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestAnalysersCoverage(SysdiagnoseTestCase):

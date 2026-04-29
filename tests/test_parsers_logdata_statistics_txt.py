@@ -1,7 +1,8 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.logdata_statistics_txt import LogDataStatisticsTxtParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersLogdataStatisticsTxt(SysdiagnoseTestCase):

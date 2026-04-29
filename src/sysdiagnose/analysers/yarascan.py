@@ -6,15 +6,16 @@ import threading
 from datetime import datetime
 
 import yara
+
 from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
 
 # These are the commonly used external variables that can be used in the YARA rules
 externals = {
-    'filename': '',
-    'filepath': '',
-    'extension': '',
-    'filetype': '',  # just a stub to allow some rules to load
-    'owner': '',     # just a stub to allow some rules to load
+    "filename": "",
+    "filepath": "",
+    "extension": "",
+    "filetype": "",  # just a stub to allow some rules to load
+    "owner": "",  # just a stub to allow some rules to load
 }
 
 
@@ -24,7 +25,7 @@ class YaraAnalyser(BaseAnalyserInterface):
 
     def __init__(self, config: SysdiagnoseConfig, case_id: str):
         super().__init__(__file__, config, case_id)
-        self.yara_rules_path = os.getenv('SYSDIAGNOSE_YARA_RULES_PATH', './yara')
+        self.yara_rules_path = os.getenv("SYSDIAGNOSE_YARA_RULES_PATH", "./yara")
 
     # Question: What is the impact of externals? (single threaded)
     # - timing without externals at all   : 1m30 - we discard a few (useful?) rules, so faster? ...
@@ -36,16 +37,13 @@ class YaraAnalyser(BaseAnalyserInterface):
 
     def execute(self):
         file_queue = self.get_target_files(
-            directories=[
-                self.case_parsed_data_folder,
-                self.case_data_folder
-            ],
+            directories=[self.case_parsed_data_folder, self.case_data_folder],
             ignore_files=[
-                self.output_file,         # don't match on ourselves
+                self.output_file,  # don't match on ourselves
             ],
             ignore_folders=[
-                glob.glob(os.path.join(self.case_data_subfolder, 'system_logs.logarchive')).pop(),  # irrelevant for YARA rules
-            ]
+                glob.glob(os.path.join(self.case_data_subfolder, "system_logs.logarchive")).pop(),  # irrelevant for YARA rules
+            ],
         )
 
         rule_filepaths = self.get_valid_yara_rule_files()
@@ -69,21 +67,21 @@ class YaraAnalyser(BaseAnalyserInterface):
             raise FileNotFoundError(f"YARA rules folder not found: {self.yara_rules_path}")
 
         rule_filepaths = {}
-        rule_files_to_test = glob.glob(os.path.join(self.yara_rules_path, '**', '*.yar'), recursive=True)
+        rule_files_to_test = glob.glob(os.path.join(self.yara_rules_path, "**", "*.yar"), recursive=True)
         for rule_file in rule_files_to_test:
             if not os.path.isfile(rule_file):
                 continue
-            logger.info(f"Loading YARA rule: {rule_file}", extra={'yara_rule_file': rule_file})
+            logger.info(f"Loading YARA rule: {rule_file}", extra={"yara_rule_file": rule_file})
             try:
                 yara.compile(filepath=rule_file, externals=externals)
                 # Valid rule, add it to the rule_filepaths
-                namespace = rule_file[len(self.yara_rules_path):].strip(os.path.sep)
+                namespace = rule_file[len(self.yara_rules_path) :].strip(os.path.sep)
                 rule_filepaths[namespace] = rule_file
             except yara.SyntaxError:
-                logger.exception(f"Error compiling rule {rule_file}", extra={'yara_rule_file': rule_file})
+                logger.exception(f"Error compiling rule {rule_file}", extra={"yara_rule_file": rule_file})
                 continue
             except yara.Error:
-                logger.exception(f"Error compiling rule {rule_file}", extra={'yara_rule_file': rule_file})
+                logger.exception(f"Error compiling rule {rule_file}", extra={"yara_rule_file": rule_file})
                 continue
 
         if rule_filepaths:
@@ -108,7 +106,7 @@ class YaraAnalyser(BaseAnalyserInterface):
                 for ignore_folder in ignore_folders:
                     if root.startswith(ignore_folder):
                         stop = True
-                        logger.warning(f"Skipping folder: {root}", extra={'yara_ignored_path': root})
+                        logger.warning(f"Skipping folder: {root}", extra={"yara_ignored_path": root})
                         continue
                 if stop:
                     continue
@@ -118,7 +116,7 @@ class YaraAnalyser(BaseAnalyserInterface):
                     for ignore_file in ignore_files:
                         if file_full_path.startswith(ignore_file):
                             stop = True
-                            logger.warning(f"Skipping file: {file_full_path}", extra={'yara_ignored_path': file_full_path})
+                            logger.warning(f"Skipping file: {file_full_path}", extra={"yara_ignored_path": file_full_path})
                             continue
                     if stop:
                         continue
@@ -126,8 +124,9 @@ class YaraAnalyser(BaseAnalyserInterface):
         return file_queue
 
     @staticmethod
-    def extract_line(file_path: str, instance_offset: int, instance_length: int,
-                     is_jsonl: bool, length: int = 10) -> tuple[str, str]:
+    def extract_line(
+        file_path: str, instance_offset: int, instance_length: int, is_jsonl: bool, length: int = 10
+    ) -> tuple[str, str]:
         """
         Extract an excerpt from a file at a given offset. In case of JSONL files, it extracts the full line.
 
@@ -138,25 +137,25 @@ class YaraAnalyser(BaseAnalyserInterface):
         :param length: The number of bytes to read before and after the match (default is 10)
         :return: A tuple with the whole line, in case it is a jsonl, if not empty, and a substring of the match
         """
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             f.seek(instance_offset)
             # Extrac the excerpt around the match
             min_length = max(length, instance_length)
             f.seek(max(0, instance_offset - min_length))
-            excerpt = f.read(min_length * 3).decode(errors='replace')
+            excerpt = f.read(min_length * 3).decode(errors="replace")
 
             # Attempt to read the full line if it is a JSONL file
-            line = ''
+            line = ""
             if is_jsonl:
                 f.seek(instance_offset)
                 # Move to the start of the line
                 while f.tell() > 0:
                     f.seek(-1, 1)
-                    if f.read(1) == b'\n':
+                    if f.read(1) == b"\n":
                         break
                     f.seek(-1, 1)
                 # Now read the line
-                line = f.readline().decode(errors='replace').strip()
+                line = f.readline().decode(errors="replace").strip()
 
             return line, excerpt
 
@@ -172,36 +171,40 @@ class YaraAnalyser(BaseAnalyserInterface):
         try:
             matches = rules.match(file_path)
 
-            logger.info(f"Scanned file {file_path} resulted in {len(matches)} matches",
-                        extra={'yara_target_file': file_path, 'yara_matches': len(matches)})
+            logger.info(
+                f"Scanned file {file_path} resulted in {len(matches)} matches",
+                extra={"yara_target_file": file_path, "yara_matches": len(matches)},
+            )
 
             # Timestamp for the match
             match_datetime = self.sysdiagnose_creation_datetime
-            match_datetime_desc = 'Sysdiagnose creation datetime'
+            match_datetime_desc = "Sysdiagnose creation datetime"
             # Check if the file belongs to parsed_data
             is_parsed_data = file_path.startswith(self.case_parsed_data_folder)
-            relative_path = file_path[len(self.config.get_case_root_folder(self.case_id)):].lstrip(os.path.sep)
+            relative_path = file_path[len(self.config.get_case_root_folder(self.case_id)) :].lstrip(os.path.sep)
             for match in matches:
                 match_details = []
                 for string_match in match.strings:
                     for instance in string_match.instances:
                         # Let's extract the line from the file
-                        is_parsed_data_jsonl = is_parsed_data and relative_path.endswith('.jsonl')
-                        line, excerpt = YaraAnalyser.extract_line(file_path, instance.offset, instance.matched_length,
-                                                                  is_parsed_data_jsonl)
+                        is_parsed_data_jsonl = is_parsed_data and relative_path.endswith(".jsonl")
+                        line, excerpt = YaraAnalyser.extract_line(
+                            file_path, instance.offset, instance.matched_length, is_parsed_data_jsonl
+                        )
 
                         # If the file is a parsed_data JSONL file, we can try to extract the datetime from the JSON
                         if is_parsed_data_jsonl:
                             try:
                                 e = json.loads(line)  # Validate JSON
-                                match_datetime = datetime.fromisoformat(e['datetime'])
-                                match_datetime_desc = \
-                                    f"Extracted datetime from JSON entry in {os.path.basename(relative_path)}"
+                                match_datetime = datetime.fromisoformat(e["datetime"])
+                                match_datetime_desc = f"Extracted datetime from JSON entry in {os.path.basename(relative_path)}"
 
                             except json.JSONDecodeError:
-                                logger.exception("Error while extracting the datetime. "
-                                                 f"Invalid JSON in {file_path} at offset {instance.offset}. Setting default datetime.",
-                                                 extra={'yara_target_file': file_path})
+                                logger.exception(
+                                    "Error while extracting the datetime. "
+                                    f"Invalid JSON in {file_path} at offset {instance.offset}. Setting default datetime.",
+                                    extra={"yara_target_file": file_path},
+                                )
 
                         # match details
                         match_details.append(
@@ -209,16 +212,17 @@ class YaraAnalyser(BaseAnalyserInterface):
                             f"XOR: '{string_match.is_xor()}', "
                             f"plaintext: '{instance.plaintext().decode(errors='replace')}', "
                             f"offset: '{instance.offset}', "
-                            f"excerpt: '{excerpt.strip()}'")
+                            f"excerpt: '{excerpt.strip()}'"
+                        )
 
                         # Prepare the data to be returned
                         data = {
-                            'target_file': relative_path,
-                            'yara_rule_file': match.namespace,
-                            'yara_rule': match.rule,
-                            'yara_rule_meta': match.meta,
-                            'yara_rule_tags': match.tags,
-                            'yara_rule_match_details': match_details
+                            "target_file": relative_path,
+                            "yara_rule_file": match.namespace,
+                            "yara_rule": match.rule,
+                            "yara_rule_meta": match.meta,
+                            "yara_rule_tags": match.tags,
+                            "yara_rule_match_details": match_details,
                         }
                         message = f"YARA rule {match.rule} from {match.namespace} matched in {relative_path}"
                         event = Event(
@@ -230,7 +234,7 @@ class YaraAnalyser(BaseAnalyserInterface):
                         )
                         result.append(event.to_dict())
         except yara.Error as e:
-            logger.exception(f"Error when scanning file {file_path}", extra={'yara_target_file': file_path})
+            logger.exception(f"Error when scanning file {file_path}", extra={"yara_target_file": file_path})
 
         return result
 

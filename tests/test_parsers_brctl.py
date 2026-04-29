@@ -1,13 +1,14 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.brctl import BrctlParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersBrctl(SysdiagnoseTestCase):
 
     def test_parsebrctl(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = BrctlParser(self.sd.config, case_id=case_id)
             folders = p.get_log_files()
             self.assertEqual(len(folders), 1)

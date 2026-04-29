@@ -1,8 +1,9 @@
-from tests import SysdiagnoseTestCase
-import unittest
 import importlib.util
-from sysdiagnose.utils.base import BaseParserInterface
 import os
+import unittest
+
+from sysdiagnose.utils.base import BaseParserInterface
+from tests import SysdiagnoseTestCase
 
 '''
 Test file structure of parsers
@@ -20,9 +21,6 @@ class TestParsers(SysdiagnoseTestCase):
             print(f"- {parser_name}")
 
             module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
-            # spec = importlib.util.spec_from_file_location(parser_fname[:-3], parser)
-            # module = importlib.util.module_from_spec(spec)
-            # spec.loader.exec_module(module)
 
             # figure out the class name
             obj = None
@@ -43,6 +41,7 @@ class TestParsers(SysdiagnoseTestCase):
             for required_variable in required_variables:
                 self.assertTrue(hasattr(obj, required_variable), f'Parser {parser_name} is missing {required_variable} variable.')
 
+    # ruff: noqa
     # def test_parsers_result_jsonl_structure(self):
     #     print("Checking parsers for result structure...")
 
@@ -100,7 +99,7 @@ class TestParsers(SysdiagnoseTestCase):
                         break
             if obj_instance:
                 # get all files and folders
-                for root, dirs, files in os.walk(obj_instance.case_data_folder):
+                for root, _dirs, files in os.walk(obj_instance.case_data_folder):
                     for file in files:
                         all_files_and_folders.append(os.path.join(root, file))
 

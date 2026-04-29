@@ -1,15 +1,16 @@
 #! /usr/bin/env python3
+"""
+For Python3
+Script to parse ps.txt to ease parsing
+Author: david@autopsit.org
+"""
 
-# For Python3
-# Script to parse ps.txt to ease parsing
-# Author: david@autopsit.org
-#
-
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger, Event
-from sysdiagnose.utils.misc import snake_case
 import glob
 import os
 import re
+
+from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import snake_case
 
 
 class PsParser(BaseParserInterface):
@@ -20,9 +21,7 @@ class PsParser(BaseParserInterface):
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'ps.txt'
-        ]
+        log_files_globs = ["ps.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -32,16 +31,15 @@ class PsParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             return self.parse_file(log_file)
-        return {'error': ['No ps.txt file present']}
+        return {"error": ["No ps.txt file present"]}
 
     def parse_file(self, filename):
         result = []
         try:
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 header = re.split(r"\s+", f.readline().strip())
                 header_length = len(header)
 
-                # print(f"Found header: {header}")
                 for line in f:
                     patterns = line.strip().split(None, header_length - 1)
                     entry = {}
@@ -62,16 +60,17 @@ class PsParser(BaseParserInterface):
                         datetime=timestamp,
                         message=f"Process {entry['command']} [{entry['pid']}] running as {entry['user']}",
                         module=self.module_name,
-                        timestamp_desc='process running',
-                        data=entry
+                        timestamp_desc="process running",
+                        data=entry,
                     )
-                    event.data['timestamp_info'] = 'sysdiagnose creation time'
+                    event.data["timestamp_info"] = "sysdiagnose creation time"
                     result.append(event.to_dict())
                 return result
         except Exception:
             logger.exception("Could not parse ps.txt")
             return []
 
+    @staticmethod
     def exclude_known_goods(processes: dict, known_good: dict) -> list[dict]:
         """
         Exclude known good processes from the given list of processes.
@@ -84,10 +83,10 @@ class PsParser(BaseParserInterface):
             dict: The updated list of processes with known good processes excluded.
         """
 
-        known_good_cmd = [x['command'] for x in known_good]
+        known_good_cmd = [x["command"] for x in known_good]
 
         for proc in processes:
-            if proc['command'] in known_good_cmd:
+            if proc["command"] in known_good_cmd:
                 processes.remove(proc)
 
         return processes

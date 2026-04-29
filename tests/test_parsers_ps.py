@@ -1,15 +1,16 @@
+import os
+import tempfile
+import unittest
+from datetime import datetime, timezone
+
 from sysdiagnose.parsers.ps import PsParser
 from tests import SysdiagnoseTestCase
-import unittest
-import tempfile
-import os
-from datetime import datetime, timezone
 
 
 class TestParsersPs(SysdiagnoseTestCase):
 
     def test_parse_ps(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
 
             p = PsParser(self.sd.config, case_id=case_id)
 

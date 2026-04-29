@@ -1,14 +1,15 @@
 
+import os
+import unittest
+
 from sysdiagnose.parsers.wifinetworks import WifiNetworksParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersWifiNetworks(SysdiagnoseTestCase):
 
     def test_parsewifinetwork(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = WifiNetworksParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             self.assertTrue(len(files) > 0)
