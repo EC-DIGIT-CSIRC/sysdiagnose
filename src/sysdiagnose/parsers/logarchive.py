@@ -301,9 +301,7 @@ class LogarchiveHelper:
         """
         result = []
 
-        with subprocess.Popen(
-            cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
-        ) as process:
+        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
             if outputfile is None:
                 for line in iter(process.stdout.readline, ""):
                     try:
@@ -417,8 +415,7 @@ class LogarchiveParser(BaseParserInterface):
 
     def execute(self) -> list | dict:
         raise NotImplementedError(
-            "LogarchiveParser does not support execute(). "
-            "Use get_result() to stream results or save_result() to parse to file."
+            "LogarchiveParser does not support execute(). Use get_result() to stream results or save_result() to parse to file."
         )
 
     def get_result(self, force: bool = False):

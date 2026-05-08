@@ -192,9 +192,7 @@ class ResultSummaryExecutionHandler:
         self._summary.num_events = num_events
         self._summary.num_errors = self._log_handler.num_errors + add_errors
         self._summary.num_warnings = self._log_handler.num_warnings + add_warnings
-        self._summary.status = ResultSummaryFactory.get_execution_status(
-            self._summary.num_errors, self._summary.num_warnings
-        )
+        self._summary.status = ResultSummaryFactory.get_execution_status(self._summary.num_errors, self._summary.num_warnings)
 
         if end:
             self._finalize()

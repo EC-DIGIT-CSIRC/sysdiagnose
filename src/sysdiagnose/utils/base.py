@@ -94,7 +94,6 @@ class SysdiagnoseConfig:
         return results
 
 
-
 class BaseInterface(ABC):
     description = "<not documented>"  # implementation should set this
     format = "json"  # implementation should set this
