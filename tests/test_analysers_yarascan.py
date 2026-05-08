@@ -12,11 +12,13 @@ class TestAnalysersYarascan(SysdiagnoseTestCase):
         super().setUp()
         self.yara_rules_folder = os.path.join(self.tmp_folder, 'yararules')
         os.makedirs(self.yara_rules_folder, exist_ok=True)
-        # Create a dummy YARA rule file for testing
+        # Create a dummy YARA rule file for testing, one that should match at least (only?) on sysdiagnose.log file.
+        # Avoids relying on any specific content and potential too many matches.
+        # Failure of this rule will help us to detect a change in the binary too :)
         rule_content = """
-rule match_for_sure_on_serial_number {
+rule match_for_sure_on_sysdiagnose_version {
     strings:
-        $a = "F4GT2K24HG7K"
+        $a = "sysdiagnose version 3.0"
     condition:
         $a
 }
