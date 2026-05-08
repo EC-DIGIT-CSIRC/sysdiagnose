@@ -111,66 +111,67 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
 
     def test_merge_files(self):
         input = []
+
         input.append(
             [
-                {"time": 1, "data": "a"},
-                {"time": 2, "data": "b"},
-                {"time": 3, "data": "c"},
-                {"time": 4, "data": "d"},
-                {"time": 5, "data": "e"},
-                {"time": 6, "data": "f"},
-                {"time": 7, "data": "g"},
+                {"datetime": "2000-01-01T10:01:00.000000+00:00", "data": "a"},
+                {"datetime": "2000-01-01T10:02:00.000000+00:00", "data": "b"},
+                {"datetime": "2000-01-01T10:03:00.000000+00:00", "data": "c"},
+                {"datetime": "2000-01-01T10:04:00.000000+00:00", "data": "d"},
+                {"datetime": "2000-01-01T10:05:00.000000+00:00", "data": "e"},
+                {"datetime": "2000-01-01T10:06:00.000000+00:00", "data": "f"},
+                {"datetime": "2000-01-01T10:07:00.000000+00:00", "data": "g"},
             ]
         )
         input.append(
             [
-                {"time": 1, "data": "a-wrong"},
-                {"time": 2, "data": "b-wrong"},
-                {"time": 3, "data": "c-wrong"},
-                {"time": 4, "data": "d-wrong"},
-                {"time": 5, "data": "e-wrong"},
-                {"time": 6, "data": "f-wrong"},
-                {"time": 7, "data": "g-wrong"},
+                {"datetime": "2000-01-01T10:01:00.000000+00:00", "data": "a-wrong"},
+                {"datetime": "2000-01-01T10:02:00.000000+00:00", "data": "b-wrong"},
+                {"datetime": "2000-01-01T10:03:00.000000+00:00", "data": "c-wrong"},
+                {"datetime": "2000-01-01T10:04:00.000000+00:00", "data": "d-wrong"},
+                {"datetime": "2000-01-01T10:05:00.000000+00:00", "data": "e-wrong"},
+                {"datetime": "2000-01-01T10:06:00.000000+00:00", "data": "f-wrong"},
+                {"datetime": "2000-01-01T10:07:00.000000+00:00", "data": "g-wrong"},
             ]
         )
 
         input.append(
             [  # should be ignored
-                {"time": 4, "data": "d-wrong"},
-                {"time": 5, "data": "e-wrong"},
-                {"time": 6, "data": "f-wrong"},
+                {"datetime": "2000-01-01T10:04:00.000000+00:00", "data": "d-wrong"},
+                {"datetime": "2000-01-01T10:05:00.000000+00:00", "data": "e-wrong"},
+                {"datetime": "2000-01-01T10:06:00.000000+00:00", "data": "f-wrong"},
             ]
         )
         input.append(
             [  # overlaps first list, so must be taken from the end of first list
-                {"time": 7, "data": "g-wrong"},
-                {"time": 8, "data": "h"},
-                {"time": 9, "data": "i"},
-                {"time": 10, "data": "j"},
+                {"datetime": "2000-01-01T10:07:00.000000+00:00", "data": "g-wrong"},
+                {"datetime": "2000-01-01T10:08:00.000000+00:00", "data": "h"},
+                {"datetime": "2000-01-01T10:09:00.000000+00:00", "data": "i"},
+                {"datetime": "2000-01-01T10:10:00.000000+00:00", "data": "j"},
             ]
         )
         input.append(
             [  # small gap
-                {"time": 12, "data": "k"},
-                {"time": 13, "data": "l"},
-                {"time": 14, "data": "m"},
+                {"datetime": "2000-01-01T10:12:00.000000+00:00", "data": "k"},
+                {"datetime": "2000-01-01T10:13:00.000000+00:00", "data": "l"},
+                {"datetime": "2000-01-01T10:14:00.000000+00:00", "data": "m"},
             ]
         )
 
         expected_output = [
-            {"time": 1, "data": "a"},
-            {"time": 2, "data": "b"},
-            {"time": 3, "data": "c"},
-            {"time": 4, "data": "d"},
-            {"time": 5, "data": "e"},
-            {"time": 6, "data": "f"},
-            {"time": 7, "data": "g"},
-            {"time": 8, "data": "h"},
-            {"time": 9, "data": "i"},
-            {"time": 10, "data": "j"},
-            {"time": 12, "data": "k"},
-            {"time": 13, "data": "l"},
-            {"time": 14, "data": "m"},
+            {"datetime": "2000-01-01T10:01:00.000000+00:00", "data": "a"},
+            {"datetime": "2000-01-01T10:02:00.000000+00:00", "data": "b"},
+            {"datetime": "2000-01-01T10:03:00.000000+00:00", "data": "c"},
+            {"datetime": "2000-01-01T10:04:00.000000+00:00", "data": "d"},
+            {"datetime": "2000-01-01T10:05:00.000000+00:00", "data": "e"},
+            {"datetime": "2000-01-01T10:06:00.000000+00:00", "data": "f"},
+            {"datetime": "2000-01-01T10:07:00.000000+00:00", "data": "g"},
+            {"datetime": "2000-01-01T10:08:00.000000+00:00", "data": "h"},
+            {"datetime": "2000-01-01T10:09:00.000000+00:00", "data": "i"},
+            {"datetime": "2000-01-01T10:10:00.000000+00:00", "data": "j"},
+            {"datetime": "2000-01-01T10:12:00.000000+00:00", "data": "k"},
+            {"datetime": "2000-01-01T10:13:00.000000+00:00", "data": "l"},
+            {"datetime": "2000-01-01T10:14:00.000000+00:00", "data": "m"},
         ]
 
         temp_files = []

@@ -78,8 +78,9 @@ class LogarchiveHelper:
     def merge_files(temp_files: list, output_file: str) -> None:
         for temp_file in temp_files:
             first_entry, last_entry = LogarchiveHelper.get_first_and_last_entries(temp_file["file"].name)
-            temp_file["first_timestamp"] = first_entry["time"]
-            temp_file["last_timestamp"] = last_entry["time"]
+            # take datetime string and convert to unixtime for easier comparison later on
+            temp_file["first_timestamp"] = datetime.fromisoformat(first_entry["datetime"]).timestamp()
+            temp_file["last_timestamp"] = datetime.fromisoformat(last_entry["datetime"]).timestamp()
 
         # lowest first timestamp, second key highest last timestamp
         temp_files.sort(key=lambda x: (x["first_timestamp"], -x["last_timestamp"]))
@@ -113,7 +114,11 @@ class LogarchiveHelper:
                     with open(current_temp_file["file"].name, "r") as f_in:
                         copy_over = False  # store if we need to copy over, spares us of json.loads() every line when we know we should be continuing
                         for line in f_in:
-                            if not copy_over and json.loads(line)["time"] > prev_temp_file["last_timestamp"]:
+                            if (
+                                not copy_over
+                                and datetime.fromisoformat(json.loads(line)["datetime"]).timestamp()
+                                > prev_temp_file["last_timestamp"]
+                            ):
                                 copy_over = True
                             if copy_over:
                                 f_out.write(line)
@@ -296,7 +301,9 @@ class LogarchiveHelper:
         """
         result = []
 
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
+        with subprocess.Popen(
+            cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
+        ) as process:
             if outputfile is None:
                 for line in iter(process.stdout.readline, ""):
                     try:
