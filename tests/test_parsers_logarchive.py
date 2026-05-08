@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime
 
-from sysdiagnose.parsers.logarchive import LogarchiveParser
+from sysdiagnose.parsers.logarchive import LogarchiveHelper, LogarchiveParser
 from tests import SysdiagnoseTestCase
 
 
@@ -36,18 +36,18 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
     def test_convert_native_time_to_unifiedlog(self):
         input = "2023-05-24 13:03:28.908085-0700"
         expected_output = 1684958608908084992
-        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
         input = "2023-05-24 20:03:28.908085-0000"
         expected_output = 1684958608908084992
-        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
     def test_convert_unifiedlog_time_to_datetime(self):
         input = 1684958608908085200
         expected_output = "2023-05-24T20:03:28.908085+00:00"
-        result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat(timespec="microseconds")
+        result = LogarchiveHelper.convert_unifiedlog_time_to_datetime(input).isoformat(timespec="microseconds")
         self.assertEqual(result, expected_output)
 
     def test_convert_entry_to_unified(self):
@@ -105,7 +105,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             "timestamp_desc": "logarchive",
             "module": "logarchive",
         }
-        result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_entry_to_unifiedlog_format(input)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
@@ -189,7 +189,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             # merge the files
             with tempfile.NamedTemporaryFile(delete=False) as output_file:
                 pass
-            LogarchiveParser.merge_files(temp_files, output_file.name)
+            LogarchiveHelper.merge_files(temp_files, output_file.name)
 
             # read the output file
             result = []

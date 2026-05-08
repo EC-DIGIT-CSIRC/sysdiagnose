@@ -1,19 +1,23 @@
 import glob
 import importlib
 import json
-import logging
 import os
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Generator, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC
 from datetime import datetime as datetime_datetime
-from enum import StrEnum
 from functools import cached_property
 from io import TextIOWrapper
 from pathlib import Path
 
 from sysdiagnose.utils.logger import logger
+from sysdiagnose.utils.summary import (
+    ResultSummary,
+    ResultSummaryExecutionHandler,
+    ResultSummaryFactory,
+)
 
 
 class SysdiagnoseConfig:
@@ -89,152 +93,6 @@ class SysdiagnoseConfig:
         results = dict(sorted(results.items()))
         return results
 
-
-class ExecutionStatus(StrEnum):
-    OK = "ok"
-    WARNING = "warning"
-    ERROR = "error"
-
-
-@dataclass
-class ResultSummary:
-    """
-    Class that represents a summary of the invocation of a BaseParserInterface or BaseAnalyserInterface subclass.
-
-    The summary includes the status of the execution (e.g. OK, WARNING, ERROR), the execution timing metadata,
-    and the number of errors, warnings, and events that were encountered during the execution.
-
-    By default, the status is set to ERROR, the timing metadata is unknown, and the number of errors, warnings,
-    and events are set to 0.
-    """
-
-    status: ExecutionStatus = ExecutionStatus.ERROR
-    start_time: datetime_datetime | None = None
-    duration: float | None = None
-    num_errors: int = 0
-    num_warnings: int = 0
-    num_events: int = 0
-
-    def to_dict(self) -> dict:
-        start_time = None
-        if self.start_time is not None:
-            start_time = self.start_time.astimezone(UTC).isoformat(timespec="microseconds")
-        return {
-            "status": self.status.value,
-            "start_time": start_time,
-            "duration": self.duration,
-            "num_errors": self.num_errors,
-            "num_warnings": self.num_warnings,
-            "num_events": self.num_events,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "ResultSummary":
-        status = data.get("status", ExecutionStatus.ERROR)
-        start_time = data.get("start_time")
-        if start_time is not None:
-            start_time = datetime_datetime.fromisoformat(start_time).astimezone(UTC)
-        return cls(
-            status=ExecutionStatus(status),
-            start_time=start_time,
-            duration=data.get("duration"),
-            num_errors=data.get("num_errors", 0),
-            num_warnings=data.get("num_warnings", 0),
-            num_events=data.get("num_events", 0),
-        )
-
-
-class ResultSummaryLogHandler(logging.Handler):
-    def __init__(self):
-        super().__init__()
-        self.num_errors = 0
-        self.num_warnings = 0
-
-    def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno >= logging.ERROR:
-            self.num_errors += 1
-        elif record.levelno >= logging.WARNING:
-            self.num_warnings += 1
-
-
-class ResultSummaryFactory:
-    @staticmethod
-    def from_result(result: list | dict | str | None) -> ResultSummary:
-        num_errors = ResultSummaryFactory.count_errors_in_result(result)
-        num_events = ResultSummaryFactory.count_events_in_result(result)
-        return ResultSummary(
-            status=ResultSummaryFactory.get_execution_status(num_errors=num_errors, num_warnings=0),
-            start_time=None,
-            duration=None,
-            num_errors=num_errors,
-            num_warnings=0,
-            num_events=num_events,
-        )
-
-    @staticmethod
-    def from_output(output_file: str, format_name: str, result: list | dict | str | None = None) -> ResultSummary:
-        if format_name == "jsonl" and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-            with open(output_file) as f:
-                num_events = sum(1 for line in f if line.strip())
-            return ResultSummary(status=ExecutionStatus.OK, num_events=num_events)
-
-        if result is not None:
-            return ResultSummaryFactory.from_result(result)
-
-        with open(output_file) as f:
-            if format_name == "json":
-                loaded_result = json.load(f)
-            elif format_name == "jsonl":
-                loaded_result = [json.loads(line) for line in f]
-            else:
-                loaded_result = f.read()
-        return ResultSummaryFactory.from_result(loaded_result)
-
-    @staticmethod
-    def get_execution_status(num_errors: int, num_warnings: int) -> ExecutionStatus:
-        if num_errors > 0:
-            return ExecutionStatus.ERROR
-        if num_warnings > 0:
-            return ExecutionStatus.WARNING
-        return ExecutionStatus.OK
-
-    @staticmethod
-    def count_events_in_result(result: list | dict | str | None) -> int:
-        if result is None:
-            return 0
-        if isinstance(result, list):
-            return len(result)
-        return 1 if result else 0
-
-    @staticmethod
-    def count_errors_in_result(result: list | dict | str | None) -> int:
-        if not isinstance(result, dict):
-            return 0
-
-        num_errors = 0
-        if ResultSummaryFactory.has_error_value(result.get("error")):
-            num_errors += ResultSummaryFactory.count_error_value(result.get("error"))
-        if ResultSummaryFactory.has_error_value(result.get("errors")):
-            num_errors += ResultSummaryFactory.count_error_value(result.get("errors"))
-        return num_errors
-
-    @staticmethod
-    def has_error_value(value) -> bool:
-        if value is None:
-            return False
-        if isinstance(value, list | tuple | set | dict | str):
-            return len(value) > 0
-        return bool(value)
-
-    @staticmethod
-    def count_error_value(value) -> int:
-        if isinstance(value, dict):
-            return len(value)
-        if isinstance(value, list | tuple | set):
-            return len(value)
-        if value:
-            return 1
-        return 0
 
 
 class BaseInterface(ABC):
@@ -327,36 +185,6 @@ class BaseInterface(ABC):
         """
         return os.path.exists(self.output_file) and os.path.getsize(self.output_file) > 0
 
-    def get_result(self, force: bool = False) -> list | dict | str | None:
-        """
-        Retrieves the result of the parsing operation, and run the parsing if necessary.
-        Also ensures the execution status is updated, the result is saved to the output_file, and can be used as a cache.
-
-        Args:
-            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists.
-            Defaults to False.
-
-        Returns:
-            list | dict: The parsed result as a list or dictionary.
-
-        Raises:
-            FileNotFoundError: If the output file does not exist and force is set to False.
-
-        WARNING: You may need to overwrite this method if your parser saves multiple files.
-        """
-        if force:
-            self.save_result(force=True)
-            return self._result
-
-        if self._result is None:
-            if self.output_exists():
-                self._result = self._load_output()
-                self._result_summary = self.load_result_summary()
-            else:
-                self.save_result()
-
-        return self._result
-
     def get_result_summary(self) -> ResultSummary:
         """
         Returns a summary of the result of the get_result operation, including the execution status, number of errors,
@@ -368,18 +196,49 @@ class BaseInterface(ABC):
         if self._result_summary is not None:
             return self._result_summary
 
-        self._result_summary = self.load_result_summary()
-        return self._result_summary
-
-    def load_result_summary(self) -> ResultSummary:
         if os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0:
             with open(self.summary_file) as f:
-                return ResultSummary.from_dict(json.load(f))
+                self._result_summary = ResultSummary.from_dict(json.load(f))
+        elif self.output_exists():
+            self._result_summary = ResultSummaryFactory.from_output(self.output_file, self.format)
+        else:
+            self._result_summary = ResultSummary()
 
-        if self.output_exists():
-            return ResultSummaryFactory.from_output(self.output_file, self.format, self._result)
+        return self._result_summary
 
-        return ResultSummary()
+    def save_result_summary(self) -> None:
+        if self._result_summary is None:
+            self._result_summary = ResultSummaryFactory.from_result(self._result)
+
+        with open(self.summary_file, "w") as f:
+            json.dump(self._result_summary.to_dict(), f, ensure_ascii=False, indent=2, sort_keys=True)
+
+    def get_result(self, force: bool = False) -> list | dict | str | None:
+        """
+        Retrieves the result of the parsing operation, and run the parsing if necessary.
+        Also ensures the execution status is updated, the result is saved to the output_file, and can be used as a cache.
+
+        Args:
+            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists.
+            Defaults to False.
+
+        Returns:
+            list | dict | str | None: The parsed result.
+
+        WARNING: You may need to overwrite this method if your parser saves multiple files.
+        """
+        if force:
+            self.save_result(force=True)
+            return self._result
+
+        if self._result is None:
+            if self.output_exists():
+                self._result = self._load_output()
+                self.get_result_summary()
+            else:
+                self.save_result()
+
+        return self._result
 
     def save_result(self, force: bool = False, indent=None):
         """
@@ -392,74 +251,83 @@ class BaseInterface(ABC):
         WARNING: You may need to overwrite this method if your parser saves multiple files.
         """
         if force or self._result is None or not self.output_exists():
-            self._result = self.execute_with_result_summary()
+            self._result, self._result_summary = self._execute_and_write(indent=indent)
         elif self._result_summary is None:
-            self._result_summary = self.load_result_summary()
+            self.get_result_summary()
 
+        self.save_result_summary()
+
+    def _execute_and_write(self, indent=None) -> tuple:
+        """
+        Executes the parser/analyser, writes the result to file, and builds the ResultSummary.
+        Handles Generator/Iterator results for jsonl format by consuming lazily during write.
+        Returns (result, summary).
+
+        Raises:
+            Exception: If there is an error during execution, the summary will be updated with 1 error and 0 events, and the exception will be re-raised."""
+        handler = ResultSummaryExecutionHandler()
+        handler.start()
+        try:
+            result = self.execute()
+        except Exception:
+            handler.update(num_events=0, add_errors=1, end=True)
+            self._result_summary = handler.get()
+            raise
+
+        num_events = self._write_result(result, indent=indent)
+        add_errors = ResultSummaryFactory.count_errors_in_result(self._result)
+        handler.update(num_events=num_events, add_errors=add_errors, end=True)
+        return self._result, handler.get()
+
+    def _write_result(self, result, indent=None) -> int:
+        """
+        Writes result to the output file and materializes it into self._result.
+        For jsonl format, if result is a Generator/Iterator, it is consumed lazily.
+        Returns the number of events written (only meaningful for jsonl).
+        """
+        num_events = 0
         with open(self.output_file, "w") as f:
             if self.format == "json":
-                # json.dumps is MUCH faster than json.dump, but less efficient on memory level
-                # also no indent as that's terribly slow
+                self._result = result
                 if self.json_pretty:
                     f.write(json.dumps(self._result, ensure_ascii=False, indent=2, sort_keys=True))
                 else:
                     f.write(json.dumps(self._result, ensure_ascii=False, indent=indent))
+                num_events += 1
             elif self.format == "jsonl":
-                for line in self._result:
+                # FIXME: in the future we will not materialise the entire result whenn it is a Generator/Iterator,
+                # because we are defeating the purpose of using a Generator/Iterator in the first place,
+                # which is to handle large data sets without consuming too much memory.
+                # For now we do it to keep the contracts of get_result().
+                do_materialize = isinstance(result, (Generator, Iterator))
+                materialized = []
+                for line in result:
                     f.write(json.dumps(line, ensure_ascii=False, indent=indent))
                     f.write("\n")
+                    if do_materialize:
+                        materialized.append(line)
+                    num_events += 1
+                self._result = materialized if do_materialize else result
             else:
+                self._result = result
                 f.write(self._result)
+                num_events += 1
+        return num_events
 
-        self.save_result_summary()
-
-    def save_result_summary(self) -> None:
-        if self._result_summary is None:
-            self._result_summary = ResultSummaryFactory.from_result(self._result)
-
-        with open(self.summary_file, "w") as f:
-            json.dump(self._result_summary.to_dict(), f, ensure_ascii=False, indent=2, sort_keys=True)
-
-    def execute_with_result_summary(self) -> list | dict | str | None:
-        log_handler = ResultSummaryLogHandler()
-        start_time = datetime_datetime.now(UTC)
-        logger.addHandler(log_handler)
-        try:
-            result = self.execute()
-        except Exception:
-            duration = (datetime_datetime.now(UTC) - start_time).total_seconds()
-            self._result_summary = ResultSummary(
-                status=ExecutionStatus.ERROR,
-                start_time=start_time,
-                duration=duration,
-                num_errors=max(1, log_handler.num_errors),
-                num_warnings=log_handler.num_warnings,
-                num_events=0,
-            )
-            raise
-        finally:
-            logger.removeHandler(log_handler)
-
-        summary = (
-            ResultSummaryFactory.from_output(self.output_file, self.format, self._result)
-            if result is None and self.output_exists()
-            else ResultSummaryFactory.from_result(result)
-        )
-        summary.start_time = start_time
-        summary.duration = (datetime_datetime.now(UTC) - start_time).total_seconds()
-        summary.num_errors += log_handler.num_errors
-        summary.num_warnings += log_handler.num_warnings
-        summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
-        self._result_summary = summary
-        return result
-
-    def _load_output(self) -> list | dict | str | None:
+    def _load_output(self):
+        """
+        Loads the cached result from the output file.
+        Returns the cached result.
+        """
         with open(self.output_file) as f:
             if self.format == "json":
                 return json.load(f)
             if self.format == "jsonl":
+                # FIXME: In the future we should yield results lazily for jsonl format
+                # instead of materializing the entire result in memory, to handle large data sets.
                 return [json.loads(line) for line in f]
-            return f.read()
+            else:
+                return f.read()
 
     @abstractmethod
     def execute(self) -> list | dict:

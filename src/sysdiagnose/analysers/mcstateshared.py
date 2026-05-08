@@ -33,18 +33,8 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
 
         return result
 
-    def save_result(self, force: bool = False, indent=None):
-        """
-        Saves the result of the parsing operation to a file.
-
-        Args:
-            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists. Defaults to False.
-        """
-        if force or self._result is None or not self.output_exists():
-            self._result = self.execute_with_result_summary()
-        else:
-            self._result_summary = self.load_result_summary()
-
+    def _write_result(self, result, indent=None) -> int:
+        self._result = result
         result_keys = set()
         for entry in self._result:
             result_keys.update(entry.keys())
@@ -54,4 +44,4 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
             writer.writeheader()
             writer.writerows(self._result)
 
-        self.save_result_summary()
+        return len(self._result)

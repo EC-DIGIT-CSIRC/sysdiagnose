@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sysdiagnose.analysers.demo_analyser import DemoAnalyser
 from sysdiagnose.parsers.demo_parser import DemoParser
-from sysdiagnose.utils.base import ExecutionStatus
+from sysdiagnose.utils.summary import ExecutionStatus
 from tests import SysdiagnoseTestCase
 
 

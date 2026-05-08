@@ -15,17 +15,16 @@ import sys
 import tempfile
 import threading
 from collections.abc import Generator
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
 
 from sysdiagnose.utils.base import (
     BaseParserInterface,
     Event,
-    ExecutionStatus,
-    ResultSummary,
-    ResultSummaryFactory,
-    ResultSummaryLogHandler,
     SysdiagnoseConfig,
     logger,
+)
+from sysdiagnose.utils.summary import (
+    ResultSummaryExecutionHandler,
 )
 
 # ruff: noqa
@@ -72,97 +71,13 @@ def log_stderr(process, logger):
             logger.debug(message)
 
 
-class LogarchiveParser(BaseParserInterface):
-    description = "Parsing system_logs.logarchive folder"
-    format = "jsonl"
-
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
-
-    def get_log_files(self) -> list:
-        log_folder_glob = "**/system_logs.logarchive/"
-        return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
-
-    @DeprecationWarning
-    def execute(self) -> list | dict:
-        # OK, this is really inefficient as we're reading all to memory, writing it to a temporary file on disk, and re-reading it again
-        # but who cares, nobody uses this function anyway...
-        try:
-            with tempfile.TemporaryDirectory() as tmp_outpath:
-                tmp_output_file = os.path.join(tmp_outpath.name, "logarchive.tmp")
-                LogarchiveParser.parse_all_to_file(self.get_log_files(), tmp_output_file)
-                with open(tmp_output_file, "r") as f:
-                    return [json.loads(line) for line in f]
-        except IndexError:
-            return {"error": "No system_logs.logarchive/ folder found in logs/ directory"}
-
-    def get_result(self, force: bool = False):
-        if force:
-            self.save_result(force)
-
-        if not self._result:
-            if not self.output_exists():
-                self.save_result()
-
-            if self.output_exists():
-                self._result_summary = self.load_result_summary()
-                # load existing output
-                with open(self.output_file, "r") as f:
-                    for line in f:
-                        try:
-                            yield json.loads(line)
-                        except json.decoder.JSONDecodeError:  # last lines of the native logarchive.jsonl file
-                            continue
-        else:
-            # should never happen, as we never keep it in memory
-            for entry in self._result:
-                yield entry
-
-    def save_result(self, force: bool = False, indent=None):
-        """
-        Save the result of the parsing operation to a file in the parser output folder
-        """
-        if not force and self._result is not None:
-            # the result was already computed, just save it now
-            super().save_result(force, indent)
-        else:
-            self.execute_with_result_summary()
-            self.save_result_summary()
-
-    def execute_with_result_summary(self):
-        log_handler = ResultSummaryLogHandler()
-        start_time = datetime.now(UTC)
-        logger.addHandler(log_handler)
-        try:
-            LogarchiveParser.parse_all_to_file(self.get_log_files(), self.output_file)
-        except Exception:
-            duration = (datetime.now(UTC) - start_time).total_seconds()
-            self._result_summary = ResultSummary(
-                status=ExecutionStatus.ERROR,
-                start_time=start_time,
-                duration=duration,
-                num_errors=max(1, log_handler.num_errors),
-                num_warnings=log_handler.num_warnings,
-                num_events=0,
-            )
-            raise
-        finally:
-            logger.removeHandler(log_handler)
-
-        summary = ResultSummaryFactory.from_output(self.output_file, self.format)
-        summary.start_time = start_time
-        summary.duration = (datetime.now(UTC) - start_time).total_seconds()
-        summary.num_errors += log_handler.num_errors
-        summary.num_warnings += log_handler.num_warnings
-        summary.status = ResultSummaryFactory.get_execution_status(summary.num_errors, summary.num_warnings)
-        self._result_summary = summary
-        # we don't keep the result in memory, as it can be very large, so we set it to None to avoid confusion
-        self._result = None
+class LogarchiveHelper:
+    """Helper class containing all static utility methods for logarchive parsing."""
 
     @staticmethod
-    def merge_files(temp_files: list, output_file: str):
+    def merge_files(temp_files: list, output_file: str) -> None:
         for temp_file in temp_files:
-            first_entry, last_entry = LogarchiveParser.get_first_and_last_entries(temp_file["file"].name)
+            first_entry, last_entry = LogarchiveHelper.get_first_and_last_entries(temp_file["file"].name)
             temp_file["first_timestamp"] = first_entry["time"]
             temp_file["last_timestamp"] = last_entry["time"]
 
@@ -224,12 +139,15 @@ class LogarchiveParser(BaseParserInterface):
             return (first_entry, last_entry)
 
     @staticmethod
-    def parse_all_to_file(folders: list, output_file: str):
+    def parse_all_to_file(folders: list, output_file: str) -> int:
+        """
+        Parses all logarchive folders to a single output file.
+        Returns the number of events (lines) written.
+        """
         # no caching
         # simple mode: only one folder
         if len(folders) == 1:
-            LogarchiveParser.parse_folder_to_file(folders[0], output_file)
-            return
+            return LogarchiveHelper.parse_folder_to_file(folders[0], output_file)
 
         # complex mode: multiple folders, need to merge multiple files
         # for each of the log folders
@@ -243,7 +161,7 @@ class LogarchiveParser(BaseParserInterface):
         try:
             for folder in folders:
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
-                LogarchiveParser.parse_folder_to_file(folder, temp_file.name)
+                LogarchiveHelper.parse_folder_to_file(folder, temp_file.name)
                 temp_files.append(
                     {
                         "file": temp_file,
@@ -251,39 +169,50 @@ class LogarchiveParser(BaseParserInterface):
                 )
 
             # merge files to the output file
-            LogarchiveParser.merge_files(temp_files, output_file)
+            LogarchiveHelper.merge_files(temp_files, output_file)
 
         finally:
             # close all temp files, ensuring they are deleted
             for temp_file in temp_files:
                 os.remove(temp_file["file"].name)
 
-    @staticmethod
-    def parse_folder_to_file(input_folder: str, output_file: str) -> bool:
-        try:
-            if platform.system() == "Darwin":
-                LogarchiveParser.__convert_using_native_logparser(input_folder, output_file)
-            else:
-                LogarchiveParser.__convert_using_unifiedlogparser(input_folder, output_file)
-            return True
-        except IndexError:
-            logger.exception("Error: No system_logs.logarchive/ folder found in logs/ directory")
-            return False
-        except FileNotFoundError:
-            logger.exception("Error: unifiedlogs command not found, please refer to the README for further instructions")
-            return False
+        # count lines in the merged output
+        # TODO: improve this counting while merging, to avoid reading the file again.
+        # There is complexity there since there is deduplication while merging.
+        with open(output_file, "r") as f:
+            return sum(1 for line in f if line.strip())
 
     @staticmethod
-    def __convert_using_native_logparser(input_folder: str, output_file: str) -> None:
+    def parse_folder_to_file(input_folder: str, output_file: str) -> int:
+        """
+        Parses a single logarchive folder to an output file.
+        Returns the number of events (lines) written.
+        """
+        try:
+            if platform.system() == "Darwin":
+                return LogarchiveHelper._convert_using_native_logparser(input_folder, output_file)
+            else:
+                return LogarchiveHelper._convert_using_unifiedlogparser(input_folder, output_file)
+        except IndexError:
+            logger.exception("Error: No system_logs.logarchive/ folder found in logs/ directory")
+            return 0
+        except FileNotFoundError:
+            logger.exception("Error: unifiedlogs command not found, please refer to the README for further instructions")
+            return 0
+
+    @staticmethod
+    def _convert_using_native_logparser(input_folder: str, output_file: str) -> int:
+        num_events = 0
         with open(output_file, "w") as f_out:
             # output to stdout and not to a file as we need to convert the output to a unified format
             cmd_array = ["/usr/bin/log", "show", input_folder, "--style", "ndjson", "--info", "--debug", "--signpost"]
             # read each line, convert line by line and write the output directly to the new file
             # this approach limits memory consumption
-            for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
+            for line in LogarchiveHelper._execute_cmd_and_yield_result(cmd_array):
                 try:
-                    entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
+                    entry_json = LogarchiveHelper.convert_entry_to_unifiedlog_format(json.loads(line))
                     f_out.write(json.dumps(entry_json) + "\n")
+                    num_events += 1
                 except json.JSONDecodeError as e:
                     logger.warning(f"WARNING: error parsing JSON {line} - {e}", exc_info=True)
                 except KeyError:
@@ -292,17 +221,21 @@ class LogarchiveParser(BaseParserInterface):
                     # last line looks like {'count':xyz, 'finished':1}
                     logger.info(f"End of the file: {line}", extra=json.loads(line))
                     break
+        return num_events
 
     @staticmethod
-    def __convert_using_unifiedlogparser(input_folder: str, output_file: str) -> None:
+    def _convert_using_unifiedlogparser(input_folder: str, output_file: str) -> int:
+        num_events = 0
         with open(output_file, "w") as f:
-            for entry in LogarchiveParser.__convert_using_unifiedlogparser_generator(input_folder):
+            for entry in LogarchiveHelper._convert_using_unifiedlogparser_generator(input_folder):
                 json.dump(entry, f)
                 f.write("\n")
+                num_events += 1
+        return num_events
 
     @DeprecationWarning
     @staticmethod
-    def __convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str):
+    def _convert_using_unifiedlogparser_save_file(input_folder: str, output_file: str) -> int:
         logger.warning("Using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X")
         # output to stdout and not to a file as we need to convert the output to a unified format
         cmd_array = [
@@ -318,19 +251,19 @@ class LogarchiveParser(BaseParserInterface):
         ]
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
-        result = LogarchiveParser.__execute_cmd_and_get_result(cmd_array)
+        result = LogarchiveHelper._execute_cmd_and_get_result(cmd_array)
         return result
 
     @staticmethod
-    def __convert_using_unifiedlogparser_generator(input_folder: str):
+    def _convert_using_unifiedlogparser_generator(input_folder: str) -> Generator[dict, None, None]:
         logger.warning("Using Mandiant UnifiedLogReader to parse logs, results will be less reliable than on OS X")
         # output to stdout and not to a file as we need to convert the output to a unified format
         cmd_array = ["unifiedlog_iterator", "--mode", "log-archive", "--input", input_folder, "--format", "jsonl"]
         # read each line, convert line by line and write the output directly to the new file
         # this approach limits memory consumption
-        for line in LogarchiveParser.__execute_cmd_and_yield_result(cmd_array):
+        for line in LogarchiveHelper._execute_cmd_and_yield_result(cmd_array):
             try:
-                entry_json = LogarchiveParser.convert_entry_to_unifiedlog_format(json.loads(line))
+                entry_json = LogarchiveHelper.convert_entry_to_unifiedlog_format(json.loads(line))
                 yield entry_json
             except json.JSONDecodeError:
                 pass
@@ -338,7 +271,7 @@ class LogarchiveParser(BaseParserInterface):
                 pass
 
     @staticmethod
-    def __execute_cmd_and_yield_result(cmd_array: list) -> Generator[str, None, None]:
+    def _execute_cmd_and_yield_result(cmd_array: list) -> Generator[str, None, None]:
         """
         Return None if it failed or the result otherwise.
 
@@ -352,7 +285,7 @@ class LogarchiveParser(BaseParserInterface):
                 yield line
 
     @staticmethod
-    def __execute_cmd_and_get_result(cmd_array: list, outputfile=None):
+    def _execute_cmd_and_get_result(cmd_array: list, outputfile=None) -> list | str | None:
         """
         Return None if it failed or the result otherwise.
 
@@ -392,7 +325,7 @@ class LogarchiveParser(BaseParserInterface):
 
         # already in the Mandiant unifiedlog format
         if "event_type" in entry:
-            timestamp = LogarchiveParser.convert_unifiedlog_time_to_datetime(entry["time"])
+            timestamp = LogarchiveHelper.convert_unifiedlog_time_to_datetime(entry["time"])
             entry["datetime"] = timestamp.isoformat(timespec="microseconds")
             entry["timestamp"] = timestamp.timestamp()
             event = Event(
@@ -462,3 +395,59 @@ class LogarchiveParser(BaseParserInterface):
         # convert time to datetime object
         timestamp = datetime.fromtimestamp(time / 1000000000, tz=timezone.utc)
         return timestamp
+
+
+class LogarchiveParser(BaseParserInterface):
+    description = "Parsing system_logs.logarchive folder"
+    format = "jsonl"
+
+    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+        super().__init__(__file__, config, case_id)
+
+    def get_log_files(self) -> list:
+        log_folder_glob = "**/system_logs.logarchive/"
+        return glob.glob(os.path.join(self.case_data_folder, log_folder_glob), recursive=True)
+
+    def execute(self) -> list | dict:
+        raise NotImplementedError(
+            "LogarchiveParser does not support execute(). "
+            "Use get_result() to stream results or save_result() to parse to file."
+        )
+
+    def get_result(self, force: bool = False):
+        if force:
+            self.save_result(force)
+
+        if not self.output_exists():
+            self.save_result()
+
+        self.get_result_summary()
+        with open(self.output_file, "r") as f:
+            for line in f:
+                try:
+                    yield json.loads(line)
+                except json.decoder.JSONDecodeError:
+                    continue
+
+    def save_result(self, force: bool = False, indent=None):
+        """
+        Save the result of the parsing operation to a file in the parser output folder
+        """
+        if force or not self.output_exists():
+            self._execute_with_result_summary()
+            self.save_result_summary()
+
+    def _execute_with_result_summary(self):
+        handler = ResultSummaryExecutionHandler()
+        handler.start()
+        try:
+            num_events = LogarchiveHelper.parse_all_to_file(self.get_log_files(), self.output_file)
+        except Exception:
+            handler.update(num_events=0, add_errors=1, end=True)
+            self._result_summary = handler.get()
+            raise
+
+        handler.update(num_events=num_events, end=True)
+        self._result_summary = handler.get()
+        # we don't keep the result in memory, as it can be very large, so we set it to None to avoid confusion
+        self._result = None
