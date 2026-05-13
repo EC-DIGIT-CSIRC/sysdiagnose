@@ -25,7 +25,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
     def execute(self) -> dict:
         log_files = self.get_log_files()
         if not log_files:
-            logger.error("ERROR: No security-sysdiagnose.txt file present.")
+            logger.warning("No security-sysdiagnose.txt file present.")
             return {}
 
         json_result = {"events": [], "meta": {}}

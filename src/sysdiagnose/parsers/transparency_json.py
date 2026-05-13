@@ -26,7 +26,7 @@ class TransparencyJsonParser(BaseParserInterface):
     def execute(self) -> dict:
         files = self.get_log_files()
         if not files:
-            logger.info("No known transparency.log file found.")
+            logger.warning("No known transparency.log file found.")
             return {}
         for file in files:
             with open(file) as f:
