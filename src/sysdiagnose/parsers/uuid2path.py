@@ -34,21 +34,4 @@ class UUID2PathParser(BaseParserInterface):
         if not log_files:
             logger.warning("No UUIDToBinaryLocations file present")
             return {}
-        return UUID2PathParser.parse_file(log_files[0])
-
-    @staticmethod
-    def parse_file(path: str) -> list | dict:
-        try:
-            return misc.load_plist_file_as_json(path)
-        except IndexError:
-            return {"error": "No UUIDToBinaryLocations file present"}
-
-    @staticmethod
-    def print_result(data):
-        """
-        Print the hashtable produced by getUUID2Path to console as UUID, path
-        """
-        if data:
-            for uuid in data:
-                print(f"{uuid!s}, {data[uuid]!s}")
-        print(f"\n {len(data.keys())!s} GUIDs found\n")
+        return misc.load_plist_file_as_json(log_files[0])

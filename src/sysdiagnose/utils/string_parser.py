@@ -223,7 +223,7 @@ class List:
 
         else:
             if self.temp_data.strip():
-                print("ERROR : Found random characters BEFORE a struct in a list. Ignoring these character")
+                logger.error("Found random characters BEFORE a struct in a list. Ignoring these characters")
 
             self.temp_data = struct.data
 

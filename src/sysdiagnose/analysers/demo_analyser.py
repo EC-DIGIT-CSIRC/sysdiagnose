@@ -21,7 +21,7 @@ class DemoAnalyser(BaseAnalyserInterface):
         By doing so you will get the parser output even if it never ran before.
         """
         try:
-            print("DO SOMETHING HERE")
+            logger.info("DO SOMETHING HERE")
             logger.info("log something here", extra={"field1": "field1_info_details"})
             logger.debug("log something for debugging purposes", extra={"field1": "field1_debug_details"})
             if True:

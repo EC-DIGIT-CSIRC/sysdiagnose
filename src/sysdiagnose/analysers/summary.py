@@ -183,5 +183,4 @@ class SummaryAnalyser(BaseAnalyserInterface):
         # TODO extract even more, ideally from plist/json and not jsonl
         # TODO also write the unit test
 
-        print("\n".join(result))
         return "\n".join(result)

@@ -103,7 +103,11 @@ known-third-party = ["yara"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["T201"]
-"src/sysdiagnose/*.py" = ["T201"]
+"src/sysdiagnose/__init__.py" = ["T201"]
+"src/sysdiagnose/__main__.py" = ["T201"]
+"src/sysdiagnose/utils/coverage_diff.py" = ["T201"]
+"src/sysdiagnose/utils/file_stats_diff.py" = ["T201"]
+"src/sysdiagnose/utils/sqlite2json.py" = ["T201"]
 
 [tool.ruff.format]
 quote-style = "double"
