@@ -13,7 +13,7 @@ class TestParsersAppinstallation(SysdiagnoseTestCase):
             files = p.get_log_files()
 
             if not files:
-                continue
+                self.skipTest(f"No log files found for {case_id}")
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))

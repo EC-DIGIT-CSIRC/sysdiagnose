@@ -33,11 +33,11 @@ class ShutdownLogsParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        try:
-            return ShutdownLogsParser.parse_file(self.get_log_files()[0])
-        except IndexError:
-            logger.info("No shutdown.log file present in system_logs.logarchive/Extra/ directory")
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No shutdown.log file present in system_logs.logarchive/Extra/ directory")
             return []
+        return ShutdownLogsParser.parse_file(log_files[0])
 
     @staticmethod
     def parse_file(path: str) -> list:

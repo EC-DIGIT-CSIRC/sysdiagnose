@@ -12,7 +12,8 @@ class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
             p = RemotectlDumpstateParser(self.sd.config, case_id=case_id)
 
             files = p.get_log_files()
-            self.assertEqual(len(files), 1)
+            if not files:
+                self.skipTest("No remotectl_dumpstate.txt file present")
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))

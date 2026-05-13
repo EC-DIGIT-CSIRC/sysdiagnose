@@ -9,7 +9,7 @@ import glob
 import os
 
 from sysdiagnose.utils import misc, sqlite2json
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class ITunesStoreParser(BaseParserInterface):
@@ -27,11 +27,11 @@ class ITunesStoreParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        # there's only one file to parse
-        try:
-            return ITunesStoreParser.parse_file(self.get_log_files()[0])
-        except IndexError:
-            return {"error": "No downloads.*.sqlitedb file found in logs/itunesstored/ directory"}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No downloads.*.sqlitedb file found in logs/itunesstored/ directory")
+            return {}
+        return ITunesStoreParser.parse_file(log_files[0])
 
     @staticmethod
     def parse_file(path: str) -> list | dict:

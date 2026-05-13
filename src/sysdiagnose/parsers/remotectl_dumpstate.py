@@ -2,7 +2,7 @@
 import glob
 import os
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hierarchal_file
 
 
@@ -22,10 +22,11 @@ class RemotectlDumpstateParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        try:
-            return parse_tab_based_hierarchal_file(self.get_log_files()[0])
-        except IndexError:
-            return {"error": "No remotectl_dumpstate.txt file present"}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No remotectl_dumpstate.txt file present")
+            return {}
+        return parse_tab_based_hierarchal_file(log_files[0])
 
     @staticmethod
     def parse_file(file_path: str) -> dict:

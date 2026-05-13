@@ -18,15 +18,13 @@ class IOACPIPlaneParser(BaseParserInterface):
         return [os.path.join(self.case_data_subfolder, log_file)]
 
     def execute(self) -> list | dict:
-        log_file = self.get_log_files()[0]
-        data_tree = {}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No IOACPIPlane file present")
+            return {}
 
-        try:
-            logger.info(f"Processing file {log_file}, new entry added", extra={"log_file": log_file})
-            p = IORegStructParser()
-            data_tree = p.parse(log_file)
-
-        except Exception:
-            logger.exception("IOACPIPlane parsing crashed")
+        logger.info(f"Processing file {log_files[0]}, new entry added", extra={"log_file": log_files[0]})
+        p = IORegStructParser()
+        data_tree = p.parse(log_files[0])
 
         return data_tree

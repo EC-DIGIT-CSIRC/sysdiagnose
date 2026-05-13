@@ -31,11 +31,11 @@ class SwcutilParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list:
-        try:
-            return self.parse_file(self.get_log_files()[0])
-        except IndexError:
-            logger.info("No swcutil_show.txt file present.")
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No swcutil_show.txt file present.")
             return []
+        return self.parse_file(log_files[0])
 
     def parse_file(self, path: str) -> list:
         try:

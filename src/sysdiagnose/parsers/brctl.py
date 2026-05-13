@@ -10,7 +10,7 @@ import os
 import re
 from contextlib import suppress
 
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 # TODO brctl analyser for boot_history section -> timeline
@@ -25,10 +25,11 @@ class BrctlParser(BaseParserInterface):
         return [os.path.join(self.case_data_subfolder, log_folder) for log_folder in log_folders]
 
     def execute(self) -> list | dict:
-        try:
-            return BrctlParser.parse_folder(self.get_log_files()[0])
-        except IndexError:
-            return {"error": "No brctl folder found"}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No brctl folder found")
+            return {}
+        return BrctlParser.parse_folder(log_files[0])
 
     @staticmethod
     def parselistfile(container_list_file):

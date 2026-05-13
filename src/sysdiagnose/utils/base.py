@@ -268,7 +268,8 @@ class BaseInterface(ABC):
         handler.start()
         try:
             result = self.execute()
-        except Exception:
+        except Exception as ex:
+            logger.exception(f"Execution crashed: {ex}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
             raise

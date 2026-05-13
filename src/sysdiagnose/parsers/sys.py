@@ -30,20 +30,20 @@ class SystemVersionParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        try:
-            entry = SystemVersionParser.parse_file(self.get_log_files()[0])
-            timestamp = self.sysdiagnose_creation_datetime
-            event = Event(
-                datetime=timestamp,
-                message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
-                module=self.module_name,
-                timestamp_desc="sys at sysdiagnose creation",
-                data=entry,
-            )
-            return [event.to_dict()]
-        except IndexError:
+        log_files = self.get_log_files()
+        if not log_files:
             logger.warning("No SystemVersion.plist file present")
             return []
+        entry = SystemVersionParser.parse_file(log_files[0])
+        timestamp = self.sysdiagnose_creation_datetime
+        event = Event(
+            datetime=timestamp,
+            message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
+            module=self.module_name,
+            timestamp_desc="sys at sysdiagnose creation",
+            data=entry,
+        )
+        return [event.to_dict()]
 
     @staticmethod
     def parse_file(path: str) -> dict:

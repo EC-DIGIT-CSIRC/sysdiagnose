@@ -12,7 +12,7 @@ import glob
 import os
 
 from sysdiagnose.utils import misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class UUID2PathParser(BaseParserInterface):
@@ -30,10 +30,11 @@ class UUID2PathParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        try:
-            return UUID2PathParser.parse_file(self.get_log_files()[0])
-        except IndexError:
-            return {"error": "No UUIDToBinaryLocations file present"}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No UUIDToBinaryLocations file present")
+            return {}
+        return UUID2PathParser.parse_file(log_files[0])
 
     @staticmethod
     def parse_file(path: str) -> list | dict:

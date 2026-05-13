@@ -11,8 +11,8 @@ class TestParsersDisks(SysdiagnoseTestCase):
         for case_id, _case in self.sd.cases().items():
             p = DisksParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
-            if not files:  # we may not have disks.txt
-                continue
+            if not files:
+                self.skipTest(f"No log files found for {case_id}")
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))

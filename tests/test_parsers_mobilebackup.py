@@ -11,8 +11,8 @@ class TestParsersBackup(SysdiagnoseTestCase):
         for case_id, _case in self.sd.cases().items():
             p = MobileBackupParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
-            if not files:  # we may not have backup
-                continue
+            if not files:
+                self.skipTest(f"No log files found for {case_id}")
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))

@@ -9,7 +9,7 @@ import glob
 import os
 
 from sysdiagnose.utils import misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class NetworkExtensionCacheParser(BaseParserInterface):
@@ -27,11 +27,11 @@ class NetworkExtensionCacheParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        files = self.get_log_files()
-        if files:
-            return NetworkExtensionCacheParser.parse_file(self.get_log_files()[0])
-        else:
-            return {"error": "No com.apple.networkextension.cache.plist file present"}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No com.apple.networkextension.cache.plist file present")
+            return {}
+        return NetworkExtensionCacheParser.parse_file(log_files[0])
 
     @staticmethod
     def parse_file(path: str) -> list | dict:

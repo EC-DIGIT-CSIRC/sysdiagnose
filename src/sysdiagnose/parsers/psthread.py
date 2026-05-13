@@ -33,46 +33,47 @@ class PsThreadParser(BaseParserInterface):
         # so we just fall back to the sysdiagnose creation timestamp
         timestamp = self.sysdiagnose_creation_datetime
 
-        result = []
-        try:
-            with open(self.get_log_files()[0]) as f:
-                header = re.split(r"\s+", f.readline().strip())
-                header_length = len(header)
-                event = None
-                for line in f:
-                    if "??" in line:
-                        # append previous entry
-                        if event:
-                            event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
-                            result.append(event.to_dict())
-
-                        patterns = line.strip().split(None, header_length - 1)
-                        event = Event(
-                            datetime=timestamp,
-                            message="",
-                            module=self.module_name,
-                            timestamp_desc="running process",
-                            data={"timestamp_info": "sysdiagnose creation time", "threads": 1},
-                        )
-                        # merge last entries together, as last entry may contain spaces
-                        for col in range(header_length):
-                            # try to cast as int, float and fallback to string
-                            col_name = snake_case(header[col])
-                            try:
-                                event.data[col_name] = int(patterns[col])
-                                continue
-                            except ValueError:
-                                try:
-                                    event.data[col_name] = float(patterns[col])
-                                except ValueError:
-                                    event.data[col_name] = patterns[col]
-                    else:
-                        event.data["threads"] += 1
-                # append last entry
-                if event:
-                    event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
-                    result.append(event.to_dict())
-                return result
-        except IndexError:
+        log_files = self.get_log_files()
+        if not log_files:
             logger.warning("No ps_thread.txt file present")
             return []
+
+        result = []
+        with open(log_files[0]) as f:
+            header = re.split(r"\s+", f.readline().strip())
+            header_length = len(header)
+            event = None
+            for line in f:
+                if "??" in line:
+                    # append previous entry
+                    if event:
+                        event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
+                        result.append(event.to_dict())
+
+                    patterns = line.strip().split(None, header_length - 1)
+                    event = Event(
+                        datetime=timestamp,
+                        message="",
+                        module=self.module_name,
+                        timestamp_desc="running process",
+                        data={"timestamp_info": "sysdiagnose creation time", "threads": 1},
+                    )
+                    # merge last entries together, as last entry may contain spaces
+                    for col in range(header_length):
+                        # try to cast as int, float and fallback to string
+                        col_name = snake_case(header[col])
+                        try:
+                            event.data[col_name] = int(patterns[col])
+                            continue
+                        except ValueError:
+                            try:
+                                event.data[col_name] = float(patterns[col])
+                            except ValueError:
+                                event.data[col_name] = patterns[col]
+                else:
+                    event.data["threads"] += 1
+            # append last entry
+            if event:
+                event.message = f"{event.data['command']} [{event.data['pid']}] as {event.data['user']}"
+                result.append(event.to_dict())
+        return result
