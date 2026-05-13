@@ -21,8 +21,12 @@ class DemoParser(BaseParserInterface):
         """
         this is the function that will be called
         """
-        result = []
         log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No log files found.")
+            return []
+
+        result = []
         for log_file in log_files:
             entry = {}
             try:
@@ -41,6 +45,7 @@ class DemoParser(BaseParserInterface):
                     logger.warning("Empty entry.")
                     # ruff: noqa
                     # logger.error("Empty entry.")
+            # Do not catch all exceptions in production code, this is just for demonstration purposes
             except Exception:
                 logger.exception("This will log an error with the exception information")
                 # logger.warning("This will log a warning with the exception information", exc_info=True)
