@@ -239,6 +239,8 @@ class TestParsersMyParser(SysdiagnoseTestCase):
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
 
+            self.assert_result_summary_consistent(p, result)
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -250,11 +252,13 @@ if __name__ == "__main__":
 
 2. **Use `self.assert_has_required_fields_jsonl(item)`** for jsonl parsers to validate the event structure.
 
-3. **Call `save_result(force=True)`** to ensure the parser runs fresh.
+3. **Use `self.assert_result_summary_consistent(instance, result)`** to validate that the `ResultSummary` matches the actual output (event count, timing, status consistency).
 
-4. **Validate the output file exists** after saving.
+4. **Call `save_result(force=True)`** to ensure the parser runs fresh.
 
-5. **Test with the provided test data** under `tests/testdata/`. Add new test archives if your parser targets files not present in existing test data.
+5. **Validate the output file exists** after saving.
+
+6. **Test with the provided test data** under `tests/testdata/`. Add new test archives if your parser targets files not present in existing test data.
 
 ## Result Summary
 

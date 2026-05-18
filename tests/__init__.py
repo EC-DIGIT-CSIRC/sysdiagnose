@@ -1,8 +1,10 @@
 import glob
 import os
 import unittest
+from datetime import datetime
 
 from sysdiagnose import Sysdiagnose
+from sysdiagnose.utils.summary import ExecutionStatus
 
 
 class SysdiagnoseTestCase(unittest.TestCase):
@@ -79,3 +81,42 @@ class SysdiagnoseTestCase(unittest.TestCase):
         """
         for field in self.required_fields_jsonl:
             self.assertTrue(field in entry, f'Parser result entry did not contain a {field}.')
+
+    def assert_result_summary_consistent(self, instance, result):
+        """
+        Validates that the ResultSummary is consistent with the actual result produced.
+
+        Args:
+            instance: The parser or analyser instance (must have been executed via save_result).
+            result: The result returned by get_result().
+        """
+        # Summary file must exist
+        self.assertTrue(os.path.isfile(instance.summary_file), "Summary file does not exist")
+
+        summary = instance.get_result_summary()
+
+        # Timing metadata must be set
+        self.assertIsInstance(summary.start_time, datetime, "start_time must be a datetime")
+        self.assertIsNotNone(summary.duration, "duration must be set")
+        self.assertGreaterEqual(summary.duration, 0, "duration must be non-negative")
+
+        # Status must be consistent with error/warning counts
+        if summary.num_errors > 0:
+            self.assertEqual(summary.status, ExecutionStatus.ERROR,
+                             f"Status should be ERROR when num_errors={summary.num_errors}")
+        elif summary.num_warnings > 0:
+            self.assertEqual(summary.status, ExecutionStatus.WARNING,
+                             f"Status should be WARNING when num_warnings={summary.num_warnings}")
+        else:
+            self.assertEqual(summary.status, ExecutionStatus.OK,
+                             "Status should be OK when no errors or warnings")
+
+        # Event count must match actual result length
+        if result is not None and instance.format in ("json", "jsonl"):
+            if isinstance(result, list):
+                self.assertEqual(summary.num_events, len(result),
+                                 f"num_events ({summary.num_events}) does not match result length ({len(result)})")
+            elif isinstance(result, dict):
+                # For json format returning a dict, num_events is 1 (the dict itself)
+                self.assertGreaterEqual(summary.num_events, 1,
+                                       "num_events should be >= 1 for dict results")
