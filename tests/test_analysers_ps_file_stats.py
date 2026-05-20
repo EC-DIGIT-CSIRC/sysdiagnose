@@ -8,8 +8,6 @@ from tests import SysdiagnoseTestCase
 class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
     def test_analyse_file_stats(self):
         for case_id, case in self.sd.cases().items():
-            print(f"Running FileStatisticsAnalyser for {case_id}")
-            # run the analyser
             a = FileStatisticsAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)
 
@@ -18,19 +16,20 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
 
             result = a.get_result()
             # device info
-            self.assertTrue('os_version' in result[0])
-            self.assertTrue('build' in result[0])
-            self.assertTrue('product_name' in result[0])
-            self.assertTrue('product_type' in result[0])
+            self.assertIn('os_version', result['device_info'])
+            self.assertIn('build', result['device_info'])
+            self.assertIn('product_name', result['device_info'])
+            self.assertIn('product_type', result['device_info'])
             # file stats
-            for item in result[1]:
-                self.assertTrue('folder_name' in item)
-                self.assertTrue('file_count' in item)
-                self.assertTrue('files' in item)
+            for item in result['file_stats']:
+                self.assertIn('folder_name', item)
+                self.assertIn('file_count', item)
+                self.assertIn('files', item)
                 for file in item['files']:
-                    self.assertTrue('filename' in file)
-                    self.assertTrue('extension' in file)
-                    self.assertTrue('file_type' in file)
+                    self.assertIn('filename', file)
+                    self.assertIn('extension', file)
+                    self.assertIn('file_type', file)
+            self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == '__main__':

@@ -15,8 +15,7 @@ class TestAnalysersSummary(SysdiagnoseTestCase):
             a.save_result(force=True)
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)
-
-            a.get_result()
+            self.assert_result_summary_consistent(a, a.get_result())
 
 
 if __name__ == '__main__':

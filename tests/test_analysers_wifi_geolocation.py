@@ -14,12 +14,7 @@ class TestAnalysersWifiGeolocation(SysdiagnoseTestCase):
 
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)
-            self.assertTrue(os.path.isfile(a.summary_file))
-
-            summary = a.get_result_summary()
-            self.assertGreaterEqual(summary.num_events, 1)
-            self.assertIsInstance(summary.start_time, datetime)
-            self.assertIsNotNone(summary.duration)
+            self.assert_result_summary_consistent(a, a.get_result())
 
 
 if __name__ == "__main__":

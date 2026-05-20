@@ -14,6 +14,7 @@ class TestAnalysersWifiGeolocationKml(SysdiagnoseTestCase):
 
             self.assertTrue(os.path.isfile(a.output_file))
             self.assertTrue(os.path.getsize(a.output_file) > 0)
+            self.assert_result_summary_consistent(a, a.get_result())
 
             # FIXME check for something else within the file...
 

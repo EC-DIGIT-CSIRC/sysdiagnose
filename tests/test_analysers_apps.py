@@ -17,6 +17,7 @@ class TestAnalysersApps(SysdiagnoseTestCase):
 
             result = a.get_result()
             self.assertGreater(len(result), 0)
+            self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == '__main__':

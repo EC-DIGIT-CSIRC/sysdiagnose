@@ -533,10 +533,14 @@ def compare_file_stats_json_files(
     json2 = load_json(file2)
 
     # Compare properties
-    added_properties, removed_properties, modified_properties = compare_file_stats_sysdiag_properties(json1[0], json2[0])
+    added_properties, removed_properties, modified_properties = compare_file_stats_sysdiag_properties(
+        json1["device_info"], json2["device_info"]
+    )
 
     # Compare nested arrays
-    added, removed, modified = compare_file_stats_folders_details(json1[1], json2[1], exclusions=exclusions)
+    added, removed, modified = compare_file_stats_folders_details(
+        json1["file_stats"], json2["file_stats"], exclusions=exclusions
+    )
 
     if format.lower() == "html":
         # Generate HTML report

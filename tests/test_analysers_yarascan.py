@@ -39,6 +39,7 @@ rule match_for_sure_on_sysdiagnose_version {
                 result = a.get_result()
                 for item in result:
                     self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == '__main__':
