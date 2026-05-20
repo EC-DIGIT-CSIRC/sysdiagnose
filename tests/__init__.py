@@ -4,6 +4,7 @@ import unittest
 from datetime import datetime
 
 from sysdiagnose import Sysdiagnose
+from sysdiagnose.utils.base import BaseInterface
 from sysdiagnose.utils.summary import ExecutionStatus
 
 
@@ -82,7 +83,7 @@ class SysdiagnoseTestCase(unittest.TestCase):
         for field in self.required_fields_jsonl:
             self.assertTrue(field in entry, f'Parser result entry did not contain a {field}.')
 
-    def assert_result_summary_consistent(self, instance, result):
+    def assert_result_summary_consistent(self, instance: BaseInterface, result: list | dict | str | None) -> None:
         """
         Validates that the ResultSummary is consistent with the actual result produced.
 
