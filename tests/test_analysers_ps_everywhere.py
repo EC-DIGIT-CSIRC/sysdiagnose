@@ -20,6 +20,7 @@ class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
                 self.assertTrue('source' in item['data'])
+            self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == '__main__':
