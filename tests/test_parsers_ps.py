@@ -21,13 +21,14 @@ class TestParsersPs(SysdiagnoseTestCase):
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
 
-            if p.get_result():  # not all logs contain data
-                for item in p.get_result():
+            result = p.get_result()
+            if result:  # not all logs contain data
+                for item in result:
                     self.assertTrue('command' in item['data'])
                     self.assertTrue('pid' in item['data'])
                     self.assertTrue('user' in item['data'])
                     self.assert_has_required_fields_jsonl(item)
-            self.assert_result_summary_consistent(p, None)
+            self.assert_result_summary_consistent(p, result)
 
     def test_parse_ps_lower_than_v16(self):
         input = [

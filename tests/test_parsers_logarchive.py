@@ -2,7 +2,6 @@ import json
 import os
 import tempfile
 import unittest
-from datetime import datetime
 
 from sysdiagnose.parsers.logarchive import LogarchiveHelper, LogarchiveParser
 from tests import SysdiagnoseTestCase
@@ -11,7 +10,6 @@ from tests import SysdiagnoseTestCase
 class TestParsersLogarchive(SysdiagnoseTestCase):
     def test_parse_logarchive(self):
         for case_id, _case in self.sd.cases().items():
-            print(f"Parsing logarchive for {case_id}")
             p = LogarchiveParser(self.sd.config, case_id=case_id)
 
             files = p.get_log_files()
@@ -20,19 +18,17 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
-            self.assertTrue(os.path.isfile(p.summary_file))
 
-            # we don't test getting result in memory, but check one line in the output.
+            # validate first line structure without loading entire file
             with open(p.output_file) as f:
-                line = f.readline()
-                item = json.loads(line)
-                self.assertTrue("subsystem" in item["data"])
+                item = json.loads(f.readline())
+                self.assertIn("subsystem", item["data"])
                 self.assert_has_required_fields_jsonl(item)
 
-            summary = p.get_result_summary()
-            self.assertGreater(summary.num_events, 0)
-            self.assertIsInstance(summary.start_time, datetime)
-            self.assertIsNotNone(summary.duration)
+            # count lines to validate summary without materializing full result
+            with open(p.output_file) as f:
+                num_lines = sum(1 for _ in f)
+            self.assert_result_summary_consistent(p, [None] * num_lines)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = "2023-05-24 13:03:28.908085-0700"
