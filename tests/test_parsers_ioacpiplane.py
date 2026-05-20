@@ -16,6 +16,7 @@ class TestParsersIOACPIPlane(SysdiagnoseTestCase):
 
             p.save_result(force=True)
             self.assertTrue(os.path.isfile(p.output_file))
+            self.assert_result_summary_consistent(p, p.get_result())
 
 
 if __name__ == '__main__':

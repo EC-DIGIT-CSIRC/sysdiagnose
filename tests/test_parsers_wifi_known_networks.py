@@ -19,6 +19,7 @@ class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertGreater(len(result), 0)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

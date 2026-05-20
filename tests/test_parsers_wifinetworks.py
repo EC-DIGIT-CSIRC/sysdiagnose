@@ -26,6 +26,7 @@ class TestParsersWifiNetworks(SysdiagnoseTestCase):
             #         print(key)
             #         # self.assertTrue(key.startswith('wifi.network'))
             #         break
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

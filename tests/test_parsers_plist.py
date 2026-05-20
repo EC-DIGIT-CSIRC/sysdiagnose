@@ -1,6 +1,5 @@
 import os
 import unittest
-from datetime import datetime
 
 from sysdiagnose.parsers.plists import PlistParser
 from tests import SysdiagnoseTestCase
@@ -14,29 +13,13 @@ class TestParsersPlist(SysdiagnoseTestCase):
             if not files:
                 self.skipTest(f"No log files found for {case_id}")
 
-            # first run to store in memory
-            result = p.get_result()
-
             p.save_result(force=True)
             self.assertTrue(os.path.isdir(p.output_folder))
-            self.assertTrue(os.path.isfile(p.summary_file))
 
+            result = p.get_result()
             self.assertGreater(len(result), 0)
-            print(result.keys())
             self.assertIn("hidutil.plist", result.keys())
-            summary = p.get_result_summary()
-            self.assertEqual(summary.num_events, len(files))
-            self.assertIsInstance(summary.start_time, datetime)
-            self.assertIsNotNone(summary.duration)
-
-            cached_parser = PlistParser(self.sd.config, case_id=case_id)
-            cached_result = cached_parser.get_result()
-            self.assertEqual(set(cached_result.keys()), set(result.keys()))
-            cached_summary = cached_parser.get_result_summary()
-            self.assertEqual(cached_summary.num_events, len(files))
-            self.assertIsInstance(cached_summary.start_time, datetime)
-            # nothing specific to assert here as there's not always a result
-            # just catching exceptions
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":
