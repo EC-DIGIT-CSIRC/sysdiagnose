@@ -29,6 +29,7 @@ class TestParsersBrctl(SysdiagnoseTestCase):
                 self.assertTrue('applibrary' in result)
                 self.assertTrue('app_library_id' in result)
                 self.assertTrue('app_ids' in result)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

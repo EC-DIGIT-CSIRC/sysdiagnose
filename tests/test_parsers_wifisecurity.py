@@ -24,6 +24,7 @@ class TestParsersWifiSecurity(SysdiagnoseTestCase):
                 self.assertTrue('cdat' in item['data'])
                 self.assertTrue('mdat' in item['data'])
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

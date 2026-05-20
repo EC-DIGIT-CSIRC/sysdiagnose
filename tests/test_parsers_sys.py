@@ -26,6 +26,7 @@ class TestParsersSys(SysdiagnoseTestCase):
                 self.assertTrue(item['data']['ProductName'] in self.productnames)  # check if the result contains at least the following keys
                 self.assertTrue(item['data']['BuildID'])
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

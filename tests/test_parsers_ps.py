@@ -27,6 +27,7 @@ class TestParsersPs(SysdiagnoseTestCase):
                     self.assertTrue('pid' in item['data'])
                     self.assertTrue('user' in item['data'])
                     self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, None)
 
     def test_parse_ps_lower_than_v16(self):
         input = [

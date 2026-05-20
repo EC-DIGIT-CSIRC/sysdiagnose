@@ -21,6 +21,7 @@ class TestParsersSys(SysdiagnoseTestCase):
             self.assertGreater(len(result), 0)
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

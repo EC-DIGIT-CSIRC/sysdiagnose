@@ -23,6 +23,7 @@ class TestParsersIntunesstore(SysdiagnoseTestCase):
             self.assertTrue('application_id' in result)
             self.assertTrue('download' in result)
             self.assertTrue('persistent_manager' in result)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

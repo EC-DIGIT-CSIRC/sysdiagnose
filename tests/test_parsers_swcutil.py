@@ -21,6 +21,7 @@ class TestParsersSwcutil(SysdiagnoseTestCase):
             self.assertGreater(len(result), 0)
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
     def test_parse_memory(self):
         p = SwcutilParser(self.sd.config, case_id='test')

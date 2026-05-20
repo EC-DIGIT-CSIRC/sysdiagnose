@@ -22,6 +22,7 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
             self.assertTrue('os_version' in result[0]['data'])
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
     def test_parse_basic(self):
         lines = [

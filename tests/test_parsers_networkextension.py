@@ -20,6 +20,7 @@ class TestParsersNetworkExtension(SysdiagnoseTestCase):
 
             result = p.get_result()
             self.assertTrue('Version' in result)
+            self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == '__main__':

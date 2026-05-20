@@ -25,6 +25,7 @@ class TestParsersLockdownd(SysdiagnoseTestCase):
             result = p.get_result()
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
+            self.assert_result_summary_consistent(p, result)
 
     def test_parse_lockdownd_simple(self):
         input = [
