@@ -49,6 +49,11 @@ save_result() → _execute_and_write() → execute() + _write_result() + ResultS
 
 Outliers (custom I/O) use: `execute_with_result_summary()` → execute() + summary (no file write)
 
+The persisted summary file (`<module>.summary.json`) has two purposes:
+
+1. **Trust signal for cached data.** When loading from cache (CLI or API), the summary provides a glimpse of data quality (event count, errors, warnings, timing) without re-executing.
+2. **Staleness detection (future).** The `start_time` field enables identifying outdated cached results — relevant for analysers depending on previously parsed data, since CLI logs only capture the current run.
+
 ## Do NOT
 
 - Override `save_result()` unless absolutely necessary

@@ -271,6 +271,14 @@ The framework automatically tracks execution metadata via `ResultSummary`:
 
 You don't need to manage this manually — it's built by `ResultSummaryExecutionHandler` during `_execute_and_write()`. The summary is persisted as `<module_name>.summary.json` alongside the output file.
 
+### Why the summary is persisted
+
+The summary file serves as a sidecar metadata cache with two purposes:
+
+1. **Trust signal for cached data.** When a consumer (CLI or API) loads results from cache rather than re-executing, the summary provides a glimpse of the data quality: how many events were produced, whether errors or warnings occurred, and when it was generated. Without it, you have no way to assess whether the cached output is trustworthy without re-reading or re-executing.
+
+2. **Staleness detection (future).** The summary's `start_time` enables detection of outdated cached results — particularly relevant for the CLI when invoking analysers that depend on previously parsed data. The CLI's JSONL log only captures the current run, not historical executions, so the summary is the only persistent record of when and how the data was produced. See the TODO in `base.py` for implementation options.
+
 ## Checklist for new parsers/analysers
 
 - [ ] Class inherits from `BaseParserInterface` or `BaseAnalyserInterface`

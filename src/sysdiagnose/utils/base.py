@@ -199,9 +199,21 @@ class BaseInterface(ABC):
             with open(self.summary_file) as f:
                 self._result_summary = ResultSummary.from_dict(json.load(f))
         elif self.output_exists():
+            logger.warning(
+                f"No summary file found for '{self.module_name}', rebuilding from output file. "
+                "Warning and error counts are not guaranteed to be accurate. "
+                "To fix this, re-run with force=True to rebuild the summary file."
+            )
             self._result_summary = ResultSummaryFactory.from_output(self.output_file, self.format)
         else:
             self._result_summary = ResultSummary()
+
+        # TODO: Detect stale results. Options considered:
+        # B) Store framework version in ResultSummary — catches any change, but causes false positives from unrelated updates
+        # C) Store hash of parser source in ResultSummary — precise, no false positives, survives git ops,
+        #    but doesn't catch changes in dependencies (utilities, base class). Backward compatible (old summaries skip check).
+        # Recommended: C + framework version bump as a "force invalidate all" signal for infrastructure changes.
+        # If stale, warn user to re-run with force=True.
 
         return self._result_summary
 
