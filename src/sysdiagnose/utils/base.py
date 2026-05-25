@@ -261,9 +261,7 @@ class BaseInterface(ABC):
         Executes the parser/analyser, writes the result to file, and builds the ResultSummary.
         Handles Generator/Iterator results for jsonl format by consuming lazily during write.
         Returns (result, summary).
-
-        Raises:
-            Exception: If there is an error during execution, the summary will be updated with 1 error and 0 events, and the exception will be re-raised."""
+        """
         handler = ResultSummaryExecutionHandler()
         handler.start()
         try:
@@ -272,7 +270,8 @@ class BaseInterface(ABC):
             logger.exception(f"Execution crashed: {ex}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            raise
+            self._result = [] if self.format == "jsonl" else {}
+            return self._result, self._result_summary
 
         num_events = self._write_result(result, indent=indent)
         add_errors = ResultSummaryFactory.count_errors_in_result(self._result)

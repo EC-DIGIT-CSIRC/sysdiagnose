@@ -182,22 +182,31 @@ def main():
             sd.init_case_logging(args.mode, case_id)
 
             print(f"Case ID: {case_id}")
-            for parser in parsers_list:
-                print(f"Parser '{parser}' for case ID '{case_id}'")
+            total = len(parsers_list)
+            for i, parser in enumerate(parsers_list, 1):
+                print(f"[{i}/{total}] Parser '{parser}' for case ID '{case_id}'")
                 logger.info(f"Parser '{parser}' started", extra={"parser": parser})
                 try:
-                    result = sd.parse(parser, case_id)
-                    result_str = "successfully" if result == 0 else "with errors"
-                    logger.info(f"Parser '{parser}' finished {result_str}", extra={"parser": parser, "result": result})
+                    summary = sd.parse(parser, case_id)
                 except NotImplementedError:
                     logger.warning(
                         f"Parser '{parser}' is not implemented yet, skipping", extra={"parser": parser, "result": "skipped"}
                     )
-                except Exception:
-                    logger.exception(
-                        f"Parser '{parser}' finished unexpectedly. Might be a sign of evil or a bug!",
-                        extra={"parser": parser, "result": "error"},
-                    )
+                    continue
+                print(
+                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"
+                )
+                logger.info(
+                    f"Parser '{parser}' finished {summary.status}",
+                    extra={
+                        "parser": parser,
+                        "status": str(summary.status),
+                        "num_events": summary.num_events,
+                        "num_errors": summary.num_errors,
+                        "num_warnings": summary.num_warnings,
+                        "duration": summary.duration,
+                    },
+                )
 
     elif args.mode == "analyse":
         # Handle analyse mode
@@ -224,23 +233,32 @@ def main():
             sd.init_case_logging(args.mode, case_id)
 
             print(f"Case ID: {case_id}")
-            for analyser in analysers_list:
-                print(f"  Analyser '{analyser}' for case ID '{case_id}'")
+            total = len(analysers_list)
+            for i, analyser in enumerate(analysers_list, 1):
+                print(f"[{i}/{total}] Analyser '{analyser}' for case ID '{case_id}'")
                 logger.info(f"Analyser '{analyser}' started", extra={"analyser": analyser})
                 try:
-                    result = sd.analyse(analyser, case_id)
-                    result_str = "successfully" if result == 0 else "with errors"
-                    logger.info(f"Analyser '{analyser}' finished {result_str}", extra={"analyser": analyser, "result": result})
+                    summary = sd.analyse(analyser, case_id)
                 except NotImplementedError:
                     logger.warning(
                         f"Analyser '{analyser}' is not implemented yet, skipping",
                         extra={"analyser": analyser, "result": "skipped"},
                     )
-                except Exception:
-                    logger.exception(
-                        f"Analyser '{analyser}' finished unexpectedley. Might be a sign of evil or a bug!",
-                        extra={"analyser": analyser, "result": "error"},
-                    )
+                    continue
+                print(
+                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"
+                )
+                logger.info(
+                    f"Analyser '{analyser}' finished {summary.status}",
+                    extra={
+                        "analyser": analyser,
+                        "status": str(summary.status),
+                        "num_events": summary.num_events,
+                        "num_errors": summary.num_errors,
+                        "num_warnings": summary.num_warnings,
+                        "duration": summary.duration,
+                    },
+                )
 
     else:
         parser.print_help()

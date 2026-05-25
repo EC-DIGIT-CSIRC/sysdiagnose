@@ -447,9 +447,11 @@ class LogarchiveParser(BaseParserInterface):
         try:
             num_events = LogarchiveHelper.parse_all_to_file(self.get_log_files(), self.output_file)
         except Exception:
+            logger.exception("Logarchive parsing crashed")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            raise
+            self._result = None
+            return
 
         handler.update(num_events=num_events, end=True)
         self._result_summary = handler.get()

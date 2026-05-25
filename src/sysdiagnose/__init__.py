@@ -15,6 +15,7 @@ from tabulate import tabulate
 from sysdiagnose.utils.base import BaseAnalyserInterface, BaseInterface, BaseParserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.lock import FileLock
 from sysdiagnose.utils.logger import logger, set_json_logging
+from sysdiagnose.utils.summary import ResultSummary
 
 
 class Sysdiagnose:
@@ -362,7 +363,7 @@ class Sysdiagnose:
         file_path = os.path.join(folder, f"log-{mode}.jsonl")
         set_json_logging(filename=file_path)
 
-    def parse(self, parser: str, case_id: str):
+    def parse(self, parser: str, case_id: str) -> ResultSummary:
         # Load parser module
         module = importlib.import_module(f"sysdiagnose.parsers.{parser}")
         parser_instance = None
@@ -376,9 +377,9 @@ class Sysdiagnose:
             raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
 
         parser_instance.save_result(force=True)  # force parsing
-        return 0
+        return parser_instance.get_result_summary()
 
-    def analyse(self, analyser: str, case_id: str):
+    def analyse(self, analyser: str, case_id: str) -> ResultSummary:
         module = importlib.import_module(f"sysdiagnose.analysers.{analyser}")
         analyser_instance = None
         for attr in dir(module):
@@ -390,8 +391,7 @@ class Sysdiagnose:
             raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")
 
         analyser_instance.save_result(force=True)  # force parsing
-
-        return 0
+        return analyser_instance.get_result_summary()
 
     def print_list_cases(self, verbose=False):
         print("#### case List ####")
