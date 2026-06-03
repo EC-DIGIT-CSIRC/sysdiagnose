@@ -10,7 +10,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
     description = "Parsing security-sysdiagnose.txt file containing keychain information"
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:
@@ -108,7 +108,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         return json_result["events"]
 
     @staticmethod
-    def process_buffer(buffer: list, section: str | None, json_result: dict, module_name: str):
+    def process_buffer(buffer: list, section: str | None, json_result: dict, module_name: str) -> None:
         """
         process the buffer for the given section
         """
@@ -121,7 +121,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             logger.error(f"ERROR: Function {function_name} not found in the SecuritySysdiagnoseParser class.")
 
     @staticmethod
-    def process_buffer_circle(buffer: list, json_result: dict, _module_name: str):
+    def process_buffer_circle(buffer: list, json_result: dict, _module_name: str) -> None:
         """
         process the buffer for the circle section
 
@@ -133,7 +133,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         json_result["meta"]["circle"] = buffer
 
     @staticmethod
-    def process_buffer_engine_state(buffer: list, json_result: dict, _module_name: str):
+    def process_buffer_engine_state(buffer: list, json_result: dict, _module_name: str) -> None:
         """
         process the buffer for the engine section
         """
@@ -143,7 +143,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         pass
 
     @staticmethod
-    def process_buffer_keychain_state(buffer: list, json_result: dict, module_name: str):
+    def process_buffer_keychain_state(buffer: list, json_result: dict, module_name: str) -> None:
         """
         process the buffer for the homekit section
         """
@@ -216,7 +216,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 json_result["meta"][section].append(row)
 
     @staticmethod
-    def process_buffer_analytics(_buffer: list, _json_result: dict, _module_name: str):
+    def process_buffer_analytics(_buffer: list, _json_result: dict, _module_name: str) -> None:
         """
         process the buffer for the analytics section
         """
@@ -224,7 +224,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         pass
 
     @staticmethod
-    def process_buffer_client(buffer: list, json_result: dict, module_name: str):
+    def process_buffer_client(buffer: list, json_result: dict, module_name: str) -> None:
         """
         process the buffer for the client section
         """
@@ -276,7 +276,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
             i += 1
 
     @staticmethod
-    def process_buffer_keys_and_values(buffer: list, json_result: dict, _module_name: str):
+    def process_buffer_keys_and_values(buffer: list, json_result: dict, _module_name: str) -> None:
         """
         process the buffer for the values section
         """

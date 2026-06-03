@@ -21,7 +21,7 @@ from sysdiagnose.utils.summary import (
 
 
 class SysdiagnoseConfig:
-    def __init__(self, cases_path: str):
+    def __init__(self, cases_path: str) -> None:
         self.config_folder = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
         self.parsers_folder = os.path.join(self.config_folder, "parsers")
         self.analysers_folder = os.path.join(self.config_folder, "analysers")
@@ -99,7 +99,7 @@ class BaseInterface(ABC):
     format = "json"  # implementation should set this
     json_pretty = True  # implementation should set this to false for large data sets
 
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
         self.config = config
 
         self.module_name = os.path.basename(module_filename).split(".")[0]
@@ -251,7 +251,7 @@ class BaseInterface(ABC):
 
         return self._result
 
-    def save_result(self, force: bool = False, indent=None):
+    def save_result(self, force: bool = False, indent=None) -> None:
         """
         Saves the result of the parsing operation to a file and returns the execution status.
 
@@ -361,7 +361,7 @@ class BaseInterface(ABC):
 
 
 class BaseParserInterface(BaseInterface):
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(module_filename, config, case_id)
 
     @abstractmethod
@@ -376,7 +376,7 @@ class BaseParserInterface(BaseInterface):
 
 
 class BaseAnalyserInterface(BaseInterface):
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(module_filename, config, case_id)
 
 
@@ -400,7 +400,7 @@ class Event:
         return getattr(self, key)
 
     # allows access to the attributes as if they were dictionary keys
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         if key == "datetime":
             if isinstance(value, str):
                 # if the value is a string, try to parse it as a datetime

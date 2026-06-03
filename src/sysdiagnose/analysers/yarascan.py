@@ -22,7 +22,7 @@ class YaraAnalyser(BaseAnalyserInterface):
     description = "Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)"
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
         self.yara_rules_path = os.getenv("SYSDIAGNOSE_YARA_RULES_PATH", "./yara")
 
@@ -241,7 +241,7 @@ class YaraAnalyser(BaseAnalyserInterface):
         """
         results_lock = threading.Lock()
 
-        def worker():
+        def worker() -> None:
             while True:
                 logger.debug(f"Worker thread seeing {file_queue.qsize()} files in queue, and taking one")
                 file_path = file_queue.get()

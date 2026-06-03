@@ -12,7 +12,7 @@ class McStateSharedProfileParser(BaseParserInterface):
     description = "Parsing MCState Shared Profile stub files"
     format = "jsonl"  # by default json
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

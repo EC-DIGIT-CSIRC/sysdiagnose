@@ -19,7 +19,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
     description = "Provides parser coverage information"
     format = "html"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def execute(self):

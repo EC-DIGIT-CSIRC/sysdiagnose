@@ -16,7 +16,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
     description = "Makes a matrix comparing ps, psthread, taskinfo"
     format = "txt"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def execute(self):

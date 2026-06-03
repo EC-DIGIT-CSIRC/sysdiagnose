@@ -10,7 +10,7 @@ class IORegStructParser:
     __rollback_addr = None
     __curr_line = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def parse(self, file_path: str | PathLike[str] | TextIOBase, from_start: bool = False) -> dict:
@@ -42,21 +42,21 @@ class IORegStructParser:
 
         return data_tree
 
-    def get_line(self):
+    def get_line(self) -> None:
         self.__rollback_addr = self.open_file.tell()
         self.__curr_line = self.open_file.readline()
         self.__curr_line = self.__curr_line.replace("\n", "")
 
-    def recursive_call(self, data_tree: dict):
+    def recursive_call(self, data_tree: dict) -> None:
         self.open_file.seek(self.__rollback_addr)
         self.recursive_loop(data_tree)
 
-    def check_start_node(self):
+    def check_start_node(self) -> None:
         if "+-o" not in self.__curr_line:
             logger.error("This is not normal. Recursive function called on random line.")
             raise Exception("File has an invalid structure, '+-o' tag was not found in first line")
 
-    def check_key_uniqueness(self, dictio: dict, key: str):
+    def check_key_uniqueness(self, dictio: dict, key: str) -> None:
         if dictio.get(key):
             logger.warning("Key is already in dictionary, data may be lost\n\tKey : " + key)
 
@@ -78,13 +78,13 @@ class IORegStructParser:
 
         return res
 
-    def parse_values(self, data_dict: dict):
+    def parse_values(self, data_dict: dict) -> None:
         for key, value in data_dict.items():
             constructed = string_parser.Parser().parse(value)
             if constructed:
                 data_dict[key] = constructed
 
-    def dict_update(self, main_dict: dict, data_dict: dict):
+    def dict_update(self, main_dict: dict, data_dict: dict) -> None:
         """Redefining the dict.update function to handle key collisions"""
 
         for key, value in data_dict.items():
@@ -111,7 +111,7 @@ class IORegStructParser:
 
         return name, data
 
-    def warn_if_no_struct(self, data: str | dict | list):
+    def warn_if_no_struct(self, data: str | dict | list) -> None:
         if isinstance(data, str):
             logger.warning("No struct found in a title, should always have one\n---> " + data)
 
@@ -161,7 +161,7 @@ class IORegStructParser:
 
         return res
 
-    def iterate_children(self, depth: int, data_tree: dict):
+    def iterate_children(self, depth: int, data_tree: dict) -> None:
         while self.__curr_line and (self.__curr_line[depth] == "|" or self.__curr_line[depth : depth + 3] == "+-o"):
             if self.__curr_line[depth : depth + 3] == "+-o":
                 name = self.parse_title()[0]
@@ -189,7 +189,7 @@ class IORegStructParser:
             data_tree[key] = {}
             return data_tree[key]
 
-    def recursive_loop(self, data_tree: dict):
+    def recursive_loop(self, data_tree: dict) -> None:
         is_leaf = False
         self.get_line()
 

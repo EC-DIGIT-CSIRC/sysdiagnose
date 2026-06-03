@@ -16,7 +16,7 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
     description = "Generate GPS Exchange (GPX) of wifi geolocations"
     format = "gpx"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def execute(self) -> str:

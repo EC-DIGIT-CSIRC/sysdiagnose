@@ -64,7 +64,7 @@ class ResultSummary:
 
 
 class ResultSummaryLogHandler(logging.Handler):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.num_errors = 0
         self.num_warnings = 0
@@ -137,7 +137,7 @@ class ResultSummaryFactory:
         return num_errors
 
     @staticmethod
-    def has_error_value(value) -> bool:
+    def has_error_value(value: object) -> bool:
         if value is None:
             return False
         if isinstance(value, list | tuple | set | dict | str):
@@ -145,7 +145,7 @@ class ResultSummaryFactory:
         return bool(value)
 
     @staticmethod
-    def count_error_value(value) -> int:
+    def count_error_value(value: object) -> int:
         if isinstance(value, dict):
             return len(value)
         if isinstance(value, list | tuple | set):
@@ -161,7 +161,7 @@ class ResultSummaryExecutionHandler:
     Provides start/update/get semantics with log handler integration.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._summary: ResultSummary | None = None
         self._log_handler: ResultSummaryLogHandler | None = None
         self._start_time: datetime_datetime | None = None

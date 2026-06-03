@@ -123,7 +123,7 @@ def build_from_logentry(line, tzinfo, module) -> Event:
 # Function call: month = month_converter(month)
 
 
-def month_converter(month):
+def month_converter(month) -> str:
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     month = months.index(month) + 1
     return f"{month:02d}"
@@ -133,7 +133,7 @@ def month_converter(month):
 # Functtion call: day = day_converter(day)
 
 
-def day_converter(day):
+def day_converter(day) -> str:
     day = int(day)
     return f"{day:02d}"
 

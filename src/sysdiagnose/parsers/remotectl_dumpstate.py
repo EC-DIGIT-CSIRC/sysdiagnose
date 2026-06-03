@@ -9,7 +9,7 @@ from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hie
 class RemotectlDumpstateParser(BaseParserInterface):
     description = "Parsing remotectl_dumpstate file containing system information"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

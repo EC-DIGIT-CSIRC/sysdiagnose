@@ -87,7 +87,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 # --------------------------------------------------------------------------- #
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", dest="inputfile", type=str, help="SQlite DB To Be Printed")
 

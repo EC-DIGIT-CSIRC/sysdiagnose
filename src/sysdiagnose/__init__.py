@@ -19,7 +19,7 @@ from sysdiagnose.utils.summary import ResultSummary
 
 
 class Sysdiagnose:
-    def __init__(self, cases_path: str | None = None):
+    def __init__(self, cases_path: str | None = None) -> None:
         if cases_path is None:
             cases_path = os.getenv("SYSDIAGNOSE_CASES_PATH", "./cases")
         self._cases = False  # will be populated through cases() method
@@ -386,7 +386,7 @@ class Sysdiagnose:
         analyser_instance.save_result(force=True)  # force parsing
         return analyser_instance.get_result_summary()
 
-    def print_list_cases(self, verbose=False):
+    def print_list_cases(self, verbose: bool = False) -> None:
         print("#### case List ####")  # noqa: T201
         headers = ["Case ID", "acquisition date", "Serial number", "Unique device ID", "iOS Version", "Tags"]
         if verbose:
@@ -415,7 +415,7 @@ class Sysdiagnose:
     def is_valid_case_id(self, case_id):
         return case_id in self.cases()
 
-    def is_valid_parser_name(self, name):
+    def is_valid_parser_name(self, name) -> bool:
         if name == "__init__":
             return False
         fname = os.path.join(self.config.parsers_folder, f"{name}.py")
@@ -429,7 +429,7 @@ class Sysdiagnose:
                 return False
         return False
 
-    def is_valid_analyser_name(self, name):
+    def is_valid_analyser_name(self, name) -> bool:
         if name == "__init__":
             return False
         fname = os.path.join(self.config.analysers_folder, f"{name}.py")

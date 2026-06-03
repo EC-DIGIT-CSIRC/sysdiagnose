@@ -14,7 +14,7 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
     description = "Generate KML file for wifi geolocations"
     format = "kml"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def execute(self) -> str:

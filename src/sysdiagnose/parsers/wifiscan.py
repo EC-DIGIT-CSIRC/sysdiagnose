@@ -11,7 +11,7 @@ class WifiScanParser(BaseParserInterface):
     description = "Parsing wifi_scan files"
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def get_log_files(self) -> list:

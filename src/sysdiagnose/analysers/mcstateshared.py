@@ -10,7 +10,7 @@ class MCStateSharedProfileAnalyser(BaseAnalyserInterface):
     description = "Exports MCState Shared Profile stub files to CSV for better analysis."
     format = "csv"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
 
     def execute(self):

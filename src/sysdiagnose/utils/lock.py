@@ -23,13 +23,13 @@ class FileLock:
         lock.release()
     """
 
-    def __init__(self, filename: str, timeout: int = 5):
+    def __init__(self, filename: str, timeout: int = 5) -> None:
         self.filename = filename
         self.timeout = timeout
         self.locked = False
         self.lock_file = Path(f"{filename}.lock")
 
-    def acquire(self):
+    def acquire(self) -> None:
         """
         Acquire the lock for the given filename.
         Waits until the lock is available or raises a TimeoutError if it cannot be acquired within the specified timeout.
@@ -47,7 +47,7 @@ class FileLock:
         self.lock_file.touch()
         self.locked = True
 
-    def release(self):
+    def release(self) -> None:
         """
         Release the lock by deleting the lock file.
         If the lock file does not exist, it does nothing.

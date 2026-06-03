@@ -73,7 +73,7 @@ default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apol
 
 
 class Apollo:
-    def __init__(self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo"):
+    def __init__(self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo") -> None:
         """
         Initialize the Apollo class for parsing databases
 
@@ -91,7 +91,7 @@ class Apollo:
         self.modules: dict[str, list[dict]] = {}  # dict: db_type -> list of modules
         self.parse_module_definition(mod_dir=self.mod_dir, os_version=self.os_version)
 
-    def parse_module_definition(self, mod_dir, os_version):
+    def parse_module_definition(self, mod_dir, os_version) -> None:
         # Parse all module data and build our own list
         mod_files = glob.glob(os.path.join(mod_dir, "*.txt"))
         for mod_file in mod_files:

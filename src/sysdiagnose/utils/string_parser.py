@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Never
 
 from sysdiagnose.utils.base import logger
 
@@ -38,27 +39,27 @@ class String:
     start_char = "'", '"'
     end_char = "'", '"'
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.data = ""
 
-    def handle_char(self, c):
+    def handle_char(self, c) -> None:
         if isinstance(self.data, str):
             self.data += c
         else:
             logger.error("ERROR : malformed data, random character found next to a structure")
             raise ValueError("malformed data, random character found next to a structure")
 
-    def add_struct(self, _struct):
+    def add_struct(self, _struct) -> Never:
         logger.error("ERROR : This function should never be called, if you see this there is a coding mistake")
         raise Exception("Code that shouldn't be called was called")
 
     def accepted_struct(self):
         return (Type.NONE,)
 
-    def end_chunk(self):
+    def end_chunk(self) -> None:
         pass
 
-    def post_treatment(self):
+    def post_treatment(self) -> None:
         self.data = self.start_char + self.data + self.end_char
 
 
@@ -67,7 +68,7 @@ class StringSingle(String):
     start_char = "'"
     end_char = "'"
 
-    def post_treatment(self):
+    def post_treatment(self) -> None:
         pass
 
 
@@ -76,12 +77,12 @@ class StringDouble(String):
     start_char = '"'
     end_char = '"'
 
-    def post_treatment(self):
+    def post_treatment(self) -> None:
         pass
 
 
 class StackBase(String):
-    def add_struct(self, struct):
+    def add_struct(self, struct) -> None:
         if struct.data:
             self.data = struct.data
             self.type = struct.type
@@ -96,7 +97,7 @@ class XmlDict:
     end_char = ">"
     separator = " "
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.data = {}
         self.currently_key = True
         self.temp_key = ""
@@ -105,7 +106,7 @@ class XmlDict:
         # fixes a special case '<"!!J>">' where we dont want the ! interpreted as a bool
         self.flag_key_is_string = False
 
-    def handle_char(self, c):
+    def handle_char(self, c) -> None:
         match c:
             case self.separator if self.currently_key:
                 if self.temp_key:
@@ -122,13 +123,13 @@ class XmlDict:
                 elif c != " ":
                     logger.error("ERROR : Chars found AFTER a struct")
 
-    def values_reset(self):
+    def values_reset(self) -> None:
         self.currently_key = True
         self.temp_key = ""
         self.temp_val = ""
         self.flag_key_is_string = False
 
-    def end_chunk(self):
+    def end_chunk(self) -> None:
         if self.temp_key.strip():
             self.temp_key = self.temp_key.strip()
             if isinstance(self.temp_val, str):
@@ -149,7 +150,7 @@ class XmlDict:
             self.data[self.temp_key] = self.temp_val
             self.values_reset()
 
-    def add_struct(self, struct):
+    def add_struct(self, struct) -> None:
         if self.currently_key:
             if isinstance(struct.data, str):
                 self.temp_key += struct.data
@@ -169,7 +170,7 @@ class XmlDict:
         else:
             return Type
 
-    def post_treatment(self):
+    def post_treatment(self) -> None:
         # case its not a dict but a string like <this_a_str>
         if list(self.data.values()) in ([""], [True], [False]):
             self.data = "<" + next(iter(self.data)) + ">"
@@ -193,11 +194,11 @@ class List:
     start_char = "("
     end_char = ")"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.data = []
         self.temp_data = ""
 
-    def handle_char(self, c):
+    def handle_char(self, c) -> None:
         match c:
             case ",":
                 self.end_chunk()
@@ -208,7 +209,7 @@ class List:
                 elif c != " ":
                     logger.error("ERROR : Found random characters AFTER a struct in a list. Ignoring these character")
 
-    def end_chunk(self):
+    def end_chunk(self) -> None:
         if isinstance(self.temp_data, str):
             self.data.append(self.temp_data.strip())
 
@@ -217,7 +218,7 @@ class List:
 
         self.temp_data = ""
 
-    def add_struct(self, struct):
+    def add_struct(self, struct) -> None:
         if isinstance(struct.data, str):
             self.temp_data += struct.data
 
@@ -230,7 +231,7 @@ class List:
     def accepted_struct(self):
         return Type
 
-    def post_treatment(self):
+    def post_treatment(self) -> None:
         # case there is no comma, its a string , not a list. ex : (hello world)
         if len(self.data) == 1 and isinstance(self.data[0], str):
             self.data = self.start_char + self.data[0] + self.end_char
@@ -249,7 +250,7 @@ class HookList(List):
 
 
 class Parser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_line = None
         self.stack = []
 
@@ -262,7 +263,7 @@ class Parser:
 
         return self.treat_final_value()
 
-    def base_switch(self, c):
+    def base_switch(self, c) -> None:
         current_struct = self.stack[-1]
         possible = current_struct.accepted_struct()  # list of types that the current struct can accept
         match c:
@@ -312,7 +313,7 @@ class Parser:
             case _:
                 self.stack[-1].handle_char(c)
 
-    def end_struct(self):
+    def end_struct(self) -> None:
         struct = self.stack.pop()
         struct.end_chunk()
         struct.post_treatment()

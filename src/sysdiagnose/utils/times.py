@@ -6,7 +6,7 @@
 from datetime import UTC, datetime
 
 
-def macepoch2time(macepoch):
+def macepoch2time(macepoch: float) -> datetime:
     # convert install_date from Cocoa EPOCH -> UTC
     epoch = macepoch + 978307200  # difference between COCOA and UNIX epoch is 978307200 seconds
     utctime = datetime.fromtimestamp(epoch, tz=UTC)

@@ -30,7 +30,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     description = "List all processes we can find a bit everywhere."
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
+    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
         super().__init__(__file__, config, case_id)
         self.all_ps: set[str] = set()
         # Track last seen timestamp for each process (for time-based deduplication)
@@ -74,7 +74,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             return None
         return self.pid_to_name.get(ppid)
 
-    def _build_pid_mapping(self):
+    def _build_pid_mapping(self) -> None:
         """
         Builds a PID to process name mapping from available parsers.
         This mapping is used to resolve parent process names from PPIDs.

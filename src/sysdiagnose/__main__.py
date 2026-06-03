@@ -7,7 +7,7 @@ from sysdiagnose import Sysdiagnose
 from sysdiagnose.utils.logger import logger, set_console_logging
 
 
-def parse_parser_error(message):
+def parse_parser_error(message: str) -> None:
     sd = Sysdiagnose()
     print(message, file=sys.stderr)
     print("Available parsers:")
@@ -16,7 +16,7 @@ def parse_parser_error(message):
     sys.exit(2)
 
 
-def analyse_parser_error(message):
+def analyse_parser_error(message: str) -> None:
     sd = Sysdiagnose()
     print(message, file=sys.stderr)
     print("Available analysers:")
@@ -25,7 +25,7 @@ def analyse_parser_error(message):
     sys.exit(2)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(prog="sysdiag", description="Sysdiagnose Analysis Framework - parsing and analysis")
     # available for all
     parser.add_argument(
@@ -60,22 +60,14 @@ def main():
 
     # parse mode
     parse_parser = subparsers.add_parser("parse", help="Parse a case")
-    parse_parser.add_argument(
-        "parser", help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers'
-    )
-    parse_parser.add_argument(
-        "-x", "--exclude", help='Exclude specific parsers (comma separated) (in case using "all")', required=False
-    )
+    parse_parser.add_argument("parser", help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers')
+    parse_parser.add_argument("-x", "--exclude", help='Exclude specific parsers (comma separated) (in case using "all")', required=False)
     parse_parser.error = parse_parser_error
 
     # analyse mode
     analyse_parser = subparsers.add_parser("analyse", help="Analyse a case")
-    analyse_parser.add_argument(
-        "analyser", help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers'
-    )
-    analyse_parser.add_argument(
-        "-x", "--exclude", help='Exclude specific analysers (comma separated) (in case using "all")', required=False
-    )
+    analyse_parser.add_argument("analyser", help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers')
+    analyse_parser.add_argument("-x", "--exclude", help='Exclude specific analysers (comma separated) (in case using "all")', required=False)
     analyse_parser.error = analyse_parser_error
 
     # list mode
@@ -189,13 +181,9 @@ def main():
                 try:
                     summary = sd.parse(parser, case_id)
                 except NotImplementedError:
-                    logger.warning(
-                        f"Parser '{parser}' is not implemented yet, skipping", extra={"parser": parser, "result": "skipped"}
-                    )
+                    logger.warning(f"Parser '{parser}' is not implemented yet, skipping", extra={"parser": parser, "result": "skipped"})
                     continue
-                print(
-                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"
-                )
+                print(f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)")
                 logger.info(
                     f"Parser '{parser}' finished {summary.status}",
                     extra={
@@ -245,9 +233,7 @@ def main():
                         extra={"analyser": analyser, "result": "skipped"},
                     )
                     continue
-                print(
-                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"
-                )
+                print(f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)")
                 logger.info(
                     f"Analyser '{analyser}' finished {summary.status}",
                     extra={
