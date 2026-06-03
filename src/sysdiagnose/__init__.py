@@ -85,9 +85,7 @@ class Sysdiagnose:
         finally:
             lock.release()
 
-    def create_case(
-        self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None
-    ) -> dict:
+    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> dict:
         """
         Extracts the sysdiagnose file and creates a new case.
 
@@ -116,9 +114,7 @@ class Sysdiagnose:
             if c["source_sha256"] == metadata["source_sha256"]:
                 if force:
                     if case_id and c["case_id"] != case_id:
-                        raise ValueError(
-                            f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}"
-                        )
+                        raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}")
                     # all is well
                     case_id = c["case_id"]
                     case = c
@@ -183,7 +179,6 @@ class Sysdiagnose:
         finally:
             lock.release()
 
-        print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
 
     @staticmethod
@@ -227,9 +222,7 @@ class Sysdiagnose:
                         if member_path.name == "remotectl_dumpstate.txt":
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
-                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(
-                                remotectl_dumpstate_file_content
-                            )
+                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
                         elif member_path.name == "sysdiagnose.log":
                             sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
                             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
@@ -394,7 +387,7 @@ class Sysdiagnose:
         return analyser_instance.get_result_summary()
 
     def print_list_cases(self, verbose=False):
-        print("#### case List ####")
+        print("#### case List ####")  # noqa: T201
         headers = ["Case ID", "acquisition date", "Serial number", "Unique device ID", "iOS Version", "Tags"]
         if verbose:
             headers.append("Source file")
@@ -412,7 +405,7 @@ class Sysdiagnose:
                 line.append(case["source_file"])
             lines.append(line)
 
-        print(tabulate(lines, headers=headers))
+        print(tabulate(lines, headers=headers))  # noqa: T201
 
     def get_case_ids(self):
         case_ids = list(self.cases().keys())
@@ -456,7 +449,7 @@ class Sysdiagnose:
             lines.append([parser, description])
 
         headers = ["Parser Name", "Parser Description"]
-        print(tabulate(lines, headers=headers))
+        print(tabulate(lines, headers=headers))  # noqa: T201
 
     def print_analysers_list(self) -> None:
         lines = [["all", "Run all analysers"]]
@@ -464,4 +457,4 @@ class Sysdiagnose:
             lines.append([analyser, description])
 
         headers = ["Analyser Name", "Analyser Description"]
-        print(tabulate(lines, headers=headers))
+        print(tabulate(lines, headers=headers))  # noqa: T201

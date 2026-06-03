@@ -311,7 +311,7 @@ def generate_markdown_report(comparison_data: list[dict], added_properties: dict
             file.write("No parser coverage data available.\n")
         file.write("\n")
 
-    print(f"Markdown report generated: {output_file}")
+    print(f"Markdown report generated: {output_file}")  # noqa: T201
 
 
 def compare_coverage_json_files(file1: str, file2: str, output_file: str, format: str = "html") -> None:
@@ -351,4 +351,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     compare_coverage_json_files(args.file1, args.file2, args.output, format=args.format)
-    print(f"Report generated: {args.output}")
+    print(f"Report generated: {args.output}")  # noqa: T201

@@ -32,9 +32,7 @@ def compare_file_stats_sysdiag_properties(obj1: dict, obj2: dict) -> tuple[dict,
     return added, removed, modified
 
 
-def compare_file_stats_folders_details(
-    arr1: list[dict], arr2: list[dict], exclusions: list[str] | None = None
-) -> tuple[list, list, list]:
+def compare_file_stats_folders_details(arr1: list[dict], arr2: list[dict], exclusions: list[str] | None = None) -> tuple[list, list, list]:
     """
     Efficiently compare two arrays of dictionaries using a unique key, with exclusions.
 
@@ -74,12 +72,7 @@ def compare_file_stats_folders_details(
                 "files_diff": {
                     "added": [f for f in item2.get("files", []) if f not in item1.get("files", [])],
                     "removed": [f for f in item1.get("files", []) if f not in item2.get("files", [])],
-                    "modified": [
-                        (f1, f2)
-                        for f1 in item1.get("files", [])
-                        for f2 in item2.get("files", [])
-                        if f1["filename"] == f2["filename"] and f1 != f2
-                    ],
+                    "modified": [(f1, f2) for f1 in item1.get("files", []) for f2 in item2.get("files", []) if f1["filename"] == f2["filename"] and f1 != f2],
                 },
             }
             modified.append(file_diff)
@@ -495,18 +488,14 @@ def generate_markdown_report(
         markdown_content.append("| Folder | Old Files | New Files |\n|--------|-----------|-----------|")
         modified = sorted(modified, key=lambda x: x["folder_name"].lower())
         for folder in modified:
-            markdown_content.append(
-                f"| {folder['folder_name']} | {folder['file_count_diff'][0]} | {folder['file_count_diff'][1]} |"
-            )
+            markdown_content.append(f"| {folder['folder_name']} | {folder['file_count_diff'][0]} | {folder['file_count_diff'][1]} |")
 
             # Detailed Section for Modified Files
             if folder["files_diff"]["modified"]:
                 markdown_modified_files.append(f"\n#### Folder: {folder['folder_name']}\n")
                 markdown_modified_files.append("| File | Old Type | New Type |\n|------|----------|----------|")
                 for file_pair in folder["files_diff"]["modified"]:
-                    markdown_modified_files.append(
-                        f"| {file_pair[0]['filename']} | {file_pair[0]['file_type']} | {file_pair[1]['file_type']} |"
-                    )
+                    markdown_modified_files.append(f"| {file_pair[0]['filename']} | {file_pair[0]['file_type']} | {file_pair[1]['file_type']} |")
 
         markdown_content.extend(markdown_modified_files)
     else:
@@ -517,9 +506,7 @@ def generate_markdown_report(
         file.write("\n".join(markdown_content))
 
 
-def compare_file_stats_json_files(
-    file1: str, file2: str, exclusions: list[str], output_file: str, format: str = "html"
-) -> None:
+def compare_file_stats_json_files(file1: str, file2: str, exclusions: list[str], output_file: str, format: str = "html") -> None:
     """
     Compare two file_stats JSON files and generate a report.
 
@@ -533,27 +520,19 @@ def compare_file_stats_json_files(
     json2 = load_json(file2)
 
     # Compare properties
-    added_properties, removed_properties, modified_properties = compare_file_stats_sysdiag_properties(
-        json1["device_info"], json2["device_info"]
-    )
+    added_properties, removed_properties, modified_properties = compare_file_stats_sysdiag_properties(json1["device_info"], json2["device_info"])
 
     # Compare nested arrays
-    added, removed, modified = compare_file_stats_folders_details(
-        json1["file_stats"], json2["file_stats"], exclusions=exclusions
-    )
+    added, removed, modified = compare_file_stats_folders_details(json1["file_stats"], json2["file_stats"], exclusions=exclusions)
 
     if format.lower() == "html":
         # Generate HTML report
-        generate_html_report(
-            added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file
-        )
+        generate_html_report(added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file)
     elif format.lower() == "markdown":
         # Generate Markdown report
-        generate_markdown_report(
-            added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file
-        )
+        generate_markdown_report(added_properties, removed_properties, modified_properties, added, removed, modified, exclusions, output_file)
     else:
-        print("Unsupported format.")
+        raise Exception("Unsupported format.")
 
 
 if __name__ == "__main__":
@@ -562,9 +541,7 @@ if __name__ == "__main__":
     parser.add_argument("file1", help="File path to the first JSON file")
     parser.add_argument("file2", help="File path to the second JSON file")
     parser.add_argument("-o", "--output", required=True, help="Output file path")
-    parser.add_argument(
-        "-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)"
-    )
+    parser.add_argument("-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)")
     parser.add_argument(
         "-x",
         "--exclude",
@@ -577,4 +554,4 @@ if __name__ == "__main__":
 
     exclusions = args.exclude.split(",")
     compare_file_stats_json_files(args.file1, args.file2, exclusions, args.output, format=args.format)
-    print(f"Report generated: {args.output}")
+    print(f"Report generated: {args.output}")  # noqa: T201

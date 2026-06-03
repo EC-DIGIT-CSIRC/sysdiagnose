@@ -95,8 +95,8 @@ def main():
 
     # no arguments given by user, print help and exit
     if args.inputfile:
-        print(f"Running {version_string}\n")
-        print(sqlite2struct(args.inputfile))
+        print(f"Running {version_string}\n")  # noqa: T201
+        print(sqlite2struct(args.inputfile))  # noqa: T201
     else:
         parser.print_help()
         sys.exit(-1)
