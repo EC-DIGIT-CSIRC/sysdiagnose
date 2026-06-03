@@ -95,7 +95,7 @@ def build_from_logentry(line, tzinfo, module) -> Event:
             entry["event_type"] = eventyperegex.group(1)
 
         # msg
-        if "event_type" in entry:
+        if "event_type" in entry:  # noqa: SIM108
             msgregex = re.search(r"\]\:(.*)", line, re.MULTILINE | re.DOTALL)
         else:
             msgregex = re.search(r"\)\ (.*)", line, re.MULTILINE | re.DOTALL)

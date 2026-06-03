@@ -175,7 +175,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         if delimiter_pos != -1 and (binary_path_end is None or delimiter_pos < binary_path_end):
                             binary_path_end = delimiter_pos
 
-                    if binary_path_end is None:
+                    if binary_path_end is None:  # noqa: SIM108
                         path = message[binary_path_start:].strip()
                     else:
                         path = message[binary_path_start:binary_path_end].strip()
@@ -391,9 +391,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     # Handle the case where extracted_process is a list of paths
                     if isinstance(extracted_process, list):
                         for proc_path in extracted_process:
-                            if self.add_if_full_command_is_not_in_set(
-                                self._strip_flags(proc_path), p_datetime, None, None, None
-                            ):
+                            if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path), p_datetime, None, None, None):
                                 yield Event(
                                     p_datetime,
                                     message=self._strip_flags(proc_path),
@@ -402,9 +400,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                                     data={"source": entity_type, "uid": None, "pid": None, "ppid": None, "ppname": None},
                                 ).to_dict()
                     # Handle the case where it's a single string
-                    elif self.add_if_full_command_is_not_in_set(
-                        self._strip_flags(extracted_process), p_datetime, None, None, None
-                    ):
+                    elif self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None, None, None):
                         yield Event(
                             datetime=p_datetime,
                             message=self._strip_flags(extracted_process),
@@ -434,9 +430,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = "uuid2path"
         try:
             for p in UUID2PathParser(self.config, self.case_id).get_result().values():
-                if self.add_if_full_command_is_not_in_set(
-                    self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None
-                ):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
                     yield Event(
                         datetime=self.sysdiagnose_creation_datetime,
                         message=self._strip_flags(p),
@@ -497,9 +491,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json["Local device"]["Services"]:
-                    if self.add_if_full_path_is_not_in_set(
-                        self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None
-                    ):
+                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
                         yield Event(
                             datetime=self.sysdiagnose_creation_datetime,
                             message=self._strip_flags(p),
@@ -520,9 +512,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
-                if self.add_if_full_command_is_not_in_set(
-                    self._strip_flags(p["data"]["process"]), p_datetime, None, None, None
-                ):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(p["data"]["process"]), p_datetime, None, None, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p["data"]["process"]),

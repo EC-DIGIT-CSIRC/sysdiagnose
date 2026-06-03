@@ -62,7 +62,7 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
             parsed_files = (group["file_type"] != "unknown").sum()
             total_group_files = len(group)
             # For "no-parser", divide by the total number of files
-            if group.name == "no-parser":
+            if group.name == "no-parser":  # noqa: SIM108
                 coverage = parsed_files / total_files if total_files > 0 else 0
             else:
                 coverage = parsed_files / total_group_files if total_group_files > 0 else 0
@@ -82,17 +82,15 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
     coverage2 = calculate_coverage(obj2)
 
     # Merge the two coverage DataFrames for comparison
-    comparison = pd.merge(
-        coverage1, coverage2, how="outer", left_index=True, right_index=True, suffixes=("_old", "_new")
-    ).fillna(0)  # Fill NaN values with 0 for parsers missing in one of the objects
+    comparison = pd.merge(coverage1, coverage2, how="outer", left_index=True, right_index=True, suffixes=("_old", "_new")).fillna(
+        0
+    )  # Fill NaN values with 0 for parsers missing in one of the objects
 
     # Convert the comparison DataFrame to a list of dictionaries
     return comparison.reset_index().to_dict(orient="records")
 
 
-def generate_html_report(
-    comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str
-) -> None:
+def generate_html_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str) -> None:
     """
     Generate an HTML report for parser coverage comparison and sysdiag properties using Jinja2.
 
@@ -250,9 +248,7 @@ def generate_html_report(
         file.write(rendered_html)
 
 
-def generate_markdown_report(
-    comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str
-) -> None:
+def generate_markdown_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str) -> None:
     """
     Generate a Markdown report for parser coverage comparison and sysdiag properties.
 
@@ -350,9 +346,7 @@ if __name__ == "__main__":
     parser.add_argument("file1", help="File path to the first JSON file")
     parser.add_argument("file2", help="File path to the second JSON file")
     parser.add_argument("-o", "--output", required=True, help="Output file path")
-    parser.add_argument(
-        "-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)"
-    )
+    parser.add_argument("-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)")
 
     args = parser.parse_args()
 
