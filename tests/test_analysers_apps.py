@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestAnalysersApps(SysdiagnoseTestCase):
 
     def test_analyse_apps(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             # run the analyser
             a = AppsAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)

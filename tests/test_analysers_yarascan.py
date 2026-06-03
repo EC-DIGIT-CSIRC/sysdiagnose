@@ -29,7 +29,7 @@ rule match_for_sure_on_sysdiagnose_version {
 
     def test_analyse_yarascan(self):
         with patch.dict(os.environ, {'SYSDIAGNOSE_YARA_RULES_PATH': self.yara_rules_folder}):
-            for case_id, case in self.sd.cases().items():
+            for case_id, _case in self.sd.cases().items():
                 print(f"Running Yarascan for {case_id}")
                 # run the analyser
                 a = YaraAnalyser(self.sd.config, case_id=case_id)

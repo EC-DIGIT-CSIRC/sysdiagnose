@@ -1,6 +1,5 @@
 import os
 import unittest
-from datetime import datetime
 
 from sysdiagnose.analysers.wifi_geolocation import WifiGeolocationAnalyser
 from tests import SysdiagnoseTestCase

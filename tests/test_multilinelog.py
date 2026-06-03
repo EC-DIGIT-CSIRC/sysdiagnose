@@ -1,5 +1,5 @@
 import unittest
-from datetime import timedelta, timezone
+from datetime import UTC, timedelta, timezone
 
 from sysdiagnose.utils import multilinelog
 from tests import SysdiagnoseTestCase
@@ -139,7 +139,7 @@ Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _rege
 
     def test_mutilinelog_emptylines(self):
         s = '''\n\n'''
-        result = multilinelog.extract_from_string(s, tzinfo=timezone.utc, module='TestModule')
+        result = multilinelog.extract_from_string(s, tzinfo=UTC, module='TestModule')
         self.assertEqual(0, len(result))
 
     def test_multilinelog_keyvalue(self):

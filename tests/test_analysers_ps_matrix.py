@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestAnalysersPsMatrix(SysdiagnoseTestCase):
 
     def test_analyse_ps_matrix(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             print(f"Running PsMatrix for {case_id}")
             # run the analyser
             a = PsMatrixAnalyser(self.sd.config, case_id=case_id)

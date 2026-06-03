@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersIOUSB(SysdiagnoseTestCase):
 
     def test_parse_case(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             p = IOUSBParser(self.sd.config, case_id=case_id)
             files = p.get_log_files()
             if not files:

@@ -7,7 +7,7 @@ from tests import SysdiagnoseTestCase
 
 class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
     def test_analyse_file_stats(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             a = FileStatisticsAnalyser(self.sd.config, case_id=case_id)
             a.save_result(force=True)
 

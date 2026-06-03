@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestAnalysersCoverage(SysdiagnoseTestCase):
 
     def test_analyse_coverage(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             print(f"Running Coverage for {case_id}")
             # run the analyser
             a = CoverageAnalyser(self.sd.config, case_id=case_id)

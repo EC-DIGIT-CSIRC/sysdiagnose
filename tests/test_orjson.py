@@ -21,9 +21,9 @@ class TestOrjson(SysdiagnoseTestCase):
             # print("load_orjsonl_dataclass: ", end=" ")
             # print(timeit.timeit(lambda: self.load_orjsonl_dataclass(fname)", number=3))
             print("load_save_dumps_orjson_dict: ", end=" ")
-            print(timeit.timeit(lambda: self.load_save_dumps_orjson_dict(fname), number=3))
+            print(timeit.timeit(lambda fname=fname: self.load_save_dumps_orjson_dict(fname), number=3))
             print("load_save_dumpstodict_orjson_dict: ", end=" ")
-            print(timeit.timeit(lambda: self.load_save_dumpstodict_orjson_dict(fname), number=3))
+            print(timeit.timeit(lambda fname=fname: self.load_save_dumpstodict_orjson_dict(fname), number=3))
             # Uncomment the following lines if you want to test without datetime
 
             # print("load_orjsonl_dataclass_nodatetime: ", end=" ")
@@ -38,7 +38,7 @@ class TestOrjson(SysdiagnoseTestCase):
     def load_orjsonl_dict(self, fname: Path):
         data = orjsonl.stream(fname)
         i = 0
-        for item in data:
+        for _item in data:
             # self.assertIsInstance(item, dict)
             i += 1
 
@@ -49,7 +49,7 @@ class TestOrjson(SysdiagnoseTestCase):
         data = orjsonl.stream(fname)
         i = 0
         for item in data:
-            e = Event.from_dict(item)
+            Event.from_dict(item)
             # self.assertIsInstance(e, Event)
             i += 1
 
@@ -69,9 +69,9 @@ class TestOrjson(SysdiagnoseTestCase):
 
     def load_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, "r", encoding="utf-8") as f:
+        with open(fname, encoding="utf-8") as f:
             for line in f:
-                item = orjson.loads(line)
+                orjson.loads(line)
                 # self.assertIsInstance(item, dict)
                 i += 1
 
@@ -80,7 +80,7 @@ class TestOrjson(SysdiagnoseTestCase):
 
     def load_save_dumps_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, "r", encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
+        with open(fname, encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
             for line in f_in:
                 item = orjson.loads(line)
                 e = Event.from_dict(item)
@@ -89,7 +89,7 @@ class TestOrjson(SysdiagnoseTestCase):
 
     def load_save_dumpstodict_orjson_dict(self, fname: Path):
         i = 0
-        with open(fname, "r", encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
+        with open(fname, encoding="utf-8") as f_in, open("/tmp/logarchive.jsonl", "wb") as f_out:
             for line in f_in:
                 item = orjson.loads(line)
                 e = Event.from_dict(item)

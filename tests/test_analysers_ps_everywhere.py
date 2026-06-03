@@ -7,7 +7,7 @@ from tests import SysdiagnoseTestCase
 
 class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
     def test_analyse_ps_everywhere(self):
-        for case_id, case in self.sd.cases().items():
+        for case_id, _case in self.sd.cases().items():
             print(f"Running PsEverywhereAnalyser for {case_id}")
             # run the analyser
             a = PsEverywhereAnalyser(self.sd.config, case_id=case_id)
