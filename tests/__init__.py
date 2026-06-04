@@ -1,4 +1,5 @@
 import glob
+import multiprocessing
 import os
 import unittest
 from datetime import datetime
@@ -6,6 +7,17 @@ from datetime import datetime
 from sysdiagnose import Sysdiagnose
 from sysdiagnose.utils.base import BaseInterface
 from sysdiagnose.utils.summary import ExecutionStatus
+
+
+def _create_case(args):
+    """Top-level function for multiprocessing (must be picklable)."""
+    archive_file, cases_path = args
+    try:
+        sd = Sysdiagnose(cases_path=cases_path)
+        sd.create_case(archive_file)
+        print(f"Created case from {archive_file}")
+    except ValueError as ve:
+        print(f"Warning: {ve}")
 
 
 class SysdiagnoseTestCase(unittest.TestCase):
@@ -32,13 +44,39 @@ class SysdiagnoseTestCase(unittest.TestCase):
             # - testdata-private/iOSxx/sysdiagnose_YYYY.MM.DD_HH-MM-SS-SSSS_....tar.gz
             # this allows testing locally with more data, while keeping online tests coherent
             sd_archive_files = glob.glob("tests/testdata*/**/*.tar.gz", recursive=True)
-            for archive_file in sd_archive_files:
-                print(f"Creating case from {archive_file}")
-                try:
-                    cls.sd.create_case(archive_file)
-                except ValueError as ve:
-                    # ignore errors as we know we may have multiple times the same case
-                    print(f"Warning: {ve}")
+
+            pool = multiprocessing.Pool()
+            try:
+                # Register cleanup so workers are killed if the parent is terminated (e.g. IDE stop button)
+                import atexit
+                import signal
+
+                def _cleanup_pool():
+                    pool.terminate()
+                    pool.join()
+
+                atexit.register(_cleanup_pool)
+
+                original_sigterm = signal.getsignal(signal.SIGTERM)
+
+                def _sigterm_handler(signum, frame):
+                    _cleanup_pool()
+                    # Restore original handler and re-raise so the process actually exits
+                    signal.signal(signal.SIGTERM, original_sigterm)
+                    os.kill(os.getpid(), signal.SIGTERM)
+
+                signal.signal(signal.SIGTERM, _sigterm_handler)
+
+                result = pool.map_async(_create_case, [(f, cases_path) for f in sd_archive_files])
+                result.get(timeout=600)
+            except KeyboardInterrupt:
+                pool.terminate()
+                raise
+            finally:
+                pool.close()
+                pool.join()
+                atexit.unregister(_cleanup_pool)
+                signal.signal(signal.SIGTERM, original_sigterm)
 
     def setUp(self):
         self.tmp_folder = os.path.join("tests", "tmp")
@@ -105,6 +143,7 @@ class SysdiagnoseTestCase(unittest.TestCase):
             self.assertEqual(
                 summary.status, ExecutionStatus.ERROR, f"Status should be ERROR when num_errors={summary.num_errors}"
             )
+            # FIXME we need to : self.fail(f"Result contained {summary.num_errors} error(s).")
         elif summary.num_warnings > 0:
             self.assertEqual(
                 summary.status,
