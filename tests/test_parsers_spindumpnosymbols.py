@@ -8,20 +8,21 @@ from tests import SysdiagnoseTestCase
 class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
     def test_parse_spindump_ns(self):
         for case_id, _case in self.sd.cases().items():
-            p = SpindumpNoSymbolsParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
-            if not files:
-                self.skipTest("No spindump-nosymbols.txt file present")
+            with self.subTest(case_id=case_id):
+                p = SpindumpNoSymbolsParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
+                if not files:
+                    self.skipTest("No spindump-nosymbols.txt file present")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            self.assertGreater(len(result), 1)
-            self.assertTrue("os_version" in result[0]["data"])
-            for item in result:
-                self.assert_has_required_fields_jsonl(item)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                self.assertGreater(len(result), 1)
+                self.assertTrue("os_version" in result[0]["data"])
+                for item in result:
+                    self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
     def test_parse_basic(self):
         lines = [

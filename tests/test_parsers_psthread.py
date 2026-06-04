@@ -8,22 +8,23 @@ from tests import SysdiagnoseTestCase
 class TestParsersPsthread(SysdiagnoseTestCase):
     def test_parse_psthread(self):
         for case_id, _case in self.sd.cases().items():
-            p = PsThreadParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
-            if not files:
-                self.skipTest("No ps_thread.txt file present")
+            with self.subTest(case_id=case_id):
+                p = PsThreadParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
+                if not files:
+                    self.skipTest("No ps_thread.txt file present")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            if result:  # not all logs contain data
-                for item in result:
-                    self.assertTrue("command" in item["data"])
-                    self.assertTrue("pid" in item["data"])
-                    self.assertTrue("user" in item["data"])
-                    self.assert_has_required_fields_jsonl(item)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                if result:  # not all logs contain data
+                    for item in result:
+                        self.assertTrue("command" in item["data"])
+                        self.assertTrue("pid" in item["data"])
+                        self.assertTrue("user" in item["data"])
+                        self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

@@ -8,19 +8,20 @@ from tests import SysdiagnoseTestCase
 class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
     def test_get_remotectldumpstate(self):
         for case_id, _case in self.sd.cases().items():
-            p = RemotectlDumpstateParser(self.sd.config, case_id=case_id)
+            with self.subTest(case_id=case_id):
+                p = RemotectlDumpstateParser(self.sd.config, case_id=case_id)
 
-            files = p.get_log_files()
-            if not files:
-                self.skipTest("No remotectl_dumpstate.txt file present")
+                files = p.get_log_files()
+                if not files:
+                    self.skipTest("No remotectl_dumpstate.txt file present")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            if result:
-                self.assertTrue("Local device" in result)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                if result:
+                    self.assertTrue("Local device" in result)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

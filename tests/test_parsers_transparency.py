@@ -9,35 +9,37 @@ from tests import SysdiagnoseTestCase
 class TestParsersTransparency(SysdiagnoseTestCase):
     def test_transparency(self):
         for case_id, _case in self.sd.cases().items():
-            p = TransparencyParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
+            with self.subTest(case_id=case_id):
+                p = TransparencyParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
 
-            if not files:
-                self.skipTest(f"No log files found for {case_id}")
+                if not files:
+                    self.skipTest(f"No log files found for {case_id}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            p.get_result()
-            result = p.get_result()
-            for item in result:
-                self.assert_has_required_fields_jsonl(item)
+                p.get_result()
+                result = p.get_result()
+                for item in result:
+                    self.assert_has_required_fields_jsonl(item)
 
     def test_transparency_json(self):
         for case_id, _case in self.sd.cases().items():
-            p = TransparencyJsonParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
+            with self.subTest(case_id=case_id):
+                p = TransparencyJsonParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
 
-            if not files:
-                self.skipTest(f"No log files found for {case_id}")
+                if not files:
+                    self.skipTest(f"No log files found for {case_id}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            self.assertTrue("copy_status_version" in result)
-            self.assertGreater(len(result), 0)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                self.assertTrue("copy_status_version" in result)
+                self.assertGreater(len(result), 0)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

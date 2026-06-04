@@ -8,19 +8,20 @@ from tests import SysdiagnoseTestCase
 class TestParsersLogdataStatistics(SysdiagnoseTestCase):
     def test_logdatastatisticstxt(self):
         for case_id, _case in self.sd.cases().items():
-            p = LogDataStatisticsParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
-            if not files:
-                self.skipTest(f"No log files found for {case_id}")
+            with self.subTest(case_id=case_id):
+                p = LogDataStatisticsParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
+                if not files:
+                    self.skipTest(f"No log files found for {case_id}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            for item in result:
-                self.assertTrue("process" in item["data"])
-                self.assert_has_required_fields_jsonl(item)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                for item in result:
+                    self.assertTrue("process" in item["data"])
+                    self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

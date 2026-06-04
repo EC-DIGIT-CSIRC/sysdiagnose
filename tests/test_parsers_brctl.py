@@ -8,27 +8,28 @@ from tests import SysdiagnoseTestCase
 class TestParsersBrctl(SysdiagnoseTestCase):
     def test_parsebrctl(self):
         for case_id, _case in self.sd.cases().items():
-            p = BrctlParser(self.sd.config, case_id=case_id)
-            folders = p.get_log_files()
-            if not folders:
-                self.skipTest("No brctl folder found")
+            with self.subTest(case_id=case_id):
+                p = BrctlParser(self.sd.config, case_id=case_id)
+                folders = p.get_log_files()
+                if not folders:
+                    self.skipTest("No brctl folder found")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            print(f"Parsing {folders}")
-            result = p.get_result()
-            if result:
-                self.assertTrue("containers" in result)
-                self.assertTrue("boot_history" in result)
-                self.assertTrue("server_state" in result)
-                self.assertTrue("client_state" in result)
-                self.assertTrue("system" in result)
-                self.assertTrue("scheduler" in result)
-                self.assertTrue("applibrary" in result)
-                self.assertTrue("app_library_id" in result)
-                self.assertTrue("app_ids" in result)
-            self.assert_result_summary_consistent(p, result)
+                print(f"Parsing {folders}")
+                result = p.get_result()
+                if result:
+                    self.assertTrue("containers" in result)
+                    self.assertTrue("boot_history" in result)
+                    self.assertTrue("server_state" in result)
+                    self.assertTrue("client_state" in result)
+                    self.assertTrue("system" in result)
+                    self.assertTrue("scheduler" in result)
+                    self.assertTrue("applibrary" in result)
+                    self.assertTrue("app_library_id" in result)
+                    self.assertTrue("app_ids" in result)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

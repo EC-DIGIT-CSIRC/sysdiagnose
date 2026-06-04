@@ -8,21 +8,22 @@ from tests import SysdiagnoseTestCase
 class TestParsersIntunesstore(SysdiagnoseTestCase):
     def test_get_itunesstore(self):
         for case_id, _case in self.sd.cases().items():
-            p = ITunesStoreParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
-            if not files:
-                self.skipTest(f"No log files found for {case_id}")
+            with self.subTest(case_id=case_id):
+                p = ITunesStoreParser(self.sd.config, case_id=case_id)
+                files = p.get_log_files()
+                if not files:
+                    self.skipTest(f"No log files found for {case_id}")
 
-            self.assertEqual(len(files), 1)
+                self.assertEqual(len(files), 1)
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
 
-            result = p.get_result()
-            self.assertTrue("application_id" in result)
-            self.assertTrue("download" in result)
-            self.assertTrue("persistent_manager" in result)
-            self.assert_result_summary_consistent(p, result)
+                result = p.get_result()
+                self.assertTrue("application_id" in result)
+                self.assertTrue("download" in result)
+                self.assertTrue("persistent_manager" in result)
+                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

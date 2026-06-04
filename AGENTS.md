@@ -37,6 +37,7 @@ docs/                 # Documentation
 ## Tests
 
 - Always guard with `self.skipTest(f"No log files found for {case_id}")` when files are missing
+- Use `self.subTest(case_id=case_id)` when iterating over multiple cases so each case is reported independently
 - Use `self.assert_has_required_fields_jsonl(item)` for jsonl validation
 - Use `self.assert_result_summary_consistent(instance, result)` to validate summary matches output
 - Call `save_result(force=True)` to ensure fresh execution

@@ -29,16 +29,17 @@ rule match_for_sure_on_sysdiagnose_version {
     def test_analyse_yarascan(self):
         with patch.dict(os.environ, {"SYSDIAGNOSE_YARA_RULES_PATH": self.yara_rules_folder}):
             for case_id, _case in self.sd.cases().items():
-                print(f"Running Yarascan for {case_id}")
-                # run the analyser
-                a = YaraAnalyser(self.sd.config, case_id=case_id)
-                a.save_result(force=True)
-                self.assertTrue(os.path.isfile(a.output_file))
+                with self.subTest(case_id=case_id):
+                    print(f"Running Yarascan for {case_id}")
+                    # run the analyser
+                    a = YaraAnalyser(self.sd.config, case_id=case_id)
+                    a.save_result(force=True)
+                    self.assertTrue(os.path.isfile(a.output_file))
 
-                result = a.get_result()
-                for item in result:
-                    self.assert_has_required_fields_jsonl(item)
-                self.assert_result_summary_consistent(a, result)
+                    result = a.get_result()
+                    for item in result:
+                        self.assert_has_required_fields_jsonl(item)
+                    self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == "__main__":
