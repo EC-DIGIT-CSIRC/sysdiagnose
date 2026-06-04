@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersIntunesstore(SysdiagnoseTestCase):
-
     def test_get_itunesstore(self):
         for case_id, _case in self.sd.cases().items():
             p = ITunesStoreParser(self.sd.config, case_id=case_id)
@@ -20,11 +19,11 @@ class TestParsersIntunesstore(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('application_id' in result)
-            self.assertTrue('download' in result)
-            self.assertTrue('persistent_manager' in result)
+            self.assertTrue("application_id" in result)
+            self.assertTrue("download" in result)
+            self.assertTrue("persistent_manager" in result)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

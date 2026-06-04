@@ -322,7 +322,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                 # Spindump has a direct 'parent' field with the parent process name
                 ppname = p.get("parent")
 
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(process_name), event_datetime, uid, pid, ppid):
+                if self.add_if_full_command_is_not_in_set(
+                    self._strip_flags(process_name), event_datetime, uid, pid, ppid
+                ):
                     yield Event(
                         datetime=event_datetime,
                         message=self._strip_flags(process_name),
@@ -391,16 +393,26 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                     # Handle the case where extracted_process is a list of paths
                     if isinstance(extracted_process, list):
                         for proc_path in extracted_process:
-                            if self.add_if_full_command_is_not_in_set(self._strip_flags(proc_path), p_datetime, None, None, None):
+                            if self.add_if_full_command_is_not_in_set(
+                                self._strip_flags(proc_path), p_datetime, None, None, None
+                            ):
                                 yield Event(
                                     p_datetime,
                                     message=self._strip_flags(proc_path),
                                     timestamp_desc=p["timestamp_desc"],
                                     module=self.module_name,
-                                    data={"source": entity_type, "uid": None, "pid": None, "ppid": None, "ppname": None},
+                                    data={
+                                        "source": entity_type,
+                                        "uid": None,
+                                        "pid": None,
+                                        "ppid": None,
+                                        "ppname": None,
+                                    },
                                 ).to_dict()
                     # Handle the case where it's a single string
-                    elif self.add_if_full_command_is_not_in_set(self._strip_flags(extracted_process), p_datetime, None, None, None):
+                    elif self.add_if_full_command_is_not_in_set(
+                        self._strip_flags(extracted_process), p_datetime, None, None, None
+                    ):
                         yield Event(
                             datetime=p_datetime,
                             message=self._strip_flags(extracted_process),
@@ -410,7 +422,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         ).to_dict()
 
                 # Process the original process name
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p["data"]["process"]), p_datetime, euid, pid, None):
+                if self.add_if_full_command_is_not_in_set(
+                    self._strip_flags(p["data"]["process"]), p_datetime, euid, pid, None
+                ):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p["data"]["process"]),
@@ -430,7 +444,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = "uuid2path"
         try:
             for p in UUID2PathParser(self.config, self.case_id).get_result().values():
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
+                if self.add_if_full_command_is_not_in_set(
+                    self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None
+                ):
                     yield Event(
                         datetime=self.sysdiagnose_creation_datetime,
                         message=self._strip_flags(p),
@@ -455,7 +471,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
                 p_datetime = datetime.fromisoformat(p["datetime"])
                 pid = p["data"].get("pid")
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p["data"]["name"]), p_datetime, None, pid, None):
+                if self.add_if_full_path_is_not_in_set(
+                    self._strip_flags(p["data"]["name"]), p_datetime, None, pid, None
+                ):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p["data"]["name"]),
@@ -491,7 +509,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
             remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json["Local device"]["Services"]:
-                    if self.add_if_full_path_is_not_in_set(self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None):
+                    if self.add_if_full_path_is_not_in_set(
+                        self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None
+                    ):
                         yield Event(
                             datetime=self.sysdiagnose_creation_datetime,
                             message=self._strip_flags(p),
@@ -512,7 +532,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
-                if self.add_if_full_command_is_not_in_set(self._strip_flags(p["data"]["process"]), p_datetime, None, None, None):
+                if self.add_if_full_command_is_not_in_set(
+                    self._strip_flags(p["data"]["process"]), p_datetime, None, None, None
+                ):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p["data"]["process"]),
@@ -534,7 +556,9 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         try:
             for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
-                if self.add_if_full_path_is_not_in_set(self._strip_flags(p["data"]["process"]), p_datetime, None, None, None):
+                if self.add_if_full_path_is_not_in_set(
+                    self._strip_flags(p["data"]["process"]), p_datetime, None, None, None
+                ):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(p["data"]["process"]),
@@ -557,7 +581,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         Ensures that a process path is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.
-        UID, PID, and PPID are considered part of the uniqueness - same process with different values is treated as separate.
+        UID, PID, and PPID are considered part of the uniqueness
+        - same process with different values is treated as separate.
 
         :param name: Process path name
         :param timestamp: Timestamp of the process occurrence (optional, for time-based deduplication)
@@ -604,7 +629,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         Ensures that a process command is unique before adding it to the shared set,
         with time-based deduplication: only keep duplicates if they occur more than 1 hour apart.
-        UID, PID, and PPID are considered part of the uniqueness - same process with different values is treated as separate.
+        UID, PID, and PPID are considered part of the uniqueness
+        - same process with different values is treated as separate.
 
         :param name: Process command name
         :param timestamp: Timestamp of the process occurrence (optional, for time-based deduplication)

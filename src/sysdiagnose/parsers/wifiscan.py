@@ -45,7 +45,9 @@ class WifiScanParser(BaseParserInterface):
                     parsed_data.update(WifiScanParser.parse_line(line))
 
                 if "ssid" in parsed_data:
-                    message = f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
+                    message = (
+                        f"{parsed_data.get('ssid')} {parsed_data.get('security', '')} {parsed_data.get('channel', '')}"
+                    )
                 else:
                     # join key-value pairs
                     concatenated = ", ".join(f"{k}={v}" for k, v in parsed_data.items())

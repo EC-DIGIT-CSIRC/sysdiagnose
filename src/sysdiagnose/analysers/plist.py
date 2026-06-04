@@ -56,7 +56,7 @@ class PListAnalyzer(BaseAnalyserInterface):
 
                     mdm_entry = Event(
                         datetime=datetime.fromisoformat(entry.get("LastPollingAttempt")),
-                        message=f"MDM Profile: {entry.get('ManagingProfileIdentifier')} with access rights {entry.get('AccessRights')}",
+                        message=f"MDM Profile: {entry.get('ManagingProfileIdentifier')} with access rights {entry.get('AccessRights')}",  # noqa: E501
                         timestamp_desc="Last Polling Attempt",
                         module=self.module_name,
                         data={"source": entity_type},

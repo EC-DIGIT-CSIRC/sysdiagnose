@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersNetworkExtension(SysdiagnoseTestCase):
-
     def test_networkextension(self):
         for case_id, _case in self.sd.cases().items():
             p = NetworkExtensionParser(self.sd.config, case_id=case_id)
@@ -19,9 +18,9 @@ class TestParsersNetworkExtension(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('Version' in result)
+            self.assertTrue("Version" in result)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

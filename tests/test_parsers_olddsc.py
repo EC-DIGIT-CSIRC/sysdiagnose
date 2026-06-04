@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersOlddsc(SysdiagnoseTestCase):
-
     def test_parse_olddsc_file(self):
         for case_id, _case in self.sd.cases().items():
             p = OldDscParser(self.sd.config, case_id=case_id)
@@ -19,10 +18,10 @@ class TestParsersOlddsc(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('Load_Address' in item['data'])
+                self.assertTrue("Load_Address" in item["data"])
                 self.assert_has_required_fields_jsonl(item)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

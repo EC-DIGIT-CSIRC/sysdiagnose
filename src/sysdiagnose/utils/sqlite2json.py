@@ -52,7 +52,8 @@ def gettables(dbfd):
 def getcolumnsfromtable(dbfd, tablename):
     cursor = dbfd.cursor()
     # prepared statements do not support column names, only data
-    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    # while the tablename is not user input, but was extracted from the database itself,
+    # we can safely use it in the query
     cursor.execute(f"SELECT * FROM `{tablename}`")
     col_name_list = [tuple[0] for tuple in cursor.description]
     return col_name_list
@@ -63,7 +64,8 @@ def table2struct(dbfd, tablename):
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
     # prepared statements do not support column names, only data
-    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    # while the tablename is not user input, but was extracted from the database itself,
+    # we can safely use it in the query
     for row in cursor.execute(f"SELECT * FROM `{tablename}`"):
         line = {}
         ptr = 0

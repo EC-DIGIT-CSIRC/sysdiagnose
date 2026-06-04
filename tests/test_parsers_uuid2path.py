@@ -21,5 +21,5 @@ class TestParsersUuid2path(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

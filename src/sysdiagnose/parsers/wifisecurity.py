@@ -68,7 +68,7 @@ class WifiSecurityParser(BaseParserInterface):
                         timestamp = datetime.strptime(element["cdat"], "%Y-%m-%d %H:%M:%S %z")
                         event = Event(
                             datetime=timestamp,
-                            message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",
+                            message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",  # noqa: E501
                             module="wifi_security",
                             timestamp_desc="wifi AP config created",
                             data=element,
@@ -80,7 +80,7 @@ class WifiSecurityParser(BaseParserInterface):
                             timestamp = datetime.strptime(element["mdat"], "%Y-%m-%d %H:%M:%S %z")
                             event_mdat = Event(
                                 datetime=timestamp,
-                                message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",
+                                message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",  # noqa: E501
                                 module="wifi_security",
                                 timestamp_desc="wifi AP config modified",
                                 data=element,

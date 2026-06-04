@@ -113,7 +113,9 @@ class CrashLogsParser(BaseParserInterface):
                 except KeyError:
                     message = f"Crashlog: {result['name']}"
 
-            event = Event(datetime=timestamp, message=message, module="crashlogs", timestamp_desc="crashlog", data=result)
+            event = Event(
+                datetime=timestamp, message=message, module="crashlogs", timestamp_desc="crashlog", data=result
+            )
 
             return event
 
@@ -197,7 +199,9 @@ class CrashLogsParser(BaseParserInterface):
 
                         elif "Binary Images" in key:
                             if powerstats_key:
-                                result["Powerstats"][powerstats_key][key].append(CrashLogsParser.split_binary_images(line))
+                                result["Powerstats"][powerstats_key][key].append(
+                                    CrashLogsParser.split_binary_images(line)
+                                )
                             else:
                                 result[key].append(CrashLogsParser.split_binary_images(line))
 
@@ -246,7 +250,8 @@ class CrashLogsParser(BaseParserInterface):
                         "name": app,
                         "filename": os.path.basename(path),
                         "path": path,
-                        "warning": "Timezone may be wrong, parsed local time as same timezone as sysdiagnose creation time",
+                        "warning": "Timezone may be wrong, parsed local time as same timezone as"
+                        " sysdiagnose creation time",
                     },
                 )
 

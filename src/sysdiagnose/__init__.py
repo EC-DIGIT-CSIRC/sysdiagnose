@@ -85,7 +85,9 @@ class Sysdiagnose:
         finally:
             lock.release()
 
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> dict:
+    def create_case(
+        self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None
+    ) -> dict:
         """
         Extracts the sysdiagnose file and creates a new case.
 
@@ -114,7 +116,9 @@ class Sysdiagnose:
             if c["source_sha256"] == metadata["source_sha256"]:
                 if force:
                     if case_id and c["case_id"] != case_id:
-                        raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}")
+                        raise ValueError(
+                            f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}"  # noqa: E501
+                        )
                     # all is well
                     case_id = c["case_id"]
                     case = c
@@ -222,10 +226,14 @@ class Sysdiagnose:
                         if member_path.name == "remotectl_dumpstate.txt":
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
-                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
+                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(
+                                remotectl_dumpstate_file_content
+                            )
                         elif member_path.name == "sysdiagnose.log":
                             sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
-                            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+                            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(
+                                sysdiagnose_log_file
+                            )
                         elif member_path.name == "SystemVersion.plist":
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
@@ -280,7 +288,9 @@ class Sysdiagnose:
 
                     return metadata
                 except Exception:
-                    logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
+                    logger.error(
+                        "Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True
+                    )
             else:
                 logger.error("remotectl_dumpstate does not contain a Local device section.")
         elif ioreg_devicetree_json and sys_json:
@@ -340,7 +350,9 @@ class Sysdiagnose:
                     with tarfile.open(sysdiagnose_file) as tf:
                         tf.extractall(path=destination_folder)
                 except Exception as e:
-                    raise Exception(f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}") from e
+                    raise Exception(
+                        f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}"
+                    ) from e
             except Exception as e:
                 raise Exception(f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}") from e
 

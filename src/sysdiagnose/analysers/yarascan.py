@@ -6,6 +6,7 @@ import threading
 from datetime import datetime
 
 import yara
+
 from sysdiagnose.utils.base import BaseAnalyserInterface, Event, SysdiagnoseConfig, logger
 
 # These are the commonly used external variables that can be used in the YARA rules
@@ -41,7 +42,9 @@ class YaraAnalyser(BaseAnalyserInterface):
                 self.output_file,  # don't match on ourselves
             ],
             ignore_folders=[
-                glob.glob(os.path.join(self.case_data_subfolder, "system_logs.logarchive")).pop(),  # irrelevant for YARA rules
+                glob.glob(
+                    os.path.join(self.case_data_subfolder, "system_logs.logarchive")
+                ).pop(),  # irrelevant for YARA rules
             ],
         )
 
@@ -115,7 +118,9 @@ class YaraAnalyser(BaseAnalyserInterface):
                     for ignore_file in ignore_files:
                         if file_full_path.startswith(ignore_file):
                             stop = True
-                            logger.warning(f"Skipping file: {file_full_path}", extra={"yara_ignored_path": file_full_path})
+                            logger.warning(
+                                f"Skipping file: {file_full_path}", extra={"yara_ignored_path": file_full_path}
+                            )
                             continue
                     if stop:
                         continue
@@ -123,7 +128,9 @@ class YaraAnalyser(BaseAnalyserInterface):
         return file_queue
 
     @staticmethod
-    def extract_line(file_path: str, instance_offset: int, instance_length: int, is_jsonl: bool, length: int = 10) -> tuple[str, str]:
+    def extract_line(
+        file_path: str, instance_offset: int, instance_length: int, is_jsonl: bool, length: int = 10
+    ) -> tuple[str, str]:
         """
         Extract an excerpt from a file at a given offset. In case of JSONL files, it extracts the full line.
 
@@ -185,18 +192,23 @@ class YaraAnalyser(BaseAnalyserInterface):
                     for instance in string_match.instances:
                         # Let's extract the line from the file
                         is_parsed_data_jsonl = is_parsed_data and relative_path.endswith(".jsonl")
-                        line, excerpt = YaraAnalyser.extract_line(file_path, instance.offset, instance.matched_length, is_parsed_data_jsonl)
+                        line, excerpt = YaraAnalyser.extract_line(
+                            file_path, instance.offset, instance.matched_length, is_parsed_data_jsonl
+                        )
 
                         # If the file is a parsed_data JSONL file, we can try to extract the datetime from the JSON
                         if is_parsed_data_jsonl:
                             try:
                                 e = json.loads(line)  # Validate JSON
                                 match_datetime = datetime.fromisoformat(e["datetime"])
-                                match_datetime_desc = f"Extracted datetime from JSON entry in {os.path.basename(relative_path)}"
+                                match_datetime_desc = (
+                                    f"Extracted datetime from JSON entry in {os.path.basename(relative_path)}"
+                                )
 
                             except json.JSONDecodeError:
                                 logger.exception(
-                                    f"Error while extracting the datetime. Invalid JSON in {file_path} at offset {instance.offset}. Setting default datetime.",
+                                    f"Error while extracting the datetime. Invalid JSON in {file_path}"
+                                    f" at offset {instance.offset}. Setting default datetime.",
                                     extra={"yara_target_file": file_path},
                                 )
 

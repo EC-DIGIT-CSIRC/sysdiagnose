@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersMcSettingsEvents(SysdiagnoseTestCase):
-
     def test_parse_mcsettingsevents(self):
         for case_id, _case in self.sd.cases().items():
             p = McSettingsEventsParser(self.sd.config, case_id=case_id)
@@ -23,5 +22,5 @@ class TestParsersMcSettingsEvents(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

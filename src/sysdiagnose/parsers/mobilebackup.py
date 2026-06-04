@@ -38,7 +38,8 @@ class MobileBackupParser(BaseParserInterface):
             #     timestamp = datetime.fromisoformat(parts[0])
             #     item = {
             #     }
-            #     # FIXME below correlation is WRONG. The index of the BackupStateInfo error is not the same as the index of the LastOnConditionEvents
+            #     # FIXME below correlation is WRONG.
+            #     # The index of the BackupStateInfo error is not the same as the index of the LastOnConditionEvents
             #     try:
             #         backupstateinfo = json_data['BackupStateInfo']['errors'][i]
             #         item.update(backupstateinfo)

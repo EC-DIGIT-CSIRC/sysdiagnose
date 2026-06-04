@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestAnalysersCoverage(SysdiagnoseTestCase):
-
     def test_analyse_coverage(self):
         for case_id, _case in self.sd.cases().items():
             print(f"Running Coverage for {case_id}")
@@ -21,5 +20,5 @@ class TestAnalysersCoverage(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

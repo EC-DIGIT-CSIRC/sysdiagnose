@@ -32,7 +32,7 @@ class FileLock:
     def acquire(self) -> None:
         """
         Acquire the lock for the given filename.
-        Waits until the lock is available or raises a TimeoutError if it cannot be acquired within the specified timeout.
+        Waits until the lock is available or raises a TimeoutError if it cannot be acquired within the specified timeout
         """
         if self.locked:
             return  # Already locked, no need to acquire again

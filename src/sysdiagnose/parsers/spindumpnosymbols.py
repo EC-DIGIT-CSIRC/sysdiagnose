@@ -78,7 +78,9 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                     basic = SpindumpNoSymbolsParser.parse_basic(headers)
                     basic["message"] = f"spindump {basic['data']['data_source']}"
                     events.append(basic)
-                    events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic["datetime"]))
+                    events.extend(
+                        SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic["datetime"])
+                    )
                 # Logging
                 logger.debug(f"{len(events)} events retrieved", extra={"num_events": len(events)})
 
@@ -129,7 +131,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
                         timestamp = start_time
                     event = Event(
                         datetime=timestamp,
-                        message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",
+                        message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",  # noqa: E501
                         module=SpindumpNoSymbolsParser.module_name,
                         timestamp_desc="process running during spindump",
                         data=process,
@@ -147,7 +149,7 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
         timestamp = start_time - timedelta(seconds=int(process.get("time_since_fork", "0").rstrip("s")))
         event = Event(
             datetime=timestamp,
-            message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",
+            message=f"{process.get('path', process['process'])} [{process['pid']}] as {process['uid']} parent={process.get('parent', '<unknown>')}",  # noqa: E501
             module=SpindumpNoSymbolsParser.module_name,
             timestamp_desc="process running during spindump",
             data=process,

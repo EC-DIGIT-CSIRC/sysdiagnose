@@ -40,7 +40,9 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
             try:
                 timestamp = dateutil.parser.parse(timestamp_str)
             except Exception:
-                logger.exception(f"Error converting timestamp. Timestamp was: {timestamp_str!s}. Assuming Jan 1st 1970.")
+                logger.exception(
+                    f"Error converting timestamp. Timestamp was: {timestamp_str!s}. Assuming Jan 1st 1970."
+                )
                 timestamp = dateutil.parser.parse("1970-01-01")
 
             bssid = network_data.get("__OSSpecific__", {}).get("BSSID", "")

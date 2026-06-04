@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersMobileactivation(SysdiagnoseTestCase):
-
     def test_mobileactivation(self):
         for case_id, _case in self.sd.cases().items():
             p = MobileActivationParser(self.sd.config, case_id=case_id)
@@ -19,15 +18,15 @@ class TestParsersMobileactivation(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('loglevel' in item['data'])
-                self.assertTrue('hexID' in item['data'])
-                if item['data']['loglevel'] == 'debug' and 'build_version' in item['data']:
-                    self.assertTrue('build_version' in item['data'])
+                self.assertTrue("loglevel" in item["data"])
+                self.assertTrue("hexID" in item["data"])
+                if item["data"]["loglevel"] == "debug" and "build_version" in item["data"]:
+                    self.assertTrue("build_version" in item["data"])
                 else:
-                    self.assertTrue('message' in item)
+                    self.assertTrue("message" in item)
                 self.assert_has_required_fields_jsonl(item)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

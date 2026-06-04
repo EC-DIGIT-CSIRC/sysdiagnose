@@ -140,7 +140,9 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     if "isOTAInstallation" in profile["InstallOptions"]:
                         result.append(f"OTA installation: {profile['InstallOptions']['isOTAInstallation']}")
                     if "managingProfileIdentifier" in profile["InstallOptions"]:
-                        result.append(f"Managing profile identifier: {profile['InstallOptions']['managingProfileIdentifier']}")
+                        result.append(
+                            f"Managing profile identifier: {profile['InstallOptions']['managingProfileIdentifier']}"
+                        )
 
                 if "OTAProfileStub" in profile:
                     result.append("OTA Profile Stub:")

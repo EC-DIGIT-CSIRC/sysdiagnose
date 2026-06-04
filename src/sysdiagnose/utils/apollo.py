@@ -73,7 +73,9 @@ default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apol
 
 
 class Apollo:
-    def __init__(self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo") -> None:
+    def __init__(
+        self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo"
+    ) -> None:
         """
         Initialize the Apollo class for parsing databases
 

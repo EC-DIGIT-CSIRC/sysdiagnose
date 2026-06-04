@@ -42,7 +42,8 @@ class McSettingsEventsParser(BaseParserInterface):
         """
         recursively traverse json_data and search for dicts that contain the 'timestamp' key.
         when found, convert the value of the 'timestamp' key to a datetime object and add it to the entry dict.
-        also add a field 'setting' with the path of the dict in the json_data where the 'timestamp' key was found. (each depth joined by a dot)
+        also add a field 'setting' with the path of the dict in the json_data where the 'timestamp' key was found.
+        (each depth joined by a dot)
         """
         for key, value in data.items():
             current_path = f"{path}.{key}" if path else key

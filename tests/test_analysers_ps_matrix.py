@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestAnalysersPsMatrix(SysdiagnoseTestCase):
-
     def test_analyse_ps_matrix(self):
         for case_id, _case in self.sd.cases().items():
             print(f"Running PsMatrix for {case_id}")
@@ -21,5 +20,5 @@ class TestAnalysersPsMatrix(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -16,21 +16,21 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
 
             result = a.get_result()
             # device info
-            self.assertIn('os_version', result['device_info'])
-            self.assertIn('build', result['device_info'])
-            self.assertIn('product_name', result['device_info'])
-            self.assertIn('product_type', result['device_info'])
+            self.assertIn("os_version", result["device_info"])
+            self.assertIn("build", result["device_info"])
+            self.assertIn("product_name", result["device_info"])
+            self.assertIn("product_type", result["device_info"])
             # file stats
-            for item in result['file_stats']:
-                self.assertIn('folder_name', item)
-                self.assertIn('file_count', item)
-                self.assertIn('files', item)
-                for file in item['files']:
-                    self.assertIn('filename', file)
-                    self.assertIn('extension', file)
-                    self.assertIn('file_type', file)
+            for item in result["file_stats"]:
+                self.assertIn("folder_name", item)
+                self.assertIn("file_count", item)
+                self.assertIn("files", item)
+                for file in item["files"]:
+                    self.assertIn("filename", file)
+                    self.assertIn("extension", file)
+                    self.assertIn("file_type", file)
             self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

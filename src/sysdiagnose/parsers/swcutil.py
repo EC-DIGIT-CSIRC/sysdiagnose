@@ -51,16 +51,28 @@ class SwcutilParser(BaseParserInterface):
                 for line in f_in:
                     if line.strip() == "":
                         continue
-                    if line.strip() == "=================================== DATABASE ===================================":
+                    if (
+                        line.strip()
+                        == "=================================== DATABASE ==================================="
+                    ):
                         status = "db"
                         continue
-                    elif line.strip() == "=================================== NETWORK ====================================":
+                    elif (
+                        line.strip()
+                        == "=================================== NETWORK ===================================="
+                    ):
                         status = "network"
                         continue
-                    elif line.strip() == "=================================== SETTINGS ===================================":
+                    elif (
+                        line.strip()
+                        == "=================================== SETTINGS ==================================="
+                    ):
                         status = "settings"
                         continue
-                    elif line.strip() == "================================= MEMORY USAGE =================================":
+                    elif (
+                        line.strip()
+                        == "================================= MEMORY USAGE ================================="
+                    ):
                         status = "memory"
                         continue
                     elif status == "headers":

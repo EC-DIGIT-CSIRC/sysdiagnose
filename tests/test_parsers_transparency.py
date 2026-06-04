@@ -7,7 +7,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersTransparency(SysdiagnoseTestCase):
-
     def test_transparency(self):
         for case_id, _case in self.sd.cases().items():
             p = TransparencyParser(self.sd.config, case_id=case_id)
@@ -36,10 +35,10 @@ class TestParsersTransparency(SysdiagnoseTestCase):
             self.assertTrue(os.path.isfile(p.output_file))
 
             result = p.get_result()
-            self.assertTrue('copy_status_version' in result)
+            self.assertTrue("copy_status_version" in result)
             self.assertGreater(len(result), 0)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

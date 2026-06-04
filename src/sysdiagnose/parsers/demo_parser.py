@@ -30,7 +30,9 @@ class DemoParser(BaseParserInterface):
         for log_file in log_files:
             entry = {}
             try:
-                timestamp = datetime.strptime("1980-01-01 12:34:56.001 +00:00", "%Y-%m-%d %H:%M:%S.%f %z")  # moment of interest
+                timestamp = datetime.strptime(
+                    "1980-01-01 12:34:56.001 +00:00", "%Y-%m-%d %H:%M:%S.%f %z"
+                )  # moment of interest
                 event = Event(
                     datetime=timestamp,
                     message=f"Demo event from {log_file}",  # String with an informative message of the event

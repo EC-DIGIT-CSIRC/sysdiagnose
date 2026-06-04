@@ -37,7 +37,7 @@ class IOServiceParser(BaseParserInterface):
         }
 
         Tree depth is determined by the the number of | in front of the entry.  Root has none.
-        """  # noqa: W605
+        """  # noqa: E501, W605
 
         log_files = self.get_log_files()
         data_tree = {}

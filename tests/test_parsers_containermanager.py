@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersContainermanager(SysdiagnoseTestCase):
-
     def test_parsecontainermanager(self):
         for case_id, _case in self.sd.cases().items():
             p = ContainerManagerParser(self.sd.config, case_id=case_id)
@@ -19,11 +18,11 @@ class TestParsersContainermanager(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('hexID' in item['data'])
-                self.assertTrue('loglevel' in item['data'])
+                self.assertTrue("hexID" in item["data"])
+                self.assertTrue("loglevel" in item["data"])
                 self.assert_has_required_fields_jsonl(item)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

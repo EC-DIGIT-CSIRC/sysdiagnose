@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersIOPower(SysdiagnoseTestCase):
-
     def test_parse_case(self):
         for case_id, _case in self.sd.cases().items():
             p = IOPowerParser(self.sd.config, case_id=case_id)
@@ -19,5 +18,5 @@ class TestParsersIOPower(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, p.get_result())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

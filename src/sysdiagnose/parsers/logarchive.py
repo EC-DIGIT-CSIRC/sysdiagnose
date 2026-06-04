@@ -202,7 +202,9 @@ class LogarchiveHelper:
             logger.exception("Error: No system_logs.logarchive/ folder found in logs/ directory")
             return 0
         except FileNotFoundError:
-            logger.exception("Error: unifiedlogs command not found, please refer to the README for further instructions")
+            logger.exception(
+                "Error: unifiedlogs command not found, please refer to the README for further instructions"
+            )
             return 0
 
     @staticmethod
@@ -281,7 +283,9 @@ class LogarchiveHelper:
         Return None if it failed or the result otherwise.
 
         """
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as process:
+        with subprocess.Popen(
+            cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+        ) as process:
             # start a thread to log stderr
             stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
             stderr_thread.start()
@@ -301,7 +305,9 @@ class LogarchiveHelper:
         """
         result = []
 
-        with subprocess.Popen(cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True) as process:
+        with subprocess.Popen(
+            cmd_array, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
+        ) as process:
             if outputfile is None:
                 for line in iter(process.stdout.readline, ""):
                     try:
@@ -334,7 +340,11 @@ class LogarchiveHelper:
             entry["datetime"] = timestamp.isoformat(timespec="microseconds")
             entry["timestamp"] = timestamp.timestamp()
             event = Event(
-                datetime=timestamp, message=entry.get("message", ""), module=module, timestamp_desc=timestamp_desc, data=entry
+                datetime=timestamp,
+                message=entry.get("message", ""),
+                module=module,
+                timestamp_desc=timestamp_desc,
+                data=entry,
             )
             return event.to_dict()
         """
@@ -374,7 +384,9 @@ class LogarchiveHelper:
         }
         # convert time
         timestamp = datetime.fromisoformat(entry["timestamp"])
-        event = Event(datetime=timestamp, message=entry.get("eventMessage", ""), module=module, timestamp_desc=timestamp_desc)
+        event = Event(
+            datetime=timestamp, message=entry.get("eventMessage", ""), module=module, timestamp_desc=timestamp_desc
+        )
         entry.pop("eventMessage")
         entry.pop("timestamp")
 

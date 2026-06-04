@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersTaskinfo(SysdiagnoseTestCase):
-
     def test_get_tasks(self):
         for case_id, _case in self.sd.cases().items():
             p = TaskinfoParser(self.sd.config, case_id=case_id)
@@ -36,5 +35,5 @@ class TestParsersTaskinfo(SysdiagnoseTestCase):
             #     self.assertGreater(len(task['threads']), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

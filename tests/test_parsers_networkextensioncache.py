@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersNetworkExtensionCache(SysdiagnoseTestCase):
-
     def test_networkextensioncache(self):
         for case_id, _case in self.sd.cases().items():
             p = NetworkExtensionCacheParser(self.sd.config, case_id=case_id)
@@ -23,5 +22,5 @@ class TestParsersNetworkExtensionCache(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

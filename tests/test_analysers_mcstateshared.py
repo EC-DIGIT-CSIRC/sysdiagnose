@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestAnalysersSummary(SysdiagnoseTestCase):
-
     def test_analyse_summary(self):
         for case_id, _case in self.sd.cases().items():
             print(f"Running Summary for {case_id}")
@@ -18,5 +17,5 @@ class TestAnalysersSummary(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(a, a.get_result())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

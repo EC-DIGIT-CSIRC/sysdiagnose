@@ -63,7 +63,11 @@ class SysdiagnoseConfig:
                 # figure out the class name
                 for attr in dir(module):
                     obj = getattr(module, attr)
-                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
+                    if (
+                        isinstance(obj, type)
+                        and issubclass(obj, BaseParserInterface)
+                        and obj is not BaseParserInterface
+                    ):
                         results[name] = obj.description
                         break
             except AttributeError:
@@ -84,7 +88,11 @@ class SysdiagnoseConfig:
                 # figure out the class name
                 for attr in dir(module):
                     obj = getattr(module, attr)
-                    if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
+                    if (
+                        isinstance(obj, type)
+                        and issubclass(obj, BaseAnalyserInterface)
+                        and obj is not BaseAnalyserInterface
+                    ):
                         results[name] = obj.description
                         break
             except AttributeError:
@@ -209,9 +217,11 @@ class BaseInterface(ABC):
             self._result_summary = ResultSummary()
 
         # TODO: Detect stale results. Options considered:
-        # B) Store framework version in ResultSummary — catches any change, but causes false positives from unrelated updates
+        # B) Store framework version in ResultSummary — catches any change,
+        #    but causes false positives from unrelated updates
         # C) Store hash of parser source in ResultSummary — precise, no false positives, survives git ops,
-        #    but doesn't catch changes in dependencies (utilities, base class). Backward compatible (old summaries skip check).
+        #    but doesn't catch changes in dependencies (utilities, base class).
+        #    Backward compatible (old summaries skip check).
         # Recommended: C + framework version bump as a "force invalidate all" signal for infrastructure changes.
         # If stale, warn user to re-run with force=True.
 
@@ -227,7 +237,8 @@ class BaseInterface(ABC):
     def get_result(self, force: bool = False) -> list | dict | str | None:
         """
         Retrieves the result of the parsing operation, and run the parsing if necessary.
-        Also ensures the execution status is updated, the result is saved to the output_file, and can be used as a cache.
+        Also ensures the execution status is updated, the result is saved to the output_file,
+        and can be used as a cache.
 
         Args:
             force (bool, optional): If True, forces the parsing operation even if the output cache or file exists.
@@ -256,8 +267,10 @@ class BaseInterface(ABC):
         Saves the result of the parsing operation to a file and returns the execution status.
 
         Args:
-            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists. Defaults to False.
-            indent (int, optional): The number of spaces to use for indentation in the JSON output. Defaults to None.
+            force (bool, optional): If True, forces the parsing operation even if the output cache or file exists.
+                                    Defaults to False.
+            indent (int, optional): The number of spaces to use for indentation in the JSON output.
+                                    Defaults to None.
 
         WARNING: You may need to overwrite this method if your parser saves multiple files.
         """
@@ -463,7 +476,9 @@ class Event:
                 datetime = datetime_datetime.fromtimestamp(data.get("timestamp", ""), tz=UTC)
             except Exception as e:
                 logger.error(f"Failed to parse timestamp: {e}", exc_info=True)
-                raise ValueError("Invalid timestamp format in data dictionary: no isoformat datetime or timestamp int.") from e
+                raise ValueError(
+                    "Invalid timestamp format in data dictionary: no isoformat datetime or timestamp int."
+                ) from e
 
         message = data.get("message", "")
         module = data.get("module", "")

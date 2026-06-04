@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersAppinstallation(SysdiagnoseTestCase):
-
     def test_get_appinstallation(self):
         for case_id, _case in self.sd.cases().items():
             p = AppInstallationParser(self.sd.config, case_id=case_id)
@@ -20,10 +19,10 @@ class TestParsersAppinstallation(SysdiagnoseTestCase):
 
             result = p.get_result()
             for item in result:
-                self.assertTrue('db_table' in item)
+                self.assertTrue("db_table" in item)
                 self.assert_has_required_fields_jsonl(item)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

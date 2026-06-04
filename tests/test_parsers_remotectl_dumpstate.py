@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
-
     def test_get_remotectldumpstate(self):
         for case_id, _case in self.sd.cases().items():
             p = RemotectlDumpstateParser(self.sd.config, case_id=case_id)
@@ -20,9 +19,9 @@ class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
 
             result = p.get_result()
             if result:
-                self.assertTrue('Local device' in result)
+                self.assertTrue("Local device" in result)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

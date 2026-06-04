@@ -84,5 +84,5 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNotNone(cached_summary.duration)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

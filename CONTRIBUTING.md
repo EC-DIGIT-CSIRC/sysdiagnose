@@ -25,7 +25,7 @@ Before submitting a PR, verify:
 
 - [ ] Class inherits from `BaseParserInterface` or `BaseAnalyserInterface`
 - [ ] `description` class attribute is set
-- [ ] `format` class attribute matches the return type of `execute()`
+- [ ] `format` class attribute matches the functional return type of `execute()`
 - [ ] `get_log_files()` returns only files that exist (parsers only)
 - [ ] `execute()` guards against empty `get_log_files()` with `logger.warning()` + empty return
 - [ ] No `IndexError` can propagate from `get_log_files()[0]` access

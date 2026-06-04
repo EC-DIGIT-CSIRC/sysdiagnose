@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
-
     def test_get_known_wifi_networks(self):
         for case_id, _case in self.sd.cases().items():
             p = WifiKnownNetworksParser(self.sd.config, case_id=case_id)
@@ -22,5 +21,5 @@ class TestParsersWifiKnownNetworks(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

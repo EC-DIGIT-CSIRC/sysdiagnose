@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersIODeviceTree(SysdiagnoseTestCase):
-
     def test_parse_case(self):
         for case_id, _case in self.sd.cases().items():
             p = IODeviceTreeParser(self.sd.config, case_id=case_id)
@@ -19,5 +18,5 @@ class TestParsersIODeviceTree(SysdiagnoseTestCase):
             self.assert_result_summary_consistent(p, p.get_result())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -176,7 +176,9 @@ class BrctlParser(BaseParserInterface):
             # Add the key-value pair to the output dictionary
             output[k] = value
 
-        pattern = r"dump taken at (\d{2}/\d{2}/\d{4}, \d{2}:\d{2}:\d{2}) \[account=(\d+)\] \[inCarry=(\w+)\] \[home=(.+)\]"
+        pattern = (
+            r"dump taken at (\d{2}/\d{2}/\d{4}, \d{2}:\d{2}:\d{2}) \[account=(\d+)\] \[inCarry=(\w+)\] \[home=(.+)\]"
+        )
 
         # Find the match in the content
         match = re.search(pattern, header)
@@ -375,6 +377,9 @@ class BrctlParser(BaseParserInterface):
         container_list_file = [os.path.join(brctl_folder, "brctl-container-list.txt")]
         container_dump_file = [os.path.join(brctl_folder, "brctl-dump.txt")]
         if os.path.exists(container_list_file[0]) and os.path.exists(container_dump_file[0]):
-            brctl_parsing = {**BrctlParser.parselistfile(container_list_file), **BrctlParser.parsedumpfile(container_dump_file)}
+            brctl_parsing = {
+                **BrctlParser.parselistfile(container_list_file),
+                **BrctlParser.parsedumpfile(container_dump_file),
+            }
             return brctl_parsing
         return {}

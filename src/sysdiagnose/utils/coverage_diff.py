@@ -82,15 +82,21 @@ def compare_coverage_details(obj1: dict, obj2: dict) -> list[dict]:
     coverage2 = calculate_coverage(obj2)
 
     # Merge the two coverage DataFrames for comparison
-    comparison = pd.merge(coverage1, coverage2, how="outer", left_index=True, right_index=True, suffixes=("_old", "_new")).fillna(
-        0
-    )  # Fill NaN values with 0 for parsers missing in one of the objects
+    comparison = pd.merge(
+        coverage1, coverage2, how="outer", left_index=True, right_index=True, suffixes=("_old", "_new")
+    ).fillna(0)  # Fill NaN values with 0 for parsers missing in one of the objects
 
     # Convert the comparison DataFrame to a list of dictionaries
     return comparison.reset_index().to_dict(orient="records")
 
 
-def generate_html_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str) -> None:
+def generate_html_report(
+    comparison_data: list[dict],
+    added_properties: dict,
+    removed_properties: dict,
+    modified_properties: dict,
+    output_file: str,
+) -> None:
     """
     Generate an HTML report for parser coverage comparison and sysdiag properties using Jinja2.
 
@@ -235,7 +241,7 @@ def generate_html_report(comparison_data: list[dict], added_properties: dict, re
         </table>
     </body>
     </html>
-    """
+    """  # noqa: E501
     template = Template(html_template)
     rendered_html = template.render(
         comparison_data=comparison_data,
@@ -248,7 +254,13 @@ def generate_html_report(comparison_data: list[dict], added_properties: dict, re
         file.write(rendered_html)
 
 
-def generate_markdown_report(comparison_data: list[dict], added_properties: dict, removed_properties: dict, modified_properties: dict, output_file: str) -> None:
+def generate_markdown_report(
+    comparison_data: list[dict],
+    added_properties: dict,
+    removed_properties: dict,
+    modified_properties: dict,
+    output_file: str,
+) -> None:
     """
     Generate a Markdown report for parser coverage comparison and sysdiag properties.
 
@@ -337,7 +349,9 @@ def compare_coverage_json_files(file1: str, file2: str, output_file: str, format
         generate_html_report(comparison_data, added_properties, removed_properties, modified_properties, output_file)
     elif format.lower() == "markdown":
         # Generate Markdown report
-        generate_markdown_report(comparison_data, added_properties, removed_properties, modified_properties, output_file)
+        generate_markdown_report(
+            comparison_data, added_properties, removed_properties, modified_properties, output_file
+        )
 
 
 if __name__ == "__main__":
@@ -346,7 +360,14 @@ if __name__ == "__main__":
     parser.add_argument("file1", help="File path to the first JSON file")
     parser.add_argument("file2", help="File path to the second JSON file")
     parser.add_argument("-o", "--output", required=True, help="Output file path")
-    parser.add_argument("-fmt", "--format", required=False, default="html", choices=["html", "markdown"], help="Output format (default: html)")
+    parser.add_argument(
+        "-fmt",
+        "--format",
+        required=False,
+        default="html",
+        choices=["html", "markdown"],
+        help="Output format (default: html)",
+    )
 
     args = parser.parse_args()
 

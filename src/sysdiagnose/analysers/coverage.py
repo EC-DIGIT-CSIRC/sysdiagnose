@@ -201,7 +201,11 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # Generate a pie chart for parser formats
         plt.figure(figsize=(6, 6))
         parser_format_counts.plot(
-            kind="pie", autopct="%1.1f%%", startangle=140, colors=plt.cm.tab20.colors[: len(parser_format_counts)], legend=False
+            kind="pie",
+            autopct="%1.1f%%",
+            startangle=140,
+            colors=plt.cm.tab20.colors[: len(parser_format_counts)],
+            legend=False,
         )
         plt.title("Parsers by Format")
 
@@ -380,7 +384,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
             </div>
         </body>
         </html>
-        """
+        """  # noqa: E501
 
         # Render the template with Jinja2
         template = Template(html_template)

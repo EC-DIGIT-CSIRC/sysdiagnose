@@ -14,14 +14,14 @@ class TestAnalysersPList(SysdiagnoseTestCase):
             a.save_result(force=True)
 
             self.assertTrue(os.path.isfile(a.output_file))
-            #self.assertTrue(os.path.getsize(a.output_file) > 0)
+            # self.assertTrue(os.path.getsize(a.output_file) > 0)
 
             result = a.get_result()
             for item in result:
                 self.assert_has_required_fields_jsonl(item)
-                self.assertTrue('source' in item['data'])
+                self.assertTrue("source" in item["data"])
             self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

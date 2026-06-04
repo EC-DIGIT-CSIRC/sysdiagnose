@@ -66,7 +66,7 @@ packages = ["src/sysdiagnose"]
 
 
 [tool.ruff]
-line-length = 128
+line-length = 120
 target-version = "py311"
 exclude = [
     ".git",
@@ -75,6 +75,9 @@ exclude = [
     ".venv",
     "build",
     "dist",
+    "cases",
+    "tests/testdata",
+    "tests/tmp"
 ]
 
 # E = Style errors from pycodestyle (PEP8)
@@ -90,10 +93,6 @@ exclude = [
 # T20 = flake8-print - disallow print statements (use logging instead)
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "W", "N", "UP", "C4", "SIM", "T20"]
-ignore = [
-  "E221", "E225", "E251", "E501",  # Match pycodestyle
-  "E302", "E266",                   # Add missing ones
-]
 fixable = []
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -102,12 +101,12 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 known-third-party = ["yara"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["T201"]
+"tests/*" = ["T201", "E501"]
 "src/sysdiagnose/__init__.py" = ["T201"]
-"src/sysdiagnose/__main__.py" = ["T201"]
+"src/sysdiagnose/__main__.py" = ["T201", "T20"]
 "src/sysdiagnose/utils/coverage_diff.py" = ["T201"]
 "src/sysdiagnose/utils/file_stats_diff.py" = ["T201"]
-"src/sysdiagnose/utils/sqlite2json.py" = ["T201"]
+"scripts/test-data-conversion.py" = ["T201"]
 
 [tool.ruff.format]
 quote-style = "double"

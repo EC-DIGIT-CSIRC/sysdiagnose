@@ -7,10 +7,9 @@ from tests import SysdiagnoseTestCase
 
 
 class TestAnalysersYarascan(SysdiagnoseTestCase):
-
     def setUp(self):
         super().setUp()
-        self.yara_rules_folder = os.path.join(self.tmp_folder, 'yararules')
+        self.yara_rules_folder = os.path.join(self.tmp_folder, "yararules")
         os.makedirs(self.yara_rules_folder, exist_ok=True)
         # Create a dummy YARA rule file for testing, one that should match at least (only?) on sysdiagnose.log file.
         # Avoids relying on any specific content and potential too many matches.
@@ -23,12 +22,12 @@ rule match_for_sure_on_sysdiagnose_version {
         $a
 }
 """
-        rule_file_path = os.path.join(self.yara_rules_folder, 'test_rule.yar')
-        with open(rule_file_path, 'w') as rule_file:
+        rule_file_path = os.path.join(self.yara_rules_folder, "test_rule.yar")
+        with open(rule_file_path, "w") as rule_file:
             rule_file.write(rule_content)
 
     def test_analyse_yarascan(self):
-        with patch.dict(os.environ, {'SYSDIAGNOSE_YARA_RULES_PATH': self.yara_rules_folder}):
+        with patch.dict(os.environ, {"SYSDIAGNOSE_YARA_RULES_PATH": self.yara_rules_folder}):
             for case_id, _case in self.sd.cases().items():
                 print(f"Running Yarascan for {case_id}")
                 # run the analyser
@@ -42,5 +41,5 @@ rule match_for_sure_on_sysdiagnose_version {
                 self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

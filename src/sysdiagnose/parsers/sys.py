@@ -38,7 +38,7 @@ class SystemVersionParser(BaseParserInterface):
         timestamp = self.sysdiagnose_creation_datetime
         event = Event(
             datetime=timestamp,
-            message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",
+            message=f"SystemVersion {entry.get('ProductName', '')} {entry.get('ProductVersion', '')} {entry.get('BuildVersion', '')}",  # noqa: E501
             module=self.module_name,
             timestamp_desc="sys at sysdiagnose creation",
             data=entry,

@@ -6,7 +6,6 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersDisks(SysdiagnoseTestCase):
-
     def test_parse_disks(self):
         for case_id, _case in self.sd.cases().items():
             p = DisksParser(self.sd.config, case_id=case_id)
@@ -20,10 +19,10 @@ class TestParsersDisks(SysdiagnoseTestCase):
             result = p.get_result()
             if result:  # not all logs contain data
                 for item in result:
-                    self.assertTrue('filesystem' in item['data'] or 'mounted_on' in item['data'])
+                    self.assertTrue("filesystem" in item["data"] or "mounted_on" in item["data"])
                     self.assert_has_required_fields_jsonl(item)
             self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

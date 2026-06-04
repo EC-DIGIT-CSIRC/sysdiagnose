@@ -235,7 +235,9 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
         i = 0
         while i < len(buffer):
             line = buffer[i]
-            match = re.search(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)", line)
+            match = re.search(
+                r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)", line
+            )
             if match:
                 timestamp = datetime.fromisoformat(match.group(1))
             else:
