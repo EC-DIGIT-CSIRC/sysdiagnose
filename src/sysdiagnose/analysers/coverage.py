@@ -73,7 +73,6 @@ class CoverageAnalyser(BaseAnalyserInterface):
                 # ugly hack to compensate for parsers that return folders
                 if parser.module_name == "logarchive":
                     # all files below the logarchive folder, excluding Extra
-                    os.path.join(parser.get_log_files().pop(), "**")
                     extra_files = glob.glob(os.path.join(parser.get_log_files().pop(), "**"), recursive=True)
                     # exclude all files in the Extra folder
                     extra_files = [f for f in extra_files if "/Extra/" not in f]
