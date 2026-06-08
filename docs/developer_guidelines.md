@@ -143,8 +143,8 @@ class MyAnalyser(BaseAnalyserInterface):
 ### Rules for analysers
 
 - Call `parser.get_result()` to obtain input data — this handles caching automatically.
-- Follow the same `execute()` rules as parsers (guard, logging, return types).
-- For custom output formats (GPX, KML, CSV), return a `str` from `execute()` and set `format` accordingly. The base `_write_result()` will write the string to the output file.
+- Follow the same `execute()` rules as parsers regarding logging and return types.
+- Analysers do not have `get_log_files()` — guard against empty input data from upstream parsers instead.
 
 ## Custom Output Formats
 
@@ -248,13 +248,13 @@ if __name__ == "__main__":
 
 ### Test rules
 
-1. **Always guard with `self.skipTest()`** when log files are missing. Never assert that files exist — test data may not contain all file types.
+1. **Parsers: always guard with `self.skipTest()`** when `get_log_files()` returns empty. Never assert that files exist — test data may not contain all file types.
 
 2. **Use `self.assert_has_required_fields_jsonl(item)`** for jsonl parsers to validate the event structure.
 
 3. **Use `self.assert_result_summary_consistent(instance, result)`** to validate that the `ResultSummary` matches the actual output (event count, timing, status consistency).
 
-4. **Call `save_result(force=True)`** to ensure the parser runs fresh.
+4. **Call `save_result(force=True)`** to ensure the parser/analyser runs fresh.
 
 5. **Validate the output file exists** after saving.
 
@@ -285,7 +285,7 @@ The summary file serves as a sidecar metadata cache with two purposes:
 - [ ] `description` class attribute is set
 - [ ] `format` class attribute matches the return type of `execute()`
 - [ ] `get_log_files()` returns only files that exist (parsers only)
-- [ ] `execute()` guards against empty `get_log_files()` with `logger.warning()` + empty return
+- [ ] `execute()` guards against empty `get_log_files()` with `logger.warning()` + empty return (parsers only)
 - [ ] No `print()` statements (enforced by ruff `T201`)
-- [ ] Test file exists under `tests/` with `skipTest` guard for missing data
+- [ ] Test file exists under `tests/` with `skipTest` guard for missing data (parsers only)
 - [ ] Output validates correctly with test data

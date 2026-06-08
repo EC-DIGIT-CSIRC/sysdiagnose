@@ -56,7 +56,4 @@ class OldDscParser(BaseParserInterface):
 
     @staticmethod
     def parse_file(path: str) -> list | dict:
-        try:
-            return load_plist_file_as_json(path)
-        except IndexError:
-            return {"error": "No olddsc file present"}
+        return load_plist_file_as_json(path)

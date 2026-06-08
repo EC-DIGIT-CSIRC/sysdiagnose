@@ -29,10 +29,7 @@ class PlistParser(BaseParserInterface):
     def execute(self) -> dict:
         result = {}
         for logfile in self.get_log_files():
-            try:
-                json_data = misc.load_plist_file_as_json(logfile)
-            except Exception as e:
-                json_data = {"error": str(e)}
+            json_data = misc.load_plist_file_as_json(logfile)
             end_of_path = logfile[len(self.case_data_subfolder) :].lstrip(
                 os.path.sep
             )  # take the path after the root path
@@ -50,10 +47,7 @@ class PlistParser(BaseParserInterface):
 
     @staticmethod
     def parse_file(file_path: str) -> dict:
-        try:
-            return misc.load_plist_file_as_json(file_path)
-        except Exception as e:
-            return {"error": str(e)}
+        return misc.load_plist_file_as_json(file_path)
 
     def _write_result(self, result, indent=None) -> int:
         self._result = result

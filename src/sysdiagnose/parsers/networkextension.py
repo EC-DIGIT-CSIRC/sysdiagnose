@@ -9,7 +9,7 @@ import glob
 import os
 
 from sysdiagnose.utils import misc
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class NetworkExtensionParser(BaseParserInterface):
@@ -29,11 +29,9 @@ class NetworkExtensionParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             return NetworkExtensionParser.parse_file(log_file)
-        return {"error": ["No com.apple.networkextension.plist file present"]}
+        logger.warning("No com.apple.networkextension.plist file present")
+        return {}
 
     @staticmethod
     def parse_file(path: str) -> list | dict:
-        try:
-            return misc.load_plist_file_as_json(path)
-        except IndexError:
-            return {"error": "No com.apple.networkextension.plist file present"}
+        return misc.load_plist_file_as_json(path)
