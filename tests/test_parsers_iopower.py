@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersIOPower(SysdiagnoseTestCase):
     def test_parse_case(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id):
+            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
                 p = IOPowerParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
                 if not files:

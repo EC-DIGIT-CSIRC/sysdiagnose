@@ -10,7 +10,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersPs(SysdiagnoseTestCase):
     def test_parse_ps(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id):
+            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
                 p = PsParser(self.sd.config, case_id=case_id)
 
                 files = p.get_log_files()

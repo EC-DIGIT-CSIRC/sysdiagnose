@@ -146,7 +146,7 @@ class MyAnalyser(BaseAnalyserInterface):
 - Follow the same `execute()` rules as parsers regarding logging and return types.
 - Analysers do not have `get_log_files()` — guard against empty input data from upstream parsers instead.
 - For custom output formats (GPX, KML, CSV), return a `str` from `execute()` and set `format` accordingly. The base `_write_result()` will write the string to the output file.
-- Use `self.subTest(case_id=case_id)` when iterating over multiple cases so each case is reported independently
+- Use `self.subTest(case_id=case_id, ios_version=_case.get('ios_version'))` when iterating over multiple cases so each case is reported independently
 
 
 ## Custom Output Formats
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
 3. **Use `self.assert_result_summary_consistent(instance, result)`** to validate that the `ResultSummary` matches the actual output (event count, timing, status consistency).
 
-4. Use `self.subTest(case_id=case_id)` when iterating over multiple cases so each case is reported independently
+4. Use `self.subTest(case_id=case_id, ios_version=_case.get('ios_version'))` when iterating over multiple cases so each case is reported independently
 
 5. **Call `save_result(force=True)`** to ensure the parser/analyser runs fresh.
 

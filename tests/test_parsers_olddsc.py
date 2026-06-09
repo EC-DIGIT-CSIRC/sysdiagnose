@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersOlddsc(SysdiagnoseTestCase):
     def test_parse_olddsc_file(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id):
+            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
                 p = OldDscParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
                 if not files:
