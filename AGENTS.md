@@ -25,8 +25,8 @@ docs/                 # Documentation
 
 ## Key Rules
 
-- `execute()` must guard against missing files: check `get_log_files()` first, `logger.warning()` + return empty if none found
-- Never let `IndexError` propagate from `get_log_files()[0]`
+- Parsers: `execute()` must guard against missing files: check `get_log_files()` first, `logger.warning()` + return empty if none found
+- Parsers: never let `IndexError` propagate from `get_log_files()[0]`
 - Never raise exceptions for expected conditions (missing files, empty data, unsupported iOS versions)
 - Use `logger` (not `print()`) — warnings/errors are captured by `ResultSummaryExecutionHandler`
 - `print()` is enforced by ruff rule `T201` — only CLI entry points are exempt
@@ -36,7 +36,7 @@ docs/                 # Documentation
 
 ## Tests
 
-- Always guard with `self.skipTest(f"No log files found for {case_id}")` when files are missing
+- Parsers: always guard with `self.skipTest(f"No log files found for {case_id}")` when `get_log_files()` is empty
 - Use `self.subTest(case_id=case_id)` when iterating over multiple cases so each case is reported independently
 - Use `self.assert_has_required_fields_jsonl(item)` for jsonl validation
 - Use `self.assert_result_summary_consistent(instance, result)` to validate summary matches output

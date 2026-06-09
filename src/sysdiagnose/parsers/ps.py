@@ -31,7 +31,8 @@ class PsParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             return self.parse_file(log_file)
-        return {"error": ["No ps.txt file present"]}
+        logger.warning("No ps.txt file present")
+        return []
 
     def parse_file(self, filename):
         result = []

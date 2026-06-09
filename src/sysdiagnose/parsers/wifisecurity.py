@@ -33,7 +33,8 @@ class WifiSecurityParser(BaseParserInterface):
     def execute(self) -> list | dict:
         for log_file in self.get_log_files():
             return WifiSecurityParser.parse_file(log_file)
-        return {"error": ["No WiFi/security.txt file present"]}
+        logger.warning("No WiFi/security.txt file present")
+        return []
 
     @staticmethod
     def parse_file(path: str) -> list | dict:
@@ -90,8 +91,8 @@ class WifiSecurityParser(BaseParserInterface):
                         # reset element for next entry
                         element = {}
         except IndexError:
-            return {"error": "No WiFi/security.txt file present"}
+            logger.warning(f"Could not parse WiFi/security.txt: {path}")
         except Exception as e:
             logger.exception(f"Could not parse: {path}")
-            return {"error": f"Could not parse: {path}. Reason: {e!s}"}
+            logger.error(f"Could not parse: {path}. Reason: {e!s}")
         return entries
