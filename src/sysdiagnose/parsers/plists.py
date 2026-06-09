@@ -5,10 +5,7 @@ import json
 import os
 
 from sysdiagnose.utils import misc
-from sysdiagnose.utils.base import (
-    BaseParserInterface,
-    SysdiagnoseConfig,
-)
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 
 
 class PlistParser(BaseParserInterface):
