@@ -9,7 +9,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersTransparency(SysdiagnoseTestCase):
     def test_transparency(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 p = TransparencyParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
 
@@ -29,7 +29,7 @@ class TestParsersTransparency(SysdiagnoseTestCase):
 
     def test_transparency_json(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 p = TransparencyJsonParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
 

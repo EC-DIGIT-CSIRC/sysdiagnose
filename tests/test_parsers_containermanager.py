@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestParsersContainermanager(SysdiagnoseTestCase):
     def test_parsecontainermanager(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 p = ContainerManagerParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
                 if len(files) == 0:

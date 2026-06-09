@@ -8,7 +8,7 @@ from tests import SysdiagnoseTestCase
 class TestAnalysersSummary(SysdiagnoseTestCase):
     def test_analyse_summary(self):
         for case_id, _case in self.sd.cases().items():
-            with self.subTest(case_id=case_id, ios_version=_case.get('ios_version')):
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 print(f"Running Summary for {case_id}")
                 # run the analyser
                 a = SummaryAnalyser(self.sd.config, case_id=case_id)
