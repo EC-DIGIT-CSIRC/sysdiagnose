@@ -13,6 +13,9 @@ class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
                     self.skipTest("No remotectl_dumpstate.txt file present")
 
                 p.save_result(force=True)

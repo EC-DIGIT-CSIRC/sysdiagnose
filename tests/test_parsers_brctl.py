@@ -12,6 +12,9 @@ class TestParsersBrctl(SysdiagnoseTestCase):
                 p = BrctlParser(self.sd.config, case_id=case_id)
                 folders = p.get_log_files()
                 if not folders:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
                     self.skipTest("No brctl folder found")
 
                 p.save_result(force=True)

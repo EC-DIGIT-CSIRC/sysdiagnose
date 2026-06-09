@@ -12,6 +12,9 @@ class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
                 p = AvConferenceCallSettingsParser(self.sd.config, case_id=case_id)
                 files = p.get_log_files()
                 if not files:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
                     self.skipTest(f"No log files found for {case_id}")
 
                 p.save_result(force=True)
