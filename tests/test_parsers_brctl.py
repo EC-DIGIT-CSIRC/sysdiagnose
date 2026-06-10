@@ -10,17 +10,18 @@ class TestParsersBrctl(SysdiagnoseTestCase):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 p = BrctlParser(self.sd.config, case=_case)
+
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
+
                 folders = p.get_log_files()
                 if not folders:
                     self.fail(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )
-                    self.skipTest("No brctl folder found")
 
                 p.save_result(force=True)
                 self.assertTrue(os.path.isfile(p.output_file))
-
-                print(f"Parsing {folders}")
                 result = p.get_result()
                 if result:
                     self.assertTrue("containers" in result)

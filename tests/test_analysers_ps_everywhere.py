@@ -12,8 +12,11 @@ class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
                 print(f"Running PsEverywhereAnalyser for {case_id}")
                 # run the analyser
                 a = PsEverywhereAnalyser(self.sd.config, case=_case)
-                a.save_result(force=True)
 
+                if not a.is_compatible():
+                    self.skipTest(f"Analyser {a.module_name} not compatible with iOS {_case.get('ios_version')}")
+
+                a.save_result(force=True)
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)
 
