@@ -15,6 +15,7 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 class ContainerManagerParser(BaseParserInterface):
     description = "Parsing containermanagerd logs file"
     format = "jsonl"
+    ios_version = ">=12,<=17"
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)

@@ -49,7 +49,15 @@ class AppInstallationParser(BaseParserInterface):
                             timestamp = datetime.fromtimestamp(item["timestamp"], tz=UTC)
                             item["db_table"] = key
                             event = Event(
-                                datetime=timestamp, message="", module=self.module_name, timestamp_desc=key, data=item
+                                datetime=timestamp,
+                                message=(
+                                    f"{item.get('title')} ({item.get('bundle_id')})"
+                                    f" v{item.get('bundle_version')} installed by {item.get('store_account_name')}"
+                                    f" from {item.get('client_id')}"
+                                ),
+                                module=self.module_name,
+                                timestamp_desc=key,
+                                data=item,
                             )
                             result.append(event.to_dict())
                         except TypeError:

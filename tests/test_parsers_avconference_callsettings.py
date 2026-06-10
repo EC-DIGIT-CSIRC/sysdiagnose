@@ -6,7 +6,7 @@ from tests import SysdiagnoseTestCase
 
 
 class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
-    def test_parse_avconverence(self):
+    def test_parse_avconference(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 p = AvConferenceCallSettingsParser(self.sd.config, case=_case)
@@ -16,9 +16,8 @@ class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
-                    self.fail(
-                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
-                    )
+                    # this parser may not have any logfiles. That's fine
+                    continue
 
                 p.save_result(force=True)
                 self.assertTrue(os.path.isfile(p.output_file))

@@ -16,6 +16,8 @@ class TestParsersIntunesstore(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
+                    # only a few images don't have a db present.
+                    # let's keep it failing for now...
                     self.fail(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )

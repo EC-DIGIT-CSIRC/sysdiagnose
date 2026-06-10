@@ -1,6 +1,6 @@
 import unittest
 
-from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, SysdiagnoseConfig
+from sysdiagnose.utils.base import BaseParserInterface
 from sysdiagnose.utils.summary import ExecutionStatus
 from tests import SysdiagnoseTestCase
 
