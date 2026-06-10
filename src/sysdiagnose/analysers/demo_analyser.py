@@ -9,6 +9,7 @@ from sysdiagnose.utils.base import BaseAnalyserInterface, SysdiagnoseConfig, log
 class DemoAnalyser(BaseAnalyserInterface):
     description = "Do something useful (DEMO)"
     # format = "json"  # by default json
+    # ios_version = ">=17.0"  # optional: PEP 440 specifier for compatible iOS versions (default: "*" = all)
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)
@@ -19,6 +20,8 @@ class DemoAnalyser(BaseAnalyserInterface):
 
         Load parsers here, and use the parser.get_result() to get the data.
         By doing so you will get the parser output even if it never ran before.
+
+        Note: pass self.case to dependent parsers to propagate case metadata.
         """
         try:
             logger.info("DO SOMETHING HERE")
@@ -28,11 +31,11 @@ class DemoAnalyser(BaseAnalyserInterface):
                 logger.warning("This will log a warning")
                 logger.error("This will log an error")
 
-            # json_data = p_fooparser.get_result()
+            # Example: load a parser's result
+            # from sysdiagnose.parsers.my_parser import MyParser
+            # json_data = MyParser(self.config, self.case).get_result()
         except Exception:
-            # Logs an error with exception context.
             logger.exception("This will log an error with the exception information")
-            # Or maybe it is a warning.
             logger.warning("This will log a warning with the exception information", exc_info=True)
 
         result = {"foo": "bar"}
