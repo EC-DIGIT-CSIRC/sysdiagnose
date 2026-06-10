@@ -24,6 +24,7 @@ class LogDataStatisticsParser(BaseParserInterface):
 
     description = "Parsing logdata.statistics.jsonl files"
     format = "jsonl"
+    ios_version = ">=16.4"
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)

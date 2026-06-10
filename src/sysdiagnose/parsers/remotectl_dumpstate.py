@@ -8,6 +8,7 @@ from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hie
 
 class RemotectlDumpstateParser(BaseParserInterface):
     description = "Parsing remotectl_dumpstate file containing system information"
+    ios_version = ">=15"
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)
