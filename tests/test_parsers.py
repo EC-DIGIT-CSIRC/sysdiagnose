@@ -27,7 +27,7 @@ class TestParsers(SysdiagnoseTestCase):
             for attr in dir(module):
                 obj = getattr(module, attr)
                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                    obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id="1")
+                    obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": "1"})
                     break
 
             self.assertIsNotNone(
@@ -50,6 +50,19 @@ class TestParsers(SysdiagnoseTestCase):
                     hasattr(obj, required_variable), f"Parser {parser_name} is missing {required_variable} variable."
                 )
 
+            # validate ios_version specifier is valid PEP 440
+            from packaging.specifiers import InvalidSpecifier, SpecifierSet
+
+            ios_version = getattr(obj, "ios_version", "*")
+            if ios_version != "*":
+                try:
+                    SpecifierSet(ios_version)
+                except InvalidSpecifier:
+                    self.fail(
+                        f"Parser {parser_name} has invalid ios_version specifier: '{ios_version}'. "
+                        "Must be a valid PEP 440 version specifier (e.g. '>=17.0', '>=14.0,<17.0') or '*'."
+                    )
+
     # ruff: noqa
     # def test_parsers_result_jsonl_structure(self):
     #     print("Checking parsers for result structure...")
@@ -67,7 +80,7 @@ class TestParsers(SysdiagnoseTestCase):
     #             for attr in dir(module):
     #                 obj = getattr(module, attr)
     #                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-    #                     obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id=case_id)
+    #                     obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": case_id})
     #                     break
 
     #             if obj_instance.format == 'jsonl':
@@ -104,7 +117,7 @@ class TestParsers(SysdiagnoseTestCase):
                         and issubclass(obj, BaseParserInterface)
                         and obj is not BaseParserInterface
                     ):
-                        obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id=case_id)
+                        obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": case_id})
 
                         module_files_and_folders = obj_instance.get_log_files()
                         covered_files_and_folders.extend(module_files_and_folders)

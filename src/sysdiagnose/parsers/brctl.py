@@ -17,8 +17,8 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logge
 class BrctlParser(BaseParserInterface):
     description = "Parsing brctl files"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_folders = ["brctl/"]

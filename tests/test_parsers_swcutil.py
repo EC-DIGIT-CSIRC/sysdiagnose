@@ -10,7 +10,7 @@ class TestParsersSwcutil(SysdiagnoseTestCase):
     def test_parseswcutil(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                p = SwcutilParser(self.sd.config, case_id=case_id)
+                p = SwcutilParser(self.sd.config, case=_case)
                 files = p.get_log_files()
                 if not files:
                     self.fail(
@@ -28,7 +28,7 @@ class TestParsersSwcutil(SysdiagnoseTestCase):
                 self.assert_result_summary_consistent(p, result)
 
     def test_parse_memory(self):
-        p = SwcutilParser(self.sd.config, case_id="test")
+        p = SwcutilParser(self.sd.config, case={"case_id": "test"})
         p.sysdiagnose_creation_datetime = datetime.fromtimestamp(1, tz=UTC)
         inputs = ["foo:      6 KB", "bar: 434 bytes", "hello:     10 MB"]
         expected_outputs = [

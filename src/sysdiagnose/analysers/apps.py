@@ -17,8 +17,8 @@ class AppsAnalyser(BaseAnalyserInterface):
     description = "Get list of Apps installed on the device"
     format = "json"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     # this code is quite slow, but that's due to logarchive.jsonl being slow to parse
     def execute(self):
@@ -26,11 +26,11 @@ class AppsAnalyser(BaseAnalyserInterface):
         Go through all json files in the folder and generate the json list of apps
         """
         apps = {}
-        json_data = AccessibilityTccParser(self.config, self.case_id).get_result()
+        json_data = AccessibilityTccParser(self.config, self.case).get_result()
         for entry in json_data:
             apps[entry["data"]["client"]] = {"found": ["accessibility-tcc"], "services": [entry["data"]["service"]]}
 
-        json_data = BrctlParser(self.config, self.case_id).get_result()
+        json_data = BrctlParser(self.config, self.case).get_result()
         if json_data and not json_data.get("error"):
             # directly going to the list of apps
             for entry in json_data["app_library_id"]:
@@ -45,7 +45,7 @@ class AppsAnalyser(BaseAnalyserInterface):
                 except (KeyError, TypeError):
                     apps[entry] = {"found": ["brctl"], "libraries": json_data["app_library_id"][entry]}
 
-        json_data = ITunesStoreParser(self.config, self.case_id).get_result()
+        json_data = ITunesStoreParser(self.config, self.case).get_result()
         if json_data and not json_data.get("error"):
             # directly going to the list of apps
             for entry in json_data["application_id"]:
@@ -56,7 +56,7 @@ class AppsAnalyser(BaseAnalyserInterface):
 
         re_bundle_id_pattern = r"(([a-zA-Z0-9-_]+\.)+[a-zA-Z0-9-_]+)"
         # list files in here
-        json_entries = LogarchiveParser(self.config, self.case_id).get_result()
+        json_entries = LogarchiveParser(self.config, self.case).get_result()
         for events in json_entries:
             entry = events["data"]
             try:

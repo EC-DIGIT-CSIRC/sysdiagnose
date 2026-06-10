@@ -10,9 +10,9 @@ from tests import SysdiagnoseTestCase
 
 class TestResultSummary(SysdiagnoseTestCase):
     def test_demo_parser_summary_roundtrip(self):
-        case_id = self.sd.get_case_ids()[0]
+        _case = next(iter(self.sd.cases().values()))
 
-        parser = DemoParser(self.sd.config, case_id=case_id)
+        parser = DemoParser(self.sd.config, case=_case)
         parser.save_result(force=True)
 
         self.assertTrue(os.path.isfile(parser.summary_file))
@@ -26,7 +26,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNotNone(summary.duration)
         self.assertGreaterEqual(summary.duration, 0)
 
-        cached_parser = DemoParser(self.sd.config, case_id=case_id)
+        cached_parser = DemoParser(self.sd.config, case=_case)
         result = cached_parser.get_result()
         self.assertEqual(len(result), 1)
 
@@ -37,13 +37,13 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNotNone(cached_summary.duration)
 
     def test_demo_parser_summary_fallback_without_sidecar(self):
-        case_id = self.sd.get_case_ids()[0]
+        _case = next(iter(self.sd.cases().values()))
 
-        parser = DemoParser(self.sd.config, case_id=case_id)
+        parser = DemoParser(self.sd.config, case=_case)
         parser.save_result(force=True)
         os.remove(parser.summary_file)
 
-        cached_parser = DemoParser(self.sd.config, case_id=case_id)
+        cached_parser = DemoParser(self.sd.config, case=_case)
         result = cached_parser.get_result()
         self.assertEqual(len(result), 1)
 
@@ -56,9 +56,9 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNone(summary.duration)
 
     def test_demo_analyser_summary_roundtrip(self):
-        case_id = self.sd.get_case_ids()[0]
+        _case = next(iter(self.sd.cases().values()))
 
-        analyser = DemoAnalyser(self.sd.config, case_id=case_id)
+        analyser = DemoAnalyser(self.sd.config, case=_case)
         analyser.save_result(force=True)
 
         self.assertTrue(os.path.isfile(analyser.output_file))
@@ -72,7 +72,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsInstance(summary.start_time, datetime)
         self.assertIsNotNone(summary.duration)
 
-        cached_analyser = DemoAnalyser(self.sd.config, case_id=case_id)
+        cached_analyser = DemoAnalyser(self.sd.config, case=_case)
         result = cached_analyser.get_result()
         self.assertEqual(result, {"foo": "bar"})
 

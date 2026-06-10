@@ -1,6 +1,8 @@
 import importlib.util
 import unittest
 
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+
 from sysdiagnose.utils.base import BaseAnalyserInterface
 from tests import SysdiagnoseTestCase
 
@@ -30,7 +32,7 @@ class TestAnalysers(SysdiagnoseTestCase):
                     and issubclass(obj, BaseAnalyserInterface)
                     and obj is not BaseAnalyserInterface
                 ):
-                    obj_instance: BaseAnalyserInterface = obj(config=self.sd.config, case_id="1")
+                    obj_instance: BaseAnalyserInterface = obj(config=self.sd.config, case={"case_id": "1"})
                     break
 
             self.assertIsNotNone(
@@ -52,6 +54,17 @@ class TestAnalysers(SysdiagnoseTestCase):
                 self.assertTrue(
                     hasattr(obj, required_variable), f"Analyser {name} is missing {required_variable} variable."
                 )
+
+            # validate ios_version specifier is valid PEP 440
+            ios_version = getattr(obj, "ios_version", "*")
+            if ios_version != "*":
+                try:
+                    SpecifierSet(ios_version)
+                except InvalidSpecifier:
+                    self.fail(
+                        f"Analyser {name} has invalid ios_version specifier: '{ios_version}'. "
+                        "Must be a valid PEP 440 version specifier (e.g. '>=17.0', '>=14.0,<17.0') or '*'."
+                    )
 
 
 if __name__ == "__main__":

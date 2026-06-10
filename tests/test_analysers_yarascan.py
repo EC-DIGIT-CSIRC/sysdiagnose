@@ -32,7 +32,7 @@ rule match_for_sure_on_sysdiagnose_version {
                 with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                     print(f"Running Yarascan for {case_id}")
                     # run the analyser
-                    a = YaraAnalyser(self.sd.config, case_id=case_id)
+                    a = YaraAnalyser(self.sd.config, case=_case)
                     a.save_result(force=True)
                     self.assertTrue(os.path.isfile(a.output_file))
 

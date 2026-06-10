@@ -30,8 +30,8 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
     description = "List all processes we can find a bit everywhere."
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
         self.all_ps: set[str] = set()
         # Track last seen timestamp for each process (for time-based deduplication)
         self.process_last_seen: dict[str, datetime] = {}
@@ -81,7 +81,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         # Build from ps.txt
         try:
-            for p in PsParser(self.config, self.case_id).get_result():
+            for p in PsParser(self.config, self.case).get_result():
                 pid = p["data"].get("pid")
                 command = p["data"].get("command")
                 if pid and command:
@@ -91,7 +91,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         # Build from psthread.txt
         try:
-            for p in PsThreadParser(self.config, self.case_id).get_result():
+            for p in PsThreadParser(self.config, self.case).get_result():
                 pid = p["data"].get("pid")
                 command = p["data"].get("command")
                 if pid and command:
@@ -101,7 +101,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         # Build from spindump
         try:
-            for event in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+            for event in SpindumpNoSymbolsParser(self.config, self.case).get_result():
                 p = event["data"]
                 if "process" in p:
                     pid = p.get("pid")
@@ -113,7 +113,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
         # Build from taskinfo
         try:
-            for p in TaskinfoParser(self.config, self.case_id).get_result():
+            for p in TaskinfoParser(self.config, self.case).get_result():
                 if "name" in p["data"]:
                     pid = p["data"].get("pid")
                     name = p["data"].get("name")
@@ -260,7 +260,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "ps.txt"
         try:
-            for p in PsParser(self.config, self.case_id).get_result():
+            for p in PsParser(self.config, self.case).get_result():
                 uid = self._sanitize_uid(p["data"].get("uid"))
                 pid = p["data"].get("pid")
                 ppid = p["data"].get("ppid")
@@ -285,7 +285,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "psthread.txt"
         try:
-            for p in PsThreadParser(self.config, self.case_id).get_result():
+            for p in PsThreadParser(self.config, self.case).get_result():
                 uid = self._sanitize_uid(p["data"].get("uid"))
                 pid = p["data"].get("pid")
                 ppid = p["data"].get("ppid")
@@ -310,7 +310,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "spindump-nosymbols.txt"
         try:
-            for event in SpindumpNoSymbolsParser(self.config, self.case_id).get_result():
+            for event in SpindumpNoSymbolsParser(self.config, self.case).get_result():
                 p = event["data"]
                 if "process" not in p:
                     continue
@@ -360,7 +360,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "shutdown.logs"
         try:
-            for p in ShutdownLogsParser(self.config, self.case_id).get_result():
+            for p in ShutdownLogsParser(self.config, self.case).get_result():
                 # Always yield shutdown log entries, even if duplicate
                 # Each occurrence represents a different shutdown event
                 pid = p["data"].get("pid")
@@ -382,7 +382,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "log archive"
         try:
-            for p in LogarchiveParser(self.config, self.case_id).get_result():
+            for p in LogarchiveParser(self.config, self.case).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
                 euid = self._sanitize_uid(p["data"].get("euid"))
                 pid = p["data"].get("pid")
@@ -443,7 +443,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "uuid2path"
         try:
-            for p in UUID2PathParser(self.config, self.case_id).get_result().values():
+            for p in UUID2PathParser(self.config, self.case).get_result().values():
                 if self.add_if_full_command_is_not_in_set(
                     self._strip_flags(p), self.sysdiagnose_creation_datetime, None, None, None
                 ):
@@ -465,7 +465,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "taskinfo.txt"
         try:
-            for p in TaskinfoParser(self.config, self.case_id).get_result():
+            for p in TaskinfoParser(self.config, self.case).get_result():
                 if "name" not in p["data"]:
                     continue
 
@@ -506,7 +506,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "remotectl_dumpstate.txt"
         try:
-            remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case_id).get_result()
+            remotectl_dumpstate_json = RemotectlDumpstateParser(self.config, self.case).get_result()
             if remotectl_dumpstate_json:
                 for p in remotectl_dumpstate_json["Local device"]["Services"]:
                     if self.add_if_full_path_is_not_in_set(
@@ -530,7 +530,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         """
         entity_type = "logdata.statistics.jsonl"
         try:
-            for p in LogDataStatisticsParser(self.config, self.case_id).get_result():
+            for p in LogDataStatisticsParser(self.config, self.case).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
                 if self.add_if_full_command_is_not_in_set(
                     self._strip_flags(p["data"]["process"]), p_datetime, None, None, None
@@ -554,7 +554,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = "logdata.statistics.txt"
 
         try:
-            for p in LogDataStatisticsTxtParser(self.config, self.case_id).get_result():
+            for p in LogDataStatisticsTxtParser(self.config, self.case).get_result():
                 p_datetime = datetime.fromisoformat(p["datetime"])
                 if self.add_if_full_path_is_not_in_set(
                     self._strip_flags(p["data"]["process"]), p_datetime, None, None, None

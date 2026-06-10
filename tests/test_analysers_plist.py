@@ -11,7 +11,7 @@ class TestAnalysersPList(SysdiagnoseTestCase):
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 print(f"Running PListAnalyser for {case_id}")
                 # run the analyser
-                a = PListAnalyzer(self.sd.config, case_id=case_id)
+                a = PListAnalyzer(self.sd.config, case=_case)
                 a.save_result(force=True)
 
                 self.assertTrue(os.path.isfile(a.output_file))

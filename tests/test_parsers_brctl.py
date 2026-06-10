@@ -9,7 +9,7 @@ class TestParsersBrctl(SysdiagnoseTestCase):
     def test_parsebrctl(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                p = BrctlParser(self.sd.config, case_id=case_id)
+                p = BrctlParser(self.sd.config, case=_case)
                 folders = p.get_log_files()
                 if not folders:
                     self.fail(

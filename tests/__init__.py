@@ -133,6 +133,10 @@ class SysdiagnoseTestCase(unittest.TestCase):
 
         summary = instance.get_result_summary()
 
+        # Skipped parsers are not expected to have timing metadata or events
+        if summary.status == ExecutionStatus.SKIPPED:
+            return
+
         # Timing metadata must be set
         self.assertIsInstance(summary.start_time, datetime, "start_time must be a datetime")
         self.assertIsNotNone(summary.duration, "duration must be set")

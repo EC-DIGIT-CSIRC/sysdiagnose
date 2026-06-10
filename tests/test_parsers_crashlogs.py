@@ -9,7 +9,7 @@ class TestParsersCrashlogs(SysdiagnoseTestCase):
     def test_parse_crashlogs(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                p = CrashLogsParser(self.sd.config, case_id=case_id)
+                p = CrashLogsParser(self.sd.config, case=_case)
                 files = p.get_log_files()
                 if not files:
                     self.fail(

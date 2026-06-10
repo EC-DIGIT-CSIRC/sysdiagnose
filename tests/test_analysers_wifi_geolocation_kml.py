@@ -9,7 +9,7 @@ class TestAnalysersWifiGeolocationKml(SysdiagnoseTestCase):
     def test_analyse_wifi_geolocation_kml(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                a = WifiGeolocationKmlAnalyser(self.sd.config, case_id=case_id)
+                a = WifiGeolocationKmlAnalyser(self.sd.config, case=_case)
                 a.save_result(force=True)
 
                 self.assertTrue(os.path.isfile(a.output_file))

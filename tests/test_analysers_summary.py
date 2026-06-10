@@ -11,7 +11,7 @@ class TestAnalysersSummary(SysdiagnoseTestCase):
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 print(f"Running Summary for {case_id}")
                 # run the analyser
-                a = SummaryAnalyser(self.sd.config, case_id=case_id)
+                a = SummaryAnalyser(self.sd.config, case=_case)
                 a.save_result(force=True)
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)

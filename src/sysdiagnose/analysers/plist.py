@@ -15,9 +15,9 @@ class PListAnalyzer(BaseAnalyserInterface):
     description = "Gathers information from a plist file."
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
-        self.parser = PlistParser(config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
+        self.parser = PlistParser(config, case)
 
     def execute(self) -> Generator[dict, None, None]:
         """

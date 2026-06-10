@@ -12,8 +12,8 @@ class McSettingsEventsParser(BaseParserInterface):
     description = "Parsing MC Settings Events plist file"
     format = "jsonl"  # by default json
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_files_globs = ["logs/MCState/Shared/MCSettingsEvents.plist"]

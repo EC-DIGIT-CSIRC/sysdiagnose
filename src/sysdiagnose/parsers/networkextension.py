@@ -15,8 +15,8 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logge
 class NetworkExtensionParser(BaseParserInterface):
     description = "Parsing networkextension plist file"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_files_globs = ["logs/Networking/com.apple.networkextension.plist"]

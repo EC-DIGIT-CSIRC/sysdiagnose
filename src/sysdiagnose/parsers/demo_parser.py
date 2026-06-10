@@ -9,9 +9,10 @@ from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 class DemoParser(BaseParserInterface):
     description = "Demo parsers"
     format = "jsonl"  # by default json, use jsonl for event-based data
+    # ios_version = ">=17.0"  # optional PEP 440 compatible definition of iOS that are supported.
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict):
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_files = ["demo_input_file.txt"]

@@ -11,7 +11,7 @@ class TestParsersPs(SysdiagnoseTestCase):
     def test_parse_ps(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                p = PsParser(self.sd.config, case_id=case_id)
+                p = PsParser(self.sd.config, case=_case)
 
                 files = p.get_log_files()
                 if not files:
@@ -67,7 +67,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         with tempfile.NamedTemporaryFile() as tmp_inputfile:
             with open(tmp_inputfile.name, "w") as f:
                 f.write("\n".join(input))
-            p = PsParser(self.sd.config, case_id="test")
+            p = PsParser(self.sd.config, case={"case_id": "test"})
             p.sysdiagnose_creation_datetime = datetime.fromtimestamp(1, tz=UTC)
             result = p.parse_file(tmp_inputfile.name)
         self.maxDiff = None
@@ -110,7 +110,7 @@ class TestParsersPs(SysdiagnoseTestCase):
         with tempfile.NamedTemporaryFile() as tmp_inputfile:
             with open(tmp_inputfile.name, "w") as f:
                 f.write("\n".join(input))
-            p = PsParser(self.sd.config, case_id="test")
+            p = PsParser(self.sd.config, case={"case_id": "test"})
             p.sysdiagnose_creation_datetime = datetime.fromtimestamp(1, tz=UTC)
             result = p.parse_file(tmp_inputfile.name)
         self.assertEqual(result, expected_result)

@@ -9,7 +9,7 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
     def test_analyse_file_stats(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                a = FileStatisticsAnalyser(self.sd.config, case_id=case_id)
+                a = FileStatisticsAnalyser(self.sd.config, case=_case)
                 a.save_result(force=True)
 
                 self.assertTrue(os.path.isfile(a.output_file))

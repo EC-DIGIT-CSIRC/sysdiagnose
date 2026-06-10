@@ -16,11 +16,11 @@ class WifiGeolocationAnalyser(BaseAnalyserInterface):
     description = "Generate GPS Exchange (GPX) of wifi geolocations"
     format = "gpx"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def execute(self) -> str:
-        json_data = WifiKnownNetworksParser(self.config, self.case_id).get_result()
+        json_data = WifiKnownNetworksParser(self.config, self.case).get_result()
         return WifiGeolocationAnalyser.generate_gpx_from_known_networks_json(json_data)
 
     @staticmethod

@@ -10,7 +10,7 @@ class TestAnalysersApps(SysdiagnoseTestCase):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
                 # run the analyser
-                a = AppsAnalyser(self.sd.config, case_id=case_id)
+                a = AppsAnalyser(self.sd.config, case=_case)
                 a.save_result(force=True)
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)

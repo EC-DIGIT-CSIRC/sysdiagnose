@@ -418,8 +418,8 @@ class LogarchiveParser(BaseParserInterface):
     description = "Parsing system_logs.logarchive folder"
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict):
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_folder_glob = "**/system_logs.logarchive/"

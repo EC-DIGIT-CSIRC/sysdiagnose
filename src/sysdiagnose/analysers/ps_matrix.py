@@ -16,21 +16,21 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
     description = "Makes a matrix comparing ps, psthread, taskinfo"
     format = "txt"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def execute(self):
         all_pids = set()
 
-        ps_json = PsParser(self.config, self.case_id).get_result()
+        ps_json = PsParser(self.config, self.case).get_result()
         ps_dict = {int(p["data"]["pid"]): p["data"] for p in ps_json}
         all_pids.update(ps_dict.keys())
 
-        psthread_json = PsThreadParser(self.config, self.case_id).get_result()
+        psthread_json = PsThreadParser(self.config, self.case).get_result()
         psthread_dict = {int(p["data"]["pid"]): p["data"] for p in psthread_json}
         all_pids.update(psthread_dict.keys())
 
-        taskinfo_json = TaskinfoParser(self.config, self.case_id).get_result()
+        taskinfo_json = TaskinfoParser(self.config, self.case).get_result()
         taskinfo_dict = {}
         for p in taskinfo_json:
             if "pid" not in p["data"]:
@@ -40,7 +40,7 @@ class PsMatrixAnalyser(BaseAnalyserInterface):
 
         # not possible to use shutdownlogs as we're looking at different timeframes
 
-        spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case_id).get_result()
+        spindumpnosymbols_json = SpindumpNoSymbolsParser(self.config, self.case).get_result()
         spindumpnosymbols_dict = {}
         for p in spindumpnosymbols_json:
             if "process" not in p["data"]:

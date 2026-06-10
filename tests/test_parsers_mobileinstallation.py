@@ -9,7 +9,7 @@ class TestParsersMobileinstallation(SysdiagnoseTestCase):
     def test_mobileinstallation(self):
         for case_id, _case in self.sd.cases().items():
             with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
-                p = MobileInstallationParser(self.sd.config, case_id=case_id)
+                p = MobileInstallationParser(self.sd.config, case=_case)
                 files = p.get_log_files()
                 if not files:
                     self.fail(

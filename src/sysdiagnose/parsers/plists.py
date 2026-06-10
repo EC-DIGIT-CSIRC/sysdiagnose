@@ -11,8 +11,8 @@ from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logge
 class PlistParser(BaseParserInterface):
     description = "Parsing any pslist into json"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
         self.output_folder = os.path.join(self.case_parsed_data_folder, self.module_name)
 
     def get_log_files(self) -> list:

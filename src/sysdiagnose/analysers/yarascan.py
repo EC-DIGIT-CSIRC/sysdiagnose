@@ -23,8 +23,8 @@ class YaraAnalyser(BaseAnalyserInterface):
     description = "Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)"
     format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
         self.yara_rules_path = os.getenv("SYSDIAGNOSE_YARA_RULES_PATH", "./yara")
 
     # Question: What is the impact of externals? (single threaded)

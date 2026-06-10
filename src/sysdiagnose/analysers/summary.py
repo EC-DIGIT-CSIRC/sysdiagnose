@@ -13,13 +13,13 @@ class SummaryAnalyser(BaseAnalyserInterface):
     description = "Gives some summary info from the device"
     format = "md"  # by default json
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def execute(self):
         result = []
 
-        rctl_parser = RemotectlDumpstateParser(self.config, self.case_id)
+        rctl_parser = RemotectlDumpstateParser(self.config, self.case)
         rctl_result = rctl_parser.get_result()
         # current device info
         try:
@@ -32,14 +32,14 @@ class SummaryAnalyser(BaseAnalyserInterface):
             result.append("Issue extracting device info")
             pass
 
-        plist_parser = PlistParser(self.config, self.case_id)
+        plist_parser = PlistParser(self.config, self.case)
         plist_result = plist_parser.parse_file(
             os.path.join(plist_parser.case_data_subfolder, "logs", "MCState", "User", "EffectiveUserSettings.plist")
         )
         with suppress(Exception):
             result.append(f"- Lockdown mode: {plist_result['restrictedBool']['allowLockdownMode']['value']}")
 
-        trans_parser = TransparencyJsonParser(self.config, self.case_id)
+        trans_parser = TransparencyJsonParser(self.config, self.case)
         trans_result = trans_parser.get_result()
         # extract email addresses / account info
         result.append("\n## Accounts")
@@ -97,7 +97,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
                 result.append("Issue extracting known devices")
                 pass
 
-        sec_parser = SecuritySysdiagnoseParser(self.config, self.case_id)
+        sec_parser = SecuritySysdiagnoseParser(self.config, self.case)
         sec_result = sec_parser.get_result()
         if "errors" in sec_result and len(sec_result["errors"]) > 0:
             pass
@@ -108,7 +108,7 @@ class SummaryAnalyser(BaseAnalyserInterface):
                     result.append("\n## Circle")
                     result.extend(item["data"]["circle"])
 
-        mcstatesharedprofile_parser = McStateSharedProfileParser(self.config, self.case_id)
+        mcstatesharedprofile_parser = McStateSharedProfileParser(self.config, self.case)
         mcstate_result = mcstatesharedprofile_parser.get_result()
         # Extract trusted certificates and configuration profiles
         # TODO fix the following piece of code, it is waaay too long and not readable

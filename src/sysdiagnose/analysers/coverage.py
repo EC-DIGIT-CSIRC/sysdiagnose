@@ -19,12 +19,12 @@ class CoverageAnalyser(BaseAnalyserInterface):
     description = "Provides parser coverage information"
     format = "html"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def execute(self):
         result = []
-        rctl_parser = RemotectlDumpstateParser(self.config, self.case_id)
+        rctl_parser = RemotectlDumpstateParser(self.config, self.case)
         rctl_result = rctl_parser.get_result()
         # device info
         device_info = {}
@@ -107,7 +107,7 @@ class CoverageAnalyser(BaseAnalyserInterface):
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                obj_instance: BaseParserInterface = obj(config=self.config, case_id=self.case_id)
+                obj_instance: BaseParserInterface = obj(config=self.config, case=self.case)
 
                 return obj_instance
         return None

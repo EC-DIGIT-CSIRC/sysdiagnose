@@ -14,11 +14,11 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
     description = "Generate KML file for wifi geolocations"
     format = "kml"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def execute(self) -> str:
-        json_data = WifiKnownNetworksParser(self.config, self.case_id).get_result()
+        json_data = WifiKnownNetworksParser(self.config, self.case).get_result()
         return WifiGeolocationKmlAnalyser.generate_kml_from_known_networks_json(json_data)
 
     # LATER merge this and wifi_geolocation.py to share as much common code as possible

@@ -372,11 +372,12 @@ class Sysdiagnose:
         # Load parser module
         module = importlib.import_module(f"sysdiagnose.parsers.{parser}")
         parser_instance = None
+        case = self.cases().get(case_id, {"case_id": case_id})
         # figure out the class name and create an instance of it
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                parser_instance: BaseParserInterface = obj(config=self.config, case_id=case_id)
+                parser_instance: BaseParserInterface = obj(config=self.config, case=case)
                 break
         if not parser_instance:
             raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
@@ -387,10 +388,11 @@ class Sysdiagnose:
     def analyse(self, analyser: str, case_id: str) -> ResultSummary:
         module = importlib.import_module(f"sysdiagnose.analysers.{analyser}")
         analyser_instance = None
+        case = self.cases().get(case_id, {"case_id": case_id})
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
-                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case_id=case_id)
+                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case=case)
                 break
         if not analyser_instance:
             raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")

@@ -12,8 +12,12 @@ from functools import cached_property
 from io import TextIOWrapper
 from pathlib import Path
 
+from packaging.specifiers import SpecifierSet
+from packaging.version import InvalidVersion, Version
+
 from sysdiagnose.utils.logger import logger
 from sysdiagnose.utils.summary import (
+    ExecutionStatus,
     ResultSummary,
     ResultSummaryExecutionHandler,
     ResultSummaryFactory,
@@ -106,14 +110,15 @@ class BaseInterface(ABC):
     description = "<not documented>"  # implementation should set this
     format = "json"  # implementation should set this
     json_pretty = True  # implementation should set this to false for large data sets
+    ios_version = "*"  # PEP 440 version specifier for compatible iOS versions (e.g. ">=17.0", ">=14.0,<17.0")
 
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case: dict) -> None:
         self.config = config
 
         self.module_name = os.path.basename(module_filename).split(".")[0]
-        self.case_id = case_id
+        self.case = case
 
-        self.case_data_folder = config.get_case_data_folder(case_id)
+        self.case_data_folder = config.get_case_data_folder(self.case_id)
         os.makedirs(self.case_data_folder, exist_ok=True)
 
         # Search for the 'sysdiagnose.log' file and return the parent folder
@@ -123,18 +128,76 @@ class BaseInterface(ABC):
         else:
             self.case_data_subfolder = self.case_data_folder
 
-        self.case_parsed_data_folder = config.get_case_parsed_data_folder(case_id)
+        self.case_parsed_data_folder = config.get_case_parsed_data_folder(self.case_id)
         os.makedirs(self.case_parsed_data_folder, exist_ok=True)
 
         if not os.path.isdir(self.case_data_folder):
-            logger.error(f"Case {case_id} does not exist")
-            raise FileNotFoundError(f"Case {case_id} does not exist")
+            logger.error(f"Case {self.case_id} does not exist")
+            raise FileNotFoundError(f"Case {self.case_id} does not exist")
 
         self.output_file = os.path.join(self.case_parsed_data_folder, self.module_name + "." + self.format)
         self.summary_file = os.path.join(self.case_parsed_data_folder, self.module_name + ".summary.json")
 
         self._result: list | dict | str | None = None  # empty result set, used for caching
         self._result_summary: ResultSummary | None = None
+
+    @property
+    def case_id(self) -> str | None:
+        """
+        Returns the case ID of the current case from the case metadata
+
+        Returns:
+            str: The string with the ID of the case, or None if unavailable
+        """
+        return self.case.get("case_id")
+
+    @property
+    def case_ios_version(self) -> str | None:
+        """
+        Returns the iOS version string for the current case from the case metadata.
+
+        Returns:
+            str | None: The iOS version string (e.g. "17.0"), or None if unavailable.
+        """
+        return self.case.get("ios_version")
+
+    def is_compatible(self, ios_version_str: str | None = None) -> bool:
+        """
+        Checks whether this parser/analyser is compatible with the given iOS version.
+
+        Uses PEP 440 version specifiers (e.g. ">=17.0", ">=14.0,<17.0", "*").
+
+        Args:
+            ios_version_str: The iOS version to check against. If None, uses the case's iOS version.
+
+        Returns:
+            bool: True if compatible (or if compatibility cannot be determined), False otherwise.
+
+        Raises:
+            InvalidSpecifier: If the ios_version class attribute is not a valid PEP 440 specifier.
+        """
+        if self.ios_version == "*":
+            return True
+
+        if ios_version_str is None:
+            ios_version_str = self.case_ios_version
+
+        if ios_version_str is None:
+            # Cannot determine compatibility without a version — assume compatible
+            return True
+
+        # Invalid specifier is a developer error — let it raise
+        spec = SpecifierSet(self.ios_version)
+
+        try:
+            version = Version(ios_version_str)
+        except InvalidVersion:
+            logger.warning(
+                f"Could not parse iOS version '{ios_version_str}' for {self.module_name}, assuming compatible."
+            )
+            return True
+
+        return version in spec
 
     @cached_property
     def sysdiagnose_creation_datetime(self) -> datetime_datetime:
@@ -287,6 +350,17 @@ class BaseInterface(ABC):
         Handles Generator/Iterator results for jsonl format by consuming lazily during write.
         Returns (result, summary).
         """
+        # Check iOS version compatibility before executing
+        if not self.is_compatible():
+            logger.info(
+                f"Skipping {self.module_name}: not compatible with iOS {self.case_ios_version} "
+                f"(requires {self.ios_version})"
+            )
+            empty_result = [] if self.format == "jsonl" else {}
+            summary = ResultSummary(status=ExecutionStatus.SKIPPED, num_events=0)
+            self._result = empty_result
+            return empty_result, summary
+
         handler = ResultSummaryExecutionHandler()
         handler.start()
         try:
@@ -374,8 +448,8 @@ class BaseInterface(ABC):
 
 
 class BaseParserInterface(BaseInterface):
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(module_filename, config, case_id)
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(module_filename, config, case)
 
     @abstractmethod
     def get_log_files(self) -> list:
@@ -389,8 +463,8 @@ class BaseParserInterface(BaseInterface):
 
 
 class BaseAnalyserInterface(BaseInterface):
-    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(module_filename, config, case_id)
+    def __init__(self, module_filename: str, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(module_filename, config, case)
 
 
 @dataclass(order=True)

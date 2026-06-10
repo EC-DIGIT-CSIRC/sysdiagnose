@@ -13,6 +13,7 @@ class ExecutionStatus(StrEnum):
     OK = "ok"
     WARNING = "warning"
     ERROR = "error"
+    SKIPPED = "skipped"
 
 
 @dataclass
@@ -70,6 +71,7 @@ class ResultSummaryLogHandler(logging.Handler):
         self.num_warnings = 0
 
     def emit(self, record: logging.LogRecord) -> None:
+        # FIXME add local logging here.
         if record.levelno >= logging.ERROR:
             self.num_errors += 1
         elif record.levelno >= logging.WARNING:

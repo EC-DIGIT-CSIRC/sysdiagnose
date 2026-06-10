@@ -10,8 +10,8 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
     description = "Obatins statistics about the files of the sysdiagnose"
     format = "json"  # Output format
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_file_type(self, file_path: str) -> str:
         return magic.from_file(file_path, mime=True)
@@ -39,7 +39,7 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
         return sysdiagnose_stats
 
     def execute(self) -> dict:
-        rctl_parser = RemotectlDumpstateParser(self.config, self.case_id)
+        rctl_parser = RemotectlDumpstateParser(self.config, self.case)
         rctl_result = rctl_parser.get_result()
         device_info = {}
         try:

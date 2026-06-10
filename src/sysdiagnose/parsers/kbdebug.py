@@ -12,8 +12,8 @@ class KbdebugParser(BaseParserInterface):
     description = "kbdebug.txt logfile parser"
     format = "jsonl"  # by default json, use jsonl for event-based data
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str) -> None:
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_files = ["kbdebug.txt"]
