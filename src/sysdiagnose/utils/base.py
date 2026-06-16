@@ -161,14 +161,21 @@ class BaseInterface(ABC):
         """
         return self.case.get("ios_version")
 
-    def is_compatible(self, ios_version_str: str | None = None) -> bool:
+    @property
+    def case_model(self) -> str | None:
+        """
+        Returns the model string for the current case from the case metadata.
+
+        Returns:
+            str | None: The model string (e.g. "iPad16,3"), or None if unavailable.
+        """
+        return self.case.get("model")
+
+    def is_compatible(self) -> bool:
         """
         Checks whether this parser/analyser is compatible with the given iOS version.
 
         Uses PEP 440 version specifiers (e.g. ">=17.0", ">=14.0,<17.0", "*").
-
-        Args:
-            ios_version_str: The iOS version to check against. If None, uses the case's iOS version.
 
         Returns:
             bool: True if compatible (or if compatibility cannot be determined), False otherwise.
@@ -179,10 +186,7 @@ class BaseInterface(ABC):
         if self.ios_version == "*":
             return True
 
-        if ios_version_str is None:
-            ios_version_str = self.case_ios_version
-
-        if ios_version_str is None:
+        if self.case_ios_version is None:
             # Cannot determine compatibility without a version — assume compatible
             return True
 
@@ -190,10 +194,10 @@ class BaseInterface(ABC):
         spec = SpecifierSet(self.ios_version)
 
         try:
-            version = Version(ios_version_str)
+            version = Version(self.case_ios_version)
         except InvalidVersion:
             logger.warning(
-                f"Could not parse iOS version '{ios_version_str}' for {self.module_name}, assuming compatible."
+                f"Could not parse iOS version '{self.case_ios_version}' for {self.module_name}, assuming compatible."
             )
             return True
 

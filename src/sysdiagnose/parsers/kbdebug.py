@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import glob
 import os
 
 import dateparser
@@ -11,13 +12,25 @@ from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
 class KbdebugParser(BaseParserInterface):
     description = "kbdebug.txt logfile parser"
     format = "jsonl"  # by default json, use jsonl for event-based data
+    ios_version = ">=12"
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)
 
+    def is_compatible(self) -> bool:
+        version_compatibility = super().is_compatible()
+        # not compatible with Apple TV
+        device_compatibility = "AppleTV" not in self.case_model
+        # both need to be compatible
+        return version_compatibility and device_compatibility
+
     def get_log_files(self) -> list:
-        log_files = ["kbdebug.txt"]
-        return [os.path.join(self.case_data_subfolder, log_files) for log_files in log_files]
+        log_files_globs = ["**/kbdebug.txt"]
+        log_files = []
+        for log_files_glob in log_files_globs:
+            log_files.extend(glob.glob(os.path.join(self.case_data_folder, log_files_glob), recursive=True))
+
+        return log_files
 
     def execute(self) -> list | dict:
         fmt_timestamp = Regex(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \+\d{4}")
