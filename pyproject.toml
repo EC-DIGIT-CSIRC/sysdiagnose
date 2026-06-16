@@ -92,7 +92,7 @@ exclude = [
 # T20 = flake8-print - disallow print statements (use logging instead)
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "W", "N", "UP", "C4", "SIM", "T20"]
-fixable = []
+fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 

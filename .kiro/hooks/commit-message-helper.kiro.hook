@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Commit Message Helper",
+  "description": "Help generate conventional commit messages following Git best practices",
+  "version": "1",
+  "when": {
+    "type": "manual",
+    "button_text": "Generate Commit Message"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Help generate a conventional commit message following Git best practices. Please:\n1. Analyze the current git diff to understand what changes were made\n2. Determine the appropriate commit type (feat, fix, docs, style, refactor, test, chore)\n3. Identify the scope if applicable\n4. Generate a concise, descriptive commit message following conventional commit format\n5. Keep the first line under 50 characters and use imperative mood\n6. Suggest the commit message and ask if the user wants to use it\n7. If there are multiple logical changes, suggest splitting into multiple commits\n8. Include body for complex changes if needed"
+  }
+}
