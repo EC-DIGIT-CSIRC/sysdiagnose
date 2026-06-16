@@ -17,6 +17,13 @@ class MobileBackupParser(BaseParserInterface):
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)
 
+    def is_compatible(self) -> bool:
+        version_compatibility = super().is_compatible()
+        # not compatible with Apple TV
+        device_compatibility = "AppleTV" not in self.case_model and "Watch" not in self.case_model
+        # both need to be compatible
+        return version_compatibility and device_compatibility
+
     def get_log_files(self) -> list:
         log_files_globs = ["logs/MobileBackup/com.apple.MobileBackup.plist"]
         log_files = []

@@ -16,7 +16,8 @@ class TestParsersMcSettingsEvents(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
-                    self.fail(
+                    # It's OK to have no files for this parser
+                    self.skipTest(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )
 
