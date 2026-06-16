@@ -96,6 +96,7 @@ class TestParsers(SysdiagnoseTestCase):
     #     missing = sorted(missing)
     #     self.assertTrue(not missing, f"Missing fields in parsers: \n{'\n'.join(missing)}")
 
+    @unittest.skip("Not meant to run automatically")
     def test_parsers_no_parser_yet(self):
         print("Checking for files that are not yet parsed...")
 
