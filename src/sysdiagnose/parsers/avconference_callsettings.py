@@ -4,9 +4,10 @@ import glob
 import gzip
 import os
 import re
-from datetime import UTC, datetime
+from datetime import UTC
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class AvConferenceCallSettingsParser(BaseParserInterface):
@@ -45,7 +46,7 @@ class AvConferenceCallSettingsParser(BaseParserInterface):
         entries = []
 
         timestamp_m = re.search(r"([0-9]{8}-[0-9]{6})-", os.path.basename(fname))
-        timestamp = datetime.strptime(timestamp_m.group(1), "%Y%m%d-%H%M%S")
+        timestamp = parse_datetime(timestamp_m.group(1), "%Y%m%d-%H%M%S")
         timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
 
         # parse the rest of the

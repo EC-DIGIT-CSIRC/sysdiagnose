@@ -3,10 +3,10 @@
 import glob
 import os
 
-import dateparser
 from pyparsing import Regex, SkipTo, StringEnd
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class KbdebugParser(BaseParserInterface):
@@ -43,7 +43,7 @@ class KbdebugParser(BaseParserInterface):
                 lines = f.read()
                 for tokens, _start, _end in fmt_line.scanString(lines):
                     try:
-                        timestamp = dateparser.parse(str(tokens.timestamp))
+                        timestamp = parse_datetime(str(tokens.timestamp), "%Y-%m-%d %H:%M:%S %z")
                         event = Event(
                             datetime=timestamp,
                             message=tokens.message,  # The rest of the kbdebug entry

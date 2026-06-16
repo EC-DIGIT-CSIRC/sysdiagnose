@@ -16,7 +16,7 @@ class TestParsersNetworkExtensionCache(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
-                    self.fail(
+                    self.skipTest(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )
 

@@ -3,9 +3,10 @@
 import csv
 import glob
 import os
-from datetime import UTC, datetime
+from datetime import UTC
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class BatteryBDCParser(BaseParserInterface):
@@ -47,11 +48,11 @@ class BatteryBDCParser(BaseParserInterface):
                 for row in reader:
                     row["type"] = entry_type
                     if "TimeStamp" in row:
-                        timestamp = datetime.strptime(row["TimeStamp"], "%Y-%m-%d %H:%M:%S")
+                        timestamp = parse_datetime(row["TimeStamp"], "%Y-%m-%d %H:%M:%S")
                         timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
                         del row["TimeStamp"]
                     elif "set_system_time" in row:
-                        timestamp = datetime.strptime(row["set_system_time"], "%Y-%m-%d %H:%M:%S %z")
+                        timestamp = parse_datetime(row["set_system_time"], "%Y-%m-%d %H:%M:%S %z")
                     else:
                         logger.error("No known timestamp field found in CSV file", extra={"header": str(row)})
                         raise ValueError("No known timestamp field found in CSV file")

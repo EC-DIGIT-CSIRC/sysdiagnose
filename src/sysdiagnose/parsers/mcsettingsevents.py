@@ -2,10 +2,11 @@
 
 import glob
 import os
-from datetime import UTC, datetime
+from datetime import UTC
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class McSettingsEventsParser(BaseParserInterface):
@@ -49,7 +50,7 @@ class McSettingsEventsParser(BaseParserInterface):
             current_path = f"{path}.{key}" if path else key
             if "timestamp" in value:
                 try:
-                    timestamp = datetime.strptime(value["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+                    timestamp = parse_datetime(value["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
                     timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
                     value.pop("timestamp")  # remove timestamp from value to avoid duplication
                     event = Event(

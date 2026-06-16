@@ -1,9 +1,9 @@
 import glob
 import os
 import re
-from datetime import datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class SecuritySysdiagnoseParser(BaseParserInterface):
@@ -186,7 +186,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 if "cdat" in row:
                     match = re.search(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})", row["cdat"])
                     if match:
-                        timestamp = datetime.fromisoformat(match.group(1))
+                        timestamp = parse_datetime(match.group(1))
                     else:
                         raise ValueError(f"Cannot parse line: {line}")
 
@@ -201,7 +201,7 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 if "mdat" in row:
                     match = re.search(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})", row["mdat"])
                     if match:
-                        timestamp = datetime.fromisoformat(match.group(1))
+                        timestamp = parse_datetime(match.group(1))
                     else:
                         raise ValueError(f"Cannot parse line: {line}")
                     event = Event(
@@ -239,13 +239,13 @@ class SecuritySysdiagnoseParser(BaseParserInterface):
                 r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)", line
             )
             if match:
-                timestamp = datetime.fromisoformat(match.group(1))
+                timestamp = parse_datetime(match.group(1))
             else:
                 match = re.search(
                     r"^(\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2} [AP]M [+-]\d{4}) ([^:]+): (.+?) - Attributes: {(.*)", line
                 )
                 if match:
-                    timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %I:%M:%S %p %z")
+                    timestamp = parse_datetime(match.group(1), "%Y-%m-%d %I:%M:%S %p %z")
                 else:
                     raise ValueError(f"Cannot parse line: {line}")
 

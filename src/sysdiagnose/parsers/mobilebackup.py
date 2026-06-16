@@ -4,10 +4,11 @@ import glob
 import os
 import re
 from contextlib import suppress
-from datetime import UTC, datetime
+from datetime import UTC
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class MobileBackupParser(BaseParserInterface):
@@ -69,7 +70,7 @@ class MobileBackupParser(BaseParserInterface):
             # add BackupStateInfo errors
             for item in json_data.get("BackupStateInfo", {}).get("errors", []):
                 try:
-                    timestamp = datetime.strptime(item["date"], "%Y-%m-%dT%H:%M:%S.%f")
+                    timestamp = parse_datetime(item["date"], "%Y-%m-%dT%H:%M:%S.%f")
                     timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
                 except Exception:
                     continue

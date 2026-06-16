@@ -6,12 +6,29 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from collections.abc import MutableMapping
 from datetime import datetime
 from functools import singledispatch
 from pathlib import Path
 
 import nska_deserialize
+
+# Precompute translation table for all Unicode decimal digits → ASCII
+_DIGIT_TABLE = {}
+for i in range(0x110000):
+    ch = chr(i)
+    d = unicodedata.decimal(ch, None)
+    if d is not None and i > 127:
+        _DIGIT_TABLE[i] = ord("0") + d
+
+
+def parse_datetime(s: str, fmt: str | None = None) -> datetime:
+    """Parse a datetime string, normalizing non-ASCII digits first."""
+    normalized = s.translate(_DIGIT_TABLE)
+    if fmt:
+        return datetime.strptime(normalized, fmt)
+    return datetime.fromisoformat(normalized)
 
 
 def merge_dicts(a: dict, b: dict) -> dict:

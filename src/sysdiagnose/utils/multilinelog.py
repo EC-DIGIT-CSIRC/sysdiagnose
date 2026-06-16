@@ -1,9 +1,9 @@
 import io
 import re
-from datetime import datetime
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import Event
+from sysdiagnose.utils.misc import parse_datetime
 
 
 def extract_from_file(fname, tzinfo, module):
@@ -78,7 +78,7 @@ def build_from_logentry(line, tzinfo, module) -> Event:
     timeregex = re.search(r"(?<=^)(.*?)(?= \[[0-9]+)", line)  # Regex for timestamp
     if timeregex:
         timestamp_str = timeregex.group(1)
-        timestamp = datetime.strptime(timestamp_str, "%a %b %d %H:%M:%S %Y")
+        timestamp = parse_datetime(timestamp_str, "%a %b %d %H:%M:%S %Y")
         timestamp = timestamp.replace(tzinfo=tzinfo)
 
         # log level

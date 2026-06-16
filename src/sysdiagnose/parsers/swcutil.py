@@ -8,10 +8,9 @@ Author: Emilien Le Jamtel
 import glob
 import os
 import re
-from datetime import datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import snake_case
+from sysdiagnose.utils.misc import parse_datetime, snake_case
 
 
 class SwcutilParser(BaseParserInterface):
@@ -162,13 +161,13 @@ class SwcutilParser(BaseParserInterface):
             # iOS 18.2 changed the datetime format
             rex = re.compile(r"(\d{4}-\d{2}-\d{2}\s+)(\d):")
             normalised_ts = rex.sub(r"\g<1>0\2:", entry["last_checked"])
-            timestamp = datetime.strptime(normalised_ts, "%Y-%m-%d %H:%M:%S %z")
+            timestamp = parse_datetime(normalised_ts, "%Y-%m-%d %H:%M:%S %z")
             timestamp_desc = "db last checked"
         except KeyError:
             timestamp = self.sysdiagnose_creation_datetime
             timestamp_desc = "sysdiagnose creation time"
         except ValueError:
-            timestamp = datetime.strptime(normalised_ts, "%Y-%m-%d %I:%M:%S %p %z")
+            timestamp = parse_datetime(normalised_ts, "%Y-%m-%d %I:%M:%S %p %z")
             timestamp_desc = "db last checked"
 
         event = Event(

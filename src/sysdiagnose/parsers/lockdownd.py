@@ -2,9 +2,9 @@
 import glob
 import os
 import re
-from datetime import datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class LockdowndParser(BaseParserInterface):
@@ -54,7 +54,7 @@ class LockdowndParser(BaseParserInterface):
 
             # process rebuild current_line
             match = re.match(r"(^.{24}) pid=(\d+) ([^:]+): (.*)$", current_line, re.DOTALL)
-            timestamp = datetime.strptime(match.group(1), "%m/%d/%y %H:%M:%S.%f")
+            timestamp = parse_datetime(match.group(1), "%m/%d/%y %H:%M:%S.%f")
             timestamp = timestamp.replace(tzinfo=tzinfo)
 
             # LATER parse the json blob that can sometimes be in the message

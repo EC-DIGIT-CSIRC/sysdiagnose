@@ -12,7 +12,7 @@ from contextlib import suppress
 from datetime import datetime, timedelta
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import snake_case
+from sysdiagnose.utils.misc import parse_datetime, snake_case
 
 
 class SpindumpNoSymbolsParser(BaseParserInterface):
@@ -99,9 +99,9 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
         if "date_time" in output:
             try:
-                timestamp = datetime.strptime(output["date_time"], "%Y-%m-%d %H:%M:%S.%f %z")
+                timestamp = parse_datetime(output["date_time"], "%Y-%m-%d %H:%M:%S.%f %z")
             except ValueError:
-                timestamp = datetime.strptime(output["date_time"], "%Y-%m-%d %H:%M:%S %z")
+                timestamp = parse_datetime(output["date_time"], "%Y-%m-%d %H:%M:%S %z")
             output.pop("date_time", None)  # remove date_time as we have timestamp and datetime now
             event = Event(
                 datetime=timestamp,

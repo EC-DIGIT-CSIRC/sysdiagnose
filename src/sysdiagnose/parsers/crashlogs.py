@@ -5,7 +5,7 @@ import re
 from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import load_plist_string_as_json
+from sysdiagnose.utils.misc import load_plist_string_as_json, parse_datetime
 
 
 class CrashLogsParser(BaseParserInterface):
@@ -91,18 +91,18 @@ class CrashLogsParser(BaseParserInterface):
             result["report"] = CrashLogsParser.process_ips_lines(lines)
             timestamp = None
             if "captureTime" in result["report"]:  # captureTime is more precise than the timestamp
-                timestamp = datetime.strptime(result["report"]["captureTime"], "%Y-%m-%d %H:%M:%S.%f %z")
+                timestamp = parse_datetime(result["report"]["captureTime"], "%Y-%m-%d %H:%M:%S.%f %z")
             elif "date" in result["report"]:
                 try:
-                    timestamp = datetime.strptime(result["report"]["date"], "%Y-%m-%d %H:%M:%S.%f %z")
+                    timestamp = parse_datetime(result["report"]["date"], "%Y-%m-%d %H:%M:%S.%f %z")
                 except ValueError:
                     try:
-                        timestamp = datetime.strptime(result["report"]["date"], "%Y-%m-%d %H:%M:%SZ")
+                        timestamp = parse_datetime(result["report"]["date"], "%Y-%m-%d %H:%M:%SZ")
                     except ValueError:
-                        timestamp = datetime.strptime(result["report"]["date"], "%Y-%m-%dT%H:%M:%SZ")
+                        timestamp = parse_datetime(result["report"]["date"], "%Y-%m-%dT%H:%M:%SZ")
 
             if not timestamp:
-                timestamp = datetime.strptime(result["timestamp"], "%Y-%m-%d %H:%M:%S.%f %z")
+                timestamp = parse_datetime(result["timestamp"], "%Y-%m-%d %H:%M:%S.%f %z")
 
             result["name"] = CrashLogsParser.metadata_from_filename(path)[0]
             try:
@@ -306,12 +306,12 @@ class CrashLogsParser(BaseParserInterface):
             # option 1: YYYY-MM-DD-HHMMSS
             m = re.search(r"/([^/]+)-(\d{4}-\d{2}-\d{2}-\d{6})", filename)
             if m:
-                timestamp = datetime.strptime(m.group(2), "%Y-%m-%d-%H%M%S")
+                timestamp = parse_datetime(m.group(2), "%Y-%m-%d-%H%M%S")
                 break
             # option 2: YYYY-MM-DD-HH-MM-SS
             m = re.search(r"/([^/]+)-(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})", filename)
             if m:
-                timestamp = datetime.strptime(m.group(2), "%Y-%m-%d-%H-%M-%S")
+                timestamp = parse_datetime(m.group(2), "%Y-%m-%d-%H-%M-%S")
                 break
             # fallback, basename
             app = os.path.basename(filename)

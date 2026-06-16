@@ -7,9 +7,9 @@ Author: david@autopsit.org
 
 import glob
 import os
-from datetime import datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class WifiSecurityParser(BaseParserInterface):
@@ -66,7 +66,7 @@ class WifiSecurityParser(BaseParserInterface):
                         element[key.strip()] = value.strip()
                     elif element:
                         # created
-                        timestamp = datetime.strptime(element["cdat"], "%Y-%m-%d %H:%M:%S %z")
+                        timestamp = parse_datetime(element["cdat"], "%Y-%m-%d %H:%M:%S %z")
                         event = Event(
                             datetime=timestamp,
                             message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",  # noqa: E501
@@ -78,7 +78,7 @@ class WifiSecurityParser(BaseParserInterface):
 
                         if element["mdat"] != element["cdat"]:
                             # also add the modified date
-                            timestamp = datetime.strptime(element["mdat"], "%Y-%m-%d %H:%M:%S %z")
+                            timestamp = parse_datetime(element["mdat"], "%Y-%m-%d %H:%M:%S %z")
                             event_mdat = Event(
                                 datetime=timestamp,
                                 message=f"Wifi AP config: {element.get('desc', '')} # {element.get('labl', '')} # {element.get('acct', '')}",  # noqa: E501

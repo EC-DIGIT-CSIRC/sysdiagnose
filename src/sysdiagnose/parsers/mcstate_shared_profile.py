@@ -2,10 +2,11 @@
 
 import glob
 import os
-from datetime import UTC, datetime
+from datetime import UTC
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
+from sysdiagnose.utils.misc import parse_datetime
 
 
 class McStateSharedProfileParser(BaseParserInterface):
@@ -39,7 +40,7 @@ class McStateSharedProfileParser(BaseParserInterface):
         log_files = self.get_log_files()
         for log_file in log_files:
             entry = misc.load_plist_file_as_json(log_file)
-            timestamp = datetime.strptime(entry["InstallDate"], "%Y-%m-%dT%H:%M:%S.%f")
+            timestamp = parse_datetime(entry["InstallDate"], "%Y-%m-%dT%H:%M:%S.%f")
             timestamp = timestamp.replace(tzinfo=UTC)  # ensure timezone is UTC
             event = Event(
                 datetime=timestamp,
