@@ -15,6 +15,7 @@ class TestIsCompatibleMethod(unittest.TestCase):
             description = "Fake parser for testing"
             ios_version = ios_version_spec
             format = "jsonl"
+            case = {}
 
             def __init__(self):
                 # Bypass BaseInterface.__init__ — we only test is_compatible()
@@ -32,111 +33,144 @@ class TestIsCompatibleMethod(unittest.TestCase):
 
     def test_wildcard_is_always_compatible(self):
         p = self._make_parser_class("*")
-        self.assertTrue(p.is_compatible("14.0"))
-        self.assertTrue(p.is_compatible("17.0"))
-        self.assertTrue(p.is_compatible("99.9.9"))
+        p.case["ios_version"] = "14.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "17.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "99.9..9"
+        self.assertTrue(p.is_compatible())
 
     # --- Greater than or equal ---
 
     def test_gte_compatible(self):
         p = self._make_parser_class(">=17.0")
-        self.assertTrue(p.is_compatible("17.0"))
-        self.assertTrue(p.is_compatible("17.1"))
-        self.assertTrue(p.is_compatible("18.0"))
+        p.case["ios_version"] = "17.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "17.1"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "18.0"
+        self.assertTrue(p.is_compatible())
 
     def test_gte_incompatible(self):
         p = self._make_parser_class(">=17.0")
-        self.assertFalse(p.is_compatible("16.9.9"))
-        self.assertFalse(p.is_compatible("16.0"))
-        self.assertFalse(p.is_compatible("14.4.1"))
+        p.case["ios_version"] = "16.9.9"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "16.0"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "14.4.1"
+        self.assertFalse(p.is_compatible())
 
     # --- Less than ---
 
     def test_lt_compatible(self):
         p = self._make_parser_class("<17.0")
-        self.assertTrue(p.is_compatible("16.9.9"))
-        self.assertTrue(p.is_compatible("14.0"))
+        p.case["ios_version"] = "16.9.9"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "14.0"
+        self.assertTrue(p.is_compatible())
 
     def test_lt_incompatible(self):
         p = self._make_parser_class("<17.0")
-        self.assertFalse(p.is_compatible("17.0"))
-        self.assertFalse(p.is_compatible("18.0"))
+        p.case["ios_version"] = "17.0"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "18.0"
+        self.assertFalse(p.is_compatible())
 
     # --- Range (AND semantics with comma) ---
 
     def test_range_compatible(self):
         p = self._make_parser_class(">=14.0,<17.0")
-        self.assertTrue(p.is_compatible("14.0"))
-        self.assertTrue(p.is_compatible("15.7.6"))
-        self.assertTrue(p.is_compatible("16.9.9"))
+        p.case["ios_version"] = "14.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "15.7.6"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "16.9.9"
+        self.assertTrue(p.is_compatible())
 
     def test_range_incompatible_below(self):
         p = self._make_parser_class(">=14.0,<17.0")
-        self.assertFalse(p.is_compatible("13.9"))
+        p.case["ios_version"] = "13.9"
+        self.assertFalse(p.is_compatible())
 
     def test_range_incompatible_above(self):
         p = self._make_parser_class(">=14.0,<17.0")
-        self.assertFalse(p.is_compatible("17.0"))
-        self.assertFalse(p.is_compatible("18.0"))
+        p.case["ios_version"] = "17.0"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "18.0"
+        self.assertFalse(p.is_compatible())
 
     # --- Exact version ---
 
     def test_exact_compatible(self):
         p = self._make_parser_class("==16.3.1")
-        self.assertTrue(p.is_compatible("16.3.1"))
+        p.case["ios_version"] = "16.3.1"
+        self.assertTrue(p.is_compatible())
 
     def test_exact_incompatible(self):
         p = self._make_parser_class("==16.3.1")
-        self.assertFalse(p.is_compatible("16.3.0"))
-        self.assertFalse(p.is_compatible("16.4"))
+        p.case["ios_version"] = "16.3.0"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "16.4"
+        self.assertFalse(p.is_compatible())
 
     # --- Wildcard match (PEP 440 ==X.*) ---
 
     def test_wildcard_minor_compatible(self):
         p = self._make_parser_class("==16.*")
-        self.assertTrue(p.is_compatible("16.0"))
-        self.assertTrue(p.is_compatible("16.3.1"))
-        self.assertTrue(p.is_compatible("16.9.9"))
+        p.case["ios_version"] = "16.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "16.3.1"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "16.9.9"
+        self.assertTrue(p.is_compatible())
 
     def test_wildcard_minor_incompatible(self):
         p = self._make_parser_class("==16.*")
-        self.assertFalse(p.is_compatible("15.9.9"))
-        self.assertFalse(p.is_compatible("17.0"))
+        p.case["ios_version"] = "15.9.9"
+        self.assertFalse(p.is_compatible())
+        p.case["ios_version"] = "17.0"
+        self.assertFalse(p.is_compatible())
 
     # --- Not equal ---
 
     def test_not_equal_compatible(self):
         p = self._make_parser_class("!=16.0")
-        self.assertTrue(p.is_compatible("15.0"))
-        self.assertTrue(p.is_compatible("16.1"))
-        self.assertTrue(p.is_compatible("17.0"))
+        p.case["ios_version"] = "15.0"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "16.1"
+        self.assertTrue(p.is_compatible())
+        p.case["ios_version"] = "17.0"
+        self.assertTrue(p.is_compatible())
 
     def test_not_equal_incompatible(self):
         p = self._make_parser_class("!=16.0")
-        self.assertFalse(p.is_compatible("16.0"))
+        p.case["ios_version"] = "16.0"
+        self.assertFalse(p.is_compatible())
 
     # --- None ios_version_str (unknown version) ---
 
     def test_none_version_assumes_compatible(self):
         p = self._make_parser_class(">=17.0")
-        # Override case_ios_version to simulate unknown version
-        type(p).case_ios_version = property(lambda self: None)
-        self.assertTrue(p.is_compatible(None))
+        # Simulate unknown version by not setting ios_version in case
+        p.case = {}
+        self.assertTrue(p.is_compatible())
 
     # --- Invalid specifier raises error ---
 
     def test_invalid_specifier_raises_error(self):
         p = self._make_parser_class("not_a_valid_spec")
+        p.case["ios_version"] = "17.0"
         from packaging.specifiers import InvalidSpecifier
 
         with self.assertRaises(InvalidSpecifier):
-            p.is_compatible("17.0")
+            p.is_compatible()
 
     # --- Invalid version string degrades gracefully ---
 
     def test_invalid_version_string_assumes_compatible(self):
         p = self._make_parser_class(">=17.0")
-        self.assertTrue(p.is_compatible("not_a_version"))
+        p.case["ios_version"] = "not_a_version"
+        self.assertTrue(p.is_compatible())
 
 
 class TestVersionCompatibilitySkipIntegration(SysdiagnoseTestCase):
