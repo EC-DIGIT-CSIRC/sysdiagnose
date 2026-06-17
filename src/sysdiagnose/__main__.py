@@ -197,8 +197,9 @@ def main() -> None:
                         extra={"parser": parser, "result": "skipped"},
                     )
                     continue
+                duration_str = f" ({summary.duration:.2f}s)" if summary.duration is not None else ""
                 print(
-                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"  # noqa: E501
+                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings{duration_str}"  # noqa: E501
                 )
                 logger.info(
                     f"Parser '{parser}' finished {summary.status}",
@@ -249,8 +250,9 @@ def main() -> None:
                         extra={"analyser": analyser, "result": "skipped"},
                     )
                     continue
+                duration_str = f" ({summary.duration:.2f}s)" if summary.duration is not None else ""
                 print(
-                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings ({summary.duration:.2f}s)"  # noqa: E501
+                    f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings{duration_str}"  # noqa: E501
                 )
                 logger.info(
                     f"Analyser '{analyser}' finished {summary.status}",

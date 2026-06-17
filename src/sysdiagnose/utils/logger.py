@@ -41,23 +41,19 @@ def set_json_logging(filename: str, level: int = logging.DEBUG) -> None:
         filename: Filename where to log.
         level: Logging level. By default to DEBUG. https://docs.python.org/3/library/logging.html#logging-levels
     """
-    updated = False
-    for h in logger.handlers:
-        # https://stackoverflow.com/questions/13839554/how-to-change-filehandle-with-python-logging-on-the-fly-with-different-classes-a
+    fmt_json = SysdiagnoseJsonFormatter(
+        fmt="%(created)f %(asctime)s %(levelname)s %(module)s %(message)s",
+        rename_fields={"asctime": "datetime", "created": "timestamp"},
+    )
+
+    # Remove any existing file handlers
+    for h in list(logger.handlers):
         if isinstance(h, logging.FileHandler):
             h.close()
-            with open(filename, "w") as f:
-                h.setStream(f)
-            updated = True
+            logger.removeHandler(h)
 
-    if not updated:
-        fmt_json = SysdiagnoseJsonFormatter(
-            fmt="%(created)f %(asctime)s %(levelname)s %(module)s %(message)s",
-            rename_fields={"asctime": "datetime", "created": "timestamp"},
-        )
-        # File handler
-        fh = logging.FileHandler(filename=filename, mode="w")
-        fh.setLevel(level)
-        fh.setFormatter(fmt_json)
-
-        logger.addHandler(fh)
+    # Add a fresh file handler
+    fh = logging.FileHandler(filename=filename, mode="w")
+    fh.setLevel(level)
+    fh.setFormatter(fmt_json)
+    logger.addHandler(fh)
