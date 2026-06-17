@@ -136,7 +136,9 @@ class BaseInterface(ABC):
             raise FileNotFoundError(f"Case {self.case_id} does not exist")
 
         self.output_file = os.path.join(self.case_parsed_data_folder, self.module_name + "." + self.format)
-        self.summary_file = os.path.join(self.case_parsed_data_folder, self.module_name + ".summary.json")
+        self.summary_file = os.path.join(
+            self.config.get_case_log_data_folder(case_id=self.case_id), self.module_name + ".summary.json"
+        )
 
         self._result: list | dict | str | None = None  # empty result set, used for caching
         self._result_summary: ResultSummary | None = None
