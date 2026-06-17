@@ -156,7 +156,7 @@ class Apollo:
                     cur.execute(module_query["sql"])
                     rows = cur.fetchall()
                 except Exception as ex:
-                    self.logger.exception(
+                    self.logger.info(
                         f"WARNING: Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
                         extra={"apollo_module": module_query["name"]},
                     )
@@ -197,7 +197,7 @@ class Apollo:
                         results.append(event.to_dict())
                     except TypeError:
                         # problem with timestamp parsing
-                        self.logger.exception(
+                        self.logger.info(
                             f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
                             extra={"apollo_module": module_query["name"], "table": db_fname, "row": list(row)},
                         )
