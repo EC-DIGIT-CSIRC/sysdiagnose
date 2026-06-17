@@ -197,13 +197,43 @@ class Sysdiagnose:
         """
         from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
         from sysdiagnose.parsers.sys import SystemVersionParser
-        from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
-        if os.path.isfile(source_file):
-            remotectl_dumpstate_json = None
-            sysdiagnose_log_file = None
-            ioreg_devicetree_json = None
+        if os.path.isdir(source_file):
+            # First try remotectl_dumpstate method
+            try:
+                sysdiagnose_log_file = os.path.join(source_file, "sysdiagnose.log")
+                sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+                sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+                remotectl_dumpstate_file = os.path.join(source_file, "remotectl_dumpstate.txt")
+                remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
+            except Exception as e:
+                logger.warning(
+                    f"Problem while processsing folder {source_file} for remotectl_dumpstate: {e!s}", exc_info=True
+                )
+            # get metadata
+            metadata = Sysdiagnose.metadata_from_remotectl_sysdiagnose_data(
+                remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+            )
+            if metadata:
+                return metadata
 
+            # As a backup use ioreg and sys method
+            try:
+                sys_json_file = os.path.join(source_file, "logs", "SystemVersion", "SystemVersion.plist")
+                sys_json = SystemVersionParser.parse_file(sys_json_file)
+                ioreg_devicetree_file = os.path.join(source_file, "ioreg", "IODeviceTree.txt")
+                with open(ioreg_devicetree_file) as wrapper:
+                    serial_number, model = Sysdiagnose.get_serial_and_model_from_ioreg_raw_file(wrapper)
+                # get metadata
+                metadata = Sysdiagnose.metadata_from_ioreg_sys(
+                    serial_number, model, sys_json, sysdiagnose_date_utc, source_file
+                )
+                return metadata
+            except Exception as e:
+                logger.error(f"Problem while processsing folder {source_file}: {e!s}", exc_info=True)
+                return None
+
+        elif os.path.isfile(source_file):
             # workaround for incompatible filesystem such as SMB
             targz_file = source_file
             try:
@@ -221,6 +251,7 @@ class Sysdiagnose:
 
             try:
                 with tarfile.open(targz_file) as tf:
+                    # First try remotectl_dumpstate method
                     for member in tf.getmembers():
                         member_path = Path(member.name)
                         if member_path.name == "remotectl_dumpstate.txt":
@@ -234,85 +265,116 @@ class Sysdiagnose:
                             sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(
                                 sysdiagnose_log_file
                             )
-                        elif member_path.name == "SystemVersion.plist":
+                            sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+
+                    # get metadata
+                    metadata = Sysdiagnose.metadata_from_remotectl_sysdiagnose_data(
+                        remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+                    )
+                    if metadata:
+                        return metadata
+
+                    # As a backup use ioreg and sys method
+                    for member in tf.getmembers():
+                        member_path = Path(member.name)
+                        if member_path.name == "SystemVersion.plist":
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
                         elif member_path.name == "IODeviceTree.txt":
                             ioreg_devicetree_file = TextIOWrapper(tf.extractfile(member), errors="backslashreplace")
-                            p = IORegStructParser()
-                            ioreg_devicetree_json = p.parse(ioreg_devicetree_file, from_start=True)
+                            serial_number, model = Sysdiagnose.get_serial_and_model_from_ioreg_raw_file(
+                                ioreg_devicetree_file
+                            )
+
+                    metadata = Sysdiagnose.metadata_from_ioreg_sys(
+                        serial_number, model, sys_json, sysdiagnose_date_utc, source_file
+                    )
+                    return metadata
 
             except Exception as e:
                 logger.error(f"Problem ocurred while processing the archive {source_file}: {e!s}", exc_info=True)
+                return None
             finally:
                 if targz_file != source_file:
                     # remove the temporary file if we copied it
                     os.remove(targz_file)
 
-        elif os.path.isdir(source_file):
-            try:
-                sysdiagnose_log_file = os.path.join(source_file, "sysdiagnose.log")
-                sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
-                remotectl_dumpstate_file = os.path.join(source_file, "remotectl_dumpstate.txt")
-                remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
-                sys_json_file = os.path.join(source_file, "logs", "SystemVersion", "SystemVersion.plist")
-                sys_json = SystemVersionParser.parse_file(sys_json_file)
-                p = IORegStructParser()
-                ioreg_devicetree_file = os.path.join(source_file, "ioreg", "IODeviceTree.txt")
-                ioreg_devicetree_json = p.parse(ioreg_devicetree_file)
-            except Exception as e:
-                logger.error(f"Problem while processsing folder {source_file}: {e!s}", exc_info=True)
         else:
             logger.error(f"File {source_file} is not a valid sysdiagnose folder.")
             return None
 
-        # Time to obtain the metadata
-        # Turn the sysdiagnose date into UTC
-        sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
-        if remotectl_dumpstate_json and "error" not in remotectl_dumpstate_json:
-            if "Local device" in remotectl_dumpstate_json:
-                try:
-                    serial_number = remotectl_dumpstate_json["Local device"]["Properties"]["SerialNumber"]
-                    metadata = {
-                        "serial_number": serial_number,
-                        "unique_device_id": remotectl_dumpstate_json["Local device"]["Properties"]["UniqueDeviceID"],
-                        "ios_version": remotectl_dumpstate_json["Local device"]["Properties"]["OSVersion"],
-                        "model": remotectl_dumpstate_json["Local device"]["Properties"]["ProductType"],
-                        "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
-                        "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                        "source_file": source_file,
-                        "source_sha256": "",
-                    }
-                    metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
+    @staticmethod
+    def metadata_from_remotectl_sysdiagnose_data(
+        remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+    ) -> dict | None:
+        try:
+            if "error" not in remotectl_dumpstate_json:
+                if "Local device" in remotectl_dumpstate_json:
+                    try:
+                        serial_number = remotectl_dumpstate_json["Local device"]["Properties"]["SerialNumber"]
+                        metadata = {
+                            "serial_number": serial_number,
+                            "unique_device_id": remotectl_dumpstate_json["Local device"]["Properties"][
+                                "UniqueDeviceID"
+                            ],
+                            "ios_version": remotectl_dumpstate_json["Local device"]["Properties"]["OSVersion"],
+                            "model": remotectl_dumpstate_json["Local device"]["Properties"]["ProductType"],
+                            "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
+                            "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
+                            "source_file": source_file,
+                            "source_sha256": "",
+                        }
+                        metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
 
-                    return metadata
-                except Exception:
-                    logger.error(
-                        "Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True
-                    )
-            else:
-                logger.error("remotectl_dumpstate does not contain a Local device section.")
-        elif ioreg_devicetree_json and sys_json:
-            # FIXME also write tests...
-            try:
-                serial_number = ioreg_devicetree_json["device-tree"]["IOPlatformSerialNumber"]
-                metadata = {
-                    "serial_number": serial_number,
-                    "unique_device_id": "unknown",  # It is not the same than the one from remotectl_dumpstate
-                    "ios_version": sys_json["ProductVersion"],
-                    "model": ioreg_devicetree_json["device-tree"]["model"].strip("<>"),
-                    "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
-                    "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                    "source_file": source_file,
-                    "source_sha256": "",
-                }
-                metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
+                        return metadata
+                    except Exception:
+                        logger.warning(
+                            "Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True
+                        )
+                else:
+                    logger.warning("remotectl_dumpstate does not contain a Local device section.")
+        except Exception:
+            logger.warning("Exception while extracting metadata from remotectl_dumpstate", exc_info=True)
+        return None
 
-                return metadata
-            except Exception:
-                logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
+    @staticmethod
+    def get_serial_and_model_from_ioreg_raw_file(wrapper: TextIOWrapper) -> (str, str):
+        # "IOPlatformSerialNumber" = "NUMBER"
+        # "model" = <"iPhone18,2">
 
+        serial_number = None
+        model = None
+        for line in wrapper:
+            if '"IOPlatformSerialNumber" = ' in line:
+                serial_number = line.split("=")[-1].strip('" \n')
+
+            elif '"model" = ' in line:
+                model = line.split("=")[-1].strip('<>" \n')
+
+            # stop reading file if we found our answer
+            if serial_number and model:
+                break
+
+        return (serial_number, model)
+
+    @staticmethod
+    def metadata_from_ioreg_sys(serial_number, model, sys_json, sysdiagnose_date_utc, source_file) -> dict | None:
+        try:
+            metadata = {
+                "serial_number": serial_number,
+                "unique_device_id": "unknown",  # It is not the same than the one from remotectl_dumpstate
+                "ios_version": sys_json["ProductVersion"],
+                "model": model,
+                "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
+                "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
+                "source_file": source_file,
+                "source_sha256": "",
+            }
+            metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
+            return metadata
+        except Exception:
+            logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
         return None
 
     @staticmethod
