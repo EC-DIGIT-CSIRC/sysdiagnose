@@ -137,7 +137,7 @@ class BaseInterface(ABC):
 
         self.output_file = os.path.join(self.case_parsed_data_folder, self.module_name + "." + self.format)
         self.summary_file = os.path.join(
-            self.config.get_case_log_data_folder(case_id=self.case_id), self.module_name + ".summary.json"
+            self.config.get_case_log_data_folder(case_id=self.case_id), "summary-" + self.module_name + ".json"
         )
 
         self._result: list | dict | str | None = None  # empty result set, used for caching
