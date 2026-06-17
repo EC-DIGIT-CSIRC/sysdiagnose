@@ -42,13 +42,13 @@ class TransparencyParser(BaseParserInterface):
             logger.info("No known transparency.log file found.")
             return result
 
-        for file in files:
-            with open(file) as f:
+        for fname in files:
+            with open(fname) as f:
                 try:
                     json_data = json.load(f)
                     result.extend(self.extract_events(json_data))
                 except json.decoder.JSONDecodeError:
-                    logger.warning(f"Error parsing {file}")
+                    logger.warning(f"Error parsing {fname}")
 
         return result
 
@@ -128,7 +128,7 @@ class TransparencyParser(BaseParserInterface):
                 events.append(event.to_dict())
 
             try:
-                key = "lockState"
+                key = "lockstate"
                 # extract the time from the string using regex "foobar 2024-08-19 09:00:28 +0200"
                 time_str = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}", sm[key]).group(0)
                 timestamp = parse_datetime(time_str, "%Y-%m-%d %H:%M:%S %z")
@@ -139,7 +139,11 @@ class TransparencyParser(BaseParserInterface):
                     timestamp_desc="stateMachine",
                 )
                 events.append(event.to_dict())
+            except AttributeError:
+                # lockstate may not contain timestamp
+                pass
             except KeyError:
+                # log may not contain lockstate entry
                 pass
 
             for _key, val in sm.get("ops", {}).items():
@@ -153,6 +157,7 @@ class TransparencyParser(BaseParserInterface):
                         timestamp_desc="stateMachine",
                     )
                     events.append(event.to_dict())
-                except KeyError:
+                except AttributeError:
+                    # value does not contain a timestamp
                     pass
         return events

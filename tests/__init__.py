@@ -120,13 +120,16 @@ class SysdiagnoseTestCase(unittest.TestCase):
         for field in self.required_fields_jsonl:
             self.assertTrue(field in entry, f"Parser result entry did not contain a {field}.")
 
-    def assert_result_summary_consistent(self, instance: BaseInterface, result: list | dict | str | None) -> None:
+    def assert_result_summary_consistent(
+        self, instance: BaseInterface, result: list | dict | str | None, allow_errors: bool = False
+    ) -> None:
         """
         Validates that the ResultSummary is consistent with the actual result produced.
 
         Args:
             instance: The parser or analyser instance (must have been executed via save_result).
             result: The result returned by get_result().
+            allow_errors: If True, do not fail the test when the summary contains errors.
         """
         # Summary file must exist
         self.assertTrue(os.path.isfile(instance.summary_file), "Summary file does not exist")
@@ -147,7 +150,8 @@ class SysdiagnoseTestCase(unittest.TestCase):
             self.assertEqual(
                 summary.status, ExecutionStatus.ERROR, f"Status should be ERROR when num_errors={summary.num_errors}"
             )
-            # FIXME we need to : self.fail(f"Result contained {summary.num_errors} error(s).")
+            if not allow_errors:
+                self.fail(f"Execution produced {summary.num_errors} error(s).")
         elif summary.num_warnings > 0:
             self.assertEqual(
                 summary.status,

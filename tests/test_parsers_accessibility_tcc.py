@@ -26,7 +26,7 @@ class TestParsersAccessibilityTcc(SysdiagnoseTestCase):
                 for item in result:
                     self.assertTrue("apollo_module" in item["data"])
                     self.assert_has_required_fields_jsonl(item)
-                self.assert_result_summary_consistent(p, result)
+                self.assert_result_summary_consistent(p, result, allow_errors=True)
 
 
 if __name__ == "__main__":

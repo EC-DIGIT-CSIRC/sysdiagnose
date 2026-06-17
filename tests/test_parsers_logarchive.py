@@ -180,14 +180,14 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
         temp_files = []
         try:
             # write the files with the test data
-            for file in input:
+            for fname in input:
                 with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                     temp_files.append(
                         {
                             "file": temp_file,
                         }
                     )
-                    for entry in file:
+                    for entry in fname:
                         temp_file.write(json.dumps(entry).encode())
                         temp_file.write(b"\n")
             # merge the files

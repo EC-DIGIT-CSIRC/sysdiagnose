@@ -127,25 +127,25 @@ class TestParsers(SysdiagnoseTestCase):
             if obj_instance:
                 # get all files and folders
                 for root, _dirs, files in os.walk(obj_instance.case_data_folder):
-                    for file in files:
-                        all_files_and_folders.append(os.path.join(root, file))
+                    for fname in files:
+                        all_files_and_folders.append(os.path.join(root, fname))
 
         # get difference
         not_covered = []
-        for file in all_files_and_folders:
+        for fname in all_files_and_folders:
             # skip files that start with a .
-            if os.path.basename(file).startswith("."):
+            if os.path.basename(fname).startswith("."):
                 continue
 
             covered = False
             for covered_file in covered_files_and_folders:
-                if file.startswith(covered_file):
+                if fname.startswith(covered_file):
                     covered = True
                     break
 
-            if not covered and os.path.getsize(file) > 10:
-                not_covered.append(file)
-                print(f"File not yet parsed: {file}")
+            if not covered and os.path.getsize(fname) > 10:
+                not_covered.append(fname)
+                print(f"File not yet parsed: {fname}")
 
         # sort by the last part of the path (excluding the first 6 folders in the path)
         not_covered = sorted(not_covered, key=lambda x: "/".join(x.split("/")[7:]))

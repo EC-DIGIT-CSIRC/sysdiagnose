@@ -29,10 +29,10 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
                     self.assertIn("folder_name", item)
                     self.assertIn("file_count", item)
                     self.assertIn("files", item)
-                    for file in item["files"]:
-                        self.assertIn("filename", file)
-                        self.assertIn("extension", file)
-                        self.assertIn("file_type", file)
+                    for fname in item["files"]:
+                        self.assertIn("filename", fname)
+                        self.assertIn("extension", fname)
+                        self.assertIn("file_type", fname)
                 self.assert_result_summary_consistent(a, result)
 
 

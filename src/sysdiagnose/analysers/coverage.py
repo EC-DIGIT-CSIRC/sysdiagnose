@@ -53,14 +53,14 @@ class CoverageAnalyser(BaseAnalyserInterface):
         # get all files and folders
         coverage = {}
         for root, _dirs, files in os.walk(path):
-            for file in files:
+            for fname in files:
                 # skip files that start with a .
-                if os.path.basename(file).startswith("."):
+                if os.path.basename(fname).startswith("."):
                     continue
 
-                coverage[os.path.join(root, file)] = {
-                    "file_type": self.get_file_type(os.path.join(root, file)),
-                    "file_size": os.path.getsize(os.path.join(root, file)),
+                coverage[os.path.join(root, fname)] = {
+                    "file_type": self.get_file_type(os.path.join(root, fname)),
+                    "file_size": os.path.getsize(os.path.join(root, fname)),
                     "folder_name": os.path.relpath(root, start=path),
                     "parser": None,
                     "parser_format": None,
@@ -78,16 +78,16 @@ class CoverageAnalyser(BaseAnalyserInterface):
                     extra_files = [f for f in extra_files if "/Extra/" not in f]
                     parser_files.extend(extra_files)
 
-                for file in parser_files:
-                    if file in coverage:
-                        coverage[file]["parser"] = parser_name
-                        coverage[file]["parser_format"] = parser.format
+                for fname in parser_files:
+                    if fname in coverage:
+                        coverage[fname]["parser"] = parser_name
+                        coverage[fname]["parser_format"] = parser.format
                     # We are assuming the parser always returns files, not just folders
-                    elif not os.path.isdir(file):
-                        coverage[file] = {
+                    elif not os.path.isdir(fname):
+                        coverage[fname] = {
                             "file_type": "unknown",
-                            "file_size": os.path.getsize(file) if os.path.exists(file) else 0,
-                            "folder_name": os.path.relpath(file, start=path),
+                            "file_size": os.path.getsize(fname) if os.path.exists(fname) else 0,
+                            "folder_name": os.path.relpath(fname, start=path),
                             "parser": parser_name,
                             "parser_format": parser.format,
                         }

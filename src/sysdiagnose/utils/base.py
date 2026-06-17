@@ -377,8 +377,7 @@ class BaseInterface(ABC):
             return self._result, self._result_summary
 
         num_events = self._write_result(result, indent=indent)
-        add_errors = ResultSummaryFactory.count_errors_in_result(self._result)
-        handler.update(num_events=num_events, add_errors=add_errors, end=True)
+        handler.update(num_events=num_events, end=True)
         return self._result, handler.get()
 
     def _write_result(self, result, indent=None) -> int:

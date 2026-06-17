@@ -25,11 +25,11 @@ class FileStatisticsAnalyser(BaseAnalyserInterface):
                 "files": [],
             }
 
-            for file in files:
-                file_path = os.path.join(root, file)
+            for fname in files:
+                file_path = os.path.join(root, fname)
                 file_info = {
-                    "filename": file,
-                    "extension": os.path.splitext(file)[1],
+                    "filename": fname,
+                    "extension": os.path.splitext(fname)[1],
                     "file_type": self.get_file_type(file_path),
                 }
                 directory_info["files"].append(file_info)

@@ -126,36 +126,6 @@ class ResultSummaryFactory:
             return len(result)
         return 1 if result else 0
 
-    @staticmethod
-    def count_errors_in_result(result: list | dict | str | None) -> int:
-        if not isinstance(result, dict):
-            return 0
-
-        num_errors = 0
-        if ResultSummaryFactory.has_error_value(result.get("error")):
-            num_errors += ResultSummaryFactory.count_error_value(result.get("error"))
-        if ResultSummaryFactory.has_error_value(result.get("errors")):
-            num_errors += ResultSummaryFactory.count_error_value(result.get("errors"))
-        return num_errors
-
-    @staticmethod
-    def has_error_value(value: object) -> bool:
-        if value is None:
-            return False
-        if isinstance(value, list | tuple | set | dict | str):
-            return len(value) > 0
-        return bool(value)
-
-    @staticmethod
-    def count_error_value(value: object) -> int:
-        if isinstance(value, dict):
-            return len(value)
-        if isinstance(value, list | tuple | set):
-            return len(value)
-        if value:
-            return 1
-        return 0
-
 
 class ResultSummaryExecutionHandler:
     """

@@ -50,13 +50,13 @@ class CrashLogsParser(BaseParserInterface):
         files = self.get_log_files()
         result = []
         seen = set()
-        for file in files:
-            logger.info(f"Processing file: {file}")
-            if os.path.basename(file).startswith("."):
+        for fname in files:
+            logger.info(f"Processing file: {fname}")
+            if os.path.basename(fname).startswith("."):
                 pass
-            elif file.endswith(".ips"):
+            elif fname.endswith(".ips"):
                 try:
-                    event = CrashLogsParser.parse_ips_file(file)
+                    event = CrashLogsParser.parse_ips_file(fname)
                     event["module"] = self.module_name
                     event_hash = f"{event.data.get('timestamp', '')[:-9]}-{event.data.get('name', '')}"
                     # skip duplicates
@@ -65,13 +65,13 @@ class CrashLogsParser(BaseParserInterface):
                     seen.add(event_hash)
                     result.append(event.to_dict())
                 except Exception:
-                    logger.warning(f"Skipping file due to error {file}", exc_info=True)
+                    logger.warning(f"Skipping file due to error {fname}", exc_info=True)
 
         # process crashes_and_spings.log at the end
-        for file in files:
-            logger.info(f"Processing file: {file}")
-            if file.endswith("crashes_and_spins.log"):
-                log_results = self.parse_summary_file(file)
+        for fname in files:
+            logger.info(f"Processing file: {fname}")
+            if fname.endswith("crashes_and_spins.log"):
+                log_results = self.parse_summary_file(fname)
                 for event in log_results:
                     event_hash = f"{event.datetime.strftime('%Y-%m-%d %H:%M:%S')}-{event.data.get('name', '')}"
                     if event_hash in seen:

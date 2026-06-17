@@ -112,8 +112,8 @@ class YaraAnalyser(BaseAnalyserInterface):
                         continue
                 if stop:
                     continue
-                for file in files:
-                    file_full_path = os.path.join(root, file)
+                for fname in files:
+                    file_full_path = os.path.join(root, fname)
                     stop = False
                     for ignore_file in ignore_files:
                         if file_full_path.startswith(ignore_file):
