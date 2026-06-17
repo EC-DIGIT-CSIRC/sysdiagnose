@@ -60,13 +60,10 @@ def get_version(filename="VERSION.txt"):
 
 def load_plist_file_as_json(fname: str) -> dict:
     if os.path.getsize(fname) == 0:
-        return {"error": ["Empty file"]}
-    try:
-        with open(fname, "rb") as f:
-            plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True, format=dict)
-            return json_serializable(plist)
-    except Exception:
-        return {"error": ["Invalid plist file"]}
+        return {}
+    with open(fname, "rb") as f:
+        plist = nska_deserialize.deserialize_plist(f, full_recurse_convert_nska=True, format=dict)
+        return json_serializable(plist)
 
 
 def load_plist_string_as_json(plist_string: str) -> dict:
