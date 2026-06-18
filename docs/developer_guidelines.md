@@ -249,6 +249,16 @@ def _load_output(self) -> dict:
 
 ## Writing Tests
 
+### Test execution order
+
+Tests are run via pytest (which discovers and runs `unittest.TestCase` subclasses). A `conftest.py` hook ensures parser tests run before analyser tests, so analysers benefit from cached parsed data:
+
+```
+tests/conftest.py  → reorders: test_parsers_* → other → test_analysers_*
+```
+
+This means analyser tests don't need to explicitly trigger their parser dependencies — the output will already exist from the parser test run.
+
 ### Parser test structure
 
 ```python
@@ -315,6 +325,16 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
+### Test assertion helpers
+
+The `SysdiagnoseTestCase` base class provides:
+
+| Helper | Purpose |
+|--------|---------|
+| `assert_has_required_fields_jsonl(item)` | Validates that a jsonl entry has `datetime`, `message`, `timestamp_desc`, `module` |
+| `assert_result_summary_consistent(instance, result)` | Validates summary matches output and **fails the test if execution produced errors** |
+| `assert_result_summary_consistent(instance, result, allow_errors=True)` | Same validation but tolerates errors (use for parsers with known issues) |
+
 ### Test rules
 
 1. **Use `self.subTest(case_id=case_id, ios_version=_case.get('ios_version'))`** when iterating over multiple cases so each case is reported independently.
@@ -325,7 +345,7 @@ if __name__ == "__main__":
 
 4. **Use `self.assert_has_required_fields_jsonl(item)`** for jsonl parsers to validate the event structure.
 
-5. **Use `self.assert_result_summary_consistent(instance, result)`** to validate that the `ResultSummary` matches the actual output.
+5. **Use `self.assert_result_summary_consistent(instance, result)`** to validate that the `ResultSummary` matches the actual output. This will **fail the test if any errors occurred during execution** — use `allow_errors=True` only for parsers with known upstream issues.
 
 6. **Call `save_result(force=True)`** to ensure the parser/analyser runs fresh.
 

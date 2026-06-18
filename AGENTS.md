@@ -52,8 +52,10 @@ docs/                 # Documentation
 - Check compatibility first: `if not p.is_compatible(): self.skipTest(...)`
 - Parsers: then check for log files: `if not files: self.fail(...)`
 - Use `self.assert_has_required_fields_jsonl(item)` for jsonl validation
-- Use `self.assert_result_summary_consistent(instance, result)` to validate summary matches output
+- Use `self.assert_result_summary_consistent(instance, result)` to validate summary matches output and **fail on execution errors**
+- Use `self.assert_result_summary_consistent(instance, result, allow_errors=True)` for parsers with known upstream issues, but that is not recommended as it will spam the user when using the CLI
 - Call `save_result(force=True)` to ensure fresh execution
+- Test execution order: parser tests run before analyser tests (configured in `tests/conftest.py`) so analysers benefit from cached parsed data
 
 ## Method Lifecycle
 
