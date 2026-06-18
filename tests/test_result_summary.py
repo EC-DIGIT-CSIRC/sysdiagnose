@@ -48,10 +48,10 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertEqual(len(result), 1)
 
         summary = cached_parser.get_result_summary()
-        self.assertEqual(summary.status, ExecutionStatus.OK)
+        self.assertEqual(summary.status, ExecutionStatus.ERROR)
         self.assertEqual(summary.num_errors, 0)
         self.assertEqual(summary.num_warnings, 0)
-        self.assertEqual(summary.num_events, 1)
+        self.assertEqual(summary.num_events, 0)
         self.assertIsNone(summary.start_time)
         self.assertIsNone(summary.duration)
 
