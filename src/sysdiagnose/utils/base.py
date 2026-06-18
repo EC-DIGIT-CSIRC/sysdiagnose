@@ -20,7 +20,6 @@ from sysdiagnose.utils.summary import (
     ExecutionStatus,
     ResultSummary,
     ResultSummaryExecutionHandler,
-    ResultSummaryFactory,
 )
 
 
@@ -275,13 +274,6 @@ class BaseInterface(ABC):
         if os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0:
             with open(self.summary_file) as f:
                 self._result_summary = ResultSummary.from_dict(json.load(f))
-        elif self.output_exists():
-            logger.warning(
-                f"No summary file found for '{self.module_name}', rebuilding from output file. "
-                "Warning and error counts are not guaranteed to be accurate. "
-                "To fix this, re-run with force=True to rebuild the summary file."
-            )
-            self._result_summary = ResultSummaryFactory.from_output(self.output_file, self.format)
         else:
             self._result_summary = ResultSummary()
 
@@ -297,9 +289,6 @@ class BaseInterface(ABC):
         return self._result_summary
 
     def save_result_summary(self) -> None:
-        if self._result_summary is None:
-            self._result_summary = ResultSummaryFactory.from_result(self._result)
-
         with open(self.summary_file, "w") as f:
             json.dump(self._result_summary.to_dict(), f, ensure_ascii=False, indent=2, sort_keys=True)
 

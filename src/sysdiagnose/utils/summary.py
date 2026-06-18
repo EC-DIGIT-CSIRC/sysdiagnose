@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 from dataclasses import dataclass
 from datetime import UTC
 from datetime import datetime as datetime_datetime
@@ -80,51 +78,12 @@ class ResultSummaryLogHandler(logging.Handler):
 
 class ResultSummaryFactory:
     @staticmethod
-    def from_result(result: list | dict | str | None) -> ResultSummary:
-        num_errors = ResultSummaryFactory.count_errors_in_result(result)
-        num_events = ResultSummaryFactory.count_events_in_result(result)
-        return ResultSummary(
-            status=ResultSummaryFactory.get_execution_status(num_errors=num_errors, num_warnings=0),
-            num_errors=num_errors,
-            num_events=num_events,
-        )
-
-    @staticmethod
-    def from_output(output_file: str, format_name: str) -> ResultSummary:
-        """
-        Creates a ResultSummary object from an output file.
-        :param output_file: The path to the output file.
-        :param format_name: The format of the output file (e.g. "json", "jsonl").
-        :return: A ResultSummary object containing the summary of the output file.
-        """
-        if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
-            return ResultSummary()
-
-        with open(output_file) as f:
-            if format_name == "json":
-                loaded_result = json.load(f)
-            elif format_name == "jsonl":
-                num_events = sum(1 for line in f if line.strip())
-                return ResultSummary(status=ExecutionStatus.OK, num_events=num_events)
-            else:
-                loaded_result = f.read()
-        return ResultSummaryFactory.from_result(loaded_result)
-
-    @staticmethod
     def get_execution_status(num_errors: int, num_warnings: int) -> ExecutionStatus:
         if num_errors > 0:
             return ExecutionStatus.ERROR
         if num_warnings > 0:
             return ExecutionStatus.WARNING
         return ExecutionStatus.OK
-
-    @staticmethod
-    def count_events_in_result(result: list | dict | str | None) -> int:
-        if result is None:
-            return 0
-        if isinstance(result, list):
-            return len(result)
-        return 1 if result else 0
 
 
 class ResultSummaryExecutionHandler:
