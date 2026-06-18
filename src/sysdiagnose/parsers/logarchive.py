@@ -49,26 +49,24 @@ from sysdiagnose.utils.summary import (
 # --------------------------------------------------------------------------- #
 
 
-def log_stderr(process, logger):
+def log_stderr(process, logger, stderr_stats):
     """
-    Reads the stderr of a subprocess and logs it line by line.
+    Reads the stderr of a subprocess and logs individual lines at DEBUG level.
+    Tracks error/warning counts in stderr_stats for a summary after completion.
     """
     for line in iter(process.stderr.readline, ""):
         message = line.strip()
-        info = message.find("[INFO]")
-        warning = message.find("[WARN]")
-        error = message.find("[ERROR]")
-        # Log the warning message
-        if info != -1:
-            logger.info(message[info + len("[INFO]") :].strip())
-        # Log the warning message
-        elif warning != -1:
-            logger.warning(message[warning + len("[WARN]") :].strip())
-        # Log the error message
-        elif error != -1:
-            logger.error(message[error + len("[ERROR]") :].strip())
-        else:
-            logger.debug(message)
+        if not message:
+            continue
+        # Full detail at DEBUG — available in log file but not in summary
+        logger.debug(f"[unifiedlog_iterator] {message}")
+        # Track counts for summary
+        if "[ERROR]" in message:
+            stderr_stats["errors"] += 1
+        elif "[WARN]" in message:
+            stderr_stats["warnings"] += 1
+        elif "[INFO]" in message:
+            stderr_stats["info"] += 1
 
 
 class LogarchiveHelper:
@@ -283,15 +281,25 @@ class LogarchiveHelper:
         Return None if it failed or the result otherwise.
 
         """
+        stderr_stats = {"errors": 0, "warnings": 0, "info": 0}
+
         with subprocess.Popen(
             cmd_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
         ) as process:
             # start a thread to log stderr
-            stderr_thread = threading.Thread(target=log_stderr, args=(process, logger), daemon=True)
+            stderr_thread = threading.Thread(target=log_stderr, args=(process, logger, stderr_stats), daemon=True)
             stderr_thread.start()
 
             for line in iter(process.stdout.readline, ""):
                 yield line
+
+            stderr_thread.join()
+
+        if stderr_stats["errors"] or stderr_stats["warnings"]:
+            logger.warning(
+                f"unifiedlog_iterator: {stderr_stats['errors']} errors, {stderr_stats['warnings']} warnings "
+                "(external tool messages, typically non-actionable)"
+            )
 
     @staticmethod
     def _execute_cmd_and_get_result(cmd_array: list, outputfile=None) -> list | str | None:
