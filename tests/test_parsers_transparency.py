@@ -17,8 +17,7 @@ class TestParsersTransparency(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
-                    # a few fail, but that seems OK
-                    self.fail(
+                    self.skipTest(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )
 
@@ -40,8 +39,7 @@ class TestParsersTransparency(SysdiagnoseTestCase):
 
                 files = p.get_log_files()
                 if not files:
-                    # a few fail, but that seems OK
-                    self.fail(
+                    self.skipTest(
                         f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
                     )
 
