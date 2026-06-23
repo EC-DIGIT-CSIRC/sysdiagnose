@@ -40,9 +40,9 @@ class Sysdiagnose:
                             case["case_id"] = str(case["case_id"])
                             new_format[case["case_id"]] = case
 
-                        cases = new_format
+                        self._cases = new_format
                         f.seek(0)
-                        json.dump(cases, f, indent=4)
+                        json.dump(self._cases, f, indent=4, sort_keys=True)
                         f.truncate()
             except FileNotFoundError:
                 self._cases = {}
@@ -309,7 +309,7 @@ class Sysdiagnose:
         remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
     ) -> dict | None:
         try:
-            if "error" not in remotectl_dumpstate_json:
+            if remotectl_dumpstate_json and "error" not in remotectl_dumpstate_json:
                 if "Local device" in remotectl_dumpstate_json:
                     try:
                         serial_number = remotectl_dumpstate_json["Local device"]["Properties"]["SerialNumber"]
@@ -430,11 +430,70 @@ class Sysdiagnose:
         file_path = os.path.join(folder, f"log-{mode}.jsonl")
         set_json_logging(filename=file_path)
 
+    def _ensure_case_metadata(self, case: dict) -> dict:
+        """
+        Checks if the case metadata has all expected keys.
+        If keys are missing, re-extracts metadata from the extracted folder on disk
+        and persists the update to cases.json.
+
+        Returns the (possibly updated) case dict.
+        """
+        expected_keys = {
+            "case_id",
+            "date",
+            "source_file",
+            "source_sha256",
+            "serial_number",
+            "unique_device_id",
+            "ios_version",
+            "model",
+            "tags",
+        }
+        missing_keys = expected_keys - set(case.keys())
+        if not missing_keys:
+            return case
+
+        # Re-extract metadata from the extracted folder on disk
+        case_data_folder = self.config.get_case_data_folder(case["case_id"])
+        # dive one folder deeper, as the real data is one folder deeper
+        subfolders = [
+            f
+            for f in os.listdir(case_data_folder)
+            if os.path.isdir(os.path.join(case_data_folder, f)) and "sysdiagnose_" in f
+        ]
+
+        if len(subfolders) == 1:
+            case_data_folder = os.path.join(case_data_folder, subfolders[0])
+        metadata = Sysdiagnose.get_case_metadata(case_data_folder)
+
+        if metadata:
+            for key in missing_keys:
+                if key in metadata:
+                    case[key] = metadata[key]
+                elif key == "tags":
+                    case[key] = []
+
+            # Persist the updated case to cases.json
+            lock = FileLock(self.config.cases_file)
+            try:
+                lock.acquire()
+                with open(self.config.cases_file, "r+") as f:
+                    all_cases = json.load(f)
+                    all_cases[case["case_id"]] = case
+                    f.seek(0)
+                    json.dump(all_cases, f, indent=4, sort_keys=True)
+                    f.truncate()
+            finally:
+                lock.release()
+
+        return case
+
     def parse(self, parser: str, case_id: str) -> ResultSummary:
         # Load parser module
         module = importlib.import_module(f"sysdiagnose.parsers.{parser}")
         parser_instance = None
         case = self.cases().get(case_id, {"case_id": case_id})
+        case = self._ensure_case_metadata(case)
         # figure out the class name and create an instance of it
         for attr in dir(module):
             obj = getattr(module, attr)
@@ -451,6 +510,7 @@ class Sysdiagnose:
         module = importlib.import_module(f"sysdiagnose.analysers.{analyser}")
         analyser_instance = None
         case = self.cases().get(case_id, {"case_id": case_id})
+        case = self._ensure_case_metadata(case)
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
