@@ -10,7 +10,8 @@ import os
 import re
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.times import parse_datetime, snake_case
+from sysdiagnose.utils.misc import snake_case
+from sysdiagnose.utils.times import parse_datetime
 
 
 class SwcutilParser(BaseParserInterface):

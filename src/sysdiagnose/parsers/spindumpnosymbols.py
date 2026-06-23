@@ -12,7 +12,8 @@ from contextlib import suppress
 from datetime import datetime, timedelta
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.times import parse_datetime, snake_case
+from sysdiagnose.utils.misc import snake_case
+from sysdiagnose.utils.times import parse_datetime
 
 
 class SpindumpNoSymbolsParser(BaseParserInterface):
