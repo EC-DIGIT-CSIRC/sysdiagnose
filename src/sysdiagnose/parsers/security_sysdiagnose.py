@@ -3,7 +3,7 @@ import os
 import re
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import parse_datetime
+from sysdiagnose.utils.times import parse_datetime
 
 
 class SecuritySysdiagnoseParser(BaseParserInterface):

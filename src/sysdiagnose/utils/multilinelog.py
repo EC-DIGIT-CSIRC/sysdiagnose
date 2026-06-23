@@ -3,7 +3,7 @@ import re
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import Event
-from sysdiagnose.utils.misc import parse_datetime
+from sysdiagnose.utils.times import parse_datetime
 
 
 def extract_from_file(fname, tzinfo, module):

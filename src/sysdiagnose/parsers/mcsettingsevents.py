@@ -6,7 +6,7 @@ from datetime import UTC
 
 from sysdiagnose.utils import misc
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
-from sysdiagnose.utils.misc import parse_datetime
+from sysdiagnose.utils.times import parse_datetime
 
 
 class McSettingsEventsParser(BaseParserInterface):

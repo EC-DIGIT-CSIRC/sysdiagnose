@@ -5,7 +5,8 @@ import re
 from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import load_plist_string_as_json, parse_datetime
+from sysdiagnose.utils.misc import load_plist_string_as_json
+from sysdiagnose.utils.times import parse_datetime
 
 
 class CrashLogsParser(BaseParserInterface):

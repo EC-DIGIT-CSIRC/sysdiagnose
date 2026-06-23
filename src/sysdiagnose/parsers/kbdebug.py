@@ -6,7 +6,7 @@ import os
 from pyparsing import Regex, SkipTo, StringEnd
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig, logger
-from sysdiagnose.utils.misc import parse_datetime
+from sysdiagnose.utils.times import parse_datetime
 
 
 class KbdebugParser(BaseParserInterface):

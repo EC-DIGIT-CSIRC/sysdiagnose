@@ -30,6 +30,7 @@ class PlistParser(BaseParserInterface):
                 json_data = misc.load_plist_file_as_json(logfile)
             except Exception as e:
                 logger.warning(f"Failed to parse {logfile} as plist: {e}")
+                json_data = {}
             end_of_path = logfile[len(self.case_data_subfolder) :].lstrip(
                 os.path.sep
             )  # take the path after the root path

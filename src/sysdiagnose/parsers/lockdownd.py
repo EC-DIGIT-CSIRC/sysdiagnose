@@ -4,7 +4,7 @@ import os
 import re
 
 from sysdiagnose.utils.base import BaseParserInterface, Event, SysdiagnoseConfig
-from sysdiagnose.utils.misc import parse_datetime
+from sysdiagnose.utils.times import parse_datetime
 
 
 class LockdowndParser(BaseParserInterface):
