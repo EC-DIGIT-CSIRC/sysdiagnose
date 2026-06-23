@@ -65,8 +65,7 @@ import logging
 import os
 import re
 import sqlite3
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import Event
 
@@ -76,7 +75,7 @@ default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apol
 class Apollo:
     def __init__(
         self, logger: logging.Logger, saf_module: str, mod_dir: str = default_mod_dir, os_version: str = "yolo"
-    ):
+    ) -> None:
         """
         Initialize the Apollo class for parsing databases
 
@@ -94,7 +93,7 @@ class Apollo:
         self.modules: dict[str, list[dict]] = {}  # dict: db_type -> list of modules
         self.parse_module_definition(mod_dir=self.mod_dir, os_version=self.os_version)
 
-    def parse_module_definition(self, mod_dir, os_version):
+    def parse_module_definition(self, mod_dir, os_version) -> None:
         # Parse all module data and build our own list
         mod_files = glob.glob(os.path.join(mod_dir, "*.txt"))
         for mod_file in mod_files:
@@ -129,7 +128,7 @@ class Apollo:
                             }
                         )
 
-    def parse_db(self, db_fname: str, db_type: Optional[str] = None) -> list:
+    def parse_db(self, db_fname: str, db_type: str | None = None) -> list:
         results = []
         if not db_type:
             db_type = os.path.basename(db_fname)
@@ -157,7 +156,7 @@ class Apollo:
                     cur.execute(module_query["sql"])
                     rows = cur.fetchall()
                 except Exception as ex:
-                    self.logger.exception(
+                    self.logger.info(
                         f"WARNING: Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
                         extra={"apollo_module": module_query["name"]},
                     )
@@ -175,10 +174,10 @@ class Apollo:
 
                 key_timestamp = module_query["key_timestamp"].lower()
                 for row in rows:
-                    item = dict(list(zip(headers, row)))
+                    item = dict(list(zip(headers, row, strict=False)))
                     try:
                         timestamp = datetime.fromisoformat(item[key_timestamp])
-                        timestamp = timestamp.replace(tzinfo=timezone.utc)
+                        timestamp = timestamp.replace(tzinfo=UTC)
                         item["apollo_module"] = module_query["name"]
                         event = Event(
                             datetime=timestamp,
@@ -187,7 +186,7 @@ class Apollo:
                             + ", ".join(
                                 [
                                     f"{k}={v}"
-                                    for k, v in list(zip(headers, row))
+                                    for k, v in list(zip(headers, row, strict=False))
                                     if k != key_timestamp and "time" not in k and "id" not in k
                                 ]
                             ),
@@ -198,7 +197,7 @@ class Apollo:
                         results.append(event.to_dict())
                     except TypeError:
                         # problem with timestamp parsing
-                        self.logger.exception(
+                        self.logger.info(
                             f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
                             extra={"apollo_module": module_query["name"], "table": db_fname, "row": list(row)},
                         )

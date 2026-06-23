@@ -1,25 +1,32 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.networkextension import NetworkExtensionParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersNetworkExtension(SysdiagnoseTestCase):
-
     def test_networkextension(self):
-        for case_id, case in self.sd.cases().items():
-            p = NetworkExtensionParser(self.sd.config, case_id=case_id)
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = NetworkExtensionParser(self.sd.config, case=_case)
 
-            files = p.get_log_files()
-            if not files:
-                continue
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                files = p.get_log_files()
+                if not files:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
 
-            result = p.get_result()
-            self.assertTrue('Version' in result)
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
+
+                result = p.get_result()
+                self.assertTrue("Version" in result)
+                self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

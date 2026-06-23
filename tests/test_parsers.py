@@ -1,28 +1,25 @@
-from tests import SysdiagnoseTestCase
-import unittest
 import importlib.util
-from sysdiagnose.utils.base import BaseParserInterface
 import os
+import unittest
 
-'''
+from sysdiagnose.utils.base import BaseParserInterface
+from tests import SysdiagnoseTestCase
+
+"""
 Test file structure of parsers
-'''
+"""
 
 
 class TestParsers(SysdiagnoseTestCase):
-
     def test_parsers_filestructure(self):
-        required_functions = ['execute']
-        required_variables = ['description']
+        required_functions = ["execute"]
+        required_variables = ["description"]
 
         print("Checking parsers for required functions and variables...")
         for parser_name in self.get_parsers():
             print(f"- {parser_name}")
 
-            module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
-            # spec = importlib.util.spec_from_file_location(parser_fname[:-3], parser)
-            # module = importlib.util.module_from_spec(spec)
-            # spec.loader.exec_module(module)
+            module = importlib.import_module(f"sysdiagnose.parsers.{parser_name}")
 
             # figure out the class name
             obj = None
@@ -30,19 +27,43 @@ class TestParsers(SysdiagnoseTestCase):
             for attr in dir(module):
                 obj = getattr(module, attr)
                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                    obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id='1')
+                    obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": "1"})
                     break
 
-            self.assertIsNotNone(obj_instance, f'Parser {parser_name} is missing a class definition inheriting BaseParserInterface.')
+            self.assertIsNotNone(
+                obj_instance, f"Parser {parser_name} is missing a class definition inheriting BaseParserInterface."
+            )
             # ensure the module_filename is correct, and not from a parent class
-            self.assertEqual(obj_instance.module_name, parser_name, f'Parser {parser_name} has incorrect module_filename. Did you add the following?\n    def __init__(self, config: SysdiagnoseConfig, case_id: str):\n        super().__init__(__file__, config, case_id)')
+            self.assertEqual(
+                obj_instance.module_name,
+                parser_name,
+                f"Parser {parser_name} has incorrect module_filename. Did you add the following?\n    def __init__(self, config: SysdiagnoseConfig, case_id: str):\n        super().__init__(__file__, config, case_id)",
+            )
 
             # check for required functions and variables
             for required_function in required_functions:
-                self.assertTrue(hasattr(obj, required_function), f'Parser {parser_name} is missing {required_function} function.')
+                self.assertTrue(
+                    hasattr(obj, required_function), f"Parser {parser_name} is missing {required_function} function."
+                )
             for required_variable in required_variables:
-                self.assertTrue(hasattr(obj, required_variable), f'Parser {parser_name} is missing {required_variable} variable.')
+                self.assertTrue(
+                    hasattr(obj, required_variable), f"Parser {parser_name} is missing {required_variable} variable."
+                )
 
+            # validate ios_version specifier is valid PEP 440
+            from packaging.specifiers import InvalidSpecifier, SpecifierSet
+
+            ios_version = getattr(obj, "ios_version", "*")
+            if ios_version != "*":
+                try:
+                    SpecifierSet(ios_version)
+                except InvalidSpecifier:
+                    self.fail(
+                        f"Parser {parser_name} has invalid ios_version specifier: '{ios_version}'. "
+                        "Must be a valid PEP 440 version specifier (e.g. '>=17.0', '>=14.0,<17.0') or '*'."
+                    )
+
+    # ruff: noqa
     # def test_parsers_result_jsonl_structure(self):
     #     print("Checking parsers for result structure...")
 
@@ -59,7 +80,7 @@ class TestParsers(SysdiagnoseTestCase):
     #             for attr in dir(module):
     #                 obj = getattr(module, attr)
     #                 if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-    #                     obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id=case_id)
+    #                     obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": case_id})
     #                     break
 
     #             if obj_instance.format == 'jsonl':
@@ -75,6 +96,7 @@ class TestParsers(SysdiagnoseTestCase):
     #     missing = sorted(missing)
     #     self.assertTrue(not missing, f"Missing fields in parsers: \n{'\n'.join(missing)}")
 
+    @unittest.skip("Not meant to run automatically")
     def test_parsers_no_parser_yet(self):
         print("Checking for files that are not yet parsed...")
 
@@ -85,14 +107,18 @@ class TestParsers(SysdiagnoseTestCase):
         for case_id in self.sd.get_case_ids():
             obj_instance = None
             for parser_name in self.get_parsers():
-                module = importlib.import_module(f'sysdiagnose.parsers.{parser_name}')
+                module = importlib.import_module(f"sysdiagnose.parsers.{parser_name}")
                 # figure out the class name
                 obj = None
                 obj_instance = None
                 for attr in dir(module):
                     obj = getattr(module, attr)
-                    if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                        obj_instance: BaseParserInterface = obj(config=self.sd.config, case_id=case_id)
+                    if (
+                        isinstance(obj, type)
+                        and issubclass(obj, BaseParserInterface)
+                        and obj is not BaseParserInterface
+                    ):
+                        obj_instance: BaseParserInterface = obj(config=self.sd.config, case={"case_id": case_id})
 
                         module_files_and_folders = obj_instance.get_log_files()
                         covered_files_and_folders.extend(module_files_and_folders)
@@ -100,34 +126,34 @@ class TestParsers(SysdiagnoseTestCase):
                         break
             if obj_instance:
                 # get all files and folders
-                for root, dirs, files in os.walk(obj_instance.case_data_folder):
-                    for file in files:
-                        all_files_and_folders.append(os.path.join(root, file))
+                for root, _dirs, files in os.walk(obj_instance.case_data_folder):
+                    for fname in files:
+                        all_files_and_folders.append(os.path.join(root, fname))
 
         # get difference
         not_covered = []
-        for file in all_files_and_folders:
+        for fname in all_files_and_folders:
             # skip files that start with a .
-            if os.path.basename(file).startswith('.'):
+            if os.path.basename(fname).startswith("."):
                 continue
 
             covered = False
             for covered_file in covered_files_and_folders:
-                if file.startswith(covered_file):
+                if fname.startswith(covered_file):
                     covered = True
                     break
 
-            if not covered and os.path.getsize(file) > 10:
-                not_covered.append(file)
-                print(f"File not yet parsed: {file}")
+            if not covered and os.path.getsize(fname) > 10:
+                not_covered.append(fname)
+                print(f"File not yet parsed: {fname}")
 
         # sort by the last part of the path (excluding the first 6 folders in the path)
-        not_covered = sorted(not_covered, key=lambda x: '/'.join(x.split('/')[7:]))
+        not_covered = sorted(not_covered, key=lambda x: "/".join(x.split("/")[7:]))
 
-        with open('not_yet_parsed.txt', 'w') as f:
-            f.write('\n'.join(not_covered))
+        with open("not_yet_parsed.txt", "w") as f:
+            f.write("\n".join(not_covered))
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

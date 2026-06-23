@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
@@ -9,8 +10,8 @@ class IOFireWireParser(BaseParserInterface):
     description = "IOFireWire.txt file parser"
     format = "json"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_file = "ioreg/IOFireWire.txt"
@@ -22,7 +23,7 @@ class IOFireWireParser(BaseParserInterface):
 
         for log_file in log_files:
             try:
-                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
+                logger.info(f"Processing file {log_file}, new entry added", extra={"log_file": log_file})
                 p = IORegStructParser()
                 data_tree = p.parse(log_file)
 

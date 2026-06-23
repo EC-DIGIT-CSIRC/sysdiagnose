@@ -1,36 +1,40 @@
+import os
+import unittest
+
 from sysdiagnose.analysers.file_stats import FileStatisticsAnalyser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
     def test_analyse_file_stats(self):
-        for case_id, case in self.sd.cases().items():
-            print(f"Running FileStatisticsAnalyser for {case_id}")
-            # run the analyser
-            a = FileStatisticsAnalyser(self.sd.config, case_id=case_id)
-            a.save_result(force=True)
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                a = FileStatisticsAnalyser(self.sd.config, case=_case)
 
-            self.assertTrue(os.path.isfile(a.output_file))
-            self.assertTrue(os.path.getsize(a.output_file) > 0)
+                if not a.is_compatible():
+                    self.skipTest(f"Analyser {a.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            result = a.get_result()
-            # device info
-            self.assertTrue('os_version' in result[0])
-            self.assertTrue('build' in result[0])
-            self.assertTrue('product_name' in result[0])
-            self.assertTrue('product_type' in result[0])
-            # file stats
-            for item in result[1]:
-                self.assertTrue('folder_name' in item)
-                self.assertTrue('file_count' in item)
-                self.assertTrue('files' in item)
-                for file in item['files']:
-                    self.assertTrue('filename' in file)
-                    self.assertTrue('extension' in file)
-                    self.assertTrue('file_type' in file)
+                a.save_result(force=True)
+                self.assertTrue(os.path.isfile(a.output_file))
+                self.assertTrue(os.path.getsize(a.output_file) > 0)
+
+                result = a.get_result()
+                # device info
+                self.assertIn("os_version", result["device_info"])
+                self.assertIn("build", result["device_info"])
+                self.assertIn("product_name", result["device_info"])
+                self.assertIn("product_type", result["device_info"])
+                # file stats
+                for item in result["file_stats"]:
+                    self.assertIn("folder_name", item)
+                    self.assertIn("file_count", item)
+                    self.assertIn("files", item)
+                    for fname in item["files"]:
+                        self.assertIn("filename", fname)
+                        self.assertIn("extension", fname)
+                        self.assertIn("file_type", fname)
+                self.assert_result_summary_consistent(a, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

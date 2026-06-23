@@ -1,29 +1,33 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.plists import PlistParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersPlist(SysdiagnoseTestCase):
-
     def test_get_plists(self):
-        for case_id, case in self.sd.cases().items():
-            p = PlistParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
-            self.assertTrue(len(files) > 0)
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = PlistParser(self.sd.config, case=_case)
 
-            # first run to store in memory
-            result = p.get_result()
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isdir(p.output_folder))
+                files = p.get_log_files()
+                if not files:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
 
-            self.assertGreater(len(result), 0)
-            print(result.keys())
-            self.assertIn('hidutil.plist', result.keys())
-            # nothing specific to assert here as there's not always a result
-            # just catching exceptions
+                p.save_result(force=True)
+                self.assertTrue(os.path.isdir(p.output_folder))
+
+                result = p.get_result()
+                self.assertGreater(len(result), 0)
+                self.assertIn("hidutil.plist", result.keys())
+                self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

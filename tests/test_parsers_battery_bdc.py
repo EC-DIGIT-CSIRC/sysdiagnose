@@ -1,23 +1,32 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.battery_bdc import BatteryBDCParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersBatteryBDC(SysdiagnoseTestCase):
-
     def test_parse(self):
-        for case_id, case in self.sd.cases().items():
-            p = BatteryBDCParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()  # noqa F841
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = BatteryBDCParser(self.sd.config, case=_case)
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            result = p.get_result()
-            for item in result:
-                self.assert_has_required_fields_jsonl(item)
+                files = p.get_log_files()
+                if not files:
+                    # Some have no files, not iOS specific
+                    continue
+
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
+
+                result = p.get_result()
+                for item in result:
+                    self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

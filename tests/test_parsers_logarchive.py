@@ -3,44 +3,54 @@ import os
 import tempfile
 import unittest
 
-from sysdiagnose.parsers.logarchive import LogarchiveParser
+from sysdiagnose.parsers.logarchive import LogarchiveHelper, LogarchiveParser
 from tests import SysdiagnoseTestCase
 
 
 class TestParsersLogarchive(SysdiagnoseTestCase):
     def test_parse_logarchive(self):
-        for case_id, case in self.sd.cases().items():
-            print(f"Parsing logarchive for {case_id}")
-            p = LogarchiveParser(self.sd.config, case_id=case_id)
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = LogarchiveParser(self.sd.config, case=_case)
 
-            files = p.get_log_files()
-            self.assertTrue(len(files) > 0)
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                files = p.get_log_files()
+                if not files:
+                    self.fail(
+                        f"No log files found for {case_id}: parser {p.module_name}, iOS {_case.get('ios_version')}"
+                    )
 
-            # we don't test getting result in memory, but check one line in the output.
-            with open(p.output_file, "r") as f:
-                line = f.readline()
-                item = json.loads(line)
-                self.assertTrue("subsystem" in item["data"])
-                self.assert_has_required_fields_jsonl(item)
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
+
+                # validate first line structure without loading entire file
+                with open(p.output_file) as f:
+                    item = json.loads(f.readline())
+                    self.assertIn("subsystem", item["data"])
+                    self.assert_has_required_fields_jsonl(item)
+
+                # count lines to validate summary without materializing full result
+                with open(p.output_file) as f:
+                    num_lines = sum(1 for _ in f)
+                self.assert_result_summary_consistent(p, [None] * num_lines)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = "2023-05-24 13:03:28.908085-0700"
         expected_output = 1684958608908084992
-        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
         input = "2023-05-24 20:03:28.908085-0000"
         expected_output = 1684958608908084992
-        result = LogarchiveParser.convert_native_time_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_native_time_to_unifiedlog_format(input)
         self.assertEqual(result, expected_output)
 
     def test_convert_unifiedlog_time_to_datetime(self):
         input = 1684958608908085200
         expected_output = "2023-05-24T20:03:28.908085+00:00"
-        result = LogarchiveParser.convert_unifiedlog_time_to_datetime(input).isoformat(timespec="microseconds")
+        result = LogarchiveHelper.convert_unifiedlog_time_to_datetime(input).isoformat(timespec="microseconds")
         self.assertEqual(result, expected_output)
 
     def test_convert_entry_to_unified(self):
@@ -98,7 +108,7 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
             "timestamp_desc": "logarchive",
             "module": "logarchive",
         }
-        result = LogarchiveParser.convert_entry_to_unifiedlog_format(input)
+        result = LogarchiveHelper.convert_entry_to_unifiedlog_format(input)
         self.maxDiff = None
         self.assertDictEqual(result, expected_output)
 
@@ -170,25 +180,24 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
         temp_files = []
         try:
             # write the files with the test data
-            for file in input:
-                temp_file = tempfile.NamedTemporaryFile(delete=False)
-                temp_files.append(
-                    {
-                        "file": temp_file,
-                    }
-                )
-                for entry in file:
-                    temp_file.write(json.dumps(entry).encode())
-                    temp_file.write(b"\n")
-                temp_file.close()
+            for fname in input:
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    temp_files.append(
+                        {
+                            "file": temp_file,
+                        }
+                    )
+                    for entry in fname:
+                        temp_file.write(json.dumps(entry).encode())
+                        temp_file.write(b"\n")
             # merge the files
-            output_file = tempfile.NamedTemporaryFile(delete=False)
-            output_file.close()
-            LogarchiveParser.merge_files(temp_files, output_file.name)
+            with tempfile.NamedTemporaryFile(delete=False) as output_file:
+                pass
+            LogarchiveHelper.merge_files(temp_files, output_file.name)
 
             # read the output file
             result = []
-            with open(output_file.name, "r") as f:
+            with open(output_file.name) as f:
                 for line in f:
                     result.append(json.loads(line))
 

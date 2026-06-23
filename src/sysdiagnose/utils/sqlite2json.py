@@ -1,14 +1,16 @@
 #! /usr/bin/env python
-#
-# For Python3
-# Script to parse sqlite database and export to JSON (generic)
-# Author: david@autopsit.org
-#
-# iOS13: 4 SQLite DB
-#   ./logs/itunesstored/downloads.28.sqlitedb
-#   ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
-#   ./logs/Accessibility/TCC.db
-#   ./logs/appinstallation/appstored.sqlitedb
+"""
+For Python3
+Script to parse sqlite database and export to JSON (generic)
+Author: david@autopsit.org
+
+iOS13: 4 SQLite DB
+  ./logs/itunesstored/downloads.28.sqlitedb
+  ./logs/powerlogs/powerlog_2019-11-07_17-23_ED7F7E2B.PLSQL
+  ./logs/Accessibility/TCC.db
+  ./logs/appinstallation/appstored.sqlitedb
+"""
+
 import argparse
 import json
 import sqlite3
@@ -50,7 +52,8 @@ def gettables(dbfd):
 def getcolumnsfromtable(dbfd, tablename):
     cursor = dbfd.cursor()
     # prepared statements do not support column names, only data
-    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    # while the tablename is not user input, but was extracted from the database itself,
+    # we can safely use it in the query
     cursor.execute(f"SELECT * FROM `{tablename}`")
     col_name_list = [tuple[0] for tuple in cursor.description]
     return col_name_list
@@ -61,14 +64,13 @@ def table2struct(dbfd, tablename):
     column_names = getcolumnsfromtable(dbfd, tablename)
     cursor = dbfd.cursor()
     # prepared statements do not support column names, only data
-    # while the tablename is not user input, but was extracted from the database itself, we can safely use it in the query
+    # while the tablename is not user input, but was extracted from the database itself,
+    # we can safely use it in the query
     for row in cursor.execute(f"SELECT * FROM `{tablename}`"):
         line = {}
         ptr = 0
         for element in row:
-            if not isinstance(element, (str, int, float, bool)):
-                element = str(element)
-            line[column_names[ptr]] = element
+            line[column_names[ptr]] = element if isinstance(element, str | int | float | bool) else str(element)
             ptr = ptr + 1
         table.append(line)
     return table
@@ -87,11 +89,7 @@ def dump2json(dbstruct, jsonpath="./db.json"):
 # --------------------------------------------------------------------------- #
 
 
-def main():
-    if sys.version_info[0] < 3:
-        print("Must be using Python 3! Exiting ...", file=sys.stderr)
-        sys.exit(-1)
-
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", dest="inputfile", type=str, help="SQlite DB To Be Printed")
 
@@ -99,8 +97,8 @@ def main():
 
     # no arguments given by user, print help and exit
     if args.inputfile:
-        print(f"Running {version_string}\n")
-        print(sqlite2struct(args.inputfile))
+        print(f"Running {version_string}\n")  # noqa: T201
+        print(sqlite2struct(args.inputfile))  # noqa: T201
     else:
         parser.print_help()
         sys.exit(-1)

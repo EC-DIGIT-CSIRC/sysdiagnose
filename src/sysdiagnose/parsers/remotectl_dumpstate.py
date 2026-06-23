@@ -1,20 +1,20 @@
 #! /usr/bin/env python3
 import glob
 import os
-from sysdiagnose.utils.tabbasedhierarchy import parse_tab_based_hierarchal_file, parse_block
-from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
+
+from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
+from sysdiagnose.utils.tabbasedhierarchy import parse_block, parse_tab_based_hierarchal_file
 
 
 class RemotectlDumpstateParser(BaseParserInterface):
     description = "Parsing remotectl_dumpstate file containing system information"
+    ios_version = ">=15"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'remotectl_dumpstate.txt'
-        ]
+        log_files_globs = ["remotectl_dumpstate.txt"]
         log_files = []
         for log_files_glob in log_files_globs:
             for item in glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)):
@@ -23,10 +23,11 @@ class RemotectlDumpstateParser(BaseParserInterface):
         return log_files
 
     def execute(self) -> list | dict:
-        try:
-            return parse_tab_based_hierarchal_file(self.get_log_files()[0])
-        except IndexError:
-            return {'error': 'No remotectl_dumpstate.txt file present'}
+        log_files = self.get_log_files()
+        if not log_files:
+            logger.warning("No remotectl_dumpstate.txt file present")
+            return {}
+        return parse_tab_based_hierarchal_file(log_files[0])
 
     @staticmethod
     def parse_file(file_path: str) -> dict:

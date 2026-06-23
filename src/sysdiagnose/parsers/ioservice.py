@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig, logger
 from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
@@ -9,41 +10,41 @@ class IOServiceParser(BaseParserInterface):
     description = "IOService.txt file parser"
     format = "json"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
         log_file = "ioreg/IOService.txt"
         return [os.path.join(self.case_data_subfolder, log_file)]
 
     def execute(self) -> list | dict:
-        """           IOService file notes
+        """IOService file notes
 
-            # Regex for +-o starting at start of file -> 1213 results
-            (\s|\|)*\+-o
+        # Regex for +-o starting at start of file -> 1213 results
+        (\s|\|)*\+-o
 
-            # Regex for ALL +-o - 1213 results
-            \+-o
+        # Regex for ALL +-o - 1213 results
+        \+-o
 
-            So we know that the data doesn't contain the node identifier ('+-o')
+        So we know that the data doesn't contain the node identifier ('+-o')
 
-            File contains IOKit object where each entry has the following format:
-            +-o AppleACPIPlatformExpert  <class AppleACPIPlatformExpert, id 0x100000100, registered, matched, active, busy 0 (0 ms), retain 12>
-            {
-            "IOInterruptControllers" = ("io-apic-0")
-            "clock-frequency" = <00000000 3b9aca00>
-            "IOName" = "AppleACPIPlatformExpert"
-            }
+        File contains IOKit object where each entry has the following format:
+        +-o AppleACPIPlatformExpert  <class AppleACPIPlatformExpert, id 0x100000100, registered, matched, active, busy 0 (0 ms), retain 12>
+        {
+        "IOInterruptControllers" = ("io-apic-0")
+        "clock-frequency" = <00000000 3b9aca00>
+        "IOName" = "AppleACPIPlatformExpert"
+        }
 
-            Tree depth is determined by the the number of | in front of the entry.  Root has none.
-        """  # noqa: W605
+        Tree depth is determined by the the number of | in front of the entry.  Root has none.
+        """  # noqa: E501, W605
 
         log_files = self.get_log_files()
         data_tree = {}
 
         for log_file in log_files:
             try:
-                logger.info(f"Processing file {log_file}, new entry added", extra={'log_file': log_file})
+                logger.info(f"Processing file {log_file}, new entry added", extra={"log_file": log_file})
                 p = IORegStructParser()
                 data_tree = p.parse(log_file)
 

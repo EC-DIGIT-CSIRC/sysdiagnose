@@ -3,7 +3,7 @@ import re
 
 def parse_tab_based_hierarchal_file(path: str) -> list | dict:
     result = {}
-    with open(path, 'r') as f:
+    with open(path) as f:
         lines = f.readlines()
         result = parse_block(lines)
     return result
@@ -14,29 +14,26 @@ def parse_block(lines: list) -> list | dict:
     n = 0
     while n < len(lines):
         line = lines[n]
-        if line.strip() == '}' or line.strip() == '' or line.strip() == ']':
+        if line.strip() == "}" or line.strip() == "" or line.strip() == "]":
             n = n + 1
             continue
         # subsection if next line is more indented  (more tabs at start of line)
-        current_depth = len(line) - len(line.lstrip('\t'))
+        current_depth = len(line) - len(line.lstrip("\t"))
         try:
-            next_depth = len(lines[n + 1]) - len(lines[n + 1].lstrip('\t'))
+            next_depth = len(lines[n + 1]) - len(lines[n + 1].lstrip("\t"))
         except IndexError:  # catch for handling last line
             next_depth = current_depth
         if next_depth > current_depth:
             # subsection
             # extract key
-            if '=>' in line:
-                key = line.split('=>')[0].strip()
-            else:
-                key = line.replace(':', '').replace('{', '').strip()
+            key = line.split("=>")[0].strip() if "=>" in line else line.replace(":", "").replace("{", "").strip()
             # identify end of subsection and call recursive parsing function with that block
             extracted_block = []
             while next_depth > current_depth:
                 n = n + 1
                 extracted_block.append(lines[n])
                 try:
-                    next_depth = len(lines[n + 1]) - len(lines[n + 1].lstrip('\t'))
+                    next_depth = len(lines[n + 1]) - len(lines[n + 1].lstrip("\t"))
                 except IndexError:
                     next_depth = current_depth
             # store the result
@@ -49,8 +46,8 @@ def parse_block(lines: list) -> list | dict:
         else:
             # extract key, val using regex
             regexes = [
-                r'^(.+?)=>*(.+)',   # key_without_spaces => value
-                r'^([^:]+):(.*)'    # key_with_spaces: value
+                r"^(.+?)=>*(.+)",  # key_without_spaces => value
+                r"^([^:]+):(.*)",  # key_with_spaces: value
             ]
             key = None
             value = None

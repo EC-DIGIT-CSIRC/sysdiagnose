@@ -1,27 +1,33 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.appinstallation import AppInstallationParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersAppinstallation(SysdiagnoseTestCase):
-
     def test_get_appinstallation(self):
-        for case_id, case in self.sd.cases().items():
-            p = AppInstallationParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = AppInstallationParser(self.sd.config, case=_case)
 
-            if not files:
-                continue
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
+                files = p.get_log_files()
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                if not files:
+                    # with any version files may not be there.
+                    continue
 
-            result = p.get_result()
-            for item in result:
-                self.assertTrue('db_table' in item)
-                self.assert_has_required_fields_jsonl(item)
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
+
+                result = p.get_result()
+                for item in result:
+                    self.assertTrue("db_table" in item["data"])
+                    self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

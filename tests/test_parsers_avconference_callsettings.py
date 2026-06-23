@@ -1,23 +1,32 @@
+import os
+import unittest
+
 from sysdiagnose.parsers.avconference_callsettings import AvConferenceCallSettingsParser
 from tests import SysdiagnoseTestCase
-import unittest
-import os
 
 
 class TestParsersAvConferenceCallSettings(SysdiagnoseTestCase):
+    def test_parse_avconference(self):
+        for case_id, _case in self.sd.cases().items():
+            with self.subTest(case_id=case_id, ios_version=_case.get("ios_version")):
+                p = AvConferenceCallSettingsParser(self.sd.config, case=_case)
 
-    def test_parse_avconverence(self):
-        for case_id, case in self.sd.cases().items():
-            p = AvConferenceCallSettingsParser(self.sd.config, case_id=case_id)
-            files = p.get_log_files()  # noqa F841
+                if not p.is_compatible():
+                    self.skipTest(f"Parser {p.module_name} not compatible with iOS {_case.get('ios_version')}")
 
-            p.save_result(force=True)
-            self.assertTrue(os.path.isfile(p.output_file))
+                files = p.get_log_files()
+                if not files:
+                    # this parser may not have any logfiles. That's fine
+                    continue
 
-            result = p.get_result()
-            for item in result:
-                self.assert_has_required_fields_jsonl(item)
+                p.save_result(force=True)
+                self.assertTrue(os.path.isfile(p.output_file))
+
+                result = p.get_result()
+                for item in result:
+                    self.assert_has_required_fields_jsonl(item)
+                self.assert_result_summary_consistent(p, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

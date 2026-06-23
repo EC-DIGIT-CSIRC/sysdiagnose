@@ -36,8 +36,7 @@ dependencies = [
   "jinja2>=3.1.0,<3.2.0",
   "matplotlib>=3.10.0,<3.11.0",
   "orjsonl>=1.0.0,<1.1.0",
-  "pyparsing>=3.2, <3.4",
-  "dateparser>=1.2.0"
+  "pyparsing>=3.2, <3.4"
 ]
 
 
@@ -67,12 +66,7 @@ packages = ["src/sysdiagnose"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py39"
-select = ["E", "F", "I", "W", "N", "B", "C4", "ARG", "SIM", "ERA", "PL", "RUF"]
-ignore = [
-  "PLR0913",
-  "E221","E225","E251","E501",
-]
+target-version = "py311"
 exclude = [
     ".git",
     ".ruff_cache",
@@ -80,7 +74,40 @@ exclude = [
     ".venv",
     "build",
     "dist",
+    "cases",
+    "tests/testdata",
+    "tests/tmp"
 ]
+
+# E = Style errors from pycodestyle (PEP8)
+# F = Logic and syntax errors from pyflakes
+# B = flake8-bugbear - find bugs and design problems
+# I = import sort order
+# W = Warnings (pycodestyle) > kept for compatibility with Github action
+# N = pep8-naming
+# UP = pyupgrade - use latest python syntax
+# C4 = comprehensions
+# ANN = require type annotations - TODO to add as a next step
+# SIM = flake8-simplify - make code more concise and readable
+# T20 = flake8-print - disallow print statements (use logging instead)
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "W", "N", "UP", "C4", "SIM", "T20"]
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+known-third-party = ["yara"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["T201", "E501"]
+"src/sysdiagnose/__init__.py" = ["T201"]
+"src/sysdiagnose/__main__.py" = ["T201", "T20"]
+"src/sysdiagnose/utils/coverage_diff.py" = ["T201"]
+"src/sysdiagnose/utils/file_stats_diff.py" = ["T201"]
+"scripts/test-data-conversion.py" = ["T201"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

@@ -1,27 +1,28 @@
-from curses import meta
-import io
-from operator import ior
-import shutil
-from typing import Text
-from tabulate import tabulate
 import hashlib
 import importlib.util
 import json
 import os
 import re
+import shutil
 import tarfile
-from pathlib import Path
-from datetime import timezone
-from sysdiagnose.parsers import iodevicetree, ioservice
-from sysdiagnose.utils.base import BaseInterface, BaseParserInterface, BaseAnalyserInterface, SysdiagnoseConfig
-from sysdiagnose.utils.logger import set_json_logging, logger
+from contextlib import suppress
+from datetime import UTC
 from io import TextIOWrapper
+from pathlib import Path
+
+from tabulate import tabulate
+
+from sysdiagnose.utils.base import BaseAnalyserInterface, BaseInterface, BaseParserInterface, SysdiagnoseConfig
 from sysdiagnose.utils.lock import FileLock
+from sysdiagnose.utils.logger import logger, set_json_logging
+from sysdiagnose.utils.summary import ResultSummary
 
 
 class Sysdiagnose:
-    def __init__(self, cases_path=os.getenv('SYSDIAGNOSE_CASES_PATH', './cases')):
-        self._cases = False   # will be populated through cases() method
+    def __init__(self, cases_path: str | None = None) -> None:
+        if cases_path is None:
+            cases_path = os.getenv("SYSDIAGNOSE_CASES_PATH", "./cases")
+        self._cases = False  # will be populated through cases() method
         self.config: SysdiagnoseConfig = SysdiagnoseConfig(cases_path)
 
     def cases(self, force: bool = False) -> dict:
@@ -31,21 +32,21 @@ class Sysdiagnose:
             lock = FileLock(self.config.cases_file)
             try:
                 lock.acquire()
-                with open(self.config.cases_file, 'r+') as f:
+                with open(self.config.cases_file, "r+") as f:
                     self._cases = json.load(f)
-                    if 'cases' in self._cases:  # conversion is needed
+                    if "cases" in self._cases:  # conversion is needed
                         new_format = {}
-                        for case in self._cases['cases']:
-                            case['case_id'] = str(case['case_id'])
-                            new_format[case['case_id']] = case
+                        for case in self._cases["cases"]:
+                            case["case_id"] = str(case["case_id"])
+                            new_format[case["case_id"]] = case
 
-                        cases = new_format
+                        self._cases = new_format
                         f.seek(0)
-                        json.dump(cases, f, indent=4)
+                        json.dump(self._cases, f, indent=4, sort_keys=True)
                         f.truncate()
             except FileNotFoundError:
                 self._cases = {}
-                with open(self.config.cases_file, 'w') as f:
+                with open(self.config.cases_file, "w") as f:
                     json.dump(self._cases, f, indent=4)
             finally:
                 lock.release()
@@ -53,12 +54,12 @@ class Sysdiagnose:
         return self._cases
 
     def delete_case(self, case_id: str) -> None:
-        '''
+        """
         Deletes a case from the sysdiagnose cases.
 
         Parameters:
             case_id (str): The case ID to delete.
-        '''
+        """
         # check if case_id is valid
         if case_id not in self.cases():
             raise ValueError(f"Case ID {case_id} does not exist.")
@@ -69,23 +70,25 @@ class Sysdiagnose:
             try:
                 shutil.rmtree(case_folder)
             except Exception as e:
-                raise Exception(f"Error while deleting case folder: {str(e)}")
+                raise Exception(f"Error while deleting case folder: {e!s}") from e
 
         # delete case from the cases
         lock = FileLock(self.config.cases_file)
         try:
             lock.acquire()
-            with open(self.config.cases_file, 'r+') as f:
-                self._cases = json.load(f)           # load latest version
-                self._cases.pop(case_id, None)       # delete case
-                f.seek(0)                            # go back to the beginning of the file
+            with open(self.config.cases_file, "r+") as f:
+                self._cases = json.load(f)  # load latest version
+                self._cases.pop(case_id, None)  # delete case
+                f.seek(0)  # go back to the beginning of the file
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()                         # truncate the rest of the file ensuring no old data is left
+                f.truncate()  # truncate the rest of the file ensuring no old data is left
         finally:
             lock.release()
 
-    def create_case(self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None) -> dict:
-        '''
+    def create_case(
+        self, sysdiagnose_file: str, force: bool = False, case_id: bool | str = False, tags: list[str] = None
+    ) -> dict:
+        """
         Extracts the sysdiagnose file and creates a new case.
 
         Parameters:
@@ -96,51 +99,49 @@ class Sysdiagnose:
 
         Returns:
             int: The case ID of the new case.
-        '''
+        """
         metadata = Sysdiagnose.get_case_metadata(sysdiagnose_file)
 
         if not metadata:
             raise ValueError(f"Invalid sysdiagnose file: {sysdiagnose_file}. Case could not be created!")
 
         # only allow specific chars for case_id
-        if case_id:
-            if not re.match(r'^[a-zA-Z0-9-_\.]+$', case_id):
-                raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
+        if case_id and not re.match(r"^[a-zA-Z0-9-_\.]+$", case_id):
+            raise ValueError("Invalid case ID. Only alphanumeric and -_. characters are allowed.")
 
         # check if sysdiagnise file is already in a case
         case = None
         for c in self.cases().values():
             # TODO: this breaks backward compatibility of sha256 calculation from old cases
-            if c['source_sha256'] == metadata['source_sha256']:
+            if c["source_sha256"] == metadata["source_sha256"]:
                 if force:
-                    if case_id and c['case_id'] != case_id:
-                        raise ValueError(f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}")
+                    if case_id and c["case_id"] != case_id:
+                        raise ValueError(
+                            f"This sysdiagnose has already been extracted + incoherent caseID: existing = {c['case_id']}, given = {case_id}"  # noqa: E501
+                        )
                     # all is well
-                    case_id = c['case_id']
+                    case_id = c["case_id"]
                     case = c
                     break
                 else:
                     raise ValueError(f"This sysdiagnose has already been extracted for case ID: {c['case_id']}")
 
         # incoherent caseID and file
-        if case_id and case_id in self.cases():
-            # TODO: again, the sha256 calculation is not the same as the one in the old cases
-            if self.cases()[case_id]['source_sha256'] != metadata['source_sha256']:
-                raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
+        # TODO: again, the sha256 calculation is not the same as the one in the old cases
+        if case_id and case_id in self.cases() and self.cases()[case_id]["source_sha256"] != metadata["source_sha256"]:
+            raise ValueError(f"Case ID {case_id} already exists but with a different sysdiagnose file.")
 
         # find next incremental case_id, if needed
         if not case_id:
             # Default suggestion for case_id is the serial number + date
-            case_id = metadata['case_id']
+            case_id = metadata["case_id"]
             if case_id in self.cases():
                 # if the case_id already exists, we need to find a new one
                 # find the highest case_id in the cases
                 case_id = 0
-                for k in self.cases().keys():
-                    try:
+                for k in self.cases():
+                    with suppress(ValueError):
                         case_id = max(case_id, int(k))
-                    except ValueError:
-                        pass
                 # add one to the new found case_id
                 case_id += 1
                 case_id = str(case_id)
@@ -148,22 +149,22 @@ class Sysdiagnose:
         if not case:
             # if sysdiagnose file is new and legit, create new case and extract files
             case = {
-                'date': metadata['date'],
-                'case_id': case_id,
-                'source_file': sysdiagnose_file,
-                'source_sha256': metadata['source_sha256'],
-                'serial_number': metadata['serial_number'],
-                'unique_device_id': metadata['unique_device_id'],
-                'ios_version': metadata['ios_version'],
-                'model': metadata['model'],
-                'tags': []
+                "date": metadata["date"],
+                "case_id": case_id,
+                "source_file": sysdiagnose_file,
+                "source_sha256": metadata["source_sha256"],
+                "serial_number": metadata["serial_number"],
+                "unique_device_id": metadata["unique_device_id"],
+                "ios_version": metadata["ios_version"],
+                "model": metadata["model"],
+                "tags": [],
             }
 
         if tags:
-            case['tags'].extend(tags)
+            case["tags"].extend(tags)
 
         # create case folder
-        case_data_folder = self.config.get_case_data_folder(str(case['case_id']))
+        case_data_folder = self.config.get_case_data_folder(str(case["case_id"]))
         os.makedirs(case_data_folder, exist_ok=True)
 
         # extract sysdiagnose files
@@ -173,16 +174,15 @@ class Sysdiagnose:
         lock = FileLock(self.config.cases_file)
         try:
             lock.acquire()
-            with open(self.config.cases_file, 'r+') as f:
-                self._cases = json.load(f)           # load latest version
-                self._cases[case['case_id']] = case  # update own case
-                f.seek(0)                            # go back to the beginning of the file
+            with open(self.config.cases_file, "r+") as f:
+                self._cases = json.load(f)  # load latest version
+                self._cases[case["case_id"]] = case  # update own case
+                f.seek(0)  # go back to the beginning of the file
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()                         # truncate the rest of the file ensuring no old data is left
+                f.truncate()  # truncate the rest of the file ensuring no old data is left
         finally:
             lock.release()
 
-        print(f"Sysdiagnose file has been processed: {sysdiagnose_file}")
         return case
 
     @staticmethod
@@ -197,123 +197,184 @@ class Sysdiagnose:
         """
         from sysdiagnose.parsers.remotectl_dumpstate import RemotectlDumpstateParser
         from sysdiagnose.parsers.sys import SystemVersionParser
-        from sysdiagnose.utils.ioreg_parsers.structure_parser import IORegStructParser
 
-        if os.path.isfile(source_file):
-            remotectl_dumpstate_json = None
-            sysdiagnose_log_file = None
-            ioreg_devicetree_json = None
+        if os.path.isdir(source_file):
+            # First try remotectl_dumpstate method
+            try:
+                sysdiagnose_log_file = os.path.join(source_file, "sysdiagnose.log")
+                sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
+                sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+                remotectl_dumpstate_file = os.path.join(source_file, "remotectl_dumpstate.txt")
+                remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
+            except Exception as e:
+                logger.warning(
+                    f"Problem while processsing folder {source_file} for remotectl_dumpstate: {e!s}", exc_info=True
+                )
+            # get metadata
+            metadata = Sysdiagnose.metadata_from_remotectl_sysdiagnose_data(
+                remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+            )
+            if metadata:
+                return metadata
 
+            # As a backup use ioreg and sys method
+            try:
+                sys_json_file = os.path.join(source_file, "logs", "SystemVersion", "SystemVersion.plist")
+                sys_json = SystemVersionParser.parse_file(sys_json_file)
+                ioreg_devicetree_file = os.path.join(source_file, "ioreg", "IODeviceTree.txt")
+                with open(ioreg_devicetree_file) as wrapper:
+                    serial_number, model = Sysdiagnose.get_serial_and_model_from_ioreg_raw_file(wrapper)
+                # get metadata
+                metadata = Sysdiagnose.metadata_from_ioreg_sys(
+                    serial_number, model, sys_json, sysdiagnose_date_utc, source_file
+                )
+                return metadata
+            except Exception as e:
+                logger.error(f"Problem while processsing folder {source_file}: {e!s}", exc_info=True)
+                return None
+
+        elif os.path.isfile(source_file):
             # workaround for incompatible filesystem such as SMB
             targz_file = source_file
             try:
-                with open(source_file, 'r+'):  # test
+                with open(source_file, "r+"):  # test
                     # compatible filesystem
                     pass
             except OSError:
                 # incompatible filesystem, copy file locally instead
                 import shutil
                 import tempfile
-                temp_file = tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False)
-                temp_file.close()
-                targz_file = temp_file.name
+
+                with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as temp_file:
+                    targz_file = temp_file.name
                 shutil.copyfile(source_file, targz_file)
 
             try:
                 with tarfile.open(targz_file) as tf:
+                    # First try remotectl_dumpstate method
                     for member in tf.getmembers():
                         member_path = Path(member.name)
-                        if member_path.name == 'remotectl_dumpstate.txt':
+                        if member_path.name == "remotectl_dumpstate.txt":
                             remotectl_dumpstate_file = tf.extractfile(member)
                             remotectl_dumpstate_file_content = remotectl_dumpstate_file.read().decode()
-                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(remotectl_dumpstate_file_content)
-                        elif member_path.name == 'sysdiagnose.log':
+                            remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file_content(
+                                remotectl_dumpstate_file_content
+                            )
+                        elif member_path.name == "sysdiagnose.log":
                             sysdiagnose_log_file = TextIOWrapper(tf.extractfile(member))
-                            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
-                        elif member_path.name == 'SystemVersion.plist':
+                            sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(
+                                sysdiagnose_log_file
+                            )
+                            sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+
+                    # get metadata
+                    metadata = Sysdiagnose.metadata_from_remotectl_sysdiagnose_data(
+                        remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+                    )
+                    if metadata:
+                        return metadata
+
+                    # As a backup use ioreg and sys method
+                    for member in tf.getmembers():
+                        member_path = Path(member.name)
+                        if member_path.name == "SystemVersion.plist":
                             sys_json_file = tf.extractfile(member)
                             sys_json_file_content = sys_json_file.read().decode()
                             sys_json = SystemVersionParser.parse_file_content(sys_json_file_content)
-                        # elif member_path.name == 'IOService.txt':
-                        #     ioreg_service_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
-                        #     p = IORegStructParser()
-                        #     ioreg_service_json = p.parse(ioreg_service_file, from_start=True)
-                        elif member_path.name == 'IODeviceTree.txt':
-                            ioreg_devicetree_file = TextIOWrapper(tf.extractfile(member), errors='backslashreplace')
-                            p = IORegStructParser()
-                            ioreg_devicetree_json = p.parse(ioreg_devicetree_file, from_start=True)
+                        elif member_path.name == "IODeviceTree.txt":
+                            ioreg_devicetree_file = TextIOWrapper(tf.extractfile(member), errors="backslashreplace")
+                            serial_number, model = Sysdiagnose.get_serial_and_model_from_ioreg_raw_file(
+                                ioreg_devicetree_file
+                            )
+
+                    metadata = Sysdiagnose.metadata_from_ioreg_sys(
+                        serial_number, model, sys_json, sysdiagnose_date_utc, source_file
+                    )
+                    return metadata
 
             except Exception as e:
-                logger.error("Problem ocurred while processing the archive {source_file}: {e}", exc_info=True)
+                logger.error(f"Problem ocurred while processing the archive {source_file}: {e!s}", exc_info=True)
+                return None
             finally:
                 if targz_file != source_file:
                     # remove the temporary file if we copied it
                     os.remove(targz_file)
 
-        elif os.path.isdir(source_file):
-            try:
-                sysdiagnose_log_file = os.path.join(source_file, 'sysdiagnose.log')
-                sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
-                remotectl_dumpstate_file = os.path.join(source_file, 'remotectl_dumpstate.txt')
-                remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
-                sys_json_file = os.path.join(source_file, 'logs', 'SystemVersion', 'SystemVersion.plist')
-                sys_json = SystemVersionParser.parse_file(sys_json_file)
-                p = IORegStructParser()
-                # ioreg_service_file = os.path.join(source_file, 'ioreg', 'IOService.txt')
-                # ioreg_service_json = p.parse(ioreg_service_file)
-                ioreg_devicetree_file = os.path.join(source_file, 'ioreg', 'IODeviceTree.txt')
-                ioreg_devicetree_json = p.parse(ioreg_devicetree_file)
-            except Exception as e:
-                logger.error("Problem while processsing folder {source_file}: {e}", exc_info=True)
         else:
             logger.error(f"File {source_file} is not a valid sysdiagnose folder.")
             return None
 
-        # Time to obtain the metadata
-        # Turn the sysdiagnose date into UTC
-        sysdiagnose_date_utc = sysdiagnose_date.astimezone(timezone.utc)
-        if remotectl_dumpstate_json and 'error' not in remotectl_dumpstate_json:
-            if 'Local device' in remotectl_dumpstate_json:
-                try:
-                    serial_number = remotectl_dumpstate_json['Local device']['Properties']['SerialNumber']
-                    metadata = {
-                        'serial_number': serial_number,
-                        'unique_device_id': remotectl_dumpstate_json['Local device']['Properties']['UniqueDeviceID'],
-                        'ios_version': remotectl_dumpstate_json['Local device']['Properties']['OSVersion'],
-                        'model': remotectl_dumpstate_json['Local device']['Properties']['ProductType'],
-                        'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
-                        'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                        'source_file': source_file,
-                        'source_sha256': ''
-                    }
-                    metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
+    @staticmethod
+    def metadata_from_remotectl_sysdiagnose_data(
+        remotectl_dumpstate_json, sysdiagnose_date_utc, source_file
+    ) -> dict | None:
+        try:
+            if remotectl_dumpstate_json and "error" not in remotectl_dumpstate_json:
+                if "Local device" in remotectl_dumpstate_json:
+                    try:
+                        serial_number = remotectl_dumpstate_json["Local device"]["Properties"]["SerialNumber"]
+                        metadata = {
+                            "serial_number": serial_number,
+                            "unique_device_id": remotectl_dumpstate_json["Local device"]["Properties"][
+                                "UniqueDeviceID"
+                            ],
+                            "ios_version": remotectl_dumpstate_json["Local device"]["Properties"]["OSVersion"],
+                            "model": remotectl_dumpstate_json["Local device"]["Properties"]["ProductType"],
+                            "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
+                            "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
+                            "source_file": source_file,
+                            "source_sha256": "",
+                        }
+                        metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
 
-                    return metadata
-                except Exception:
-                    logger.error("Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True)
-            else:
-                logger.error("remotectl_dumpstate does not contain a Local device section.")
-        elif ioreg_devicetree_json and sys_json:
-            # elif ioreg_devicetree_json and sys_json:
-            # FIXME also write tests...
-            try:
-                serial_number = ioreg_devicetree_json['device-tree']['IOPlatformSerialNumber']
-                metadata = {
-                    'serial_number': serial_number,
-                    'unique_device_id': 'unknown',  # It is not the same than the one from remotectl_dumpstate
-                    'ios_version': sys_json['ProductVersion'],
-                    'model': ioreg_devicetree_json['device-tree']['model'].strip('<>'),
-                    'date': sysdiagnose_date_utc.isoformat(timespec='microseconds'),
-                    'case_id': f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
-                    'source_file': source_file,
-                    'source_sha256': ''
-                }
-                metadata['source_sha256'] = Sysdiagnose.calculate_metadata_signature(metadata)
+                        return metadata
+                    except Exception:
+                        logger.warning(
+                            "Could not parse remotectl_dumpstate, and therefore extract serial numbers.", exc_info=True
+                        )
+                else:
+                    logger.warning("remotectl_dumpstate does not contain a Local device section.")
+        except Exception:
+            logger.warning("Exception while extracting metadata from remotectl_dumpstate", exc_info=True)
+        return None
 
-                return metadata
-            except Exception:
-                logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
+    @staticmethod
+    def get_serial_and_model_from_ioreg_raw_file(wrapper: TextIOWrapper) -> (str, str):
+        # "IOPlatformSerialNumber" = "NUMBER"
+        # "model" = <"iPhone18,2">
 
+        serial_number = None
+        model = None
+        for line in wrapper:
+            if '"IOPlatformSerialNumber" = ' in line:
+                serial_number = line.split("=")[-1].strip('" \n')
+
+            elif '"model" = ' in line:
+                model = line.split("=")[-1].strip('<>" \n')
+
+            # stop reading file if we found our answer
+            if serial_number and model:
+                break
+
+        return (serial_number, model)
+
+    @staticmethod
+    def metadata_from_ioreg_sys(serial_number, model, sys_json, sysdiagnose_date_utc, source_file) -> dict | None:
+        try:
+            metadata = {
+                "serial_number": serial_number,
+                "unique_device_id": "unknown",  # It is not the same than the one from remotectl_dumpstate
+                "ios_version": sys_json["ProductVersion"],
+                "model": model,
+                "date": sysdiagnose_date_utc.isoformat(timespec="microseconds"),
+                "case_id": f"{serial_number}_{sysdiagnose_date_utc.strftime('%Y%m%d_%H%M%S')}",
+                "source_file": source_file,
+                "source_sha256": "",
+            }
+            metadata["source_sha256"] = Sysdiagnose.calculate_metadata_signature(metadata)
+            return metadata
+        except Exception:
+            logger.error("Could not parse IODeviceTree, and therefore extract serial numbers.", exc_info=True)
         return None
 
     @staticmethod
@@ -326,13 +387,11 @@ class Sysdiagnose:
         :return: SHA256 hash of the concatenated metadata fields.
         """
         # Exclude 'case_id' and 'source_sha256' from the metadata
-        excluded_keys = {'case_id', 'source_file', 'source_sha256'}
-        concatenated_values = ''.join(
-            str(value) for key, value in metadata.items() if key not in excluded_keys
-        )
+        excluded_keys = {"case_id", "source_file", "source_sha256"}
+        concatenated_values = "".join(str(value) for key, value in metadata.items() if key not in excluded_keys)
 
         # Calculate the SHA256 hash of the concatenated string
-        signature = hashlib.sha256(concatenated_values.encode('utf-8')).hexdigest()
+        signature = hashlib.sha256(concatenated_values.encode("utf-8")).hexdigest()
         return signature
 
     def extract_sysdiagnose_files(self, sysdiagnose_file: str, destination_folder: str) -> None:
@@ -353,73 +412,136 @@ class Sysdiagnose:
                     with tarfile.open(sysdiagnose_file) as tf:
                         tf.extractall(path=destination_folder)
                 except Exception as e:
-                    raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
+                    raise Exception(
+                        f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}"
+                    ) from e
             except Exception as e:
-                raise Exception(f'Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {str(e)}')
+                raise Exception(f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}") from e
 
         elif os.path.isdir(sysdiagnose_file):
             try:
-                shutil.copytree(sysdiagnose_file, os.path.join(destination_folder, 'sysdiagnose'), dirs_exist_ok=True)
+                shutil.copytree(sysdiagnose_file, os.path.join(destination_folder, "sysdiagnose"), dirs_exist_ok=True)
             except Exception as e:
-                raise Exception(f'Error while copying sysdiagnose folder. Reason: {str(e)}')
+                raise Exception(f"Error while copying sysdiagnose folder. Reason: {e!s}") from e
 
     def init_case_logging(self, mode: str, case_id: str) -> None:
-        ''' Initialises the file handler '''
+        """Initialises the file handler"""
         folder = self.config.get_case_log_data_folder(case_id=case_id)
-        file_path = os.path.join(folder, f'log-{mode}.jsonl')
+        file_path = os.path.join(folder, f"log-{mode}.jsonl")
         set_json_logging(filename=file_path)
 
-    def parse(self, parser: str, case_id: str):
+    def _ensure_case_metadata(self, case: dict) -> dict:
+        """
+        Checks if the case metadata has all expected keys.
+        If keys are missing, re-extracts metadata from the extracted folder on disk
+        and persists the update to cases.json.
+
+        Returns the (possibly updated) case dict.
+        """
+        expected_keys = {
+            "case_id",
+            "date",
+            "source_file",
+            "source_sha256",
+            "serial_number",
+            "unique_device_id",
+            "ios_version",
+            "model",
+            "tags",
+        }
+        missing_keys = expected_keys - set(case.keys())
+        if not missing_keys:
+            return case
+
+        # Re-extract metadata from the extracted folder on disk
+        case_data_folder = self.config.get_case_data_folder(case["case_id"])
+        # dive one folder deeper, as the real data is one folder deeper
+        subfolders = [
+            f
+            for f in os.listdir(case_data_folder)
+            if os.path.isdir(os.path.join(case_data_folder, f)) and "sysdiagnose_" in f
+        ]
+
+        if len(subfolders) == 1:
+            case_data_folder = os.path.join(case_data_folder, subfolders[0])
+        metadata = Sysdiagnose.get_case_metadata(case_data_folder)
+
+        if metadata:
+            for key in missing_keys:
+                if key in metadata:
+                    case[key] = metadata[key]
+                elif key == "tags":
+                    case[key] = []
+
+            # Persist the updated case to cases.json
+            lock = FileLock(self.config.cases_file)
+            try:
+                lock.acquire()
+                with open(self.config.cases_file, "r+") as f:
+                    all_cases = json.load(f)
+                    all_cases[case["case_id"]] = case
+                    f.seek(0)
+                    json.dump(all_cases, f, indent=4, sort_keys=True)
+                    f.truncate()
+            finally:
+                lock.release()
+
+        return case
+
+    def parse(self, parser: str, case_id: str) -> ResultSummary:
         # Load parser module
-        module = importlib.import_module(f'sysdiagnose.parsers.{parser}')
+        module = importlib.import_module(f"sysdiagnose.parsers.{parser}")
         parser_instance = None
+        case = self.cases().get(case_id, {"case_id": case_id})
+        case = self._ensure_case_metadata(case)
         # figure out the class name and create an instance of it
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                parser_instance: BaseParserInterface = obj(config=self.config, case_id=case_id)
+                parser_instance: BaseParserInterface = obj(config=self.config, case=case)
                 break
         if not parser_instance:
             raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
 
         parser_instance.save_result(force=True)  # force parsing
-        return 0
+        return parser_instance.get_result_summary()
 
-    def analyse(self, analyser: str, case_id: str):
-        module = importlib.import_module(f'sysdiagnose.analysers.{analyser}')
+    def analyse(self, analyser: str, case_id: str) -> ResultSummary:
+        module = importlib.import_module(f"sysdiagnose.analysers.{analyser}")
         analyser_instance = None
+        case = self.cases().get(case_id, {"case_id": case_id})
+        case = self._ensure_case_metadata(case)
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
-                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case_id=case_id)
+                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case=case)
                 break
         if not analyser_instance:
             raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")
 
         analyser_instance.save_result(force=True)  # force parsing
+        return analyser_instance.get_result_summary()
 
-        return 0
-
-    def print_list_cases(self, verbose=False):
-        print("#### case List ####")
-        headers = ['Case ID', 'acquisition date', 'Serial number', 'Unique device ID', 'iOS Version', 'Tags']
+    def print_list_cases(self, verbose: bool = False) -> None:
+        print("#### case List ####")  # noqa: T201
+        headers = ["Case ID", "acquisition date", "Serial number", "Unique device ID", "iOS Version", "Tags"]
         if verbose:
-            headers.append('Source file')
+            headers.append("Source file")
         lines = []
         for case in self.cases().values():
             line = [
-                case['case_id'],
-                case.get('date', '<unknown>'),
-                case.get('serial_number', '<unknown>'),
-                case.get('unique_device_id', '<unknown>'),
-                case.get('ios_version', '<unknown>'),
-                ','.join(case.get('tags', []))
+                case["case_id"],
+                case.get("date", "<unknown>"),
+                case.get("serial_number", "<unknown>"),
+                case.get("unique_device_id", "<unknown>"),
+                case.get("ios_version", "<unknown>"),
+                ",".join(case.get("tags", [])),
             ]
             if verbose:
-                line.append(case['source_file'])
+                line.append(case["source_file"])
             lines.append(line)
 
-        print(tabulate(lines, headers=headers))
+        print(tabulate(lines, headers=headers))  # noqa: T201
 
     def get_case_ids(self):
         case_ids = list(self.cases().keys())
@@ -429,10 +551,10 @@ class Sysdiagnose:
     def is_valid_case_id(self, case_id):
         return case_id in self.cases()
 
-    def is_valid_parser_name(self, name):
-        if name == '__init__':
+    def is_valid_parser_name(self, name) -> bool:
+        if name == "__init__":
             return False
-        fname = os.path.join(self.config.parsers_folder, f'{name}.py')
+        fname = os.path.join(self.config.parsers_folder, f"{name}.py")
         if os.path.isfile(fname):
             try:
                 spec = importlib.util.spec_from_file_location(name, fname)
@@ -443,10 +565,10 @@ class Sysdiagnose:
                 return False
         return False
 
-    def is_valid_analyser_name(self, name):
-        if name == '__init__':
+    def is_valid_analyser_name(self, name) -> bool:
+        if name == "__init__":
             return False
-        fname = os.path.join(self.config.analysers_folder, f'{name}.py')
+        fname = os.path.join(self.config.analysers_folder, f"{name}.py")
         if os.path.isfile(fname):
             try:
                 spec = importlib.util.spec_from_file_location(name, fname)
@@ -458,17 +580,17 @@ class Sysdiagnose:
         return False
 
     def print_parsers_list(self) -> None:
-        lines = [['all', 'Run all parsers']]
+        lines = [["all", "Run all parsers"]]
         for parser, description in self.config.get_parsers().items():
             lines.append([parser, description])
 
-        headers = ['Parser Name', 'Parser Description']
-        print(tabulate(lines, headers=headers))
+        headers = ["Parser Name", "Parser Description"]
+        print(tabulate(lines, headers=headers))  # noqa: T201
 
     def print_analysers_list(self) -> None:
-        lines = [['all', 'Run all analysers']]
+        lines = [["all", "Run all analysers"]]
         for analyser, description in self.config.get_analysers().items():
             lines.append([analyser, description])
 
-        headers = ['Analyser Name', 'Analyser Description']
-        print(tabulate(lines, headers=headers))
+        headers = ["Analyser Name", "Analyser Description"]
+        print(tabulate(lines, headers=headers))  # noqa: T201

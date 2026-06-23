@@ -1,15 +1,15 @@
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils import multilinelog
-from datetime import timezone, timedelta
 import unittest
+from datetime import UTC, timedelta, timezone
+
+from sysdiagnose.utils import multilinelog
+from tests import SysdiagnoseTestCase
 
 
 class TestMultiline(SysdiagnoseTestCase):
-
     tzinfo = timezone(timedelta(hours=1))
 
     def test_multilinelog_plist(self):
-        s = '''Wed May 24 13:58:04 2023 [173] <debug> (0x16bf9b000) MA: -[MobileActivationDaemon handleActivationInfoWithSession:activationSignature:completionBlock:]: Activation message:
+        s = """Wed May 24 13:58:04 2023 [173] <debug> (0x16bf9b000) MA: -[MobileActivationDaemon handleActivationInfoWithSession:activationSignature:completionBlock:]: Activation message:
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -27,20 +27,20 @@ dGVzdA==
 </dict>
 </plist>
 
-'''
+"""
         expected_result = {
-            'datetime': '2023-05-24T13:58:04.000000+01:00',
-            'data': {
-                'loglevel': 'debug',
-                'hexID': '0x16bf9b000',
-                'event_type': 'MobileActivationDaemon handleActivationInfoWithSession:activationSignature:completionBlock:',
-                'plist': {'AccountToken': 'test', 'AccountTokenCertificate': 'test', 'unbrick': True}
+            "datetime": "2023-05-24T13:58:04.000000+01:00",
+            "data": {
+                "loglevel": "debug",
+                "hexID": "0x16bf9b000",
+                "event_type": "MobileActivationDaemon handleActivationInfoWithSession:activationSignature:completionBlock:",
+                "plist": {"AccountToken": "test", "AccountTokenCertificate": "test", "unbrick": True},
             },
-            'message': 'Activation message:',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event'
+            "message": "Activation message:",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
         }
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result, result[0])
 
         pass
@@ -49,7 +49,7 @@ dGVzdA==
         # LATER parse the bracket as json, but it's a though job:
         # - find the first bracket, then the last bracket by counting up and down again, extract the inside.
         # - but if the inside is not at the end, the rest of the text still needs to be added somewhere... So not sure what is the best.
-        s = '''Wed May 24 14:05:36 2023 [72] <err> (0x16be43000) +[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {
+        s = """Wed May 24 14:05:36 2023 [72] <err> (0x16be43000) +[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {
     MCMMetadataActiveDPClass = 0;
     MCMMetadataContentClass = 2;
     MCMMetadataIdentifier = "com.apple.VoiceMemos";
@@ -67,82 +67,77 @@ dGVzdA==
     };
     MCMMetadataVersion = 6;
 } (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})
-'''
+"""
         expected_result = {
-            'datetime': '2023-05-24T14:05:36.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'message': '+[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {\n    MCMMetadataActiveDPClass = 0;\n    MCMMetadataContentClass = 2;\n    MCMMetadataIdentifier = "com.apple.VoiceMemos";\n    MCMMetadataInfo =     {\n        "com.apple.MobileInstallation.ContentProtectionClass" = 0;\n    };\n    MCMMetadataSchemaVersion = 1;\n    MCMMetadataUUID = "12036663-1F3A-45B3-A34C-402D5BB7D4FB";\n    MCMMetadataUserIdentity =     {\n        personaUniqueString = "83CB8039-725D-4462-84C2-7F79F0A6EFB3";\n        posixGID = 501;\n        posixUID = 501;\n        type = 0;\n        version = 2;\n    };\n    MCMMetadataVersion = 6;\n} (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})',
-            'data': {
-                'loglevel': 'err',
-                'hexID': '0x16be43000'
-            }
+            "datetime": "2023-05-24T14:05:36.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "message": '+[MCMMetadata readAndValidateMetadataAtFileUrl:forUserIdentity:containerClass:checkClassPath:transient:error:]: 199: Failed to validate metadata at URL [file:///private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155/.com.apple.mobile_container_manager.metadata.plist]: {\n    MCMMetadataActiveDPClass = 0;\n    MCMMetadataContentClass = 2;\n    MCMMetadataIdentifier = "com.apple.VoiceMemos";\n    MCMMetadataInfo =     {\n        "com.apple.MobileInstallation.ContentProtectionClass" = 0;\n    };\n    MCMMetadataSchemaVersion = 1;\n    MCMMetadataUUID = "12036663-1F3A-45B3-A34C-402D5BB7D4FB";\n    MCMMetadataUserIdentity =     {\n        personaUniqueString = "83CB8039-725D-4462-84C2-7F79F0A6EFB3";\n        posixGID = 501;\n        posixUID = 501;\n        type = 0;\n        version = 2;\n    };\n    MCMMetadataVersion = 6;\n} (Error Domain=MCMErrorDomain Code=29 "Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155" UserInfo={SourceFileLine=370, NSLocalizedDescription=Invalid metadata-URLs should match: /private/var/mobile/Containers/Data/Application/0984009B-81D1-4F7F-BDBD-261E22059155 : /private/var/mobile/Containers/Data/VPNPlugin/0984009B-81D1-4F7F-BDBD-261E22059155, FunctionName=+[MCMMetadata _readAndValidateMetadataInDictionary:containerURL:forUserIdentity:containerClass:checkClassPath:fsNode:transient:error:]})',
+            "data": {"loglevel": "err", "hexID": "0x16be43000"},
         }
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result, result[0])
 
     def test_multilinelog_simple_1(self):
-        s = '''Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk'''
+        s = """Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk"""
         expected_result = {
-            'datetime': '2023-05-24T13:55:37.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'notice',
-                'hexID': '0x16afb3000',
-                'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths'
+            "datetime": "2023-05-24T13:55:37.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {
+                "loglevel": "notice",
+                "hexID": "0x16afb3000",
+                "event_type": "MCMClientConnection _regenerateAllSystemContainerPaths",
             },
-            'message': 'Rolling system container directory UUIDs on disk'}
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+            "message": "Rolling system container directory UUIDs on disk",
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result, result[0])
 
     def test_mutlinelog_simple_2(self):
-        s = '''Wed May 24 14:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'''
+        s = """Wed May 24 14:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete"""
         expected_result = {
-            'datetime': '2023-05-24T14:05:30.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'notice',
-                'hexID': '0x16be43000'
-            },
-            'message': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+            "datetime": "2023-05-24T14:05:30.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {"loglevel": "notice", "hexID": "0x16be43000"},
+            "message": "_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete",
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result, result[0])
 
     def test_multilinelog_simple_multiplelines(self):
-        s = '''Wed May 24 14:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete
-Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk'''
+        s = """Wed May 24 14:05:30 2023 [72] <notice> (0x16be43000) _containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete
+Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk"""
         expected_result_0 = {
-            'datetime': '2023-05-24T14:05:30.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'notice',
-                'hexID': '0x16be43000'
-            },
-            'message': '_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete'}
+            "datetime": "2023-05-24T14:05:30.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {"loglevel": "notice", "hexID": "0x16be43000"},
+            "message": "_containermanagerd_init_block_invoke: containermanagerd first boot cleanup complete",
+        }
         expected_result_1 = {
-            'datetime': '2023-05-24T13:55:37.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'notice',
-                'hexID': '0x16afb3000',
-                'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths'
+            "datetime": "2023-05-24T13:55:37.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {
+                "loglevel": "notice",
+                "hexID": "0x16afb3000",
+                "event_type": "MCMClientConnection _regenerateAllSystemContainerPaths",
             },
-            'message': 'Rolling system container directory UUIDs on disk'}
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+            "message": "Rolling system container directory UUIDs on disk",
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result_0, result[0])
         self.assertDictEqual(expected_result_1, result[1])
 
     def test_mutilinelog_emptylines(self):
-        s = '''\n\n'''
-        result = multilinelog.extract_from_string(s, tzinfo=timezone.utc, module='TestModule')
+        s = """\n\n"""
+        result = multilinelog.extract_from_string(s, tzinfo=UTC, module="TestModule")
         self.assertEqual(0, len(result))
 
     def test_multilinelog_keyvalue(self):
-        s = '''Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk
+        s = """Wed May 24 13:55:37 2023 [72] <notice> (0x16afb3000) -[MCMClientConnection _regenerateAllSystemContainerPaths]: Rolling system container directory UUIDs on disk
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: ____________________ Mobile Activation Startup _____________________
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: build_version: 19H349
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: internal_build: false
@@ -159,85 +154,80 @@ Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: is_fpga: false
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: is_devfused_undemoted: false
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: is_prodfused_demoted: false
 Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: soc_generation: H9
-Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: ____________________________________________________________________'''
+Wed May 24 14:08:13 2023 [135] <debug> (0x16f1db000) MA: main: ____________________________________________________________________"""
         expected_result_0 = {
-            'datetime': '2023-05-24T13:55:37.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'notice',
-                'hexID': '0x16afb3000',
-                'event_type': 'MCMClientConnection _regenerateAllSystemContainerPaths'
+            "datetime": "2023-05-24T13:55:37.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {
+                "loglevel": "notice",
+                "hexID": "0x16afb3000",
+                "event_type": "MCMClientConnection _regenerateAllSystemContainerPaths",
             },
-            'message': 'Rolling system container directory UUIDs on disk'}
-        expected_result_1 = {
-            'datetime': '2023-05-24T14:08:13.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'message': 'MA: main: ____________________ Mobile Activation Startup _____________________',
-            'data': {
-                'loglevel': 'debug',
-                'hexID': '0x16f1db000',
-                'build_version': '19H349',
-                'internal_build': 'false',
-                'uid': '501',
-                'user_name': 'mobile',
-                'system_container_path': '/private/var/containers/Data/System/4E023926-12C3-401D-BE00-06FC33B50889',
-                'regulatory_images_path': '/private/var/containers/Shared/SystemGroup/AF534A77-07C2-4140-917E-BEE330B5B1AF',
-                'hardware_model': 'D101AP',
-                'product_type': 'iPhone9,3',
-                'device_class': 'iPhone',
-                'has_telephony': 'true',
-                'should_hactivate': 'false',
-                'is_fpga': 'false',
-                'is_devfused_undemoted': 'false',
-                'is_prodfused_demoted': 'false',
-                'soc_generation': 'H9'
-            }
+            "message": "Rolling system container directory UUIDs on disk",
         }
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+        expected_result_1 = {
+            "datetime": "2023-05-24T14:08:13.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "message": "MA: main: ____________________ Mobile Activation Startup _____________________",
+            "data": {
+                "loglevel": "debug",
+                "hexID": "0x16f1db000",
+                "build_version": "19H349",
+                "internal_build": "false",
+                "uid": "501",
+                "user_name": "mobile",
+                "system_container_path": "/private/var/containers/Data/System/4E023926-12C3-401D-BE00-06FC33B50889",
+                "regulatory_images_path": "/private/var/containers/Shared/SystemGroup/AF534A77-07C2-4140-917E-BEE330B5B1AF",
+                "hardware_model": "D101AP",
+                "product_type": "iPhone9,3",
+                "device_class": "iPhone",
+                "has_telephony": "true",
+                "should_hactivate": "false",
+                "is_fpga": "false",
+                "is_devfused_undemoted": "false",
+                "is_prodfused_demoted": "false",
+                "soc_generation": "H9",
+            },
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result_0, result[0])
         self.assertDictEqual(expected_result_1, result[1])
 
     def test_multilinelog_keyvalue_onlyend(self):
-        s = '''Sat Feb 18 10:48:38 2023 [2695] <debug> (0x16dc37000) MA: main: ____________________________________________________________________
-Sat Feb 18 10:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: Activation State: Activated'''
+        s = """Sat Feb 18 10:48:38 2023 [2695] <debug> (0x16dc37000) MA: main: ____________________________________________________________________
+Sat Feb 18 10:48:39 2023 [2695] <debug> (0x16dc37000) MA: dealwith_activation: Activation State: Activated"""
         expected_result_0 = {
-            'datetime': '2023-02-18T10:48:38.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'debug',
-                'hexID': '0x16dc37000'
-            },
-            'message': 'MA: main: ____________________________________________________________________'}
+            "datetime": "2023-02-18T10:48:38.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {"loglevel": "debug", "hexID": "0x16dc37000"},
+            "message": "MA: main: ____________________________________________________________________",
+        }
         expected_result_1 = {
-            'datetime': '2023-02-18T10:48:39.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'debug',
-                'hexID': '0x16dc37000'
-            },
-            'message': 'MA: dealwith_activation: Activation State: Activated'}
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+            "datetime": "2023-02-18T10:48:39.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {"loglevel": "debug", "hexID": "0x16dc37000"},
+            "message": "MA: dealwith_activation: Activation State: Activated",
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result_0, result[0])
         self.assertDictEqual(expected_result_1, result[1])
 
     def test_multilinelog_keyvalue_onlystart(self):
-        s = '''Fri Dec  2 12:32:19 2022 [84816] <debug> (0x16afff000) MA: main: ____________________ Mobile Activation Startup _____________________'''
+        s = """Fri Dec  2 12:32:19 2022 [84816] <debug> (0x16afff000) MA: main: ____________________ Mobile Activation Startup _____________________"""
         expected_result = {
-            'datetime': '2022-12-02T12:32:19.000000+01:00',
-            'module': 'TestModule',
-            'timestamp_desc': 'TestModule event',
-            'data': {
-                'loglevel': 'debug',
-                'hexID': '0x16afff000'
-            },
-            'message': 'MA: main: ____________________ Mobile Activation Startup _____________________'}
-        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module='TestModule')
+            "datetime": "2022-12-02T12:32:19.000000+01:00",
+            "module": "TestModule",
+            "timestamp_desc": "TestModule event",
+            "data": {"loglevel": "debug", "hexID": "0x16afff000"},
+            "message": "MA: main: ____________________ Mobile Activation Startup _____________________",
+        }
+        result = multilinelog.extract_from_string(s, tzinfo=self.tzinfo, module="TestModule")
         self.assertDictEqual(expected_result, result[0])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

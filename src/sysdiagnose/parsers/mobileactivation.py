@@ -1,26 +1,26 @@
 #! /usr/bin/env python3
-
-# For Python3
-# Script to parse the swcutil_show.txt file
-# Author: Emilien Le Jamtel
+"""
+For Python3
+Script to parse the swcutil_show.txt file
+Author: Emilien Le Jamtel
+"""
 
 import glob
 import os
+
 from sysdiagnose.utils import multilinelog
 from sysdiagnose.utils.base import BaseParserInterface, SysdiagnoseConfig
 
 
 class MobileActivationParser(BaseParserInterface):
     description = "Parsing mobileactivation logs file"
-    format = 'jsonl'
+    format = "jsonl"
 
-    def __init__(self, config: SysdiagnoseConfig, case_id: str):
-        super().__init__(__file__, config, case_id)
+    def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
+        super().__init__(__file__, config, case)
 
     def get_log_files(self) -> list:
-        log_files_globs = [
-            'logs/MobileActivation/mobileactivationd.log*'
-        ]
+        log_files_globs = ["logs/MobileActivation/mobileactivationd.log*"]
         log_files = []
         for log_files_glob in log_files_globs:
             log_files.extend(glob.glob(os.path.join(self.case_data_subfolder, log_files_glob)))
@@ -30,5 +30,7 @@ class MobileActivationParser(BaseParserInterface):
     def execute(self) -> list | dict:
         result = []
         for logfile in self.get_log_files():
-            result.extend(multilinelog.extract_from_file(logfile, self.sysdiagnose_creation_datetime.tzinfo, self.module_name))
+            result.extend(
+                multilinelog.extract_from_file(logfile, self.sysdiagnose_creation_datetime.tzinfo, self.module_name)
+            )
         return result

@@ -1,13 +1,12 @@
-
-from tests import SysdiagnoseTestCase
-from sysdiagnose.utils.lock import FileLock
 import unittest
+
+from sysdiagnose.utils.lock import FileLock
+from tests import SysdiagnoseTestCase
 
 
 class TestLock(SysdiagnoseTestCase):
-
     def test_lock(self):
-        lock = FileLock('foo.txt', timeout=1)
+        lock = FileLock("foo.txt", timeout=1)
         # first remove any existing lock file
         lock.lock_file.unlink(missing_ok=True)
         # do the real test
@@ -18,7 +17,7 @@ class TestLock(SysdiagnoseTestCase):
         self.assertFalse(lock.lock_file.exists())
 
     def test_lock_timeout(self):
-        lock = FileLock('foo.txt', timeout=1)
+        lock = FileLock("foo.txt", timeout=1)
         # first remove any existing lock file
         lock.lock_file.unlink(missing_ok=True)
         lock.acquire()
@@ -26,7 +25,7 @@ class TestLock(SysdiagnoseTestCase):
 
         # Try to acquire the lock again, should raise TimeoutError
         with self.assertRaises(TimeoutError):
-            lock2 = FileLock('foo.txt', timeout=1)
+            lock2 = FileLock("foo.txt", timeout=1)
             lock2.acquire()
 
         # Release the first lock
@@ -41,5 +40,5 @@ class TestLock(SysdiagnoseTestCase):
         self.assertFalse(lock2.lock_file.exists())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
