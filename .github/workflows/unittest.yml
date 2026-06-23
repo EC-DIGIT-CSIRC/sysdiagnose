@@ -55,9 +55,9 @@ jobs:
           cd tests/testdata
           echo "Extracting sysdiagnose test files"
           find . -iname '*.tar.gz' -execdir tar xzf {} \; 2> /dev/null
-      - name: Test with python unittest
+      - name: Test with python pytest
         run: |
-          python -m coverage run -m unittest -v
+          python -m coverage run -m pytest tests -v
 
       - name: Generate coverage report
         run: |
