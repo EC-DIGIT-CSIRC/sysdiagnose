@@ -105,7 +105,7 @@ known-third-party = ["yara"]
 "src/sysdiagnose/__main__.py" = ["T201", "T20"]
 "src/sysdiagnose/utils/coverage_diff.py" = ["T201"]
 "src/sysdiagnose/utils/file_stats_diff.py" = ["T201"]
-"scripts/test-data-conversion.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.format]
 quote-style = "double"
