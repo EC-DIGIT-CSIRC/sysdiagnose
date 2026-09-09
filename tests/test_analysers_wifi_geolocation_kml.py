@@ -1,5 +1,6 @@
 import os
 import unittest
+import xml.etree.ElementTree as ET
 
 from sysdiagnose.analysers.wifi_geolocation_kml import WifiGeolocationKmlAnalyser
 from tests import SysdiagnoseTestCase
@@ -19,6 +20,23 @@ class TestAnalysersWifiGeolocationKml(SysdiagnoseTestCase):
                 self.assertTrue(os.path.getsize(a.output_file) > 0)
                 self.assert_result_summary_consistent(a, a.get_result())
                 # FIXME check for something else within the file...
+
+    def test_generated_kml_is_namespace_well_formed(self):
+        """The gx: prefix must be declared, otherwise no conforming XML parser can read the file."""
+        kml = WifiGeolocationKmlAnalyser.generate_kml_from_known_networks_json(
+            {
+                "net1": {
+                    "SSID": "test-ssid",
+                    "AddedAt": "2023-05-24T13:29:15Z",
+                    "Latitude": 1.0,
+                    "Longitude": 2.0,
+                }
+            }
+        )
+        # on main this raises ParseError: unbound prefix
+        root = ET.fromstring(kml)
+        self.assertEqual("{http://www.opengis.net/kml/2.2}kml", root.tag)
+        self.assertIn("http://www.google.com/kml/ext/2.2", kml)
 
 
 if __name__ == "__main__":
