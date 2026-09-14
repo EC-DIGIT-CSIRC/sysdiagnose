@@ -163,14 +163,17 @@ class BaseInterface(ABC):
         return self.case.get("ios_version")
 
     @property
-    def case_model(self) -> str | None:
+    def case_model(self) -> str:
         """
         Returns the model string for the current case from the case metadata.
 
+        Always returns a string so consumers can safely perform membership checks
+        (e.g. ``"AppleTV" not in self.case_model``) without guarding against ``None``.
+
         Returns:
-            str | None: The model string (e.g. "iPad16,3"), or None if unavailable.
+            str: The model string (e.g. "iPad16,3"), or "unknown" if unavailable.
         """
-        return self.case.get("model")
+        return self.case.get("model") or "unknown"
 
     def is_compatible(self) -> bool:
         """
