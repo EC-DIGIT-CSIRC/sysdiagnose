@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 from sysdiagnose.parsers.spindumpnosymbols import SpindumpNoSymbolsParser
 from tests import SysdiagnoseTestCase
@@ -240,6 +241,20 @@ class TestParsersSpindumpnosymbols(SysdiagnoseTestCase):
         }
         result = SpindumpNoSymbolsParser.parse_thread(lines)
         self.assertDictEqual(expected_result, result)
+
+    def test_parse_file_does_not_swallow_indexerror(self):
+        """A parse failure must surface as an error, not as an empty successful result."""
+        path = os.path.join(self.tmp_folder, "spindump-nosymbols.txt")
+        with open(path, "w") as f:
+            f.write("Date/Time:        2023-05-24 13:29:15.759 -0700\n")
+            f.write("------------------------------------------------------------\n")
+            f.write("Process:          accessoryd [176]\n")
+
+        with (
+            patch.object(SpindumpNoSymbolsParser, "parse_basic", side_effect=IndexError("boom")),
+            self.assertRaises(IndexError),
+        ):
+            SpindumpNoSymbolsParser.parse_file(path)
 
 
 if __name__ == "__main__":
