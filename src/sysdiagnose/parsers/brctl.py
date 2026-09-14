@@ -31,20 +31,29 @@ class BrctlParser(BaseParserInterface):
             return {}
         return BrctlParser.parse_folder(log_files[0])
 
+    # Container list values come in three shapes:
+    #   id:com.apple.CloudDocs                      -- a bare token
+    #   localizedName:'iCloud Drive'                -- single-quoted, may contain spaces
+    #   [Private: inInitialState] / [Public:]       -- bracketed
+    # `clients` is a comma-separated list that runs to the end of the line.
+    CONTAINER_KEYS = ("id", "localizedName", "documents", "Public", "Private", "clients")
+    CONTAINER_VALUE_RE = re.compile(rf"({'|'.join(CONTAINER_KEYS)}):\s*('[^']*'|\[[^\]]*\]|[^ \[]*)")
+    CONTAINER_CLIENTS_RE = re.compile(r"clients:\s*(.*)$")
+
     @staticmethod
     def parselistfile(container_list_file):
         containers = {"containers": []}
-        result = []
         with open(container_list_file[0]) as f:
-            keys = ["id", "localizedName", "documents", "Public", "clients"]
             for l_line in f:
                 line = l_line.strip()
-                line = line.replace("Mobile Documents", "Mobile_Documents")
-                keys = ["id", "localizedName", "documents", "Public", "Private", "clients"]
-                values = re.findall(rf"({'|'.join(keys)}):\s*([^ \[]+|\[[^\]]*\])", line)
-                result = {k: v.strip("[]") for k, v in values}
+                values = BrctlParser.CONTAINER_VALUE_RE.findall(line)
+                result = {k: v.strip("[]'") for k, v in values}
                 if result != {}:
-                    result["documents"] = result["documents"].replace("Mobile_Documents", "Mobile Documents")
+                    # `clients` is space-separated as well as comma-separated, so it has to be
+                    # taken to the end of the line rather than to the first space.
+                    clients = BrctlParser.CONTAINER_CLIENTS_RE.search(line)
+                    if clients:
+                        result["clients"] = clients.group(1).strip()
                     containers["containers"].append(result)
             return containers
 
