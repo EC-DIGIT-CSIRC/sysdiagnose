@@ -68,6 +68,7 @@ import sqlite3
 from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import Event
+from sysdiagnose.utils.misc import json_serializable
 
 default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apollo_modules")
 
@@ -192,7 +193,8 @@ class Apollo:
                             ),
                             module=self.saf_module,
                             timestamp_desc=module_query["activity"],
-                            data=item,
+                            # sqlite BLOB columns come back as bytes, which json.dumps cannot encode
+                            data=json_serializable(item),
                         )
                         results.append(event.to_dict())
                     except TypeError:
