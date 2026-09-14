@@ -163,14 +163,17 @@ class BaseInterface(ABC):
         return self.case.get("ios_version")
 
     @property
-    def case_model(self) -> str | None:
+    def case_model(self) -> str:
         """
         Returns the model string for the current case from the case metadata.
 
+        Always returns a string so consumers can safely perform membership checks
+        (e.g. ``"AppleTV" not in self.case_model``) without guarding against ``None``.
+
         Returns:
-            str | None: The model string (e.g. "iPad16,3"), or None if unavailable.
+            str: The model string (e.g. "iPad16,3"), or "unknown" if unavailable.
         """
-        return self.case.get("model")
+        return self.case.get("model") or "unknown"
 
     def is_compatible(self) -> bool:
         """
@@ -367,7 +370,21 @@ class BaseInterface(ABC):
             self._result = [] if self.format == "jsonl" else {}
             return self._result, self._result_summary
 
-        num_events = self._write_result(result, indent=indent)
+        try:
+            num_events = self._write_result(result, indent=indent)
+        except Exception as ex:
+            # A partially written output file must never be served as a complete cached result:
+            # output_exists() would be true and _load_output() would return the truncated data.
+            logger.exception(f"Writing result failed: {ex}")
+            try:
+                os.remove(self.output_file)
+            except OSError:
+                logger.warning(f"Could not remove partially written {self.output_file}")
+            handler.update(num_events=0, add_errors=1, end=True)
+            self._result_summary = handler.get()
+            self._result = [] if self.format == "jsonl" else {}
+            return self._result, self._result_summary
+
         handler.update(num_events=num_events, end=True)
         return self._result, handler.get()
 
