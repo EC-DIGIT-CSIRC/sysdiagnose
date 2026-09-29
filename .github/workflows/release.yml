@@ -1,58 +1,51 @@
-name: Build and Publish Docker Images
+name: Version & Release
+
+# IMPORTANT: This workflow relies on branch protection rules to ensure
+# code quality before releasing. The `main` branch MUST have required
+# status checks enabled (codestyle + unittest must pass before merge).
+# Without branch protection, broken code could be released.
 
 on:
-  workflow_dispatch:
   push:
-    # branches:
-    #   - "main"
-    tags:
-      - "v*"
+    branches: [main]
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
+  pull-requests: read
 
 jobs:
-  backend:
+  release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
+        uses: actions/checkout@v6
         with:
-          images: |
-            ghcr.io/EC-DIGIT-CSIRC/sysdiagnose
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-          labels: |
-            org.opencontainers.image.title=SysDiagnose
-            org.opencontainers.image.description=SysDiagnose
-            org.opencontainers.image.vendor=EC-DIGIT-CSIRC
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+      - name: Python Semantic Release
+        id: psr
+        uses: python-semantic-release/python-semantic-release@9a026e9303981c866c3425723009becb2437c757 # v10.6.2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog: "false"
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Generate release notes with git-cliff
+        id: git-cliff
+        if: steps.psr.outputs.released == 'true'
+        uses: orhun/git-cliff-action@3d96a18cc4ec17e9dc69ddcc424ccafaf1f78ce2 # v4.9.0
         with:
-          context: ./
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          config: cliff.toml
+          args: --verbose --latest --strip header
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
+      - name: Update GitHub Release notes
+        if: steps.psr.outputs.released == 'true'
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: v${{ steps.psr.outputs.version }}
+          body: ${{ steps.git-cliff.outputs.content }}
+          token: ${{ secrets.GITHUB_TOKEN }}
