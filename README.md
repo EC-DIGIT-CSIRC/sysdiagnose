@@ -111,7 +111,6 @@ appinstallation        Parsing app installation logs
 brctl                  Parsing brctl files
 containermanager       Parsing containermanagerd logs file
 crashlogs              Parsing crashes folder
-demo_parser            Demo parsers
 itunesstore            Parsing iTunes store logs
 lockdownd              Parsing lockdownd logs file
 logarchive             Parsing system_logs.logarchive folder
@@ -148,7 +147,6 @@ Analyser Name         Analyser Description
 --------------------  -------------------------------------------------------------------------------
 all                   Run all analysers
 apps                  Get list of Apps installed on the device
-demo_analyser         Do something useful (DEMO)
 ps_everywhere         List all processes we can find a bit everywhere.
 ps_matrix             Makes a matrix comparing ps, psthread, taskinfo
 timesketch            Generate a Timesketch compatible timeline
@@ -240,7 +238,7 @@ You will be able to identify the execution of a parser/analyser by, at least, tw
 
 In between those two entries, you may see any other produced by the parser/analyser, where the module, this time, will match the parser/analyser name.
 
-__Note:__ It is of utmost important that the parser/analyser provides logging to help troubleshooting potential issues. Please take a look to the [demo_parser](src/sysdiagnose/parsers/demo_parser.py) and the [demo_analyser](src/sysdiagnose/analysers/demo_analyser.py) files for inspiration.
+__Note:__ It is of utmost important that the parser/analyser provides logging to help troubleshooting potential issues. Please take a look to the [demo_parser](docs/samples/parsers/demo_parser.py) and the [demo_analyser](docs/samples/analysers/demo_analyser.py) reference samples for inspiration.
 
 Below you can find an example of traces within the log file.
 
