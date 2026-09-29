@@ -3,6 +3,7 @@ import unittest
 from sysdiagnose.utils.base import BaseParserInterface
 from sysdiagnose.utils.summary import ExecutionStatus
 from tests import SysdiagnoseTestCase
+from tests.fixtures import SampleParser
 
 
 class TestIsCompatibleMethod(unittest.TestCase):
@@ -181,14 +182,12 @@ class TestVersionCompatibilitySkipIntegration(SysdiagnoseTestCase):
         case_id = self.sd.get_case_ids()[0]
         case = self.sd.cases()[case_id]
 
-        # Monkey-patch DemoParser to require an impossibly high iOS version
-        from sysdiagnose.parsers.demo_parser import DemoParser
-
-        original_ios_version = DemoParser.ios_version
+        # Monkey-patch SampleParser to require an impossibly high iOS version
+        original_ios_version = SampleParser.ios_version
         try:
-            DemoParser.ios_version = ">=99.0"
+            SampleParser.ios_version = ">=99.0"
 
-            parser = DemoParser(self.sd.config, case=case)
+            parser = SampleParser(self.sd.config, case=case)
             parser.save_result(force=True)
 
             summary = parser.get_result_summary()
@@ -200,16 +199,14 @@ class TestVersionCompatibilitySkipIntegration(SysdiagnoseTestCase):
             result = parser.get_result()
             self.assertEqual(result, [])
         finally:
-            DemoParser.ios_version = original_ios_version
+            SampleParser.ios_version = original_ios_version
 
     def test_compatible_parser_executes_normally(self):
         """A parser with ios_version='*' should execute normally."""
         case_id = self.sd.get_case_ids()[0]
         case = self.sd.cases()[case_id]
 
-        from sysdiagnose.parsers.demo_parser import DemoParser
-
-        parser = DemoParser(self.sd.config, case=case)
+        parser = SampleParser(self.sd.config, case=case)
         self.assertEqual(parser.ios_version, "*")
 
         parser.save_result(force=True)
@@ -223,21 +220,19 @@ class TestVersionCompatibilitySkipIntegration(SysdiagnoseTestCase):
         case_id = self.sd.get_case_ids()[0]
         case = self.sd.cases()[case_id]
 
-        from sysdiagnose.parsers.demo_parser import DemoParser
-
-        original_ios_version = DemoParser.ios_version
+        original_ios_version = SampleParser.ios_version
         try:
             # Set to a range that includes all known iOS versions in test data
-            DemoParser.ios_version = ">=10.0"
+            SampleParser.ios_version = ">=10.0"
 
-            parser = DemoParser(self.sd.config, case=case)
+            parser = SampleParser(self.sd.config, case=case)
             parser.save_result(force=True)
 
             summary = parser.get_result_summary()
             self.assertNotEqual(summary.status, ExecutionStatus.SKIPPED)
             self.assertGreater(summary.num_events, 0)
         finally:
-            DemoParser.ios_version = original_ios_version
+            SampleParser.ios_version = original_ios_version
 
 
 if __name__ == "__main__":
