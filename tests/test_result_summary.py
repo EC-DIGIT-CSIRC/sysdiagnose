@@ -2,17 +2,16 @@ import os
 import unittest
 from datetime import datetime
 
-from sysdiagnose.analysers.demo_analyser import DemoAnalyser
-from sysdiagnose.parsers.demo_parser import DemoParser
 from sysdiagnose.utils.summary import ExecutionStatus
 from tests import SysdiagnoseTestCase
+from tests.fixtures import SampleAnalyser, SampleParser
 
 
 class TestResultSummary(SysdiagnoseTestCase):
-    def test_demo_parser_summary_roundtrip(self):
+    def test_parser_summary_roundtrip(self):
         _case = next(iter(self.sd.cases().values()))
 
-        parser = DemoParser(self.sd.config, case=_case)
+        parser = SampleParser(self.sd.config, case=_case)
         parser.save_result(force=True)
 
         self.assertTrue(os.path.isfile(parser.summary_file))
@@ -26,7 +25,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNotNone(summary.duration)
         self.assertGreaterEqual(summary.duration, 0)
 
-        cached_parser = DemoParser(self.sd.config, case=_case)
+        cached_parser = SampleParser(self.sd.config, case=_case)
         result = cached_parser.get_result()
         self.assertEqual(len(result), 1)
 
@@ -36,14 +35,14 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsInstance(cached_summary.start_time, datetime)
         self.assertIsNotNone(cached_summary.duration)
 
-    def test_demo_parser_summary_fallback_without_sidecar(self):
+    def test_parser_summary_fallback_without_sidecar(self):
         _case = next(iter(self.sd.cases().values()))
 
-        parser = DemoParser(self.sd.config, case=_case)
+        parser = SampleParser(self.sd.config, case=_case)
         parser.save_result(force=True)
         os.remove(parser.summary_file)
 
-        cached_parser = DemoParser(self.sd.config, case=_case)
+        cached_parser = SampleParser(self.sd.config, case=_case)
         result = cached_parser.get_result()
         self.assertEqual(len(result), 1)
 
@@ -55,10 +54,10 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsNone(summary.start_time)
         self.assertIsNone(summary.duration)
 
-    def test_demo_analyser_summary_roundtrip(self):
+    def test_analyser_summary_roundtrip(self):
         _case = next(iter(self.sd.cases().values()))
 
-        analyser = DemoAnalyser(self.sd.config, case=_case)
+        analyser = SampleAnalyser(self.sd.config, case=_case)
         analyser.save_result(force=True)
 
         self.assertTrue(os.path.isfile(analyser.output_file))
@@ -72,7 +71,7 @@ class TestResultSummary(SysdiagnoseTestCase):
         self.assertIsInstance(summary.start_time, datetime)
         self.assertIsNotNone(summary.duration)
 
-        cached_analyser = DemoAnalyser(self.sd.config, case=_case)
+        cached_analyser = SampleAnalyser(self.sd.config, case=_case)
         result = cached_analyser.get_result()
         self.assertEqual(result, {"foo": "bar"})
 

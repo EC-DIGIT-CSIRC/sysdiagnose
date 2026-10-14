@@ -4,13 +4,15 @@
 
 The Sysdiagnose Analysis Framework (SAF) is a framework that can be used to convert the Apple sysdiagnose diagnostic archive data to a structured and machine readable format so it can be used for data and forensic analytics on iOS mobile.
 
-You may find this code on: 
-- https://github.com/ec-DIGIT-CSIRC/sysdiagnose
-- https://code.europa.eu/ec-digit-s2/mobilesecurity/sysdiagnose
+You may find this code on:
+
+- <https://github.com/ec-DIGIT-CSIRC/sysdiagnose>
+- <https://code.europa.eu/ec-digit-s2/mobilesecurity/sysdiagnose>
 
 # Supported iOS versions
 
 Tested on:
+
 - python 3.11
 - iOS13 (to be confirmed)
 - iOS14 (to be confirmed)
@@ -19,7 +21,7 @@ Tested on:
 - iOS17
 - iOS18
 - iOS26
-  
+
 # Installation
 
 Note that you will need Python 3.11 or higher.
@@ -33,7 +35,8 @@ Create a virtual environment and install dependencies:
  sudo apt install graphviz
  ```
 
- On MacOS (Apple Silicon):
+ On macOS (Apple Silicon):
+
 ```bash
  python3 -m venv venv
  source venv/bin/activate
@@ -48,15 +51,16 @@ On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser.
 # Quickstart
 
 ## Training material
+
 During the [hack.lu](https://hack.lu) conference a workshop training session was given.
-You may find the training materials here: https://tinyurl.com/hacklu2025ios
+You may find the training materials here: <https://tinyurl.com/hacklu2025ios>
 
 ## Case management
 
 Creating a new case, with the optional `-c` parameter if you want to specify the case number yourself. (such as an uuid)
 
 ```bash
-$ sysdiag create test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
+$ saf create test-data/iOS12/sysdiagnose_2019.02.13_15-50-14+0100_iPhone_OS_iPhone_16C101.tar.gz
 
 Sysdiagnose file has been processed
 Case ID: 1
@@ -65,7 +69,7 @@ Case ID: 1
 Listing existing cases can be done easily:
 
 ```bash
-$ sysdiag cases
+$ saf cases
 Case ID              acquisition date           Serial number    Unique device ID                          iOS Version    Tags
 -------------------  -------------------------  ---------------  ----------------------------------------  -------------  ------
 public               2023-05-24T13:29:15-07:00  F4GT2K24HG7K     e22f7f830e5dcc1287a1690a2622c2b12afaa33c  <unknown>
@@ -76,7 +80,7 @@ You can change this using the environment variable `SYSDIAGNOSE_CASES_PATH`, for
 
 ```bash
 $ export SYSDIAGNOSE_CASES_PATH='/path/to/folder'
-$ sysdiag list cases
+$ saf list cases
 ```
 
 ## Parsing data and converting it to a usable format
@@ -86,10 +90,10 @@ Data of sysdiagnose is not always usable directly, use parsers to convert them t
 Run parsers:
 
 ```bash
-$ sysdiag -c 1 parse ps
+$ saf -c 1 parse ps
 Execution success, output saved in: cases/1/parsed_data/ps.json
 
-$ sysdiag -c 1 parse sys
+$ saf -c 1 parse sys
 Execution success, output saved in: cases/1/parsed_data/sys.json
 ```
 
@@ -98,7 +102,7 @@ To run on all cases do not specify a case number or use `-c all`.
 List available parsers :
 
 ```bash
-$ sysdiag list parsers
+$ saf list parsers
 Parser Name            Parser Description
 ---------------------  ---------------------------------------------------------------------
 all                    Run all parsers
@@ -107,7 +111,6 @@ appinstallation        Parsing app installation logs
 brctl                  Parsing brctl files
 containermanager       Parsing containermanagerd logs file
 crashlogs              Parsing crashes folder
-demo_parser            Demo parsers
 itunesstore            Parsing iTunes store logs
 lockdownd              Parsing lockdownd logs file
 logarchive             Parsing system_logs.logarchive folder
@@ -139,12 +142,11 @@ wifisecurity           Parsing WiFi Security logs
 List analysers:
 
 ```bash
-$ sysdiag list analysers
+$ saf list analysers
 Analyser Name         Analyser Description
 --------------------  -------------------------------------------------------------------------------
 all                   Run all analysers
 apps                  Get list of Apps installed on the device
-demo_analyser         Do something useful (DEMO)
 ps_everywhere         List all processes we can find a bit everywhere.
 ps_matrix             Makes a matrix comparing ps, psthread, taskinfo
 timesketch            Generate a Timesketch compatible timeline
@@ -156,7 +158,7 @@ yarascan              Scan the case folder using YARA rules ('./yara' or SYSDIAG
 Run analyser (make sure you run `parse all` before)
 
 ```bash
-$ sysdiag -c 1 analyse timesketch
+$ saf -c 1 analyse timesketch
 Execution success, output saved in: cases/1/parsed_data/timesketch.jsonl
 ```
 
@@ -185,18 +187,35 @@ Using YARA rules are an easy and flexible way of spotting 'evil', the Yarascan a
 
 # UnifiedLogs
 
-This unifiedlogs parser tool is natively provided on a MacOS system. Fortunately some entities developed a linux compatible parser.
+This unifiedlogs parser tool is natively provided on a macOS system. Fortunately some entities developed a linux compatible parser.
 
 By default sysdiagnose will use the Apple unifiedlogs `log` binary.
+
 On linux it expects the Mandiant developed UnifiedLogs tool to be present in the path. Follow below instructions to compile and install it on your system.
 
 ## Building macos-UnifiedLogs for linux
 
 First, ensure `cargo` is installed so you can build rust projects.
 
-```bash
-sudo apt install cargo
-```
+1. Install rustup (this installs the latest stable toolchain too):
+
+    ```bash
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+
+    Take the default installation option when prompted.
+
+2. Load rustup into your current shell (or just open a new terminal):
+
+    ```bash
+    source "$HOME/.cargo/env"
+    ```
+
+3. Confirm you're on a new enough version:
+
+    ```bash
+    cargo --version
+    ```
 
 Now you can download and compile the code:
 
@@ -219,7 +238,7 @@ You will be able to identify the execution of a parser/analyser by, at least, tw
 
 In between those two entries, you may see any other produced by the parser/analyser, where the module, this time, will match the parser/analyser name.
 
-__Note:__ It is of utmost important that the parser/analyser provides logging to help troubleshooting potential issues. Please take a look to the [demo_parser](src/sysdiagnose/parsers/demo_parser.py) and the [demo_analyser](src/sysdiagnose/analysers/demo_analyser.py) files for inspiration.
+__Note:__ It is of utmost important that the parser/analyser provides logging to help troubleshooting potential issues. Please take a look to the [demo_parser](docs/samples/parsers/demo_parser.py) and the [demo_analyser](docs/samples/analysers/demo_analyser.py) reference samples for inspiration.
 
 Below you can find an example of traces within the log file.
 
@@ -231,7 +250,6 @@ Below you can find an example of traces within the log file.
 
 ```
 
-
 # Contributors
 
 - Dario BORREGUERO RINCON (European Commission - EC DIGIT Cybersecurity Operation Centre)
@@ -240,9 +258,9 @@ Below you can find an example of traces within the log file.
 - Christophe VANDEPLAS (European Commission - EC DIGIT Cybersecurity Operation Centre)
 - Emilien  LE JAMTEL (CERT-EU)
 - Benoît ROUSSILLE (European Parliament)
-- For the Apollo library: https://github.com/mac4n6/APOLLO
+- For the Apollo library: <https://github.com/mac4n6/APOLLO>
 
 # Licence
 
 This project is released under the European Public Licence
-https://commission.europa.eu/content/european-union-public-licence_en
+<https://commission.europa.eu/content/european-union-public-licence_en>
