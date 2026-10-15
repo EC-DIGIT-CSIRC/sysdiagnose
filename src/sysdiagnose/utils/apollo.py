@@ -199,7 +199,7 @@ class Apollo:
                         results.append(event.to_dict())
                     except TypeError:
                         # problem with timestamp parsing
-                        self.logger.info(
+                        self.logger.warning(
                             f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
                             extra={"apollo_module": module_query["name"], "table": db_fname, "row": list(row)},
                         )
