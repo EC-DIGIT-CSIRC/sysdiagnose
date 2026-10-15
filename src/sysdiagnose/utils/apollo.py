@@ -158,7 +158,8 @@ class Apollo:
                     rows = cur.fetchall()
                 except Exception as ex:
                     self.logger.info(
-                        f"WARNING: Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
+                    self.logger.warning(
+                        f"Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
                         extra={"apollo_module": module_query["name"]},
                     )
                     continue
