@@ -199,11 +199,24 @@ class Sysdiagnose:
         from sysdiagnose.parsers.sys import SystemVersionParser
 
         if os.path.isdir(source_file):
-            # First try remotectl_dumpstate method
+            # Both are consumed below and by the ioreg/SystemVersion fallback, so they must always be
+            # bound -- otherwise a failure here raises UnboundLocalError and the fallback is unreachable.
+            sysdiagnose_date_utc = None
+            remotectl_dumpstate_json = None
+
+            # The date and the dumpstate come from different files: a failure to read one must not
+            # discard the other.
             try:
                 sysdiagnose_log_file = os.path.join(source_file, "sysdiagnose.log")
                 sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
                 sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+            except Exception as e:
+                logger.warning(
+                    f"Problem while processsing folder {source_file} for sysdiagnose.log: {e!s}", exc_info=True
+                )
+
+            # First try remotectl_dumpstate method
+            try:
                 remotectl_dumpstate_file = os.path.join(source_file, "remotectl_dumpstate.txt")
                 remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
             except Exception as e:
