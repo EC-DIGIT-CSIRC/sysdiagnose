@@ -25,7 +25,15 @@ class WifiGeolocationKmlAnalyser(BaseAnalyserInterface):
     @staticmethod
     def generate_kml_from_known_networks_json(json_data: dict) -> str:
         """Generates KML XML string from known networks JSON data."""
-        kml = ET.Element("kml", xmlns="http://www.opengis.net/kml/2.2")
+        # the gx: prefix is used below (gx:Tour, gx:Playlist, gx:FlyTo, ...), so its namespace
+        # has to be declared on the root element or the document is not namespace-well-formed
+        kml = ET.Element(
+            "kml",
+            {
+                "xmlns": "http://www.opengis.net/kml/2.2",
+                "xmlns:gx": "http://www.google.com/kml/ext/2.2",
+            },
+        )
         document = ET.SubElement(kml, "Document")
 
         # Add tour elements
