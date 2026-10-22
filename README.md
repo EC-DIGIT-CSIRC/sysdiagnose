@@ -53,7 +53,7 @@ On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser.
 ## Training material
 
 During the [hack.lu](https://hack.lu) conference a workshop training session was given.
-You may find the training materials here: <https://tinyurl.com/hacklu2025ios>
+You may find the training materials here: <https://tinyurl.com/hacklu2026ios>
 
 ## Case management
 
