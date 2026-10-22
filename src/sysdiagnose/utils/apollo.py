@@ -68,6 +68,7 @@ import sqlite3
 from datetime import UTC, datetime
 
 from sysdiagnose.utils.base import Event
+from sysdiagnose.utils.misc import json_serializable
 
 default_mod_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apollo_modules")
 
@@ -156,8 +157,8 @@ class Apollo:
                     cur.execute(module_query["sql"])
                     rows = cur.fetchall()
                 except Exception as ex:
-                    self.logger.info(
-                        f"WARNING: Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
+                    self.logger.warning(
+                        f"Cannot fetch query contents for query with name: {module_query['name']} due to {ex}",
                         extra={"apollo_module": module_query["name"]},
                     )
                     continue
@@ -192,12 +193,13 @@ class Apollo:
                             ),
                             module=self.saf_module,
                             timestamp_desc=module_query["activity"],
-                            data=item,
+                            # sqlite BLOB columns come back as bytes, which json.dumps cannot encode
+                            data=json_serializable(item),
                         )
                         results.append(event.to_dict())
                     except TypeError:
                         # problem with timestamp parsing
-                        self.logger.info(
+                        self.logger.warning(
                             f"Problem with timestamp parsing for table {db_fname}, row {list(row)}",
                             extra={"apollo_module": module_query["name"], "table": db_fname, "row": list(row)},
                         )
