@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 import tarfile
@@ -70,6 +71,48 @@ class TestSysdiagnose(SysdiagnoseTestCase):
 
         finally:
             # Ensure the temporary directory is cleaned up after the test
+            shutil.rmtree(temp_dir)
+
+    def test_read_only_use_creates_no_cases_folder(self):
+        # Instantiating Sysdiagnose and listing cases in a directory without any
+        # cases must not create the cases folder or cases.json on disk.
+        try:
+            temp_dir = tempfile.mkdtemp()
+            cases_path = os.path.join(temp_dir, "cases")
+            sd = Sysdiagnose(cases_path=cases_path)
+            self.assertFalse(os.path.exists(cases_path), "cases folder should not be created on instantiation")
+
+            self.assertEqual(sd.cases(), {})
+            self.assertEqual(sd.get_case_ids(), [])
+
+            self.assertFalse(os.path.exists(cases_path), "cases folder should not be created by read-only use")
+            self.assertFalse(os.path.exists(os.path.join(cases_path, "cases.json")))
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_create_two_cases_keeps_cases_json_valid(self):
+        # Regression test: creating a second case must overwrite cases.json, not
+        # append a second JSON object to it (which corrupts the file).
+        try:
+            temp_dir = tempfile.mkdtemp()
+            cases_path = os.path.join(temp_dir, "cases")
+            sd = Sysdiagnose(cases_path=cases_path)
+
+            archives = sorted(glob.glob("tests/testdata*/**/*.tar.gz", recursive=True))[:2]
+            self.assertEqual(len(archives), 2, "need at least two test archives for this test")
+
+            sd.create_case(archives[0], case_id="one")
+            sd.create_case(archives[1], case_id="two")
+
+            # cases.json must still be valid JSON and contain both cases.
+            with open(os.path.join(cases_path, "cases.json")) as f:
+                data = json.load(f)
+            self.assertEqual(sorted(data.keys()), ["one", "two"])
+
+            # A fresh instance must read both cases back.
+            sd2 = Sysdiagnose(cases_path=cases_path)
+            self.assertEqual(sorted(sd2.get_case_ids()), ["one", "two"])
+        finally:
             shutil.rmtree(temp_dir)
 
     def test_init_case_logging(self):
