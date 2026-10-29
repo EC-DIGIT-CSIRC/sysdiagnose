@@ -22,10 +22,35 @@ externals = {
 class YaraAnalyser(BaseAnalyserInterface):
     description = "Scan the case folder using YARA rules ('./yara' or SYSDIAGNOSE_YARA_RULES_PATH)"
     format = "jsonl"
+    # This is a scanner: its output is findings, not a data source. Scanners do not scan
+    # each other's (or their own) output — see `scannable` on BaseInterface.
+    scannable = False
 
     def __init__(self, config: SysdiagnoseConfig, case: dict) -> None:
         super().__init__(__file__, config, case)
         self.yara_rules_path = os.getenv("SYSDIAGNOSE_YARA_RULES_PATH", "./yara")
+
+    def _scanner_output_files(self) -> list[str]:
+        """Return the parsed_data output paths of all scanner modules (scannable=False).
+
+        These are findings produced by scanners (e.g. sigmascan, and yarascan itself), not
+        data sources — yarascan must not scan them. Resolved dynamically from SAF discovery
+        so a new scanner is excluded automatically (no hardcoded cross-reference).
+
+        Each path is taken from the module's own ``output_file`` (the canonical location set
+        by ``BaseInterface``), rather than reconstructed here, so there is a single source of
+        truth for where a module writes its output.
+        """
+        paths = []
+        for name in list(self.config.get_parsers()) + list(self.config.get_analysers()):
+            cls = self.config.get_module_class(name)
+            if cls is None or getattr(cls, "scannable", True):
+                continue
+            try:
+                paths.append(cls(self.config, self.case).output_file)
+            except Exception:
+                logger.exception(f"Could not resolve output_file for scanner module {name}")
+        return paths
 
     # Question: What is the impact of externals? (single threaded)
     # - timing without externals at all   : 1m30 - we discard a few (useful?) rules, so faster? ...
@@ -38,9 +63,9 @@ class YaraAnalyser(BaseAnalyserInterface):
     def execute(self):
         file_queue = self.get_target_files(
             directories=[self.case_parsed_data_folder, self.case_data_folder],
-            ignore_files=[
-                self.output_file,  # don't match on ourselves
-            ],
+            # Don't scan scanner outputs (our own + other scanners like sigmascan) — they are
+            # findings, not data sources. _scanner_output_files() includes self.output_file.
+            ignore_files=self._scanner_output_files(),
             ignore_folders=[
                 glob.glob(
                     os.path.join(self.case_data_subfolder, "system_logs.logarchive")

@@ -1,6 +1,7 @@
 # generated data
 cases/*
 yara/*
+sigma/*
 not_yet_parsed.txt
 
 # private test data
