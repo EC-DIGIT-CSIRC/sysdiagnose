@@ -1,10 +1,38 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 import argparse
 import os
 import sys
 
+import argcomplete
+
 from sysdiagnose import Sysdiagnose
 from sysdiagnose.utils.logger import logger, set_console_logging
+
+
+def _complete_case_ids(prefix: str, **kwargs) -> list[str]:
+    """Tab-completion for case IDs. Returns the available case IDs plus "all"."""
+    try:
+        return ["all", *Sysdiagnose().get_case_ids()]
+    except Exception:
+        # Completion must never crash the shell; fall back to no suggestions.
+        return []
+
+
+def _complete_parsers(prefix: str, **kwargs) -> list[str]:
+    """Tab-completion for parser names, plus the "all" and "list" keywords."""
+    try:
+        return ["all", "list", *Sysdiagnose().config.get_parsers().keys()]
+    except Exception:
+        return []
+
+
+def _complete_analysers(prefix: str, **kwargs) -> list[str]:
+    """Tab-completion for analyser names, plus the "all" and "list" keywords."""
+    try:
+        return ["all", "list", *Sysdiagnose().config.get_analysers().keys()]
+    except Exception:
+        return []
 
 
 def parse_parser_error(message: str) -> None:
@@ -30,13 +58,14 @@ def main() -> None:
         prog="sysdiag", description="Sysdiagnose Analysis Framework - parsing and analysis"
     )
     # available for all
-    parser.add_argument(
+    case_id_arg = parser.add_argument(
         "-c",
         "--case_id",
         required=False,
         default="all",
         help='ID of the case, comma-separated list of IDs, or "all" for all cases (default)',
     )
+    case_id_arg.completer = _complete_case_ids
     parser.add_argument(
         "-l",
         "--log",
@@ -62,9 +91,10 @@ def main() -> None:
 
     # parse mode
     parse_parser = subparsers.add_parser("parse", help="Parse a case")
-    parse_parser.add_argument(
+    parse_parser_arg = parse_parser.add_argument(
         "parser", help='Name of the parser, "all" for running all parsers, or "list" for a listing of all parsers'
     )
+    parse_parser_arg.completer = _complete_parsers
     parse_parser.add_argument(
         "-x", "--exclude", help='Exclude specific parsers (comma separated) (in case using "all")', required=False
     )
@@ -72,10 +102,11 @@ def main() -> None:
 
     # analyse mode
     analyse_parser = subparsers.add_parser("analyse", help="Analyse a case")
-    analyse_parser.add_argument(
+    analyse_parser_arg = analyse_parser.add_argument(
         "analyser",
         help='Name of the analyser, "all" for running all analysers, or "list" for a listing of all analysers',
     )
+    analyse_parser_arg.completer = _complete_analysers
     analyse_parser.add_argument(
         "-x", "--exclude", help='Exclude specific analysers (comma separated) (in case using "all")', required=False
     )
@@ -93,7 +124,9 @@ def main() -> None:
     subparsers.add_parser("parsers", help="List parsers")
     subparsers.add_parser("analysers", help="List analysers")
 
-    parser.parse_args()
+    # Enable shell tab-completion (no-op unless running under the completion hook).
+    # Must be called after the parser is fully built and before parse_args().
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
 
