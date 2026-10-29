@@ -58,55 +58,66 @@ class SysdiagnoseConfig:
         os.makedirs(logs_data_folder, exist_ok=True)
         return logs_data_folder
 
-    def get_parsers(self) -> dict:
-        modules = glob.glob(os.path.join(self.parsers_folder, "*.py"))
-        results = {}
-        for item in modules:
+    @staticmethod
+    def _resolve_class(package: str, name: str, base: type) -> type | None:
+        """Import ``sysdiagnose.<package>.<name>`` and return its ``base`` subclass.
+
+        Returns the first class defined in the module that is a strict subclass of ``base``
+        (i.e. the module's parser/analyser implementation), or ``None`` if the module cannot
+        be imported or contains no such class.
+        """
+        try:
+            module = importlib.import_module(f"sysdiagnose.{package}.{name}")
+        except (ImportError, AttributeError):
+            return None
+        for attr in dir(module):
+            obj = getattr(module, attr)
+            if isinstance(obj, type) and issubclass(obj, base) and obj is not base:
+                return obj
+        return None
+
+    @staticmethod
+    def _discover_names(folder: str) -> list[str]:
+        """Return the module names (file stems) of all non-dunder ``*.py`` files in ``folder``."""
+        names = []
+        for item in glob.glob(os.path.join(folder, "*.py")):
             if item.endswith("__init__.py"):
                 continue
-            try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f"sysdiagnose.parsers.{name}")
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BaseParserInterface)
-                        and obj is not BaseParserInterface
-                    ):
-                        results[name] = obj.description
-                        break
-            except AttributeError:
-                continue
+            names.append(os.path.splitext(os.path.basename(item))[0])
+        return names
 
-        results = dict(sorted(results.items()))
-        return results
+    def get_parser_class(self, name: str) -> type | None:
+        """Resolve a parser module name to its ``BaseParserInterface`` subclass (or ``None``)."""
+        return self._resolve_class("parsers", name, BaseParserInterface)
+
+    def get_analyser_class(self, name: str) -> type | None:
+        """Resolve an analyser module name to its ``BaseAnalyserInterface`` subclass (or ``None``)."""
+        return self._resolve_class("analysers", name, BaseAnalyserInterface)
+
+    def get_module_class(self, name: str) -> type | None:
+        """Resolve a module name to its producing class, trying parser first then analyser.
+
+        A SAF "module" (an output ``parsed_data/<name>.jsonl``) may be produced by a parser
+        or an analyser. Resolution precedence is parser-first, then analyser. Returns
+        ``None`` if ``name`` is neither a known parser nor a known analyser.
+        """
+        return self.get_parser_class(name) or self.get_analyser_class(name)
+
+    def get_parsers(self) -> dict:
+        results = {}
+        for name in self._discover_names(self.parsers_folder):
+            cls = self.get_parser_class(name)
+            if cls is not None:
+                results[name] = cls.description
+        return dict(sorted(results.items()))
 
     def get_analysers(self) -> dict:
-        modules = glob.glob(os.path.join(self.analysers_folder, "*.py"))
         results = {}
-        for item in modules:
-            if item.endswith("__init__.py"):
-                continue
-            try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f"sysdiagnose.analysers.{name}")
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BaseAnalyserInterface)
-                        and obj is not BaseAnalyserInterface
-                    ):
-                        results[name] = obj.description
-                        break
-            except AttributeError:
-                continue
-
-        results = dict(sorted(results.items()))
-        return results
+        for name in self._discover_names(self.analysers_folder):
+            cls = self.get_analyser_class(name)
+            if cls is not None:
+                results[name] = cls.description
+        return dict(sorted(results.items()))
 
 
 class BaseInterface(ABC):
@@ -114,6 +125,11 @@ class BaseInterface(ABC):
     format = "json"  # implementation should set this
     json_pretty = True  # implementation should set this to false for large data sets
     ios_version = "*"  # PEP 440 version specifier for compatible iOS versions (e.g. ">=17.0", ">=14.0,<17.0")
+    # Whether this module's output is a scannable data source. Scanners (e.g. yarascan,
+    # sigmascan) that produce findings over other modules' output set this to False so that
+    # scanners do not scan each other's (or their own) output. Every normal parser/analyser
+    # leaves it True.
+    scannable = True
 
     def __init__(self, module_filename: str, config: SysdiagnoseConfig, case: dict) -> None:
         self.config = config
