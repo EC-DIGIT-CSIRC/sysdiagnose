@@ -29,6 +29,13 @@ class Sysdiagnose:
         # kinda caching, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
+            # If there is no cases file yet, report an empty set without creating
+            # the cases folder, the cases.json file, or a lock file. Reading the
+            # (non-existent) case list must not have side effects on disk.
+            if not os.path.exists(self.config.cases_file):
+                self._cases = {}
+                return self._cases
+
             lock = FileLock(self.config.cases_file)
             try:
                 lock.acquire()
@@ -45,9 +52,10 @@ class Sysdiagnose:
                         json.dump(self._cases, f, indent=4, sort_keys=True)
                         f.truncate()
             except FileNotFoundError:
+                # No cases file yet: report an empty set in memory without
+                # creating the cases folder or an empty cases.json on disk.
+                # The file is only written when a case is actually created.
                 self._cases = {}
-                with open(self.config.cases_file, "w") as f:
-                    json.dump(self._cases, f, indent=4)
             finally:
                 lock.release()
 
@@ -174,12 +182,21 @@ class Sysdiagnose:
         lock = FileLock(self.config.cases_file)
         try:
             lock.acquire()
-            with open(self.config.cases_file, "r+") as f:
-                self._cases = json.load(f)  # load latest version
-                self._cases[case["case_id"]] = case  # update own case
-                f.seek(0)  # go back to the beginning of the file
+            # Load the latest version if the file already exists; otherwise start
+            # fresh. cases.json is no longer created eagerly when Sysdiagnose is
+            # instantiated, so it may not exist yet on the first case creation.
+            # Note: do not use "a+" here — on Linux O_APPEND forces every write to
+            # the end of the file regardless of seek(), which would append a second
+            # JSON object instead of overwriting and corrupt cases.json.
+            try:
+                with open(self.config.cases_file) as f:
+                    self._cases = json.load(f)
+            except FileNotFoundError:
+                self._cases = {}
+
+            self._cases[case["case_id"]] = case  # update own case
+            with open(self.config.cases_file, "w") as f:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()  # truncate the rest of the file ensuring no old data is left
         finally:
             lock.release()
 

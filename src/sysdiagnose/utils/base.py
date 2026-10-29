@@ -32,7 +32,11 @@ class SysdiagnoseConfig:
         # case data is in current working directory by default
         self.cases_root_folder = cases_path
         self.cases_file = os.path.join(self.cases_root_folder, "cases.json")
-        os.makedirs(self.cases_root_folder, exist_ok=True)
+        # Note: the cases root folder is intentionally NOT created here.
+        # It is created lazily when case data is actually written (via the
+        # get_case_*_folder helpers below). This avoids creating an empty
+        # "cases" folder (and cases.json) merely by instantiating Sysdiagnose,
+        # e.g. when listing parsers/analysers or printing help.
 
     def get_case_root_folder(self, case_id: str) -> str:
         case_root_folder = os.path.join(self.cases_root_folder, case_id)
