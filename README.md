@@ -48,6 +48,36 @@ Create a virtual environment and install dependencies:
 
 On linux systems you may wish to install the [unifiedlogs](#unifiedlogs) parser. See below for instructions how to do this.
 
+## Shell completion (optional)
+
+The `saf` / `sysdiag` commands support tab-completion for subcommands, options,
+and dynamic values (case IDs, parser names and analyser names) via
+[argcomplete](https://kislyuk.github.io/argcomplete/). Completion is not active
+until you enable it once in your shell.
+
+Easiest option, enable global completion for all argcomplete-aware tools (bash),
+then restart your shell:
+
+```bash
+activate-global-python-argcomplete
+```
+
+Alternatively, enable it only for `saf` and `sysdiag` by adding this to your
+`~/.bashrc` (bash) or `~/.zshrc` (zsh, after `autoload -U bashcompinit && bashcompinit`):
+
+```bash
+eval "$(register-python-argcomplete saf)"
+eval "$(register-python-argcomplete sysdiag)"
+```
+
+Once enabled, pressing `<Tab>` completes commands and values, for example:
+
+```bash
+$ saf parse <Tab>        # lists all parsers (plus "all" and "list")
+$ saf -c <Tab>           # lists existing case IDs (plus "all")
+$ saf analyse <Tab>      # lists all analysers (plus "all" and "list")
+```
+
 # Quickstart
 
 ## Training material
