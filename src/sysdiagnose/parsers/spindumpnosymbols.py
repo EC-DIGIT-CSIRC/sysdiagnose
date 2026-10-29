@@ -41,54 +41,48 @@ class SpindumpNoSymbolsParser(BaseParserInterface):
 
     @staticmethod
     def parse_file(path: str) -> list:
-        try:
-            with open(path) as f_in:
-                # init section
-                headers = []
-                processes_raw = []
-                status = "headers"
+        with open(path) as f_in:
+            # init section
+            headers = []
+            processes_raw = []
+            status = "headers"
 
-                # stripping
-                for line in f_in:
-                    if line.strip() == "No samples":
-                        status = "empty"
-                        # Since the rest is just 'binary format', we ignore the rest of the file.
-                        break
-                    elif (
-                        line.strip() == ""
-                        or line.strip() == "Heavy format: stacks are sorted by count"
-                        or line.strip() == "Use -i and -timeline to re-report with chronological sorting"
-                    ):
-                        continue
-                    elif line.strip() == "------------------------------------------------------------":
-                        status = "processes_raw"
-                        continue
-                    elif line.strip() == "Spindump binary format":
-                        status = "binary"
-                        continue
-                    elif status == "headers":
-                        headers.append(line.strip())
-                        continue
-                    elif status == "processes_raw":
-                        processes_raw.append(line.strip())
-                        continue
+            # stripping
+            for line in f_in:
+                if line.strip() == "No samples":
+                    status = "empty"
+                    # Since the rest is just 'binary format', we ignore the rest of the file.
+                    break
+                elif (
+                    line.strip() == ""
+                    or line.strip() == "Heavy format: stacks are sorted by count"
+                    or line.strip() == "Use -i and -timeline to re-report with chronological sorting"
+                ):
+                    continue
+                elif line.strip() == "------------------------------------------------------------":
+                    status = "processes_raw"
+                    continue
+                elif line.strip() == "Spindump binary format":
+                    status = "binary"
+                    continue
+                elif status == "headers":
+                    headers.append(line.strip())
+                    continue
+                elif status == "processes_raw":
+                    processes_raw.append(line.strip())
+                    continue
 
-                # call parsing function per section
-                events = []
-                if status != "empty":
-                    basic = SpindumpNoSymbolsParser.parse_basic(headers)
-                    basic["message"] = f"spindump {basic['data']['data_source']}"
-                    events.append(basic)
-                    events.extend(
-                        SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic["datetime"])
-                    )
-                # Logging
-                logger.debug(f"{len(events)} events retrieved", extra={"num_events": len(events)})
+            # call parsing function per section
+            events = []
+            if status != "empty":
+                basic = SpindumpNoSymbolsParser.parse_basic(headers)
+                basic["message"] = f"spindump {basic['data']['data_source']}"
+                events.append(basic)
+                events.extend(SpindumpNoSymbolsParser.parse_processes(processes_raw, start_timestamp=basic["datetime"]))
+            # Logging
+            logger.debug(f"{len(events)} events retrieved", extra={"num_events": len(events)})
 
-                return events
-
-        except IndexError:
-            return []
+            return events
 
     @staticmethod
     def parse_basic(data: list) -> dict:

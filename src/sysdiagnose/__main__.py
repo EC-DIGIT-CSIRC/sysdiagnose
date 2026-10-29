@@ -197,6 +197,14 @@ def main() -> None:
                         extra={"parser": parser, "result": "skipped"},
                     )
                     continue
+                except Exception:
+                    # a crash in one parser must not abort the remaining parsers or the remaining cases
+                    logger.exception(
+                        f"Parser '{parser}' crashed, skipping",
+                        extra={"parser": parser, "result": "error"},
+                    )
+                    print("  → crashed, see log")
+                    continue
                 duration_str = f" ({summary.duration:.2f}s)" if summary.duration is not None else ""
                 print(
                     f"  → {summary.status}: {summary.num_events} events, {summary.num_errors} errors, {summary.num_warnings} warnings{duration_str}"  # noqa: E501
@@ -249,6 +257,14 @@ def main() -> None:
                         f"Analyser '{analyser}' is not implemented yet, skipping",
                         extra={"analyser": analyser, "result": "skipped"},
                     )
+                    continue
+                except Exception:
+                    # a crash in one analyser must not abort the remaining analysers or the remaining cases
+                    logger.exception(
+                        f"Analyser '{analyser}' crashed, skipping",
+                        extra={"analyser": analyser, "result": "error"},
+                    )
+                    print("  → crashed, see log")
                     continue
                 duration_str = f" ({summary.duration:.2f}s)" if summary.duration is not None else ""
                 print(

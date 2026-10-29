@@ -1,5 +1,18 @@
 #! /usr/bin/env python3
 
+# ---------------------------------------------------------------------------
+# REFERENCE SAMPLE — NOT part of the sysdiagnose package.
+#
+# This file is intentionally kept outside of `src/sysdiagnose/parsers/` so it
+# is NOT discovered by the framework, exposed via the CLI, packaged in the
+# wheel, or picked up by the test suite. It exists purely as a starting point
+# for developers writing a new parser.
+#
+# To turn it into a real parser: copy it into `src/sysdiagnose/parsers/`,
+# rename the class, and implement `get_log_files()` and `execute()`.
+# See docs/developer_guidelines.md for the full contract.
+# ---------------------------------------------------------------------------
+
 import os
 from datetime import datetime
 

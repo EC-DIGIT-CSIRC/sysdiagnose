@@ -29,6 +29,13 @@ class Sysdiagnose:
         # kinda caching, so it's not loaded unless necessary
         # load cases + migration of old cases format to new format
         if not self._cases or force:
+            # If there is no cases file yet, report an empty set without creating
+            # the cases folder, the cases.json file, or a lock file. Reading the
+            # (non-existent) case list must not have side effects on disk.
+            if not os.path.exists(self.config.cases_file):
+                self._cases = {}
+                return self._cases
+
             lock = FileLock(self.config.cases_file)
             try:
                 lock.acquire()
@@ -45,9 +52,10 @@ class Sysdiagnose:
                         json.dump(self._cases, f, indent=4, sort_keys=True)
                         f.truncate()
             except FileNotFoundError:
+                # No cases file yet: report an empty set in memory without
+                # creating the cases folder or an empty cases.json on disk.
+                # The file is only written when a case is actually created.
                 self._cases = {}
-                with open(self.config.cases_file, "w") as f:
-                    json.dump(self._cases, f, indent=4)
             finally:
                 lock.release()
 
@@ -174,12 +182,21 @@ class Sysdiagnose:
         lock = FileLock(self.config.cases_file)
         try:
             lock.acquire()
-            with open(self.config.cases_file, "r+") as f:
-                self._cases = json.load(f)  # load latest version
-                self._cases[case["case_id"]] = case  # update own case
-                f.seek(0)  # go back to the beginning of the file
+            # Load the latest version if the file already exists; otherwise start
+            # fresh. cases.json is no longer created eagerly when Sysdiagnose is
+            # instantiated, so it may not exist yet on the first case creation.
+            # Note: do not use "a+" here — on Linux O_APPEND forces every write to
+            # the end of the file regardless of seek(), which would append a second
+            # JSON object instead of overwriting and corrupt cases.json.
+            try:
+                with open(self.config.cases_file) as f:
+                    self._cases = json.load(f)
+            except FileNotFoundError:
+                self._cases = {}
+
+            self._cases[case["case_id"]] = case  # update own case
+            with open(self.config.cases_file, "w") as f:
                 json.dump(self._cases, f, indent=4, sort_keys=True)  # save the updated version
-                f.truncate()  # truncate the rest of the file ensuring no old data is left
         finally:
             lock.release()
 
@@ -199,11 +216,24 @@ class Sysdiagnose:
         from sysdiagnose.parsers.sys import SystemVersionParser
 
         if os.path.isdir(source_file):
-            # First try remotectl_dumpstate method
+            # Both are consumed below and by the ioreg/SystemVersion fallback, so they must always be
+            # bound -- otherwise a failure here raises UnboundLocalError and the fallback is unreachable.
+            sysdiagnose_date_utc = None
+            remotectl_dumpstate_json = None
+
+            # The date and the dumpstate come from different files: a failure to read one must not
+            # discard the other.
             try:
                 sysdiagnose_log_file = os.path.join(source_file, "sysdiagnose.log")
                 sysdiagnose_date = BaseInterface.get_sysdiagnose_creation_datetime_from_file(sysdiagnose_log_file)
                 sysdiagnose_date_utc = sysdiagnose_date.astimezone(UTC)
+            except Exception as e:
+                logger.warning(
+                    f"Problem while processsing folder {source_file} for sysdiagnose.log: {e!s}", exc_info=True
+                )
+
+            # First try remotectl_dumpstate method
+            try:
                 remotectl_dumpstate_file = os.path.join(source_file, "remotectl_dumpstate.txt")
                 remotectl_dumpstate_json = RemotectlDumpstateParser.parse_file(remotectl_dumpstate_file)
             except Exception as e:
