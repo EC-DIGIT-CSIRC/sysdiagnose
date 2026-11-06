@@ -1,10 +1,8 @@
-import builtins
 import io
 import os
 import tarfile
 import tempfile
 import unittest
-from unittest import mock
 
 from sysdiagnose import Sysdiagnose
 
@@ -20,13 +18,6 @@ def _add_symlink(tf: tarfile.TarFile, name: str, target: str) -> None:
     info.type = tarfile.SYMTYPE
     info.linkname = target
     tf.addfile(info)
-
-
-def _no_tar_filters(obj, name):
-    # simulates Python < 3.11.4, where tarfile has no extraction filters
-    if obj is tarfile and name == "data_filter":
-        return False
-    return builtins.hasattr(obj, name)
 
 
 class TestExtractTarSlip(unittest.TestCase):
@@ -104,19 +95,6 @@ class TestExtractTarSlip(unittest.TestCase):
 
     def test_benign_archive_extracts(self):
         self._assert_benign_archive_extracts()
-
-    def test_malicious_members_are_rejected_without_tar_filters(self):
-        with mock.patch("sysdiagnose.hasattr", create=True, side_effect=_no_tar_filters):
-            self._assert_rejected()
-
-    def test_benign_archive_extracts_without_tar_filters(self):
-        with mock.patch("sysdiagnose.hasattr", create=True, side_effect=_no_tar_filters):
-            self._assert_benign_archive_extracts()
-
-    def test_checked_tar_members_rejects_unsafe_members(self):
-        for label, (archive, _) in self._malicious_archives().items():
-            with self.subTest(archive=label), tarfile.open(archive) as tf, self.assertRaises(tarfile.TarError):
-                Sysdiagnose._checked_tar_members(tf)
 
 
 if __name__ == "__main__":

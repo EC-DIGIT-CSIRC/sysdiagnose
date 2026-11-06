@@ -407,36 +407,6 @@ class Sysdiagnose:
         signature = hashlib.sha256(concatenated_values.encode("utf-8")).hexdigest()
         return signature
 
-    @staticmethod
-    def _checked_tar_members(tf: tarfile.TarFile) -> list[tarfile.TarInfo]:
-        """
-        Validate every member of an untrusted archive before anything is extracted.
-
-        Only used on Python < 3.11.4, where tarfile has no extraction filters. Stricter than the
-        "data" filter so that it can be checked up front, without resolving links on disk: rejects
-        absolute paths and any ".." component in a member name or link target, and anything that is
-        not a regular file, directory or link (devices, FIFOs). Every link then points to its own
-        directory or below, so no chain of links can leave the destination folder.
-        setuid/setgid/sticky bits are dropped. Raises tarfile.TarError on the first unsafe member, so
-        the archive is rejected as a whole, as with the "data" filter.
-        """
-
-        def unsafe(path: str) -> bool:
-            return os.path.isabs(path) or ".." in Path(path).parts
-
-        members = []
-        for member in tf.getmembers():
-            if unsafe(member.name):
-                raise tarfile.TarError(f"Refusing to extract {member.name!r}: path is outside the case folder")
-            if member.issym() or member.islnk():
-                if unsafe(member.linkname):
-                    raise tarfile.TarError(f"Refusing to extract {member.name!r}: link points outside the case folder")
-            elif not (member.isfile() or member.isdir()):
-                raise tarfile.TarError(f"Refusing to extract {member.name!r}: not a regular file, directory or link")
-            member.mode &= 0o777
-            members.append(member)
-        return members
-
     def extract_sysdiagnose_files(self, sysdiagnose_file: str, destination_folder: str) -> None:
         """
         Extracts the sysdiagnose files from the given sysdiagnose file to the specified destination folder.
@@ -451,14 +421,12 @@ class Sysdiagnose:
         if os.path.isfile(sysdiagnose_file):
             try:
                 with tarfile.open(sysdiagnose_file) as tf:
-                    if hasattr(tarfile, "data_filter"):
-                        # Never filter=None: on Python 3.11.4-3.13 that resolves to the *fully trusted*
-                        # filter, which honours "..", absolute paths and escaping links.
-                        tf.extractall(path=destination_folder, filter="data")
-                    else:
-                        # Python < 3.11.4 has no extraction filters: validate every member by hand.
-                        members = Sysdiagnose._checked_tar_members(tf)
-                        tf.extractall(path=destination_folder, members=members)
+                    # The archive is untrusted input (it comes from a potentially compromised
+                    # device). `filter="data"` rejects absolute paths, ".." traversal, links
+                    # pointing outside the destination, device nodes and setuid/setgid bits.
+                    # It is the stable, supported API from Python 3.11.4 onwards (and the default
+                    # from 3.14), which is why `requires-python` is pinned to >=3.11.4.
+                    tf.extractall(path=destination_folder, filter="data")
             except Exception as e:
                 raise Exception(f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}") from e
 
