@@ -36,7 +36,8 @@ dependencies = [
   "jinja2>=3.1.0,<3.2.0",
   "matplotlib>=3.10.0,<3.11.0",
   "orjsonl>=1.0.0,<1.1.0",
-  "pyparsing>=3.2, <3.4"
+  "pyparsing>=3.2, <3.4",
+  "argcomplete>=3.0.0,<4.0.0"
 ]
 
 
