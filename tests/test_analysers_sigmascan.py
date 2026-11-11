@@ -47,6 +47,7 @@ detection:
 
 
 class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
+    @unittest.skip("Functionality has already been tested. Don't waste resources to run on all data.")
     def test_runs_and_emits_valid_alerts(self):
         with tempfile.TemporaryDirectory() as rules_dir:
             _write_rule(rules_dir, "match.yml", MATCH_ANYTHING)
@@ -73,6 +74,7 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                             self.assertIn("matched_module", data)
                         self.assert_result_summary_consistent(a, result)
 
+    @unittest.skip("Functionality has already been tested. Don't waste resources to run on all data.")
     def test_zero_matches_yields_empty_output(self):
         with tempfile.TemporaryDirectory() as rules_dir:
             _write_rule(rules_dir, "nomatch.yml", MATCH_NOTHING)

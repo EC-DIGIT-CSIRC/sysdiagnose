@@ -519,35 +519,25 @@ class Sysdiagnose:
         return case
 
     def parse(self, parser: str, case_id: str) -> ResultSummary:
-        # Load parser module
-        module = importlib.import_module(f"sysdiagnose.parsers.{parser}")
-        parser_instance = None
+        # Load parser module. A broken module raises out of get_parser_class (not silently
+        # skipped); an unknown name returns None and becomes a NotImplementedError below.
+        cls = self.config.get_parser_class(parser)
+        if cls is None:
+            raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
         case = self.cases().get(case_id, {"case_id": case_id})
         case = self._ensure_case_metadata(case)
-        # figure out the class name and create an instance of it
-        for attr in dir(module):
-            obj = getattr(module, attr)
-            if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                parser_instance: BaseParserInterface = obj(config=self.config, case=case)
-                break
-        if not parser_instance:
-            raise NotImplementedError(f"Parser '{parser}' does not exist or has problems")
+        parser_instance: BaseParserInterface = cls(config=self.config, case=case)
 
         parser_instance.save_result(force=True)  # force parsing
         return parser_instance.get_result_summary()
 
     def analyse(self, analyser: str, case_id: str) -> ResultSummary:
-        module = importlib.import_module(f"sysdiagnose.analysers.{analyser}")
-        analyser_instance = None
+        cls = self.config.get_analyser_class(analyser)
+        if cls is None:
+            raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")
         case = self.cases().get(case_id, {"case_id": case_id})
         case = self._ensure_case_metadata(case)
-        for attr in dir(module):
-            obj = getattr(module, attr)
-            if isinstance(obj, type) and issubclass(obj, BaseAnalyserInterface) and obj is not BaseAnalyserInterface:
-                analyser_instance: BaseAnalyserInterface = obj(config=self.config, case=case)
-                break
-        if not analyser_instance:
-            raise NotImplementedError(f"Analyser '{analyser}' does not exist or has problems")
+        analyser_instance: BaseAnalyserInterface = cls(config=self.config, case=case)
 
         analyser_instance.save_result(force=True)  # force parsing
         return analyser_instance.get_result_summary()

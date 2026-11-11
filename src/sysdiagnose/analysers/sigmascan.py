@@ -103,7 +103,13 @@ class SigmascanAnalyser(BaseAnalyserInterface):
         A source that fails to load is logged and treated as no output, so one bad source
         never aborts the scan.
         """
-        cls = self.config.get_module_class(module)
+        try:
+            cls = self.config.get_module_class(module)
+        except (ImportError, AttributeError) as ex:
+            # A broken module (fails to import or has no producing class) must not abort the
+            # scan — log it and treat it as no output.
+            logger.error(f"sigmascan: module {module!r} could not be loaded: {ex}")
+            return None
         if cls is None:
             # Shouldn't happen — the index is built from discovered modules.
             logger.error(f"sigmascan: module {module!r} resolved to no producing class")

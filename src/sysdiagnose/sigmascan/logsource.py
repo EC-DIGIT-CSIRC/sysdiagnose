@@ -31,7 +31,12 @@ def discover_modules(config: SysdiagnoseConfig) -> set[str]:
     names = set(config.get_parsers()) | set(config.get_analysers())
     scannable = set()
     for name in names:
-        cls = config.get_module_class(name)
+        try:
+            cls = config.get_module_class(name)
+        except (ImportError, AttributeError) as ex:
+            # A broken module must not abort discovery — log and skip it.
+            logger.error(f"sigmascan: module {name!r} could not be loaded during discovery: {ex}")
+            continue
         if cls is None:
             continue
         if getattr(cls, "format", None) not in SCANNABLE_FORMATS:

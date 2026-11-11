@@ -43,7 +43,12 @@ class YaraAnalyser(BaseAnalyserInterface):
         """
         paths = []
         for name in list(self.config.get_parsers()) + list(self.config.get_analysers()):
-            cls = self.config.get_module_class(name)
+            try:
+                cls = self.config.get_module_class(name)
+            except (ImportError, AttributeError):
+                # A broken module must not abort the scan — log and skip it.
+                logger.exception(f"Could not load scanner module {name}")
+                continue
             if cls is None or getattr(cls, "scannable", True):
                 continue
             try:

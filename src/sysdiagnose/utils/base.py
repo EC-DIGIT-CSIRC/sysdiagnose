@@ -63,18 +63,30 @@ class SysdiagnoseConfig:
         """Import ``sysdiagnose.<package>.<name>`` and return its ``base`` subclass.
 
         Returns the first class defined in the module that is a strict subclass of ``base``
-        (i.e. the module's parser/analyser implementation), or ``None`` if the module cannot
-        be imported or contains no such class.
+        (i.e. the module's parser/analyser implementation).
+
+        Returns ``None`` only when there is simply no such module in the package (the name is
+        not a known parser/analyser). A module that *does* exist but cannot be used — it fails
+        to import (including a broken nested import), raises while being inspected, or contains
+        no ``base`` subclass — raises instead of being silently skipped, so a genuine problem
+        is never swallowed. Callers that want parser-or-analyser fallback should go through
+        :meth:`get_module_class`, which only raises when *both* lookups fail.
         """
+        target = f"sysdiagnose.{package}.{name}"
         try:
-            module = importlib.import_module(f"sysdiagnose.{package}.{name}")
-        except (ImportError, AttributeError):
-            return None
+            module = importlib.import_module(target)
+        except ModuleNotFoundError as ex:
+            # The target module itself is absent -> unknown name, return None.
+            # A ModuleNotFoundError for a *different* module means the target exists but one
+            # of its imports is broken: that is a real error, so re-raise it.
+            if ex.name == target:
+                return None
+            raise
         for attr in dir(module):
             obj = getattr(module, attr)
             if isinstance(obj, type) and issubclass(obj, base) and obj is not base:
                 return obj
-        return None
+        raise ImportError(f"Module '{target}' exists but defines no {base.__name__} subclass")
 
     @staticmethod
     def _discover_names(folder: str) -> list[str]:
@@ -98,15 +110,45 @@ class SysdiagnoseConfig:
         """Resolve a module name to its producing class, trying parser first then analyser.
 
         A SAF "module" (an output ``parsed_data/<name>.jsonl``) may be produced by a parser
-        or an analyser. Resolution precedence is parser-first, then analyser. Returns
-        ``None`` if ``name`` is neither a known parser nor a known analyser.
+        or an analyser. Resolution precedence is parser-first, then analyser.
+
+        Returns ``None`` if ``name`` is neither a known parser nor a known analyser. A broken
+        module (one that exists but fails to import or defines no suitable class) makes the
+        corresponding lookup raise; that error is held and only propagated if the *other*
+        lookup does not yield a usable class either. So a name that resolves cleanly as one
+        kind is returned even if the other kind is broken, and only a name that is broken (or
+        absent) on both sides raises. Callers (e.g. sigmascan/yarascan) are expected to catch
+        this and degrade gracefully rather than aborting on a single bad module.
         """
-        return self.get_parser_class(name) or self.get_analyser_class(name)
+        pending_error: Exception | None = None
+        try:
+            cls = self.get_parser_class(name)
+            if cls is not None:
+                return cls
+        except (ImportError, AttributeError) as ex:
+            pending_error = ex
+
+        try:
+            cls = self.get_analyser_class(name)
+            if cls is not None:
+                return cls
+        except (ImportError, AttributeError) as ex:
+            pending_error = pending_error or ex
+
+        if pending_error is not None:
+            raise pending_error
+        return None
 
     def get_parsers(self) -> dict:
         results = {}
         for name in self._discover_names(self.parsers_folder):
-            cls = self.get_parser_class(name)
+            try:
+                cls = self.get_parser_class(name)
+            except (ImportError, AttributeError) as ex:
+                # Discovery found the file but it is broken: surface it loudly rather than
+                # silently dropping it from the catalog, but keep listing the rest.
+                logger.error(f"Parser '{name}' could not be loaded: {ex}")
+                continue
             if cls is not None:
                 results[name] = cls.description
         return dict(sorted(results.items()))
@@ -114,7 +156,11 @@ class SysdiagnoseConfig:
     def get_analysers(self) -> dict:
         results = {}
         for name in self._discover_names(self.analysers_folder):
-            cls = self.get_analyser_class(name)
+            try:
+                cls = self.get_analyser_class(name)
+            except (ImportError, AttributeError) as ex:
+                logger.error(f"Analyser '{name}' could not be loaded: {ex}")
+                continue
             if cls is not None:
                 results[name] = cls.description
         return dict(sorted(results.items()))
