@@ -91,9 +91,7 @@ class SigmascanAnalyser(BaseAnalyserInterface):
             values_text = serialize_event_values(event)
             for loaded_rule, compiled_rule in rules:
                 if compiled_rule.evaluate(event, event_values_text=values_text):
-                    alerts.append(
-                        build_alert(loaded_rule, event, module, self.sysdiagnose_creation_datetime)
-                    )
+                    alerts.append(build_alert(loaded_rule, event, module, self.sysdiagnose_creation_datetime))
         return alerts
 
     def _load_module_events(self, module: str):

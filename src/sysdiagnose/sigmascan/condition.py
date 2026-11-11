@@ -6,10 +6,10 @@ pySigma owns the ``condition`` grammar — ``and``/``or``/``not``, parentheses, 
 ``1 of``/``all of`` quantifiers (expanded into ``ConditionOR``/``ConditionAND`` trees); this
 module only evaluates the result against a SAF event.
 
-Handled node types (from ``sigma.conditions``; anything else raises``ConditionEvaluationError``): 
+Handled node types (from ``sigma.conditions``; anything else raises ``ConditionEvaluationError``):
 * ``ConditionAND``/``ConditionOR`` (boolean over ``.args``)
 * ``ConditionNOT`` (unary, ``.args[0]``)
-*  ``ConditionFieldEqualsValueExpression`` (field leaf → ``match_field_value``)
+* ``ConditionFieldEqualsValueExpression`` (field leaf → ``match_field_value``)
 * ``ConditionValueExpression`` (keyword leaf → ``match_keyword_value``).
 
 Recovering modifiers: a condition leaf exposes ``.field``/``.value`` but carries NO modifiers
