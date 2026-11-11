@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from sysdiagnose.analysers.sigmascan import SigmascanAnalyser, build_summary
+from sysdiagnose.parsers.ps import PsParser
 from sysdiagnose.sigmascan.emit import build_alert
 from sysdiagnose.sigmascan.loader import load_rule_from_yaml
 from tests import SysdiagnoseTestCase
@@ -18,6 +19,11 @@ def _write_rule(dir_path: str, name: str, text: str) -> None:
 
 # A rule that matches essentially any event (keyword over a very common letter) — used to
 # guarantee hits on a real case without depending on specific content.
+#
+# Scoped to the single 'ps' module (logsource.modules) rather than all modules, so the
+# end-to-end scan loads/scans only ps.jsonl (small) instead of every module including the
+# huge logarchive. This exercises the full pipeline (discovery, rule load, index build,
+# scan, emit, summary) at a fraction of the cost.
 MATCH_ANYTHING = """
 title: Match anything (test)
 id: 11111111-1111-4111-8111-111111111111
@@ -25,13 +31,16 @@ status: experimental
 level: low
 logsource:
   product: ios
+  modules:
+    - ps
 detection:
   keywords:
     - e
   condition: keywords
 """
 
-# A rule that matches nothing (a token that will not appear in any event).
+# A rule that matches nothing (a token that will not appear in any event). Scoped to 'ps'
+# for the same reason as MATCH_ANYTHING above.
 MATCH_NOTHING = """
 title: Match nothing (test)
 id: 22222222-2222-4222-8222-222222222222
@@ -39,6 +48,8 @@ status: stable
 level: high
 logsource:
   product: ios
+  modules:
+    - ps
 detection:
   keywords:
     - ZZZZ_NO_SUCH_TOKEN_QX9
@@ -47,7 +58,20 @@ detection:
 
 
 class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
-    @unittest.skip("Functionality has already been tested. Don't waste resources to run on all data.")
+    # The scoped-to-'ps' rules (see MATCH_ANYTHING / MATCH_NOTHING) keep these end-to-end runs
+    # cheap: the scan only loads ps.jsonl, not every module. The ps module must be parsed
+    # first for there to be anything to scan, so each case runs the ps parser (force) before
+    # scanning; a case without a ps.txt source is skipped.
+    def _ensure_ps_parsed(self, case: dict) -> bool:
+        """Parse the ps module for this case so sigmascan has ps.jsonl to scan.
+
+        Returns True if ps output exists afterwards, False if the case has no ps source
+        (nothing to scan — the caller should skip).
+        """
+        ps = PsParser(self.sd.config, case=case)
+        ps.save_result(force=True)
+        return ps.output_exists()
+
     def test_runs_and_emits_valid_alerts(self):
         with tempfile.TemporaryDirectory() as rules_dir:
             _write_rule(rules_dir, "match.yml", MATCH_ANYTHING)
@@ -57,12 +81,14 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                         a = SigmascanAnalyser(self.sd.config, case=_case)
                         if not a.is_compatible():
                             self.skipTest(f"not compatible with iOS {_case.get('ios_version')}")
+                        if not self._ensure_ps_parsed(_case):
+                            self.skipTest("no ps.txt source in this case")
 
                         a.save_result(force=True)
                         self.assertTrue(os.path.isfile(a.output_file))
                         result = a.get_result()
 
-                        # Expect at least one alert (the match-anything rule).
+                        # Expect at least one alert (the match-anything rule over ps events).
                         self.assertGreater(len(result), 0, "expected at least one alert")
                         for item in result:
                             self.assert_has_required_fields_jsonl(item)
@@ -71,10 +97,9 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                             self.assertEqual(data["rule_id"], "11111111-1111-4111-8111-111111111111")
                             self.assertEqual(data["level"], "low")
                             self.assertIn("event", data)  # full event embedded
-                            self.assertIn("matched_module", data)
+                            self.assertEqual(data["matched_module"], "ps")
                         self.assert_result_summary_consistent(a, result)
 
-    @unittest.skip("Functionality has already been tested. Don't waste resources to run on all data.")
     def test_zero_matches_yields_empty_output(self):
         with tempfile.TemporaryDirectory() as rules_dir:
             _write_rule(rules_dir, "nomatch.yml", MATCH_NOTHING)
@@ -84,6 +109,8 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                         a = SigmascanAnalyser(self.sd.config, case=_case)
                         if not a.is_compatible():
                             self.skipTest(f"not compatible with iOS {_case.get('ios_version')}")
+                        if not self._ensure_ps_parsed(_case):
+                            self.skipTest("no ps.txt source in this case")
 
                         a.save_result(force=True)
                         result = a.get_result()
