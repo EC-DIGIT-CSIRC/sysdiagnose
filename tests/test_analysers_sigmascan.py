@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from sysdiagnose.analysers.sigmascan import SigmascanAnalyser, build_summary
@@ -301,6 +302,10 @@ class TestBuildAlert(unittest.TestCase):
         )
         return load_rule_from_yaml(text, "mem://example")
 
+    # Fallback datetime passed to build_alert (stands in for the sysdiagnose creation
+    # datetime); used only when the matched event has no parseable datetime of its own.
+    FALLBACK_DT = datetime(2020, 2, 3, 4, 5, 6, tzinfo=UTC)
+
     def test_alert_shape(self):
         lr = self._loaded()
         event = {
@@ -310,7 +315,7 @@ class TestBuildAlert(unittest.TestCase):
             "module": "crashlogs",
             "data": {"x": "alpha"},
         }
-        alert = build_alert(lr, event, "crashlogs")
+        alert = build_alert(lr, event, "crashlogs", self.FALLBACK_DT)
         self.assertEqual(alert["module"], "sigmascan")
         self.assertTrue(alert["message"].startswith("ALERT: Example rule"))
         data = alert["data"]
@@ -329,8 +334,26 @@ class TestBuildAlert(unittest.TestCase):
     def test_alert_datetime_from_event(self):
         lr = self._loaded()
         event = {"datetime": "2023-05-24T20:27:43.000000+00:00", "data": {"x": "alpha"}}
-        alert = build_alert(lr, event, "crashlogs")
+        alert = build_alert(lr, event, "crashlogs", self.FALLBACK_DT)
         self.assertEqual(alert["datetime"], "2023-05-24T20:27:43.000000+00:00")
+        self.assertEqual(alert["timestamp_desc"], "sigmascan match from event")
+
+    def test_alert_datetime_falls_back_to_sysdiagnose_creation(self):
+        # An event with no datetime must stamp the alert with the supplied fallback (the
+        # sysdiagnose creation datetime), not wall-clock time, mirroring yarascan.
+        lr = self._loaded()
+        event = {"data": {"x": "alpha"}}  # no 'datetime' key
+        alert = build_alert(lr, event, "crashlogs", self.FALLBACK_DT)
+        self.assertEqual(alert["datetime"], self.FALLBACK_DT.isoformat(timespec="microseconds"))
+        self.assertIn("sysdiagnose creation datetime", alert["timestamp_desc"])
+
+    def test_alert_datetime_falls_back_on_unparseable_datetime(self):
+        # A present-but-garbage datetime is not parseable -> same fallback path.
+        lr = self._loaded()
+        event = {"datetime": "not-a-date", "data": {"x": "alpha"}}
+        alert = build_alert(lr, event, "crashlogs", self.FALLBACK_DT)
+        self.assertEqual(alert["datetime"], self.FALLBACK_DT.isoformat(timespec="microseconds"))
+        self.assertIn("sysdiagnose creation datetime", alert["timestamp_desc"])
 
 
 if __name__ == "__main__":
