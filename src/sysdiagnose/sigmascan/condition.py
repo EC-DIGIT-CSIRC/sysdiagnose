@@ -1,20 +1,28 @@
 """
 sigmascan condition evaluator.
 
-A thin tree-walker over pySigma's already-parsed condition tree. pySigma owns the
-``condition`` grammar (``and``/``or``/``not``, parentheses, ``1 of``/``all of``, which it
-expands into ``ConditionOR``/``ConditionAND`` trees); we only walk the result and call the
-leaf matcher at each leaf.
+Walks pySigma's already-parsed condition tree and calls the leaf matcher at each leaf.
+pySigma owns the ``condition`` grammar — ``and``/``or``/``not``, parentheses, and the
+``1 of``/``all of`` quantifiers (expanded into ``ConditionOR``/``ConditionAND`` trees); this
+module only evaluates the result against a SAF event.
 
-Node types (from ``sigma.conditions``): ``ConditionAND``/``ConditionOR``/``ConditionNOT``
-(boolean, via ``.args``), ``ConditionFieldEqualsValueExpression`` (field leaf), and
-``ConditionValueExpression`` (keyword leaf).
+Handled node types (from ``sigma.conditions``; anything else raises``ConditionEvaluationError``): 
+* ``ConditionAND``/``ConditionOR`` (boolean over ``.args``)
+* ``ConditionNOT`` (unary, ``.args[0]``)
+*  ``ConditionFieldEqualsValueExpression`` (field leaf → ``match_field_value``)
+* ``ConditionValueExpression`` (keyword leaf → ``match_keyword_value``).
 
-A condition leaf exposes ``.field``/``.value`` but not the modifiers, and the ``cased``
-modifier in particular is not recoverable from the leaf. We therefore map each leaf back to
-its owning ``SigmaDetectionItem`` (which keeps the modifiers) by value-object identity:
-pySigma reuses the same value object in the leaf and the detection item, so
-``id(leaf.value)`` is a reliable key.
+Recovering modifiers: a condition leaf exposes ``.field``/``.value`` but carries NO modifiers
+at all. Operator modifiers (``contains``/``startswith``/``endswith``) survive indirectly in
+the leaf's ``value``/``operator``, but ``cased`` is a pure matching policy with no such trace
+— drop it and every rule silently matches case-insensitively. So we map each leaf back to its
+owning ``SigmaDetectionItem`` (which keeps ``.modifiers``) via value-object identity:
+``id(leaf.value)`` (see ``_build_value_index``). This relies on a pySigma implementation
+detail — it reuses the same value object in leaf and item — asserted in cased-through-condition tests).
+
+Compilation: ``SigmaCondition.parse()`` deep-copies the tree and re-runs postprocessing on
+every call (too expensive per event), so :class:`CompiledRule` builds the parsed tree(s) and
+value index once per rule and reuses them read-only across events.
 """
 
 from sigma.conditions import (
