@@ -17,14 +17,15 @@ class TestAnalysersPsEverywhere(SysdiagnoseTestCase):
                     self.skipTest(f"Analyser {a.module_name} not compatible with iOS {_case.get('ios_version')}")
 
                 a.save_result(force=True)
+                result = a.get_result()
+                self.assert_result_summary_consistent(a, result)
+
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)
 
-                result = a.get_result()
                 for item in result:
                     self.assert_has_required_fields_jsonl(item)
                     self.assertTrue("source" in item["data"])
-                self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,12 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
+
+                # count lines to validate summary without materializing full result
+                with open(p.output_file) as f:
+                    num_lines = sum(1 for _ in f)
+                self.assert_result_summary_consistent(p, [None] * num_lines)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
                 # validate first line structure without loading entire file
@@ -30,11 +36,6 @@ class TestParsersLogarchive(SysdiagnoseTestCase):
                     item = json.loads(f.readline())
                     self.assertIn("subsystem", item["data"])
                     self.assert_has_required_fields_jsonl(item)
-
-                # count lines to validate summary without materializing full result
-                with open(p.output_file) as f:
-                    num_lines = sum(1 for _ in f)
-                self.assert_result_summary_consistent(p, [None] * num_lines)
 
     def test_convert_native_time_to_unifiedlog(self):
         input = "2023-05-24 13:03:28.908085-0700"

@@ -86,8 +86,10 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                             self.skipTest("no ps.txt source in this case")
 
                         a.save_result(force=True)
-                        self.assertTrue(os.path.isfile(a.output_file))
                         result = a.get_result()
+                        self.assert_result_summary_consistent(a, result)
+
+                        self.assertTrue(os.path.isfile(a.output_file))
 
                         # Expect at least one alert (the match-anything rule over ps events).
                         self.assertGreater(len(result), 0, "expected at least one alert")
@@ -99,7 +101,6 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
                             self.assertEqual(data["level"], "low")
                             self.assertIn("event", data)  # full event embedded
                             self.assertEqual(data["matched_module"], "ps")
-                        self.assert_result_summary_consistent(a, result)
 
     def test_zero_matches_yields_empty_output(self):
         with tempfile.TemporaryDirectory() as rules_dir:
@@ -115,9 +116,9 @@ class TestSigmascanAnalyserEndToEnd(SysdiagnoseTestCase):
 
                         a.save_result(force=True)
                         result = a.get_result()
+                        self.assert_result_summary_consistent(a, result)
                         # Zero matches = empty output (not an error, no placeholder record).
                         self.assertEqual(result, [])
-                        self.assert_result_summary_consistent(a, result)
 
     def test_no_rules_dir_yields_empty_output(self):
         with patch.dict(os.environ, {"SYSDIAGNOSE_SIGMA_RULES_PATH": "/nonexistent/sigma/rules"}):

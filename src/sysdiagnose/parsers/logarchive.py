@@ -441,11 +441,18 @@ class LogarchiveParser(BaseParserInterface):
     def get_result(self, force: bool = False):
         if force:
             self.save_result(force)
-
-        if not self.output_exists():
+        elif not self._has_trustworthy_result():
             self.save_result()
 
         self.get_result_summary()
+
+        # A crashed or empty run may have left no output file on disk. Do not raise
+        # FileNotFoundError into the caller (e.g. AppsAnalyser.execute()), which would turn a
+        # recorded parser error into an unrelated crash of the consuming analyser. The error is
+        # already captured in the ResultSummary; here we simply yield nothing.
+        if not self.output_exists():
+            return
+
         with open(self.output_file, "r") as f:
             for line in f:
                 try:
@@ -457,7 +464,7 @@ class LogarchiveParser(BaseParserInterface):
         """
         Save the result of the parsing operation to a file in the parser output folder
         """
-        if force or not self.output_exists():
+        if force or not self._has_trustworthy_result():
             self._execute_with_result_summary()
             self.save_result_summary()
 

@@ -361,6 +361,30 @@ class BaseInterface(ABC):
         with open(self.summary_file, "w") as f:
             json.dump(self._result_summary.to_dict(), f, ensure_ascii=False, indent=2, sort_keys=True)
 
+    def _has_trustworthy_result(self) -> bool:
+        """
+        Returns True when a previously produced result can be reused instead of re-executing.
+
+        The decision is driven by the persisted/in-memory ``ResultSummary.status`` rather than by the
+        shape of ``self._result``. This avoids the historical incoherence where a crashed run left an
+        empty-but-non-None ``self._result`` ({} or []) that ``is None`` checks mistook for a real,
+        cached result even though no output file was ever written.
+
+        A result is trustworthy when:
+          - the run was SKIPPED (incompatible iOS version): a deliberate, terminal "no data" outcome
+            that does not write an output file and must not be retried, or
+          - the run finished OK or with WARNING *and* the output file is actually present on disk.
+
+        An ERROR status (or a missing output file for a non-skipped run) is never trustworthy, so a
+        crashed or incomplete run is always recomputed rather than served from a stale/empty state.
+        """
+        summary = self.get_result_summary()
+        if summary.status == ExecutionStatus.SKIPPED:
+            return True
+        if summary.status in (ExecutionStatus.OK, ExecutionStatus.WARNING):
+            return self.output_exists()
+        return False
+
     def get_result(self, force: bool = False) -> list | dict | str | None:
         """
         Retrieves the result of the parsing operation, and run the parsing if necessary.
@@ -380,13 +404,22 @@ class BaseInterface(ABC):
             self.save_result(force=True)
             return self._result
 
-        if self._result is None:
+        # Reuse a prior result only when the recorded ExecutionStatus says it is trustworthy.
+        # This gates BOTH the in-memory cache and the on-disk cache: the shape of self._result
+        # (e.g. an empty {} or [] left behind by a crashed run) is never used as the signal, so
+        # a failed run is never served as if it were a real, cached result.
+        if self._has_trustworthy_result():
+            # In-memory payload from a trustworthy run in this process.
+            if self._result is not None:
+                return self._result
+            # Trustworthy run persisted to disk (not yet loaded in this process).
             if self.output_exists():
                 self._result = self._load_output()
-                self.get_result_summary()
-            else:
-                self.save_result()
+            # SKIPPED runs legitimately have no output file; self._result stays None.
+            return self._result
 
+        # Not trustworthy (never run, or a recorded error): (re)execute.
+        self.save_result()
         return self._result
 
     def save_result(self, force: bool = False, indent=None) -> None:
@@ -401,7 +434,7 @@ class BaseInterface(ABC):
 
         WARNING: You may need to overwrite this method if your parser saves multiple files.
         """
-        if force or self._result is None or not self.output_exists():
+        if force or not self._has_trustworthy_result():
             self._result, self._result_summary = self._execute_and_write(indent=indent)
         elif self._result_summary is None:
             self.get_result_summary()

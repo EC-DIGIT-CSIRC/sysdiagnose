@@ -24,13 +24,14 @@ class TestParsersIntunesstore(SysdiagnoseTestCase):
                 self.assertEqual(len(files), 1)
 
                 p.save_result(force=True)
+                result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
-                result = p.get_result()
                 self.assertTrue("application_id" in result)
                 self.assertTrue("download" in result)
                 self.assertTrue("persistent_manager" in result)
-                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

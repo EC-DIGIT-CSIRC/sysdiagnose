@@ -21,9 +21,11 @@ class TestParsersWifiNetworks(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
+                result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
-                result = p.get_result()
                 self.assertTrue(len(result) > 0)
                 # not sure what to assert here as there's not always a result
                 # if result:
@@ -31,7 +33,6 @@ class TestParsersWifiNetworks(SysdiagnoseTestCase):
                 #         print(key)
                 #         # self.assertTrue(key.startswith('wifi.network'))
                 #         break
-                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

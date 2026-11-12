@@ -16,9 +16,9 @@ class TestAnalysersWifiGeolocationKml(SysdiagnoseTestCase):
                     self.skipTest(f"Analyser {a.module_name} not compatible with iOS {_case.get('ios_version')}")
 
                 a.save_result(force=True)
+                self.assert_result_summary_consistent(a, a.get_result())
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)
-                self.assert_result_summary_consistent(a, a.get_result())
                 # FIXME check for something else within the file...
 
     def test_generated_kml_is_namespace_well_formed(self):
