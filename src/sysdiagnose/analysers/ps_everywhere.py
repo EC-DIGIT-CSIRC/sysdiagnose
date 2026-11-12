@@ -429,9 +429,7 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
                         ).to_dict()
 
                 # Process the original process name
-                if self.add_if_full_command_is_not_in_set(
-                    self._strip_flags(process), p_datetime, euid, pid, None
-                ):
+                if self.add_if_full_command_is_not_in_set(self._strip_flags(process), p_datetime, euid, pid, None):
                     yield Event(
                         datetime=p_datetime,
                         message=self._strip_flags(process),
