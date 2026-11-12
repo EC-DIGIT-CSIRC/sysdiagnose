@@ -7,7 +7,7 @@ name = "sysdiagnose"
 version = "0.1.0"
 description = "A tool for sysdiagnose parsing and analysis"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.11"
+requires-python = ">=3.11.4"
 license = {text = "EUPL-1.2"}
 authors = [
   { name="EC-DIGIT-CSIRC", email="EC-DIGIT-CSIRC@ec.europa.eu" },
@@ -38,6 +38,7 @@ dependencies = [
   "orjsonl>=1.0.0,<1.1.0",
   "pyparsing>=3.2, <3.4",
   "pysigma>=2.0.0,<3.0.0"
+  "argcomplete>=3.0.0,<4.0.0"
 ]
 
 

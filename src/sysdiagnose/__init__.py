@@ -428,23 +428,22 @@ class Sysdiagnose:
         """
         Extracts the sysdiagnose files from the given sysdiagnose file to the specified destination folder.
 
+        The archive is untrusted input: an archive with a member that would land outside
+        destination_folder (absolute path, ".." traversal, link escaping the folder, device node) is
+        rejected.
+
         :param sysdiagnose_file: Path to the sysdiagnose file.
         :param destination_folder: Path to the destination folder where files will be extracted.
         """
         if os.path.isfile(sysdiagnose_file):
             try:
                 with tarfile.open(sysdiagnose_file) as tf:
-                    # Extract the sysdiagnose files to the destination folder
-                    tf.extractall(path=destination_folder, filter=None)
-            except TypeError:
-                # python 3.11 compatibility
-                try:
-                    with tarfile.open(sysdiagnose_file) as tf:
-                        tf.extractall(path=destination_folder)
-                except Exception as e:
-                    raise Exception(
-                        f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}"
-                    ) from e
+                    # The archive is untrusted input (it comes from a potentially compromised
+                    # device). `filter="data"` rejects absolute paths, ".." traversal, links
+                    # pointing outside the destination, device nodes and setuid/setgid bits.
+                    # It is the stable, supported API from Python 3.11.4 onwards (and the default
+                    # from 3.14), which is why `requires-python` is pinned to >=3.11.4.
+                    tf.extractall(path=destination_folder, filter="data")
             except Exception as e:
                 raise Exception(f"Error while decompressing sysdiagnose file {sysdiagnose_file}. Reason: {e!s}") from e
 
