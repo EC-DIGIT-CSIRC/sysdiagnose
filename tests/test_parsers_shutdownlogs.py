@@ -21,15 +21,16 @@ class TestParsersShutdownlogs(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
+                result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
-                result = p.get_result()
                 self.assertGreater(len(result), 0)
                 for item in result:
                     self.assertTrue("pid" in item["data"])
                     self.assertTrue("path" in item["data"])
                     self.assert_has_required_fields_jsonl(item)
-                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":

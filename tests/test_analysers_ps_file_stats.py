@@ -15,10 +15,12 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
                     self.skipTest(f"Analyser {a.module_name} not compatible with iOS {_case.get('ios_version')}")
 
                 a.save_result(force=True)
+                result = a.get_result()
+                self.assert_result_summary_consistent(a, result)
+
                 self.assertTrue(os.path.isfile(a.output_file))
                 self.assertTrue(os.path.getsize(a.output_file) > 0)
 
-                result = a.get_result()
                 # device info
                 self.assertIn("os_version", result["device_info"])
                 self.assertIn("build", result["device_info"])
@@ -33,7 +35,6 @@ class TestFileStatisticsAnalyser(SysdiagnoseTestCase):
                         self.assertIn("filename", fname)
                         self.assertIn("extension", fname)
                         self.assertIn("file_type", fname)
-                self.assert_result_summary_consistent(a, result)
 
 
 if __name__ == "__main__":

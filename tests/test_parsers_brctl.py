@@ -22,8 +22,10 @@ class TestParsersBrctl(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
-                self.assertTrue(os.path.isfile(p.output_file))
                 result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
+                self.assertTrue(os.path.isfile(p.output_file))
                 if result:
                     self.assertTrue("containers" in result)
                     self.assertTrue("boot_history" in result)
@@ -34,7 +36,6 @@ class TestParsersBrctl(SysdiagnoseTestCase):
                     self.assertTrue("applibrary" in result)
                     self.assertTrue("app_library_id" in result)
                     self.assertTrue("app_ids" in result)
-                self.assert_result_summary_consistent(p, result)
 
     # real lines from brctl-container-list.txt of an iOS 16 sysdiagnose
     SAMPLE = (

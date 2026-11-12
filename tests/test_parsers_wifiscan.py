@@ -21,9 +21,11 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
+                result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
-                result = p.get_result()
                 self.assertGreater(len(result), 0)
                 self.assertTrue("total" in result[0]["data"])
                 for item in result:
@@ -31,7 +33,6 @@ class TestParsersWifiScan(SysdiagnoseTestCase):
                         continue
                     self.assertTrue("ssid" in item["data"])
                     self.assert_has_required_fields_jsonl(item)
-                self.assert_result_summary_consistent(p, result)
 
     def test_parse_summary(self):
         line = "total=13, 6GHz(PSC)=0, 6GHz(NonPSC)=0, 5GHz(Active)=2, 5GHz(DFS)=0, 2GHz=11, ibss=0, hidden=1, passpoint=0, ph=0, airport=0"

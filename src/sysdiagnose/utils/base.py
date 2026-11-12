@@ -58,55 +58,112 @@ class SysdiagnoseConfig:
         os.makedirs(logs_data_folder, exist_ok=True)
         return logs_data_folder
 
-    def get_parsers(self) -> dict:
-        modules = glob.glob(os.path.join(self.parsers_folder, "*.py"))
-        results = {}
-        for item in modules:
+    @staticmethod
+    def _resolve_class(package: str, name: str, base: type) -> type | None:
+        """Import ``sysdiagnose.<package>.<name>`` and return its ``base`` subclass.
+
+        Returns the first class defined in the module that is a strict subclass of ``base``
+        (i.e. the module's parser/analyser implementation).
+
+        Returns ``None`` only when there is simply no such module in the package (the name is
+        not a known parser/analyser). A module that *does* exist but cannot be used — it fails
+        to import (including a broken nested import), raises while being inspected, or contains
+        no ``base`` subclass — raises instead of being silently skipped, so a genuine problem
+        is never swallowed. Callers that want parser-or-analyser fallback should go through
+        :meth:`get_module_class`, which only raises when *both* lookups fail.
+        """
+        target = f"sysdiagnose.{package}.{name}"
+        try:
+            module = importlib.import_module(target)
+        except ModuleNotFoundError as ex:
+            # The target module itself is absent -> unknown name, return None.
+            # A ModuleNotFoundError for a *different* module means the target exists but one
+            # of its imports is broken: that is a real error, so re-raise it.
+            if ex.name == target:
+                return None
+            raise
+        for attr in dir(module):
+            obj = getattr(module, attr)
+            if isinstance(obj, type) and issubclass(obj, base) and obj is not base:
+                return obj
+        raise ImportError(f"Module '{target}' exists but defines no {base.__name__} subclass")
+
+    @staticmethod
+    def _discover_names(folder: str) -> list[str]:
+        """Return the module names (file stems) of all non-dunder ``*.py`` files in ``folder``."""
+        names = []
+        for item in glob.glob(os.path.join(folder, "*.py")):
             if item.endswith("__init__.py"):
                 continue
-            try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f"sysdiagnose.parsers.{name}")
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BaseParserInterface)
-                        and obj is not BaseParserInterface
-                    ):
-                        results[name] = obj.description
-                        break
-            except AttributeError:
-                continue
+            names.append(os.path.splitext(os.path.basename(item))[0])
+        return names
 
-        results = dict(sorted(results.items()))
-        return results
+    def get_parser_class(self, name: str) -> type | None:
+        """Resolve a parser module name to its ``BaseParserInterface`` subclass (or ``None``)."""
+        return self._resolve_class("parsers", name, BaseParserInterface)
+
+    def get_analyser_class(self, name: str) -> type | None:
+        """Resolve an analyser module name to its ``BaseAnalyserInterface`` subclass (or ``None``)."""
+        return self._resolve_class("analysers", name, BaseAnalyserInterface)
+
+    def get_module_class(self, name: str) -> type | None:
+        """Resolve a module name to its producing class, trying parser first then analyser.
+
+        A SAF "module" (an output ``parsed_data/<name>.jsonl``) may be produced by a parser
+        or an analyser. Resolution precedence is parser-first, then analyser.
+
+        Returns ``None`` if ``name`` is neither a known parser nor a known analyser. A broken
+        module (one that exists but fails to import or defines no suitable class) makes the
+        corresponding lookup raise; that error is held and only propagated if the *other*
+        lookup does not yield a usable class either. So a name that resolves cleanly as one
+        kind is returned even if the other kind is broken, and only a name that is broken (or
+        absent) on both sides raises. Callers (e.g. sigmascan/yarascan) are expected to catch
+        this and degrade gracefully rather than aborting on a single bad module.
+        """
+        pending_error: Exception | None = None
+        try:
+            cls = self.get_parser_class(name)
+            if cls is not None:
+                return cls
+        except (ImportError, AttributeError) as ex:
+            pending_error = ex
+
+        try:
+            cls = self.get_analyser_class(name)
+            if cls is not None:
+                return cls
+        except (ImportError, AttributeError) as ex:
+            pending_error = pending_error or ex
+
+        if pending_error is not None:
+            raise pending_error
+        return None
+
+    def get_parsers(self) -> dict:
+        results = {}
+        for name in self._discover_names(self.parsers_folder):
+            try:
+                cls = self.get_parser_class(name)
+            except (ImportError, AttributeError) as ex:
+                # Discovery found the file but it is broken: surface it loudly rather than
+                # silently dropping it from the catalog, but keep listing the rest.
+                logger.error(f"Parser '{name}' could not be loaded: {ex}")
+                continue
+            if cls is not None:
+                results[name] = cls.description
+        return dict(sorted(results.items()))
 
     def get_analysers(self) -> dict:
-        modules = glob.glob(os.path.join(self.analysers_folder, "*.py"))
         results = {}
-        for item in modules:
-            if item.endswith("__init__.py"):
-                continue
+        for name in self._discover_names(self.analysers_folder):
             try:
-                name = os.path.splitext(os.path.basename(item))[0]
-                module = importlib.import_module(f"sysdiagnose.analysers.{name}")
-                # figure out the class name
-                for attr in dir(module):
-                    obj = getattr(module, attr)
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BaseAnalyserInterface)
-                        and obj is not BaseAnalyserInterface
-                    ):
-                        results[name] = obj.description
-                        break
-            except AttributeError:
+                cls = self.get_analyser_class(name)
+            except (ImportError, AttributeError) as ex:
+                logger.error(f"Analyser '{name}' could not be loaded: {ex}")
                 continue
-
-        results = dict(sorted(results.items()))
-        return results
+            if cls is not None:
+                results[name] = cls.description
+        return dict(sorted(results.items()))
 
 
 class BaseInterface(ABC):
@@ -114,6 +171,11 @@ class BaseInterface(ABC):
     format = "json"  # implementation should set this
     json_pretty = True  # implementation should set this to false for large data sets
     ios_version = "*"  # PEP 440 version specifier for compatible iOS versions (e.g. ">=17.0", ">=14.0,<17.0")
+    # Whether this module's output is a scannable data source. Scanners (e.g. yarascan,
+    # sigmascan) that produce findings over other modules' output set this to False so that
+    # scanners do not scan each other's (or their own) output. Every normal parser/analyser
+    # leaves it True.
+    scannable = True
 
     def __init__(self, module_filename: str, config: SysdiagnoseConfig, case: dict) -> None:
         self.config = config
@@ -299,6 +361,42 @@ class BaseInterface(ABC):
         with open(self.summary_file, "w") as f:
             json.dump(self._result_summary.to_dict(), f, ensure_ascii=False, indent=2, sort_keys=True)
 
+    def _has_trustworthy_result(self) -> bool:
+        """
+        Returns True when a previously produced result can be reused instead of re-executing.
+
+        The decision is driven by the recorded ``ResultSummary.status`` rather than by the shape of
+        ``self._result``.
+
+        A result is trustworthy when:
+          - the run was SKIPPED (incompatible iOS version): a deliberate, terminal "no data" outcome
+            that does not write an output file and must not be retried, or
+          - the run finished OK or with WARNING *and* the output file is present on disk, or
+          - there is a cached output file on disk but NO summary sidecar (``summary_file``) to vouch
+            for it. In that case the status cannot be a *recorded* failure — the ERROR default comes
+            only from the absent sidecar, not from an execution that actually failed — so we preserve
+            the long-standing fallback of serving the cached output as-is (reporting the default
+            "unknown" summary) instead of paying to re-execute. Staleness detection (see the TODO in
+            get_result_summary) is the intended future home for invalidating such sidecar-less caches.
+
+        A *recorded* ERROR (an ERROR status that came from an actual summary sidecar on disk, or from
+        an in-process run that failed) with no trustworthy output is never reused, so a genuinely
+        crashed or incomplete run is always recomputed rather than served from a stale/empty state.
+        """
+        summary = self.get_result_summary()
+        if summary.status == ExecutionStatus.SKIPPED:
+            return True
+        if summary.status in (ExecutionStatus.OK, ExecutionStatus.WARNING):
+            return self.output_exists()
+        # ERROR status: distinguish a *recorded* failure from a merely-absent sidecar.
+        # A real run (success or crash) always stamps start_time on its summary; the only way to
+        # have ERROR with start_time is None is the default ResultSummary() returned when no sidecar
+        # exists and nothing ran in this process. In that "unknown" case, if a cached output file is
+        # present on disk, fall back to reusing it rather than re-executing.
+        summary_sidecar_exists = os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0
+        is_unrecorded_default = not summary_sidecar_exists and summary.start_time is None
+        return is_unrecorded_default and self.output_exists()
+
     def get_result(self, force: bool = False) -> list | dict | str | None:
         """
         Retrieves the result of the parsing operation, and run the parsing if necessary.
@@ -318,14 +416,32 @@ class BaseInterface(ABC):
             self.save_result(force=True)
             return self._result
 
-        if self._result is None:
+        # Reuse a prior result only when the recorded ExecutionStatus says it is trustworthy.
+        # This gates BOTH the in-memory cache and the on-disk cache: the shape of self._result
+        # (e.g. an empty {} or [] left behind by a crashed run) is never used as the signal, so
+        # a failed run is never served as if it were a real, cached result.
+        if self._has_trustworthy_result():
+            # In-memory payload from a trustworthy run in this process.
+            if self._result is not None:
+                return self._result
+            # Trustworthy run persisted to disk (not yet loaded in this process).
             if self.output_exists():
                 self._result = self._load_output()
-                self.get_result_summary()
-            else:
-                self.save_result()
+                return self._result
+            # Trustworthy but nothing to load (e.g. a SKIPPED run writes no output file).
+            # Materialize the format-appropriate empty container rather than returning None:
+            # consumers iterate get_result() and rely on it never being None for json/jsonl
+            # parsers (an empty [] / {} is the long-standing "no data" contract).
+            self._result = self._empty_result()
+            return self._result
 
+        # Not trustworthy (never run, or a recorded error): (re)execute.
+        self.save_result()
         return self._result
+
+    def _empty_result(self) -> list | dict:
+        """Returns the format-appropriate empty result: [] for jsonl, {} otherwise."""
+        return [] if self.format == "jsonl" else {}
 
     def save_result(self, force: bool = False, indent=None) -> None:
         """
@@ -339,7 +455,7 @@ class BaseInterface(ABC):
 
         WARNING: You may need to overwrite this method if your parser saves multiple files.
         """
-        if force or self._result is None or not self.output_exists():
+        if force or not self._has_trustworthy_result():
             self._result, self._result_summary = self._execute_and_write(indent=indent)
         elif self._result_summary is None:
             self.get_result_summary()
@@ -358,7 +474,7 @@ class BaseInterface(ABC):
                 f"Skipping {self.module_name}: not compatible with iOS {self.case_ios_version} "
                 f"(requires {self.ios_version})"
             )
-            empty_result = [] if self.format == "jsonl" else {}
+            empty_result = self._empty_result()
             summary = ResultSummary(status=ExecutionStatus.SKIPPED, num_events=0)
             self._result = empty_result
             return empty_result, summary
@@ -371,7 +487,7 @@ class BaseInterface(ABC):
             logger.exception(f"Execution crashed: {ex}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            self._result = [] if self.format == "jsonl" else {}
+            self._result = self._empty_result()
             return self._result, self._result_summary
 
         try:
@@ -386,7 +502,7 @@ class BaseInterface(ABC):
                 logger.warning(f"Could not remove partially written {self.output_file}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            self._result = [] if self.format == "jsonl" else {}
+            self._result = self._empty_result()
             return self._result, self._result_summary
 
         handler.update(num_events=num_events, end=True)

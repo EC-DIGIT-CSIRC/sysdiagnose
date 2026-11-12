@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 import base64
 import glob
-import importlib
 import os
 from io import BytesIO
 from pathlib import Path
@@ -100,17 +99,10 @@ class CoverageAnalyser(BaseAnalyserInterface):
         :param parser_name: The name of the parser.
         :return: An instance of the parser class.
         """
-        module = importlib.import_module(f"sysdiagnose.parsers.{parser_name}")
-        # figure out the class name
-        obj = None
-        obj_instance = None
-        for attr in dir(module):
-            obj = getattr(module, attr)
-            if isinstance(obj, type) and issubclass(obj, BaseParserInterface) and obj is not BaseParserInterface:
-                obj_instance: BaseParserInterface = obj(config=self.config, case=self.case)
-
-                return obj_instance
-        return None
+        cls = self.config.get_parser_class(parser_name)
+        if cls is None:
+            return None
+        return cls(config=self.config, case=self.case)
 
     def get_file_type(self, file_path: str) -> str:
         """

@@ -40,7 +40,7 @@ class SysctlParser(BaseParserInterface):
         result = []
         for lineno, line in enumerate(lines, start=1):
             try:
-                tokens = self.fmt_line.parse_string(line, parseAll=True)
+                tokens = self.fmt_line.parse_string(line, parse_all=True)
                 timestamp = self.sysdiagnose_creation_datetime
                 event = Event(
                     datetime=timestamp,

@@ -21,12 +21,13 @@ class TestParsersRemotectlDumpstate(SysdiagnoseTestCase):
                     )
 
                 p.save_result(force=True)
+                result = p.get_result()
+                self.assert_result_summary_consistent(p, result)
+
                 self.assertTrue(os.path.isfile(p.output_file))
 
-                result = p.get_result()
                 if result:
                     self.assertTrue("Local device" in result)
-                self.assert_result_summary_consistent(p, result)
 
 
 if __name__ == "__main__":
