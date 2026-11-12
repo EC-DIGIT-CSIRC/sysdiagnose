@@ -61,7 +61,7 @@ class AppsAnalyser(BaseAnalyserInterface):
             entry = events["data"]
             try:
                 # skip empty entries
-                if entry["subsystem"] == "":
+                if entry["subsystem"] in ["", None]:
                     continue
             except KeyError:  # last line of the native logarchive.jsonl file
                 continue
