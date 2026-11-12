@@ -365,17 +365,22 @@ class BaseInterface(ABC):
         """
         Returns True when a previously produced result can be reused instead of re-executing.
 
-        The decision is driven by the persisted/in-memory ``ResultSummary.status`` rather than by the
-        shape of ``self._result``. This avoids the historical incoherence where a crashed run left an
-        empty-but-non-None ``self._result`` ({} or []) that ``is None`` checks mistook for a real,
-        cached result even though no output file was ever written.
+        The decision is driven by the recorded ``ResultSummary.status`` rather than by the shape of
+        ``self._result``.
 
         A result is trustworthy when:
           - the run was SKIPPED (incompatible iOS version): a deliberate, terminal "no data" outcome
             that does not write an output file and must not be retried, or
-          - the run finished OK or with WARNING *and* the output file is actually present on disk.
+          - the run finished OK or with WARNING *and* the output file is present on disk, or
+          - there is a cached output file on disk but NO summary sidecar (``summary_file``) to vouch
+            for it. In that case the status cannot be a *recorded* failure — the ERROR default comes
+            only from the absent sidecar, not from an execution that actually failed — so we preserve
+            the long-standing fallback of serving the cached output as-is (reporting the default
+            "unknown" summary) instead of paying to re-execute. Staleness detection (see the TODO in
+            get_result_summary) is the intended future home for invalidating such sidecar-less caches.
 
-        An ERROR status (or a missing output file for a non-skipped run) is never trustworthy, so a
+        A *recorded* ERROR (an ERROR status that came from an actual summary sidecar on disk, or from
+        an in-process run that failed) with no trustworthy output is never reused, so a genuinely
         crashed or incomplete run is always recomputed rather than served from a stale/empty state.
         """
         summary = self.get_result_summary()
@@ -383,7 +388,14 @@ class BaseInterface(ABC):
             return True
         if summary.status in (ExecutionStatus.OK, ExecutionStatus.WARNING):
             return self.output_exists()
-        return False
+        # ERROR status: distinguish a *recorded* failure from a merely-absent sidecar.
+        # A real run (success or crash) always stamps start_time on its summary; the only way to
+        # have ERROR with start_time is None is the default ResultSummary() returned when no sidecar
+        # exists and nothing ran in this process. In that "unknown" case, if a cached output file is
+        # present on disk, fall back to reusing it rather than re-executing.
+        summary_sidecar_exists = os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0
+        is_unrecorded_default = not summary_sidecar_exists and summary.start_time is None
+        return is_unrecorded_default and self.output_exists()
 
     def get_result(self, force: bool = False) -> list | dict | str | None:
         """
@@ -415,12 +427,21 @@ class BaseInterface(ABC):
             # Trustworthy run persisted to disk (not yet loaded in this process).
             if self.output_exists():
                 self._result = self._load_output()
-            # SKIPPED runs legitimately have no output file; self._result stays None.
+                return self._result
+            # Trustworthy but nothing to load (e.g. a SKIPPED run writes no output file).
+            # Materialize the format-appropriate empty container rather than returning None:
+            # consumers iterate get_result() and rely on it never being None for json/jsonl
+            # parsers (an empty [] / {} is the long-standing "no data" contract).
+            self._result = self._empty_result()
             return self._result
 
         # Not trustworthy (never run, or a recorded error): (re)execute.
         self.save_result()
         return self._result
+
+    def _empty_result(self) -> list | dict:
+        """Returns the format-appropriate empty result: [] for jsonl, {} otherwise."""
+        return [] if self.format == "jsonl" else {}
 
     def save_result(self, force: bool = False, indent=None) -> None:
         """
@@ -453,7 +474,7 @@ class BaseInterface(ABC):
                 f"Skipping {self.module_name}: not compatible with iOS {self.case_ios_version} "
                 f"(requires {self.ios_version})"
             )
-            empty_result = [] if self.format == "jsonl" else {}
+            empty_result = self._empty_result()
             summary = ResultSummary(status=ExecutionStatus.SKIPPED, num_events=0)
             self._result = empty_result
             return empty_result, summary
@@ -466,7 +487,7 @@ class BaseInterface(ABC):
             logger.exception(f"Execution crashed: {ex}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            self._result = [] if self.format == "jsonl" else {}
+            self._result = self._empty_result()
             return self._result, self._result_summary
 
         try:
@@ -481,7 +502,7 @@ class BaseInterface(ABC):
                 logger.warning(f"Could not remove partially written {self.output_file}")
             handler.update(num_events=0, add_errors=1, end=True)
             self._result_summary = handler.get()
-            self._result = [] if self.format == "jsonl" else {}
+            self._result = self._empty_result()
             return self._result, self._result_summary
 
         handler.update(num_events=num_events, end=True)

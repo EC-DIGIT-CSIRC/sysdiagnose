@@ -383,12 +383,19 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
         entity_type = "log archive"
         try:
             for p in LogarchiveParser(self.config, self.case).get_result():
+                # Skip entries without a usable process name. Newer versions of the Mandiant
+                # unifiedlog_iterator emit a JSON null (-> None) for a missing process, where
+                # older versions/native log emitted "".
+                process = p["data"].get("process")
+                if process in ("", None):
+                    continue
+
                 p_datetime = datetime.fromisoformat(p["datetime"])
                 euid = self._sanitize_uid(p["data"].get("euid"))
                 pid = p["data"].get("pid")
 
                 # First check if we can extract a binary from the message
-                extracted_process = self.message_extract_binary(p["data"]["process"], p["message"])
+                extracted_process = self.message_extract_binary(process, p["message"])
                 if extracted_process:
                     # Handle the case where extracted_process is a list of paths
                     if isinstance(extracted_process, list):
@@ -423,11 +430,11 @@ class PsEverywhereAnalyser(BaseAnalyserInterface):
 
                 # Process the original process name
                 if self.add_if_full_command_is_not_in_set(
-                    self._strip_flags(p["data"]["process"]), p_datetime, euid, pid, None
+                    self._strip_flags(process), p_datetime, euid, pid, None
                 ):
                     yield Event(
                         datetime=p_datetime,
-                        message=self._strip_flags(p["data"]["process"]),
+                        message=self._strip_flags(process),
                         timestamp_desc=p["timestamp_desc"],
                         module=self.module_name,
                         data={"source": entity_type, "uid": euid, "pid": pid, "ppid": None, "ppname": None},
