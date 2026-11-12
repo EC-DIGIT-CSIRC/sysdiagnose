@@ -48,7 +48,7 @@ class KbdebugParser(BaseParserInterface):
         for log_file in log_files:
             with open(log_file) as f:
                 lines = f.read()
-                for tokens, _start, _end in fmt_line.scanString(lines):
+                for tokens, _start, _end in fmt_line.scan_string(lines):
                     try:
                         timestamp = parse_datetime(str(tokens.timestamp), "%Y-%m-%d %H:%M:%S %z")
                         event = Event(
